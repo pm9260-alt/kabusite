@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>はじめての株 — 「わからない」を「おもしろい」に。</title>
+<meta name="description" content="株を始めたばかりの初心者のための金融入門メディア。用語・チャート・はじめ方を、ひとつずつ「なるほど！」に変えていく入り口です。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Maru+Gothic:wght@700;900&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Noto Sans JP', sans-serif; background:#0e0f13; color:#ececf0; overflow-x:hidden; }
+  a { color: inherit; text-decoration: none; }
+  a:hover { opacity: 0.75; }
+  @keyframes floaty { 0%,100% { transform: translateY(0) rotate(var(--r,0deg)); } 50% { transform: translateY(-18px) rotate(var(--r,0deg)); } }
+  @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  .reveal { opacity:0; transform:translateY(40px); transition:.8s; }
+  .reveal.in { opacity:1; transform:none; }
+  .flip { perspective: 1000px; cursor:pointer; }
+  .flip-inner { position:relative; width:100%; height:100%; transition: transform .55s cubic-bezier(.4,0,.2,1); transform-style: preserve-3d; }
+  .flip:hover .flip-inner { transform: rotateY(180deg); }
+  .flip-face { position:absolute; inset:0; backface-visibility:hidden; -webkit-backface-visibility:hidden; display:flex; flex-direction:column; }
+  .flip-back { transform: rotateY(180deg); }
+  .flip.flipped .flip-inner { transform: rotateY(180deg); }
+  .sp-br { display: none; }
+  .art-card{ transition:transform .25s,border-color .25s; cursor:pointer; }
+  .art-card:hover{ transform:translateY(-6px); border-color:#c9f24a !important; }
+
+  /* article page */
+  #article{ display:none; max-width:780px; margin:0 auto; padding:130px 40px 120px; }
+  #article .back{ display:inline-flex;align-items:center;gap:8px;font-family:'Space Grotesk',sans-serif;font-size:13px;color:#c9f24a;border:1px solid rgba(201,242,74,.4);padding:9px 18px;border-radius:100px;cursor:pointer;margin-bottom:38px; }
+  #article .a-tag{ display:flex;gap:12px;align-items:center;font-size:13px;color:#8a8a94;margin-bottom:16px; }
+  #article .a-tag .pill{ font-weight:700;color:#0e0f13;background:#c9f24a;padding:5px 13px;border-radius:100px; }
+  #article .a-title{ font-family:'Zen Maru Gothic',sans-serif;font-weight:900;font-size:clamp(30px,5vw,48px);color:#fff;line-height:1.3; }
+  #article .a-meta{ margin-top:16px;padding-bottom:28px;border-bottom:1px solid #22232c;font-size:13px;color:#6a6a74;font-family:'Space Grotesk',sans-serif; }
+  #article .a-body{ margin-top:36px;font-size:16.5px;line-height:2.05;color:#c2c2cc; }
+  #article .a-body h3{ font-family:'Zen Maru Gothic',sans-serif;font-weight:700;font-size:24px;color:#fff;margin:44px 0 16px; }
+  #article .a-body p{ margin:0 0 22px; }
+  #article .a-body b{ color:#fff; }
+  #article .a-body .lime{ color:#c9f24a; }
+  #article .a-body .box{ background:#15161c;border:1px solid #22232c;border-radius:18px;padding:24px 26px;margin:26px 0;font-size:15.5px;line-height:1.95;color:#b0b0ba; }
+  #article .a-body .box b{ color:#fff; }
+  #article .a-body .pull{ border-left:3px solid #c9f24a;background:rgba(201,242,74,.08);padding:18px 24px;border-radius:0 14px 14px 0;margin:28px 0;color:#fff;font-size:18px;line-height:1.8;font-family:'Zen Maru Gothic',sans-serif;font-weight:700; }
+  #article .a-foot{ margin-top:54px;padding-top:28px;border-top:1px solid #22232c;font-size:13px;color:#6a6a74;line-height:1.8; }
+  #article .a-more{ margin-top:48px; }
+  #article .a-more h4{ font-size:12px;letter-spacing:.2em;color:#8a8a94;font-family:'Space Grotesk',sans-serif;margin-bottom:8px; }
+  #article .a-more .m{ display:block;padding:18px 0;border-top:1px solid #22232c;cursor:pointer;color:#fff;font-weight:700;font-family:'Zen Maru Gothic',sans-serif;font-size:18px; }
+  #article .a-more .m:hover{ color:#c9f24a;opacity:1; }
+
+  @media (max-width:760px){
+    .sp-br { display: inline !important; }
+    .nav-links { display:none !important; }
+    .cols2 { grid-template-columns:1fr !important; gap:34px !important; }
+    .wrap { padding:88px 20px !important; }
+    .q-float { display:none !important; }
+    .hero-inner { padding:130px 22px 0 !important; }
+    .conc { padding:40px 24px !important; }
+    .hero-btns a { flex:1; text-align:center; }
+    #article{ padding:110px 22px 90px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== NAV ===== -->
+<div id="nav" style="position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;padding:20px 40px;transition:all .3s;border-bottom:1px solid transparent;">
+  <a href="#top" onclick="goHome(event,'top')" style="font-family:'Zen Maru Gothic',sans-serif;font-weight:900;font-size:21px;color:#fff;display:flex;align-items:center;gap:8px;"><span style="display:inline-flex;width:30px;height:30px;background:#c9f24a;color:#0e0f13;border-radius:10px;align-items:center;justify-content:center;font-size:18px;">株</span>はじめての株</a>
+  <div style="display:flex;gap:30px;font-size:14px;font-weight:700;color:#c9c9d0;align-items:center;">
+    <div class="nav-links" style="display:flex;gap:30px;align-items:center;">
+      <a href="#basics" onclick="goHome(event,'basics')">株式とは</a><a href="#why" onclick="goHome(event,'why')">なぜ面白い</a><a href="#stumble" onclick="goHome(event,'stumble')">つまずき</a><a href="#steps" onclick="goHome(event,'steps')">はじめ方</a><a href="#words" onclick="goHome(event,'words')">用語</a><a href="#articles" onclick="goHome(event,'articles')">記事</a>
+    </div>
+    <a href="#articles" onclick="goHome(event,'articles')" style="background:#c9f24a;color:#0e0f13;padding:10px 20px;border-radius:100px;">記事を読む</a>
+  </div>
+</div>
+
+<!-- ===== SITE ===== -->
+<div id="site">
+
+  <!-- HERO -->
+  <div id="top" style="position:relative;min-height:100vh;overflow:hidden;">
+    <canvas id="pcanvas" style="position:absolute;inset:0;width:100%;height:100%;"></canvas>
+    <div style="position:absolute;top:-100px;right:-60px;width:480px;height:480px;background:radial-gradient(circle,rgba(201,242,74,.20),transparent 70%);pointer-events:none;"></div>
+    <div class="q-float" style="position:absolute;top:22%;left:8%;font-family:'Zen Maru Gothic',sans-serif;font-weight:900;font-size:70px;color:rgba(201,242,74,.35);--r:-12deg;animation:floaty 6s ease-in-out infinite;pointer-events:none;">？</div>
+    <div class="q-float" style="position:absolute;top:62%;left:14%;font-family:'Zen Maru Gothic',sans-serif;font-weight:900;font-size:44px;color:rgba(255,255,255,.14);--r:8deg;animation:floaty 7s ease-in-out infinite 1s;pointer-events:none;">？</div>
+    <div class="q-float" style="position:absolute;top:30%;right:10%;font-family:'Zen Maru Gothic',sans-serif;font-weight:900;font-size:56px;color:rgba(255,255,255,.12);--r:14deg;animation:floaty 8s ease-in-out infinite .5s;pointer-events:none;">？</div>
+
+    <div id="heroInner" class="hero-inner" style="position:relative;z-index:2;max-width:1180px;margin:0 auto;padding:170px 40px 0;text-align:center;">
+      <div style="display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:700;letter-spacing:.05em;color:#c9f24a;background:rgba(201,242,74,.12);border:1px solid rgba(201,242,74,.35);padding:8px 18px;border-radius:100px;margin-bottom:34px;">まったくの初心者、大歓迎</div>
+      <div style="font-family:'Zen Maru Gothic',sans-serif;font-weight:900;font-size:clamp(48px,8vw,104px);line-height:1.08;color:#fff;letter-spacing:-.01em;">
+        株って、<br class="sp-br">むずかしい<span id="qmark" style="display:inline-block;color:#c9f24a;">？</span><br>
+        <span style="color:#c9f24a;">わかると、<br class="sp-br">おもしろい。</span>
+      </div>
+      <div style="max-width:600px;margin:30px auto 0;font-size:18px;line-height:2;color:#a6a6b0;">用語もチャートも、最初はみんなチンプンカンプン。<br>ひとつずつ「なるほど！」に変えていく入り口。</div>
+      <div class="hero-btns" style="display:flex;gap:14px;justify-content:center;margin-top:42px;flex-wrap:wrap;">
+        <a href="#articles" onclick="goHome(event,'articles')" style="background:#c9f24a;color:#0e0f13;font-weight:900;font-size:16px;padding:17px 38px;border-radius:100px;">記事を読む →</a>
+        <a href="#stumble" onclick="goHome(event,'stumble')" style="border:1.5px solid #3a3a44;color:#fff;font-weight:700;font-size:16px;padding:17px 38px;border-radius:100px;">つまずきを見る</a>
+      </div>
+    </div>
+
+    <div style="position:absolute;bottom:56px;left:0;right:0;z-index:2;overflow:hidden;border-top:1px solid #1e1e26;border-bottom:1px solid #1e1e26;background:rgba(14,15,19,.7);padding:15px 0;">
+      <div id="ticker" style="display:flex;gap:44px;width:max-content;animation:marquee 26s linear infinite;font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:500;white-space:nowrap;"></div>
+    </div>
+    <div style="position:absolute;bottom:18px;left:50%;transform:translateX(-50%);z-index:2;font-size:12px;color:#6a6a74;font-family:'Space Grotesk',sans-serif;letter-spacing:.2em;">SCROLL ↓</div>
+  </div>
+
+  <!-- BASICS -->
+  <div id="basics" class="wrap" style="max-width:1180px;margin:0 auto;padding:130px 40px;">
+    <div class="reveal">
+      <div style="font-family:'Space Grotesk',sans-serif;font-size:12px;letter-spacing:.25em;color:#c9f24a;margin-bottom:16px;">00 — WHAT IS A STOCK</div>
+      <div class="cols2" style="display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:start;">
+        <div>
+          <div style="font-family:'Zen Maru Gothic',sans-serif;font-weight:900;font-size:clamp(38px,5vw,64px);color:#fff;line-height:1.15;">株式とは<span style="color:#c9f24a;">？</span></div>
+          <div style="font-size:18px;line-height:2.1;color:#c2c2cc;margin-top:26px;">ひとことで言うと、<b style="color:#fff;">会社の価値をこまかく分割したもの</b>。1株買えば、その会社の「一部のオーナー」になれます。</div>
+          <div style="font-size:16px;line-height:2;color:#9a9aa4;margin-top:22px;">会社が成長すれば、あなたの持ち分の価値も上がる。応援と成長を「自分ごと」にできます。</div>
+        </div>
+        <div style="background:#15161c;border:1px solid #22232c;border-radius:22px;padding:34px;">
+          <div style="font-size:14px;color:#8a8a94;margin-bottom:8px;">たとえば、1つの会社を10,000株に分けると</div>
+          <div id="shareGrid" style="display:grid;grid-template-columns:repeat(10,1fr);gap:5px;margin:18px 0;"></div>
+          <div style="font-size:15px;line-height:1.9;color:#b0b0ba;"><span style="color:#c9f24a;font-weight:700;">緑の1マス</span>があなたの持ち分。少額でも、ちゃんとオーナーの一員です。</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="reveal cols2" style="display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:56px;">
+      <div style="background:#15161c;border:1px solid #22232c;border-radius:22px;padding:36px 34px;">
+        <div style="font-family:'Zen Maru Gothic',sans-serif;font-weight:700;font-size:24px;color:#fff;margin-bottom:16px;">インフレは、1800年代からずっと続いている</div>
+        <div style="font-size:16px;line-height:1.95;color:#9a9aa4;">昔の<b style="color:#fff;">1円</b>は、今の<b style="color:#fff;">1万円</b>ほどの価値があったと言われます。つまり<b style="color:#fff;">現金の価値は時間とともに目減りする</b>。だから、お金をどう働かせるかが大切です。</div>
+        <div id="inflBars" style="margin-top:24px;height:110px;display:flex;align-items:flex-end;gap:6px;"></div>
+        <div style="font-size:12px;color:#6a6a74;margin-top:8px;font-family:'Space Grotesk',sans-serif;">お金の価値イメージ（昔の1円 ≒ 今の1万円）</div>
+      </div>
+      <div style="background:#15161c;border:1px solid #22232c;border-radius:22px;padding:36px 34px;">
+        <div style="font-family:'Zen Maru Gothic',sans-serif;font-weight:700;font-size:24px;color:#fff;margin-bottom:16px;">S&amp;P500は、長期では上がり続けてきた</div>
+        <div style="font-size:16px;line-height:1.95;color:#9a9aa4;">アメリカの主要500社の指数。短期は上下しても、<b style="color:#fff;">約70年で見れば右肩上がり</b>。長く持つほど成長の波に乗りやすくなります。</div>
+        <svg viewBox="0 0 440 220" style="width:100%;height:auto;margin-top:20px;">
+          <defs><linearGradient id="spfill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(201,242,74,.32)"></stop><stop offset="100%" stop-color="rgba(201,242,74,0)"></stop></linearGradient></defs>
+          <g stroke="#22232c" stroke-width="1">
+            <line x1="34" y1="20" x2="440" y2="20"></line><line x1="34" y1="60" x2="440" y2="60"></line><line x1="34" y1="100" x2="440" y2="100"></line><line x1="34" y1="140" x2="440" y2="140"></line><line x1="34" y1="180" x2="440" y2="180"></line>
+          </g>
+          <g fill="#6a6a74" font-size="9" font-family="'Space Grotesk',sans-serif" text-anchor="end">
+            <text x="30" y="23">5000</text><text x="30" y="103">1500</text><text x="30" y="183">50</text>
+          </g>
+          <path d="M34,192 L70,187 L108,180 L150,168 L172,160 L188,170 L205,152 L230,133 L252,116 L262,150 L278,138 L300,104 L318,97 L330,140 L352,110 L372,78 L392,58 L406,96 L418,50 L432,34 L440,28 L440,200 L34,200 Z" fill="url(#spfill)"></path>
+          <path d="M34,192 L70,187 L108,180 L150,168 L172,160 L188,170 L205,152 L230,133 L252,116 L262,150 L278,138 L300,104 L318,97 L330,140 L352,110 L372,78 L392,58 L406,96 L418,50 L432,34 L440,28" fill="none" stroke="#c9f24a" stroke-width="2.5" stroke-linejoin="round"></path>
+          <g fill="#ff6b6b"><circle cx="188" cy="170" r="3.2"></circle><circle cx="262" cy="150" r="3.2"></circle><circle cx="330" cy="140" r="3.2"></circle><circle cx="406" cy="96" r="3.2"></circle></g>
+          <g fill="#ff8b8b" font-size="8" font-family="'Space Grotesk',sans-serif" text-anchor="middle">
+            <text x="188" y="185">1987</text><text x="262" y="166">ITバブル</text><text x="330" y="156">金融危機</text><text x="406" y="112">コロナ</text>
+          </g>
+          <g fill="#6a6a74" font-size="9" font-family="'Space Grotesk',sans-serif" text-anchor="middle">
+            <text x="40" y="214">1950</text><text x="150" y="214">1975</text><text x="262" y="214">2000</text><text x="392" y="214">2020</text><text x="434" y="214">現在</text>
+          </g>
+        </svg>
+        <div style="font-size:12px;color:#6a6a74;margin-top:2px;font-family:'Space Grotesk',sans-serif;">S&amp;P500の約70年の推移イメージ。暴落（赤）を挟みつつ右肩上がり。</div>
+      </div>
+    </div>
+
+    <div class="reveal conc" style="margin-top:32px;background:rgba(201,242,74,.08);border:1px solid rgba(201,242,74,.3);border-radius:24px;padding:56px 48px;text-align:center;">
+      <div style="font-family:'Space Grotesk',sans-serif;font-size:12px;letter-spacing:.25em;color:#c9f24a;margin-bottom:20px;">CONCLUSION</div>
+      <div style="font-family:'Zen Maru Gothic',sans-serif;font-weight:900;font-size:clamp(22px,3vw,34px);line-height:1.5;color:#fff;">
+        むずかしく考えなくても大丈夫。<br>株は<span style="color:#c9f24a;">「長期」で持てば、勝てる確率がぐっと高い</span>。
+      </div>
+      <div style="max-width:560px;margin:22px auto 0;font-size:16px;line-height:1.95;color:#a6a6b0;">1日では上下でも、10年20年と持てば成長に乗りやすい。焦らず長く、が初心者の武器。</div>
+    </div>
+    <div style="font-size:13px;color:#5a5a64;margin-top:22px;line-height:1.7;">※図はイメージです。過去の傾向であり、将来の成果を保証するものではありません。投資にはリスクがあります。</div>
+  </div>
+
+  <!-- WHY FUN -->
+  <div id="why" class="wrap" style="max-width:1180px;margin:0 auto;padding:130px 40px;">
+    <div class="reveal" style="text-align:center;margin-bottom:60px;">
+      <div style="font-family:'Space Grotesk',sans-serif;font-size:12px;letter-spacing:.25em;color:#c9f24a;margin-bottom:16px;">01 — WHY IT'S FUN</div>
+      <div style="font-family:'Zen Maru Gothic',sans-serif;font-weight:900;font-size:clamp(34px,5vw,56px);color:#fff;line-height:1.2;">「わかる」瞬間が、<br>クセになる。</div>
+    </div>
+    <div id="whys" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:22px;"></div>
+  </div>
+
+  <!-- STUMBLE -->
+  <div id="stumble" style="border-top:1px solid #191a20;background:#101117;">
+    <div class="wrap" style="max-width:1180px;margin:0 auto;padding:130px 40px;">
+      <div class="reveal" style="text-align:center;margin-bottom:16px;">
+        <div style="font-family:'Space Grotesk',sans-serif;font-size:12px;letter-spacing:.25em;color:#c9f24a;margin-bottom:16px;">02 — COMMON STUMBLES</div>
+        <div style="font-family:'Zen Maru Gothic',sans-serif;font-weight:900;font-size:clamp(34px,5vw,56px);color:#fff;line-height:1.2;">みんながつまずく「？」</div>
+        <div style="font-size:15px;color:#8a8a94;margin-top:14px;">カードにマウスを乗せる（スマホはタップ）と、答えがくるっと出てきます</div>
+      </div>
+      <div class="reveal conc" style="margin-top:44px;background:rgba(201,242,74,.08);border:1px solid rgba(201,242,74,.3);border-radius:24px;padding:44px 40px;text-align:center;">
+        <div style="font-family:'Zen Maru Gothic',sans-serif;font-weight:900;font-size:clamp(24px,3.4vw,40px);line-height:1.4;color:#fff;">
+          株は怖いもの<span style="color:#8a8a94;">？</span>　<span style="color:#c9f24a;">→　理解すれば、怖くない。</span>
+        </div>
+        <div style="max-width:600px;margin:18px auto 0;font-size:16px;line-height:2;color:#a6a6b0;">「怖い」の正体は、たいてい&quot;よくわからない&quot;こと。仕組みを知り少額から始めれば、リスクは自分で管理できます。</div>
+      </div>
+      <div id="stumbles" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:22px;margin-top:32px;"></div>
+    </div>
+  </div>
+
+  <!-- STEPS -->
+  <div id="steps" class="wrap" style="max-width:1180px;margin:0 auto;padding:130px 40px;">
+    <div class="reveal" style="text-align:center;margin-bottom:60px;">
+      <div style="font-family:'Space Grotesk',sans-serif;font-size:12px;letter-spacing:.25em;color:#c9f24a;margin-bottom:16px;">03 — HOW TO START</div>
+      <div style="font-family:'Zen Maru Gothic',sans-serif;font-weight:900;font-size:clamp(34px,5vw,56px);color:#fff;line-height:1.2;">3ステップで、はじめられる。</div>
+    </div>
+    <div id="steps-list" style="display:flex;flex-direction:column;gap:0;"></div>
+  </div>
+
+  <!-- WORDS -->
+  <div id="words" style="border-top:1px solid #191a20;background:#101117;">
+    <div class="wrap" style="max-width:1180px;margin:0 auto;padding:130px 40px;">
+      <div class="reveal" style="text-align:center;margin-bottom:52px;">
+        <div style="font-family:'Space Grotesk',sans-serif;font-size:12px;letter-spacing:.25em;color:#c9f24a;margin-bottom:16px;">04 — MINI GLOSSARY</div>
+        <div style="font-family:'Zen Maru Gothic',sans-serif;font-weight:900;font-size:clamp(34px,5vw,56px);color:#fff;line-height:1.2;">まずはこれだけ用語辞典</div>
+      </div>
+      <div id="words-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;"></div>
+    </div>
+  </div>
+
+  <!-- ARTICLES -->
+  <div id="articles" style="border-top:1px solid #191a20;">
+    <div class="wrap" style="max-width:1180px;margin:0 auto;padding:130px 40px;">
+      <div class="reveal" style="text-align:center;margin-bottom:56px;">
+        <div style="font-family:'Space Grotesk',sans-serif;font-size:12px;letter-spacing:.25em;color:#c9f24a;margin-bottom:16px;">05 — READ MORE</div>
+        <div style="font-family:'Zen Maru Gothic',sans-serif;font-weight:900;font-size:clamp(34px,5vw,56px);color:#fff;line-height:1.2;">もっと知りたい人へ</div>
+      </div>
+
+      <!-- featured: 利下げ・利上げ -->
+      <div style="background:#15161c;border:1px solid #22232c;border-radius:24px;overflow:hidden;margin-bottom:26px;">
+        <div style="padding:44px 44px 0;">
+          <div style="display:flex;gap:12px;align-items:center;margin-bottom:18px;">
+            <span style="font-size:12px;font-weight:700;color:#0e0f13;background:#c9f24a;padding:5px 13px;border-radius:100px;">FEATURED · マクロ</span>
+            <span style="font-size:13px;color:#8a8a94;font-family:'Space Grotesk',sans-serif;">6分で読める</span>
+          </div>
+          <div style="font-family:'Zen Maru Gothic',sans-serif;font-weight:900;font-size:clamp(28px,3.6vw,40px);color:#fff;line-height:1.3;">利下げ・利上げで、株はどう動く？</div>
+          <div style="font-size:16px;line-height:2;color:#a6a6b0;margin-top:18px;max-width:760px;">ニュースでよく聞くけど、なぜ金利で株価が動く？お金の流れをたどれば、意外とシンプルです。</div>
+        </div>
+        <div class="cols2" style="padding:34px 44px 8px;display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+          <div style="background:rgba(122,212,255,.07);border:1px solid rgba(122,212,255,.25);border-radius:18px;padding:28px;">
+            <div style="font-family:'Zen Maru Gothic',sans-serif;font-weight:700;font-size:22px;color:#7ad4ff;margin-bottom:12px;">利下げ　→　株は上がりやすい</div>
+            <div style="font-size:15px;line-height:2;color:#b0b0ba;">金利が下がると、会社はお金を<b style="color:#fff;">安く借りられる</b>。投資や採用が増え、業績アップの期待が高まる。預金の利息も減るので、お金は<b style="color:#fff;">株式へ</b>流れやすくなります。</div>
+          </div>
+          <div style="background:rgba(255,139,139,.06);border:1px solid rgba(255,139,139,.22);border-radius:18px;padding:28px;">
+            <div style="font-family:'Zen Maru Gothic',sans-serif;font-weight:700;font-size:22px;color:#ff8b8b;margin-bottom:12px;">利上げ　→　株は下がりやすい</div>
+            <div style="font-size:15px;line-height:2;color:#b0b0ba;">金利が上がると、借入コストが増えて<b style="color:#fff;">会社の負担が重く</b>なる。預金や債券にも利息が付くため、株から<b style="color:#fff;">お金が逃げやすく</b>なります。</div>
+          </div>
+        </div>
+        <div style="padding:8px 44px 44px;">
+          <div style="font-size:15px;line-height:2;color:#9a9aa4;">これは<b style="color:#fff;">大まかな傾向</b>。実際は&quot;予想との差&quot;で動きますが、まず<b style="color:#c9f24a;">「金利と株は逆に動きやすい」</b>と覚えればOK。</div>
+          <div style="margin-top:22px;font-size:13px;color:#5a5a64;">※特定の投資判断を推奨するものではありません。</div>
+        </div>
+      </div>
+
+      <!-- featured: 投資法の全体像 -->
+      <div style="background:#15161c;border:1px solid #22232c;border-radius:24px;overflow:hidden;margin-bottom:26px;">
+        <div style="padding:44px 44px 0;">
+          <div style="display:flex;gap:12px;align-items:center;margin-bottom:18px;">
+            <span style="font-size:12px;font-weight:700;color:#0e0f13;background:#c9f24a;padding:5px 13px;border-radius:100px;">FEATURED · 投資法</span>
+            <span style="font-size:13px;color:#8a8a94;font-family:'Space Grotesk',sans-serif;">8分で読める</span>
+          </div>
+          <div style="font-family:'Zen Maru Gothic',sans-serif;font-weight:900;font-size:clamp(28px,3.6vw,40px);color:#fff;line-height:1.3;">投資法いろいろ、まず全体像から</div>
+          <div style="font-size:16px;line-height:2;color:#a6a6b0;margin-top:18px;max-width:760px;">株の買い方は、大きく<b style="color:#fff;">「インデックス」</b>と<b style="color:#fff;">「個別株」</b>の2つ。自分に合うほうから始めましょう。</div>
+        </div>
+        <div class="cols2" style="padding:34px 44px 8px;display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+          <div style="background:rgba(201,242,74,.07);border:1px solid rgba(201,242,74,.28);border-radius:18px;padding:28px;">
+            <div style="font-family:'Zen Maru Gothic',sans-serif;font-weight:700;font-size:22px;color:#c9f24a;margin-bottom:6px;">インデックス投資</div>
+            <div style="font-size:13px;color:#8a8a94;margin-bottom:14px;">初心者・ほったらかし向き</div>
+            <div style="font-size:15px;line-height:2;color:#b0b0ba;">市場全体（S&amp;P500など）にまとめて投資。<b style="color:#fff;">1本で自動的に分散</b>され、手間がいらない。コツコツ長期の王道。</div>
+          </div>
+          <div style="background:rgba(122,212,255,.06);border:1px solid rgba(122,212,255,.24);border-radius:18px;padding:28px;">
+            <div style="font-family:'Zen Maru Gothic',sans-serif;font-weight:700;font-size:22px;color:#7ad4ff;margin-bottom:6px;">個別株投資</div>
+            <div style="font-size:13px;color:#8a8a94;margin-bottom:14px;">自分で会社を選びたい人向き</div>
+            <div style="font-size:15px;line-height:2;color:#b0b0ba;">1社ずつ選んで買う方法。当たれば大きいが、<b style="color:#fff;">値動きも大きい</b>。戦い方でさらに分かれます（下記）。</div>
+          </div>
+        </div>
+        <div style="padding:14px 44px 44px;">
+          <div style="font-size:13px;font-weight:700;color:#8a8a94;letter-spacing:.05em;margin-bottom:16px;">個別株の主なスタイル</div>
+          <div id="styles-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;"></div>
+          <div style="margin-top:22px;font-size:15px;line-height:2;color:#9a9aa4;">迷ったら、まずは<b style="color:#c9f24a;">インデックスで土台をつくり</b>、慣れてきたら個別株に少しずつ——が、失敗しにくい順番です。</div>
+        </div>
+      </div>
+
+      <!-- other article cards (clickable -> article pages) -->
+      <div id="cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:22px;"></div>
+    </div>
+  </div>
+
+  <!-- START CTA -->
+  <div id="start" style="position:relative;overflow:hidden;">
+    <div style="position:absolute;inset:0;background:radial-gradient(circle at 50% 0%,rgba(201,242,74,.14),transparent 60%);pointer-events:none;"></div>
+    <div style="position:relative;max-width:900px;margin:0 auto;padding:150px 40px;text-align:center;">
+      <div style="font-family:'Zen Maru Gothic',sans-serif;font-weight:900;font-size:clamp(28px,4vw,44px);color:#c9f24a;margin-bottom:8px;">？ → ！</div>
+      <div style="font-family:'Zen Maru Gothic',sans-serif;font-weight:900;font-size:clamp(42px,7vw,82px);color:#fff;line-height:1.1;">今日、最初の<br>「なるほど」を。</div>
+      <div style="max-width:480px;margin:26px auto 0;font-size:17px;line-height:2;color:#a6a6b0;">登録もお金も不要。まずは1つ、用語を覚えるところから。</div>
+      <a href="#words" onclick="goHome(event,'words')" style="display:inline-block;margin-top:40px;background:#c9f24a;color:#0e0f13;font-weight:900;font-size:17px;padding:18px 44px;border-radius:100px;">用語を見る →</a>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div id="footer" style="border-top:1px solid #191a20;background:#0a0b0e;">
+    <div class="wrap" style="max-width:1180px;margin:0 auto;padding:80px 40px 40px;">
+      <div class="cols2" style="display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:48px;">
+        <div>
+          <div style="font-family:'Zen Maru Gothic',sans-serif;font-weight:900;font-size:20px;color:#fff;display:flex;align-items:center;gap:8px;margin-bottom:16px;"><span style="display:inline-flex;width:28px;height:28px;background:#c9f24a;color:#0e0f13;border-radius:9px;align-items:center;justify-content:center;font-size:16px;">株</span>はじめての株</div>
+          <div style="font-size:14px;line-height:1.9;color:#8a8a94;max-width:340px;">「わからない」を「おもしろい」に変える、初心者のための金融メディア。投資は自己責任で、無理のない範囲から。</div>
+        </div>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:#c9c9d0;margin-bottom:16px;">コンテンツ</div>
+          <div style="display:flex;flex-direction:column;gap:12px;font-size:14px;color:#8a8a94;">
+            <a href="#basics" onclick="goHome(event,'basics')">株式とは</a><a href="#articles" onclick="goHome(event,'articles')">記事一覧</a><a href="#words" onclick="goHome(event,'words')">用語辞典</a><a href="#steps" onclick="goHome(event,'steps')">はじめ方</a>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:#c9c9d0;margin-bottom:16px;">サイト情報</div>
+          <div style="display:flex;flex-direction:column;gap:12px;font-size:14px;color:#8a8a94;">
+            <a href="javascript:void(0)" onclick="openModal('privacy')">プライバシーポリシー</a>
+            <a href="javascript:void(0)" onclick="openModal('about')">運営者情報</a>
+            <a href="javascript:void(0)" onclick="openModal('contact')">お問い合わせ</a>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:center;margin-top:56px;">
+        <a href="javascript:void(0)" onclick="openModal('contact')" style="background:#c9f24a;color:#0e0f13;font-weight:900;font-size:16px;padding:16px 44px;border-radius:100px;">お問い合わせ</a>
+      </div>
+      <div style="margin-top:48px;padding-top:28px;border-top:1px solid #191a20;display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;font-size:12px;color:#5a5a64;font-family:'Space Grotesk',sans-serif;">
+        <span>© 2026 はじめての株 — 初心者のための金融入門</span>
+        <span>本サイトは情報提供を目的とし、投資勧誘を目的としたものではありません。</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ===== ARTICLE PAGE ===== -->
+<div id="article">
+  <div class="back" onclick="closeArticle()">← 記事一覧へ戻る</div>
+  <div class="a-tag" id="aTag"></div>
+  <div class="a-title" id="aTitle"></div>
+  <div class="a-meta" id="aMeta"></div>
+  <div class="a-body" id="aBody"></div>
+  <div class="a-foot">※本記事は情報提供を目的とした一般的な解説であり、特定の銘柄・商品の売買や投資判断を推奨するものではありません。投資はご自身の判断と責任で行ってください。</div>
+  <div class="a-more"><h4>OTHER ARTICLES</h4><div id="aMore"></div></div>
+</div>
+
+<!-- ===== MODAL ===== -->
+<div id="modal" style="display:none;position:fixed;inset:0;z-index:100;background:rgba(6,7,9,.72);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:24px;" onclick="closeModal()">
+  <div onclick="event.stopPropagation()" style="background:#15161c;border:1px solid #2a2b34;border-radius:22px;max-width:560px;width:100%;max-height:82vh;overflow:auto;padding:40px;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:20px;margin-bottom:20px;">
+      <div id="modalTitle" style="font-family:'Zen Maru Gothic',sans-serif;font-weight:900;font-size:26px;color:#fff;"></div>
+      <div onclick="closeModal()" style="flex:0 0 auto;width:36px;height:36px;border-radius:50%;background:#22232c;color:#c9c9d0;display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer;">×</div>
+    </div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   コンテンツ（DATA）— ここを編集すれば中身が変わります
+   ========================================================= */
+const TICKER = [
+  {sym:'N225', px:'39,842', chg:'+1.2%', color:'#c9f24a'},{sym:'TOPIX', px:'2,741', chg:'+0.8%', color:'#c9f24a'},
+  {sym:'USDJPY', px:'156.3', chg:'-0.3%', color:'#ff6b6b'},{sym:'AAPL', px:'241.5', chg:'+2.1%', color:'#c9f24a'},
+  {sym:'NVDA', px:'138.9', chg:'+3.4%', color:'#c9f24a'},{sym:'7203', px:'2,610', chg:'-0.6%', color:'#ff6b6b'},
+  {sym:'BTC', px:'98,204', chg:'+4.7%', color:'#c9f24a'},{sym:'9432', px:'152', chg:'+0.5%', color:'#c9f24a'},
+];
+const WHYS = [
+  {title:'世界のニュースが繋がる', body:'金利・円安・新製品——ニュースがなぜ株価を動かすのか、点が線になっていく感覚。', example:'「円安」のニュース → 車を海外で売るトヨタがもうかる → 株価が上がる。'},
+  {title:'お金が「働く」のを見る', body:'応援したい会社に投資して、その成長を一緒に体験する。貯金とはちがう手ざわり。', example:'好きなアプリの会社に1株。利用者が増える → 株価も上がる。応援がリターンに。'},
+  {title:'ちょっとゲームみたい', body:'仮説→検証の繰り返し。当たると嬉しいし、外れても学びになる。', example:'流行りのゲームや食べ物を知る → 親会社の株を買って数か月待つ。答え合わせが楽しい。'},
+];
+const STUMBLES = [
+  {q:'そもそも「株」って何？', a:'会社のオーナー権を小さく分けたもの。買うと、その会社の一部の持ち主になれます。'},
+  {q:'いくらから買えるの？', a:'数百円〜数千円から買える銘柄も。少額から気軽に始められます。'},
+  {q:'チャートの見方がわからない', a:'まずは「上がってる/下がってる」だけでOK。細かい線は後からで大丈夫。'},
+  {q:'損したらどうなる？', a:'買った額以上には基本減りません。少額なら、勉強代として割り切れる範囲から。'},
+];
+const STEPS = [
+  {n:'1', title:'証券口座をひらく', body:'スマホで完結。ネット証券なら手数料も安く、初心者向けの画面が用意されています。'},
+  {n:'2', title:'気になる会社を探す', body:'いつも使うサービスや好きな商品の会社から。「知ってる」は立派な入り口です。'},
+  {n:'3', title:'少額で1株買ってみる', body:'まずは1株。値動きを自分ごととして眺めると、ニュースの見え方が変わります。'},
+];
+const WORDS = [
+  {term:'株価', def:'株1株の値段。人気や業績で毎日変わる。'},{term:'配当', def:'会社が利益の一部を株主に配るお金。'},
+  {term:'NISA', def:'利益に税金がかからないおトクな制度。'},{term:'インフレ', def:'モノの値段が上がること。現金の価値は下がる。'},
+  {term:'デフレ', def:'モノの値段が下がること。インフレの逆。'},{term:'分散投資', def:'複数に分けてリスクを下げる考え方。'},
+  {term:'指値', def:'値段を指定する注文。'},{term:'成行', def:'値段を指定せず「今すぐ」買う／売る注文。'},
+  {term:'板（いた）', def:'いくらに何株の注文があるかを並べた一覧。'},{term:'ストップ高（S高）', def:'値幅の上限まで急騰した状態。'},
+  {term:'ストップ安（S安）', def:'値幅の下限まで急落した状態。'},
+];
+const STYLES = [
+  {name:'スイングトレード', term:'数日〜数週間', tagBg:'#c9f24a', desc:'数日〜数週間で売買。日中ずっと見なくてよく、会社員でも取り組みやすい中期スタイル。'},
+  {name:'デイトレード', term:'1日で完結', tagBg:'#ff8b8b', desc:'その日のうちに売買を終える短期売買。値動きを追い続ける必要があり、上級者向け。'},
+  {name:'ファンダメンタルズ', term:'業績で選ぶ', tagBg:'#7ad4ff', desc:'業績や財務など「会社の実力」を分析して、割安な株を長めに持つ王道アプローチ。'},
+  {name:'イベントドリブン', term:'出来事に賭ける', tagBg:'#e0b0ff', desc:'決算・新製品・M&Aなど、株価が動きそうな「出来事」を狙って売買するスタイル。'},
+];
+
+// 記事カード（クリックで記事ページが開く）。増やすときはこの配列に追加。
+const CARDS = [
+  {
+    id:'chart', tag:'基礎', mins:'5分', title:'チャートの読み方、まずはこの3つ',
+    desc:'ローソク足・移動平均線・出来高。最初に押さえるべきポイントだけを、図解でシンプルに。',
+    body:`
+      <p>チャートは、たくさんの線や棒が並んでいて、最初は誰でも「うわ、むずかしそう」と感じます。でも大丈夫。初心者がまず覚えるのは、たった<b class="lime">3つ</b>だけでいい。ローソク足・移動平均線・出来高。この3つが読めれば、チャートの8割は「なんとなく分かる」に変わります。</p>
+      <h3>① ローソク足 — 1本で4つの値段がわかる</h3>
+      <p>ローソク足は、ある期間（1日など）の値動きを、1本のロウソクの形で表したもの。太い部分（実体）と、上下に伸びる細い線（ヒゲ）でできています。</p>
+      <div class="box"><b>色の意味（いちばん大事）</b><br>・<b>上がった</b>ら陽線（アプリでは白や赤）<br>・<b>下がった</b>ら陰線（黒や青）<br>※色の割り当てはアプリによって逆のことがあります。使うアプリで「上がったらどっちの色か」を最初に確認しておきましょう。</div>
+      <p>実体が長いほど、その期間で大きく動いたということ。ヒゲは「一度はそこまで行ったけど、押し戻された」跡です。1本1本が、その日の"せめぎ合いの記録"だと思うと、急に読みやすくなります。</p>
+      <h3>② 移動平均線 — 全体の「流れ」をつかむ</h3>
+      <p>毎日の株価はギザギザで、見ているだけでは上か下か分かりません。そこで、過去数日〜数十日の平均をつないだ線が移動平均線。ギザギザを&quot;ならして&quot;、大きな流れ（トレンド）を見やすくしてくれます。</p>
+      <div class="pull">線が上向きなら上昇の流れ、下向きなら下降の流れ。まずはこれだけでOK。</div>
+      <p>短期（25日など）と長期（75日など）の2本を表示して、その向きと位置関係をぼんやり眺める。それだけで「今はどっちの空気か」がつかめます。</p>
+      <h3>③ 出来高 — 「どれだけ注目されているか」の温度計</h3>
+      <p>チャートの下にある棒グラフが出来高。その期間に成立した売買の量です。<b>出来高が急に増える</b>のは、何かのニュースで注目が集まったサイン。株価の動きと一緒に見ると、その動きが&quot;本気&quot;か&quot;気まぐれ&quot;かの手がかりになります。</p>
+      <div class="box">まとめ：<b>ローソク足</b>で「今日どう動いたか」、<b>移動平均線</b>で「全体の流れ」、<b>出来高</b>で「注目度」。最初はこの3点だけを、毎日ぼんやり眺めるところから。細かい指標は、慣れてからで十分です。</div>
+    `
+  },
+  {
+    id:'broker', tag:'口座選び', mins:'7分', title:'クレカ別・証券会社の選び方',
+    desc:'ポイントが貯まるクレカ積立。普段使うカードから逆算して選ぶ、いちばん損しない口座選び。',
+    body:`
+      <p>証券会社はたくさんあって、初心者ほど「どこがいいの？」で止まってしまいます。結論から言うと、いま多くの人にとっていちばん&quot;損しない&quot;選び方は、<b class="lime">自分が普段使っているクレジットカードから逆算する</b>ことです。</p>
+      <h3>「クレカ積立」って何がおトクなの？</h3>
+      <p>多くのネット証券では、毎月の積立の支払いをクレジットカードにできます。これがクレカ積立。すると、<b>積立額に応じてカードのポイントが貯まる</b>。同じように投資しても、現金より少しだけおトクになる、という仕組みです。塵も積もれば、長期ではけっこうな差になります。</p>
+      <div class="pull">証券会社は「どのカードでポイントが貯まるか」で選ぶと、失敗しにくい。</div>
+      <h3>カード別・相性のいい証券会社（代表例）</h3>
+      <p>カードと証券会社には&quot;公式の組み合わせ&quot;があります。よく使うカードがあるなら、その相方の証券会社が第一候補になります。</p>
+      <div class="box">
+        ・<b>三井住友カード</b> → <b>SBI証券</b><br>
+        ・<b>楽天カード</b> → <b>楽天証券</b><br>
+        ・<b>マネックスカード／dカード</b> → <b>マネックス証券</b><br>
+        ・<b>au PAY カード</b> → <b>auカブコム証券</b><br>
+        <span style="color:#8a8a94;font-size:13px;">※これは代表的な組み合わせの例です。</span>
+      </div>
+      <h3>還元率は「変わるもの」。必ず公式で最新を確認</h3>
+      <p>ここが大事な注意点です。クレカ積立のポイント還元率や上限額は、<b>各社が頻繁に見直します</b>。カードのランク（一般／ゴールドなど）でも変わります。「〇%だからここ」と思い込まず、口座を作る前に必ず<b class="lime">各証券会社・カード会社の公式ページで、今の還元率と上限</b>を確認してください。ネット記事の数字は古いことがあります。</p>
+      <h3>ポイント以外の、地味だけど効くチェック点</h3>
+      <p>還元率だけで決めず、次も見ておくと後悔しません。<b>①手数料</b>（売買コストの安さ）、<b>②貯まるポイントを普段使っているか</b>（使わないポイントは意味が薄い）、<b>③アプリの見やすさ</b>（毎日開くので、初心者向けの画面かは想像以上に大事）。</p>
+      <div class="box"><b>迷ったときの結論：</b>いちばんよく使うカード・ポイント経済圏に合わせて選ぶ。それが、続けやすくて&quot;取りこぼしのない&quot;口座選びです。</div>
+    `
+  },
+  {
+    id:'compound', tag:'複利', mins:'5分', title:'若い人こそ読むべき、複利の魔法',
+    desc:'時間を味方につけると、雪だるま式にお金が増える。始めるのが早いほど効く「複利」の正体。',
+    body:`
+      <p>投資でいちばん強い味方は、才能でも度胸でもなく<b class="lime">時間</b>です。その時間を味方につける仕組みが「複利」。これを知っているかどうかで、10年後・20年後の景色がまるで変わります。</p>
+      <h3>複利とは、「増えた分にも、さらに増える」こと</h3>
+      <p>ふつうの利息（単利）は、最初の元本にだけ利息がつきます。複利は、<b>ついた利息を元本に組み込んで、その合計にまた利息がつく</b>。これが繰り返されると、増え方が「足し算」から「かけ算」に変わっていきます。雪玉が転がるほど大きくなるイメージです。</p>
+      <div class="box"><b>ざっくりの例（年利5%と仮定）</b><br>100万円を置いておくと……<br>10年後 → 約163万円<br>20年後 → 約265万円<br>30年後 → 約432万円<br><span style="color:#8a8a94;font-size:13px;">※あくまで一定利回りを仮定した計算例。実際の相場は上下し、利回りは保証されません。</span></div>
+      <h3>「72の法則」で、二倍になる年数がわかる</h3>
+      <p>覚えておくと便利な目安があります。<b class="lime">72 ÷ 利回り(%) ≒ お金が2倍になる年数</b>。たとえば年5%なら、72 ÷ 5 ＝ 約14年で倍。年3%なら24年。数字が頭にあると、「時間の力」が実感としてつかめます。</p>
+      <div class="pull">複利がいちばん効くのは、最後の数年。だから「早く始める」が最大の武器になる。</div>
+      <h3>だから、若い人ほど有利</h3>
+      <p>複利は後半になるほど加速します。つまり、金額の大小よりも<b>「どれだけ長く時間を使えるか」</b>が効いてくる。少額でもいい。早く始めて、長く続ける——それだけで、時間があなたの代わりに働いてくれます。</p>
+      <div class="box">注意：複利は&quot;プラスの利回りが続けば&quot;の話です。相場は下がる年もあります。だからこそ、一つに賭けず分散し、無理のない金額で長く続けることが、複利を活かすコツになります。</div>
+    `
+  },
+];
+
+const MODAL = {
+  privacy:{title:'プライバシーポリシー', html:`
+    <div style="font-size:15px;line-height:1.95;color:#b0b0ba;">当サイト「はじめての株」（以下、当サイト）における個人情報の取り扱いについて、以下のとおり定めます。</div>
+    <div style="font-weight:700;color:#fff;margin:22px 0 8px;">取得する情報</div>
+    <div style="font-size:15px;line-height:1.95;color:#b0b0ba;">お問い合わせフォームからご連絡いただく際に、お名前・メールアドレスを取得する場合があります。また、アクセス解析のためCookieを利用することがあります。</div>
+    <div style="font-weight:700;color:#fff;margin:22px 0 8px;">利用目的</div>
+    <div style="font-size:15px;line-height:1.95;color:#b0b0ba;">取得した情報は、お問い合わせへの回答、およびサイト改善のための統計分析にのみ利用し、ご本人の同意なく第三者へ提供することはありません。</div>
+    <div style="font-weight:700;color:#fff;margin:22px 0 8px;">免責事項</div>
+    <div style="font-size:15px;line-height:1.95;color:#b0b0ba;">当サイトの情報は正確性に努めていますが、その完全性を保証するものではありません。投資はご自身の判断と責任において行ってください。</div>
+    <div style="color:#5a5a64;font-size:13px;margin-top:22px;">制定日：2026年1月1日</div>`},
+  about:{title:'運営者情報', html:`
+    <div style="font-size:15px;line-height:1.95;color:#b0b0ba;">当サイトは、金融をこれから学ぶ初心者に向けて、やさしい入り口を届けることを目的に運営しています。</div>
+    <div style="margin-top:20px;border-top:1px solid #2a2b34;">
+      <div style="display:flex;padding:16px 0;border-bottom:1px solid #22232c;"><div style="width:120px;color:#8a8a94;flex:0 0 auto;">サイト名</div><div style="color:#fff;">はじめての株</div></div>
+      <div style="display:flex;padding:16px 0;border-bottom:1px solid #22232c;"><div style="width:120px;color:#8a8a94;flex:0 0 auto;">運営</div><div style="color:#fff;">はじめての株 編集部</div></div>
+      <div style="display:flex;padding:16px 0;border-bottom:1px solid #22232c;"><div style="width:120px;color:#8a8a94;flex:0 0 auto;">開設</div><div style="color:#fff;">2026年</div></div>
+      <div style="display:flex;padding:16px 0;"><div style="width:120px;color:#8a8a94;flex:0 0 auto;">連絡先</div><div style="color:#fff;">hello@example.com</div></div>
+    </div>
+    <div style="font-size:15px;line-height:1.95;color:#b0b0ba;margin-top:20px;">本サイトは特定の金融商品の勧誘を目的とするものではありません。</div>`},
+  contact:{title:'お問い合わせ', html:`
+    <div style="font-size:15px;line-height:1.95;color:#b0b0ba;">ご質問・ご感想・記事のリクエストなど、お気軽にお寄せください。</div>
+    <div style="margin-top:24px;display:flex;flex-direction:column;gap:16px;">
+      <div><div style="font-size:13px;color:#8a8a94;margin-bottom:6px;">お名前</div><input type="text" placeholder="山田 太郎" style="width:100%;background:#0e0f13;border:1px solid #2a2b34;border-radius:12px;padding:14px 16px;color:#fff;font-size:15px;font-family:inherit;box-sizing:border-box;"></div>
+      <div><div style="font-size:13px;color:#8a8a94;margin-bottom:6px;">メールアドレス</div><input type="email" placeholder="you@example.com" style="width:100%;background:#0e0f13;border:1px solid #2a2b34;border-radius:12px;padding:14px 16px;color:#fff;font-size:15px;font-family:inherit;box-sizing:border-box;"></div>
+      <div><div style="font-size:13px;color:#8a8a94;margin-bottom:6px;">お問い合わせ内容</div><textarea rows="4" placeholder="ご自由にお書きください" style="width:100%;background:#0e0f13;border:1px solid #2a2b34;border-radius:12px;padding:14px 16px;color:#fff;font-size:15px;font-family:inherit;resize:vertical;box-sizing:border-box;"></textarea></div>
+      <button style="background:#c9f24a;color:#0e0f13;font-weight:900;font-size:16px;padding:15px;border:none;border-radius:100px;cursor:pointer;font-family:inherit;">送信する</button>
+      <div style="font-size:12px;color:#5a5a64;text-align:center;">※これはデモフォームです。実際には送信されません。</div>
+    </div>`},
+};
+
+/* =========================================================
+   描画と動作（ふだん触る必要はありません）
+   ========================================================= */
+const $ = id => document.getElementById(id);
+// ティッカー
+$('ticker').innerHTML = [...TICKER, ...TICKER].map(t=>`<span style="display:flex;align-items:center;gap:8px;color:#c9c9d0;"><span style="color:#fff;">${t.sym}</span> ${t.px} <span style="color:${t.color};">${t.chg}</span></span>`).join('');
+// share grid
+$('shareGrid').innerHTML = Array.from({length:50},(_,i)=>`<div style="aspect-ratio:1;border-radius:4px;background:${i===23?'#c9f24a':'#22232c'};"></div>`).join('');
+// inflation bars
+$('inflBars').innerHTML = [22,28,26,34,40,38,48,55,60,72,84,100].map(v=>`<div style="flex:1;border-radius:4px 4px 0 0;background:linear-gradient(180deg,#c9f24a,rgba(201,242,74,.25));height:${v}%;"></div>`).join('');
+// whys (flip)
+$('whys').innerHTML = WHYS.map(w=>`
+  <div class="flip" style="height:250px;" onclick="this.classList.toggle('flipped')">
+    <div class="flip-inner">
+      <div class="flip-face" style="background:#15161c;border:1px solid #22232c;border-radius:22px;padding:36px 30px;justify-content:space-between;">
+        <div><div style="font-family:'Zen Maru Gothic',sans-serif;font-weight:700;font-size:22px;color:#fff;margin-bottom:12px;">${w.title}</div><div style="font-size:15px;line-height:1.9;color:#9a9aa4;">${w.body}</div></div>
+        <div style="font-size:13px;font-weight:700;color:#c9f24a;">具体例を見る →</div>
+      </div>
+      <div class="flip-face flip-back" style="background:#c9f24a;color:#0e0f13;border-radius:22px;padding:36px 30px;justify-content:space-between;">
+        <div style="font-size:12px;font-weight:700;letter-spacing:.1em;opacity:.7;">具体例</div>
+        <div style="font-size:16px;line-height:1.85;font-weight:500;">${w.example}</div>
+      </div>
+    </div>
+  </div>`).join('');
+// stumbles (flip)
+$('stumbles').innerHTML = STUMBLES.map(q=>`
+  <div class="flip" style="height:230px;" onclick="this.classList.toggle('flipped')">
+    <div class="flip-inner">
+      <div class="flip-face" style="background:#15161c;border:1px solid #22232c;border-radius:22px;padding:32px;justify-content:space-between;">
+        <div style="font-family:'Zen Maru Gothic',sans-serif;font-weight:900;font-size:44px;color:rgba(201,242,74,.5);">？</div>
+        <div style="font-family:'Zen Maru Gothic',sans-serif;font-weight:700;font-size:23px;color:#fff;line-height:1.4;">${q.q}</div>
+      </div>
+      <div class="flip-face flip-back" style="background:#c9f24a;color:#0e0f13;border-radius:22px;padding:32px;justify-content:space-between;">
+        <div style="font-family:'Zen Maru Gothic',sans-serif;font-weight:900;font-size:44px;">！</div>
+        <div style="font-size:16px;line-height:1.8;font-weight:500;">${q.a}</div>
+      </div>
+    </div>
+  </div>`).join('');
+// steps
+$('steps-list').innerHTML = STEPS.map(s=>`
+  <div style="display:flex;gap:34px;align-items:flex-start;padding:34px 0;border-top:1px solid #1e1e26;">
+    <div style="flex:0 0 auto;width:70px;height:70px;border-radius:50%;background:rgba(201,242,74,.12);border:1.5px solid #c9f24a;display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:28px;color:#c9f24a;">${s.n}</div>
+    <div style="flex:1;"><div style="font-family:'Zen Maru Gothic',sans-serif;font-weight:700;font-size:26px;color:#fff;margin-bottom:10px;">${s.title}</div><div style="font-size:16px;line-height:1.9;color:#9a9aa4;max-width:640px;">${s.body}</div></div>
+  </div>`).join('');
+// words
+$('words-grid').innerHTML = WORDS.map(d=>`
+  <div style="background:#15161c;border:1px solid #22232c;border-radius:16px;padding:24px 26px;display:flex;gap:18px;align-items:baseline;">
+    <div style="font-family:'Zen Maru Gothic',sans-serif;font-weight:900;font-size:19px;color:#c9f24a;flex:0 0 auto;min-width:96px;">${d.term}</div>
+    <div style="font-size:15px;line-height:1.8;color:#b0b0ba;">${d.def}</div>
+  </div>`).join('');
+// styles
+$('styles-grid').innerHTML = STYLES.map(st=>`
+  <div style="background:#0e0f13;border:1px solid #22232c;border-radius:16px;padding:22px 22px;">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
+      <div style="font-family:'Zen Maru Gothic',sans-serif;font-weight:700;font-size:18px;color:#fff;">${st.name}</div>
+      <div style="font-size:11px;color:#0e0f13;background:${st.tagBg};padding:3px 9px;border-radius:100px;font-weight:700;">${st.term}</div>
+    </div>
+    <div style="font-size:14px;line-height:1.85;color:#9a9aa4;">${st.desc}</div>
+  </div>`).join('');
+// article cards (clickable)
+$('cards').innerHTML = CARDS.map(a=>`
+  <div class="art-card" onclick="openArticle('${a.id}')" style="background:#15161c;border:1px solid #22232c;border-radius:22px;overflow:hidden;">
+    <div style="height:140px;background:repeating-linear-gradient(45deg,#1a1b22,#1a1b22 11px,#141519 11px,#141519 22px);"></div>
+    <div style="padding:26px 26px 30px;">
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;"><span style="font-size:12px;font-weight:700;color:#c9f24a;">${a.tag}</span><span style="font-size:12px;color:#6a6a74;font-family:'Space Grotesk',sans-serif;">${a.mins}</span></div>
+      <div style="font-family:'Zen Maru Gothic',sans-serif;font-weight:700;font-size:21px;color:#fff;line-height:1.4;margin-bottom:12px;">${a.title}</div>
+      <div style="font-size:14px;line-height:1.85;color:#9a9aa4;">${a.desc}</div>
+    </div>
+  </div>`).join('');
+
+// 記事の開閉
+function openArticle(id){
+  const a = CARDS.find(c=>c.id===id); if(!a) return;
+  $('aTag').innerHTML = `<span class="pill">${a.tag}</span><span style="font-family:'Space Grotesk',sans-serif;">${a.mins}で読める</span>`;
+  $('aTitle').textContent = a.title;
+  $('aMeta').textContent = `はじめての株 編集部`;
+  $('aBody').innerHTML = a.body;
+  $('aMore').innerHTML = CARDS.filter(c=>c.id!==id).map(c=>`<a class="m" onclick="openArticle('${c.id}')">${c.title}</a>`).join('');
+  $('site').style.display='none'; $('article').style.display='block'; window.scrollTo(0,0);
+}
+function closeArticle(){ $('article').style.display='none'; $('site').style.display='block'; $('articles').scrollIntoView(); }
+function goHome(e, anchor){ if(e) e.preventDefault(); $('article').style.display='none'; $('site').style.display='block'; const el=$(anchor); if(el) el.scrollIntoView(); }
+
+// モーダル
+function openModal(k){ const m=MODAL[k]; if(!m) return; $('modalTitle').textContent=m.title; $('modalBody').innerHTML=m.html; $('modal').style.display='flex'; }
+function closeModal(){ $('modal').style.display='none'; }
+
+// リビール
+const io = new IntersectionObserver((ents)=>{ ents.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} }); },{threshold:0.15});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+// ナビ背景 & ヒーローのパララックス & ?→! 点滅
+const nav=$('nav'), heroInner=$('heroInner'), q=$('qmark');
+let on=false;
+setInterval(()=>{ if(!q) return; on=!on; q.textContent=on?'！':'？'; q.style.transition='transform .2s'; q.style.transform='scale(1.25)'; setTimeout(()=>{ if(q) q.style.transform='scale(1)'; },200); },2600);
+function onScroll(){
+  const y=window.scrollY;
+  if(heroInner){ heroInner.style.transform=`translateY(${y*0.18}px)`; heroInner.style.opacity=Math.max(0,1-y/750); }
+  if(y>40){ nav.style.background='rgba(14,15,19,.88)'; nav.style.backdropFilter='blur(12px)'; nav.style.borderColor='#1e1e26'; nav.style.padding='14px 40px'; }
+  else { nav.style.background='transparent'; nav.style.backdropFilter='none'; nav.style.borderColor='transparent'; nav.style.padding='20px 40px'; }
+}
+window.addEventListener('scroll', onScroll, {passive:true}); onScroll();
+
+// 背景の粒子ネットワーク
+(function(){
+  const cv=$('pcanvas'); if(!cv) return;
+  const ctx=cv.getContext('2d'); let w,h,dpr=Math.min(window.devicePixelRatio||1,2);
+  const resize=()=>{ w=cv.clientWidth; h=cv.clientHeight; cv.width=w*dpr; cv.height=h*dpr; ctx.setTransform(dpr,0,0,dpr,0,0); };
+  resize(); window.addEventListener('resize', resize);
+  const N=60, pts=Array.from({length:N},()=>({x:Math.random(),y:Math.random(),vx:(Math.random()-.5)*0.0005,vy:(Math.random()-.5)*0.0005,r:Math.random()*1.6+0.6}));
+  (function draw(){
+    ctx.clearRect(0,0,w,h);
+    for(const p of pts){ p.x+=p.vx; p.y+=p.vy; if(p.x<0||p.x>1)p.vx*=-1; if(p.y<0||p.y>1)p.vy*=-1; }
+    for(let i=0;i<N;i++)for(let j=i+1;j<N;j++){ const a=pts[i],b=pts[j],dx=(a.x-b.x)*w,dy=(a.y-b.y)*h,d=Math.hypot(dx,dy); if(d<130){ ctx.strokeStyle='rgba(201,242,74,'+(0.12*(1-d/130))+')'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(a.x*w,a.y*h); ctx.lineTo(b.x*w,b.y*h); ctx.stroke(); } }
+    for(const p of pts){ ctx.fillStyle='rgba(201,242,74,.5)'; ctx.beginPath(); ctx.arc(p.x*w,p.y*h,p.r,0,7); ctx.fill(); }
+    requestAnimationFrame(draw);
+  })();
+})();
+</script>
+</body>
+</html>
