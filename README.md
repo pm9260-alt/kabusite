@@ -1,0 +1,2 @@
+# kabusite
+kabu
