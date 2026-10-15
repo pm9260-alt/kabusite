@@ -162,7 +162,8 @@
       ab: { study: gauss(rnd), body: gauss(rnd), social: gauss(rnd) },
       edu: null, school: null, job: null, married: false, everMarried: false, kids: 0,
       goods: {}, queue: [], log: [], branchCount: 0,
-      stats: { univ: false, emptyYears: 0, dupes: 0, nonreg: {}, atHome30: null, events: 0 }
+      stats: { univ: false, emptyYears: 0, dupes: 0, nonreg: {}, atHome30: null, events: 0 },
+      earn: { real: 0, nominal: 0, years: 0, nonregYears: 0, futureYears: 0 }
     };
     CATS.forEach(function (c) { L.cat[c] = 0; });
     familyAtBirth(L);
@@ -789,8 +790,38 @@
   }
 
   /* 年の終わり：場面が空なら必ず1つ出す。亡くなるかを決める */
+  /* ---------- 稼ぎ（生涯獲得賃金） ---------- */
+  // 2020〜2023年の年齢・男女・学歴・正規か非正規か別の年収に、その年の賃金の水準（全国の所定内給与額の動き）と
+  // 住んでいる都道府県の差を掛け、消費者物価指数で2025年のお金の価値に直す。2026年以降は2025年の水準のまま
+  var WAGE_YEAR = 2025;
+  function wageOf(L, y, a) {
+    var W = L.C.wage, C = L.C;
+    if (!W || !L.job) return null;
+    var P = W.profile[L.sex], kind = L.job.reg ? 'r' : 'n';
+    var band = a < 20 ? 15 : a >= 70 ? 70 : Math.floor(a / 5) * 5;
+    function at(e) { var t = P[e]; return t && t[kind] && t[kind][band] != null ? t[kind][band] : null; }
+    var base;
+    if (L.edu === '短大・専門') { var x1 = at('専門'), x2 = at('短大高専'); base = x1 != null && x2 != null ? (x1 + x2) / 2 : (x1 != null ? x1 : x2); }
+    else base = at({ '中学': '中学', '高校': '高校', '大学': '大学' }[L.edu] || 'all');
+    if (base == null) base = at('all');
+    if (base == null) return null;
+    var yy = Math.min(y, WAGE_YEAR);
+    var pref = L.place.away ? 1 : (val((L.P.s.wage || {})[L.sex], yy) || 1);
+    var nominal = base * val(W.idx[L.sex], yy) * pref;
+    var real = nominal * val(C.nat.cpi, WAGE_YEAR) / val(C.nat.cpi, yy);
+    return { nominal: nominal, real: real, future: y > WAGE_YEAR };
+  }
+  function earnYear(L) {
+    var w = wageOf(L, L.year, L.age);
+    if (!w) return;
+    L.earn.real += w.real; L.earn.nominal += w.nominal; L.earn.years++;
+    if (!L.job.reg) L.earn.nonregYears++;
+    if (w.future) L.earn.futureYears++;
+  }
+
   function finishYear(L, rec) {
     var C = L.C, y = L.year, a = L.age, rnd = L.rnd;
+    earnYear(L);
     {
       var dp = deathProb(C, L.P, L.sex, a, y);
       if (a >= MAX_AGE) dp = 1;
@@ -919,14 +950,17 @@
   // 同じ町・同じ年に生まれた100人のその後（最期の画面）
   function cohort(C, P, year, muniCode, seed, n) {
     n = n || 100;
-    var r = { n: n, stayed: 0, univ: 0, to80: 0, married: 0 };
+    var r = { n: n, stayed: 0, univ: 0, to80: 0, married: 0 }, earns = [];
     for (var i = 0; i < n; i++) {
       var L = autoRun(newLife(C, P, { year: year, muniCode: muniCode, seed: (seed * 7919 + i * 104729 + 13) >>> 0 }));
       if (L.stats.atHome30) r.stayed++;
       if (L.stats.univ) r.univ++;
       if (L.deathAge >= 80) r.to80++;
       if (L.everMarried) r.married++;
+      earns.push(L.earn ? L.earn.real : 0);
     }
+    earns.sort(function (p, q) { return p - q; });
+    r.earnMedian = (earns[Math.floor((n - 1) / 2)] + earns[Math.ceil((n - 1) / 2)]) / 2;
     return r;
   }
   function majorTimeline(C, by, until, prefCode) {

@@ -179,6 +179,7 @@ export function build({ test = false } = {}) {
     nat: { ...nat, ...natReal, marryShape: { m: shapeM, f: shapeF }, marryShapeSum: { m: shapeM.reduce((a, b) => a + b, 0), f: shapeF.reduce((a, b) => a + b, 0) } },
     mort: { beta: BETA, bg: BG, q0: q0s, alpha: alphaTable(e0s, q0s, null) },
     timeline,
+    wage: stats && stats.wage && stats.wage.profile ? stats.wage : null,
     goods: goodsOut,
     names: namesOut,
     hotline,

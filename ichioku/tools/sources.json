@@ -55,7 +55,9 @@
     {"id": "edu-2020", "name": "令和2年国勢調査（年齢・最終卒業学校の種類別人口・全国）", "src": "census", "statsDataId": "0003450543", "params": {"cdCat02": "07", "cdArea": "00000"}},
     {"id": "nat-household", "name": "社会・人口統計体系 都道府県データ（核家族世帯・核家族以外の世帯・0〜5歳人口・全国）", "src": "census", "statsDataId": "0000010101", "params": {"cdCat01": "A810102,A810103,A1405", "cdArea": "00000"}},
     {"id": "nat-house", "name": "社会・人口統計体系 都道府県データ（持ち家数・主世帯数・全国）", "src": "census", "statsDataId": "0000010108", "params": {"cdCat01": "H1310,H3111", "cdArea": "00000"}},
-    {"id": "nat-nursery", "name": "社会・人口統計体系 都道府県データ（保育所等在所児数・全国）", "src": "census", "statsDataId": "0000010110", "params": {"cdCat01": "J2506", "cdArea": "00000"}}
+    {"id": "nat-nursery", "name": "社会・人口統計体系 都道府県データ（保育所等在所児数・全国）", "src": "census", "statsDataId": "0000010110", "params": {"cdCat01": "J2506", "cdArea": "00000"}},
+    {"id": "wage-profile", "name": "賃金構造基本統計調査（雇用形態・男女・学歴・年齢階級別の給与と賞与、2020年〜）", "src": "wage", "statsDataId": "0003446878", "params": {"cdTab": "40,44", "cdCat01": "01", "cdCat02": "02,03", "cdCat05": "01", "cdCat06": "02,03", "cdCat07": "01"}},
+    {"id": "wage-pref", "name": "社会・人口統計体系 都道府県データ（所定内給与額・男女別）", "src": "wage", "statsDataId": "0000010106", "params": {"cdCat01": "F620201,F620202,F620217,F620218"}}
   ],
   "_説明_files": "files は e-Stat に Excel で置かれている表。毎月ファイルの番号が変わるため、取り込みのたびに題名が同じで一番新しいものを探して取る。raw/files/<id>.xlsx に保存する。",
   "files": [

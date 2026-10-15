@@ -465,7 +465,52 @@ for (const y of Object.keys(names)) if (!names[y].m || !names[y].f) delete names
   if (Object.keys(pe.m).length) nat.parentEdu = pe;
 }
 
-const out = { generated: new Date().toISOString(), tables: used, missing, nat, prefs, goods, names };
+// 生涯獲得賃金のもと：2020〜2023年の年齢・男女・学歴・正規か非正規か別の年収（きまって支給する現金給与額×12＋年間賞与）と、
+// 1975年からの男女別の所定内給与額の動き（全国と都道府県）
+const wage = {};
+{
+  const j = load('wage-profile');
+  if (j) {
+    const sexK = { '02': 'm', '03': 'f' }, regK = { '02': 'r', '03': 'n' };
+    const eduK = { '01': 'all', '02': '中学', '03': '高校', '04': '専門', '05': '短大高専', '06': '大学', '07': '大学院' };
+    const bandK = { '02': 15, '03': 20, '04': 25, '05': 30, '06': 35, '07': 40, '08': 45, '09': 50, '10': 55, '11': 60, '12': 65, '13': 70 };
+    const t = {};
+    for (const v of j.values) {
+      const sx = sexK[v['@cat02']], rg = regK[v['@cat06']], ed = eduK[v['@cat04']], b = bandK[v['@cat03']], x = num(v);
+      if (!sx || !rg || !ed || b == null || x == null) continue;
+      const k = [sx, ed, rg, b].join('|');
+      t[k] = t[k] || { m: [], bonus: [] };
+      if (v['@tab'] === '40') t[k].m.push(x); else if (v['@tab'] === '44') t[k].bonus.push(x);
+    }
+    const avg = a => a.length ? a.reduce((p, q) => p + q, 0) / a.length : null;
+    wage.profile = {};
+    for (const [k, o] of Object.entries(t)) {
+      const [sx, ed, rg, b] = k.split('|');
+      const m = avg(o.m), bo = avg(o.bonus);
+      if (m == null) continue;
+      (((wage.profile[sx] = wage.profile[sx] || {})[ed] = wage.profile[sx][ed] || { r: {}, n: {} })[rg])[b] = Math.round(m * 12 + (bo || 0));
+    }
+    wage.baseYears = [...new Set(j.values.map(v => yearOf(v['@time'])))].sort();
+  }
+  const w = load('wage-pref');
+  if (w && wage.profile) {
+    const c = cube(w);
+    const ser = (sx, a) => ({ ...get(c, sx === 'm' ? 'F620201' : 'F620202', a), ...get(c, sx === 'm' ? 'F620217' : 'F620218', a) });
+    wage.idx = {};
+    for (const sx of ['m', 'f']) {
+      const n = ser(sx, A), base = wage.baseYears.map(y => n[y]).filter(Boolean);
+      const b = base.reduce((p, q) => p + q, 0) / base.length;
+      wage.idx[sx] = Object.fromEntries(Object.entries(n).map(([y, v]) => [y, r4(v / b)]));
+    }
+    for (const p of prefs) {
+      const o = {};
+      for (const sx of ['m', 'f']) o[sx] = ratio(ser(sx, p.code + '000'), ser(sx, A), 0, 0, 5);
+      if (Object.keys(o.m).length) p.s.wage = o;
+    }
+  }
+}
+
+const out = { generated: new Date().toISOString(), tables: used, missing, nat, prefs, goods, names, wage };
 fs.mkdirSync(path.dirname(OUT), { recursive: true });
 fs.writeFileSync(OUT, JSON.stringify(out));
 const muniN = prefs.reduce((s, p) => s + p.munis.length, 0);

@@ -251,6 +251,38 @@
   }
 
   /* ---------- 最期の画面 ---------- */
+  // 金額（千円）を「約1億2,340万円」の形にする
+  function yen(k) {
+    var man = Math.round(k / 100) * 10; // 10万円単位
+    if (man <= 0) return '0円';
+    var oku = Math.floor(man / 10000), rest = man % 10000;
+    return '約' + (oku ? oku + '億' : '') + (rest ? rest.toLocaleString('ja-JP') + '万' : '') + '円';
+  }
+  function srcEv(src, y, what, val, extra) {
+    var s = C.sources[src] || {};
+    var e = { src: src, name: s.name || src, org: s.org || '', y: y, what: what, val: val, prov: !!C.meta.provisional };
+    if (extra) for (var k in extra) e[k] = extra[k];
+    return e;
+  }
+  function renderEarn(co) {
+    var g = L.earn || { real: 0, years: 0 };
+    if (!C.wage) { $('earn-num').textContent = '賃金の統計を取り込むと表示されます'; $('earn-sub').textContent = ''; $('earn-ev').hidden = true; return; }
+    $('earn-ev').hidden = false;
+    $('earn-num').textContent = g.years ? yen(g.real) : '働いて賃金を得た年はなかった';
+    var sub = [];
+    if (g.years) sub.push('働いた年 ' + g.years + '年' + (g.nonregYears ? '（うち非正規 ' + g.nonregYears + '年）' : '') + '。2025年のお金の価値に直した額です');
+    if (g.futureYears) sub.push('2026年以降の' + g.futureYears + '年分は、2025年の賃金の水準のままで数えています');
+    sub.push('同じ町・同じ年に生まれた100人の真ん中の人は ' + yen(co.earnMedian));
+    $('earn-sub').textContent = sub.join('。');
+    var by = (C.wage.baseYears || []);
+    $('earn-ev').onclick = function () {
+      openEvidence('生涯に働いて得た賃金', [
+        srcEv('wage', by[by.length - 1], '年齢・男女・学歴・正規か非正規か別の年収（きまって支給する現金給与額の12か月分と年間賞与。' + by[0] + '〜' + by[by.length - 1] + '年の平均）', '', { est: true }),
+        srcEv('wage', 2024, '男女別の所定内給与額の動き（全国と都道府県、1975年から）。昔の年の賃金の水準に直すのに使用', ''),
+        srcEv('cpi', 2025, '消費者物価指数で2025年のお金の価値に直した', '')
+      ]);
+    };
+  }
   function showEnd() {
     clearTimeout(timer);
     if (!L) return;
@@ -259,6 +291,7 @@
     $('end-sub').textContent = L.home.prefName + L.home.muniName + 'で生まれ、' + (L.place.away ? L.place.prefName : L.place.prefName + L.place.muniName) + 'で亡くなった。';
     renderHotline($('hotline-end'), L.cause === 'sui');
     var co = E.cohort(C, P, L.by, L.home.muni, L.seed, 100);
+    renderEarn(co);
     var list = $('cohort');
     clear(list);
     [['地元に残った人', co.stayed], ['大学へ進んだ人', co.univ], ['80歳まで生きた人', co.to80]].forEach(function (x) {
