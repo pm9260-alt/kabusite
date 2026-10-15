@@ -54,7 +54,7 @@ rec('数字が仮の値ではないか', !C.meta.provisional && Object.values(P)
   const ids = C.scenes.map(s => s.id);
   const dupId = ids.filter((x, i) => ids.indexOf(x) !== i);
   rec('場面の番号が重なっていないか', dupId.length === 0, dupId.join('、'));
-  const extra = Object.entries(C.sources).filter(([k, v]) => v.extra && C.scenes.some(s => s.src === k)).map(([, v]) => v.name);
+  const extra = Object.entries(C.sources).filter(([k, v]) => v.extra && !v.approved && C.scenes.some(s => s.src === k)).map(([, v]) => v.name);
   rec('8章の一覧にない統計を使っていないか', extra.length === 0, extra.length ? '作る人の判断待ち：' + extra.join('、') : '');
 }
 
