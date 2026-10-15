@@ -246,7 +246,226 @@ if (un) {
   for (const v of un.values) if (num(v) != null) nat.unemp[yearOf(v['@time'])] = num(v);
 }
 
-const out = { generated: new Date().toISOString(), tables: used, missing, nat, prefs };
+/* ---------- 全国の暮らしの値（2回目の取り込み、2026-10-16） ---------- */
+const fileJob = id => {
+  const x = path.join(FILES, id + '.xlsx'), meta = path.join(FILES, id + '.json');
+  if (!fs.existsSync(x)) { missing.push(id + '：まだ取り込んでいない'); return null; }
+  const m = JSON.parse(fs.readFileSync(meta, 'utf8'));
+  used.push({ job: m.job, name: m.name, src: m.src, table: m.url, title: m.name, updated: m.modified, fetched: m.fetched });
+  return readSheets(fs.readFileSync(x));
+};
+const clsYear = name => { const m = /(\d{4})/.exec(String(name || '')); return m ? +m[1] : null; };
+
+// 25〜34歳の非正規の割合（%）：1988〜2001年は2月の特別調査、2002年からは四半期平均を年でならす
+{
+  const sh = fileJob('labor-nonreg');
+  if (sh) {
+    const rows = sh[0].rows;
+    const head = rows.find(r => r.some(x => String(x || '').startsWith('25～34')));
+    const c = head.findIndex(x => String(x || '').startsWith('25～34')) + 13;
+    const acc = {};
+    for (const r of rows) {
+      const lab = String(r[2] || '');
+      let y = null;
+      if (/^Feb\. \d{4}$/.test(lab)) y = +lab.slice(5);
+      else if (/^\d{4} .*average$/.test(lab)) y = +lab.slice(0, 4);
+      if (!y || typeof r[c] !== 'number') continue;
+      (acc[y] = acc[y] || []).push(r[c]);
+    }
+    nat.nonreg = Object.fromEntries(Object.entries(acc).filter(([, v]) => v.length === 1 || v.length === 4).map(([y, v]) => [y, +(v.reduce((a, b) => a + b, 0) / v.length).toFixed(1)]));
+  }
+}
+
+// 普及率（%）：消費動向調査 二人以上の世帯。2004年で調べ終わった品目は data-src/stats/goods-ended.json
+const goods = {};
+{
+  const sh = fileJob('goods-long');
+  if (sh) {
+    const rows = sh[0].rows;
+    const head = rows.find(r => r.includes('ルームエアコン'));
+    const want = { washlet: '温水洗浄便座', aircon: 'ルームエアコン', pc: 'パソコン', mobile: '携帯電話_全体', smart: '携帯電話_スマートフォン' };
+    for (const [id, label] of Object.entries(want)) {
+      const c = head.indexOf(label);
+      if (c < 0) { missing.push('goods-long：「' + label + '」の列が見つからない'); continue; }
+      goods[id] = {};
+      for (const r of rows) if (typeof r[0] === 'number' && r[0] > 1e9 && typeof r[c] === 'number') goods[id][Math.floor(r[0] / 1e6)] = r[c];
+    }
+  }
+  const endedPath = path.join(ROOT, 'data-src', 'stats', 'goods-ended.json');
+  if (fs.existsSync(endedPath)) {
+    const e = JSON.parse(fs.readFileSync(endedPath, 'utf8'));
+    for (const [id, d] of Object.entries(e.diff)) goods[id] = d;
+    // 今も調べている品目でも、今の表が始まる年より前は古い表の値を使う（携帯電話・温水洗浄便座）
+    for (const [id, d] of Object.entries(e.diff_old || {})) if (goods[id]) { const first = Math.min(...Object.keys(goods[id]).map(Number)); for (const [y, v] of Object.entries(d)) if (+y < first) goods[id][y] = v; }
+    used.push({ job: 'goods-ended', name: '消費動向調査（2004年3月で調査終了した品目の普及率）', src: 'consumer', table: e.source, title: e.source, updated: '2012-10-31', fetched: e.extracted });
+  }
+}
+
+// 名前の流行：明治安田生命 生まれ年別の名前調査（上位10）
+const names = {};
+for (const [sex, id] of [['m', 'names-boy'], ['f', 'names-girl']]) {
+  const p = path.join(ROOT, 'raw', 'web', id + '.html');
+  if (!fs.existsSync(p)) { missing.push(id + '：まだ取り込んでいない'); continue; }
+  const html = fs.readFileSync(p, 'utf8');
+  let n = 0;
+  for (const tr of html.matchAll(/<tr>([\s\S]*?)<\/tr>/g)) {
+    // 同じ順位の名前は1つの欄に改行で並び、そのぶん後ろの欄が「-」になる
+    const cells = [...tr[1].matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g)].map(m => m[1].replace(/<br\s*\/?>/g, '|').replace(/<[^>]+>/g, '').replace(/\s+/g, ''));
+    const y = /[（(](\d{4})[）)]/.exec(cells[0] || '');
+    if (!y) continue;
+    const list = cells.slice(1).flatMap(c => c.split('|')).map(x => x.trim()).filter(x => x && x !== '-' && x !== '－').slice(0, 10);
+    if (list.length < 5) continue;
+    (names[+y[1]] = names[+y[1]] || {})[sex] = list; n++;
+  }
+  used.push({ job: id, name: '生まれ年別の名前調査（明治安田生命）', src: 'names', table: 'https://www.meijiyasuda.co.jp/enjoy/ranking/year_men/' + (sex === 'm' ? 'boy' : 'girl') + '.html', title: n + '年分', updated: '', fetched: fs.statSync(p).mtime.toISOString() });
+  if (n < 50) missing.push(id + '：名前の表が ' + n + ' 年分しか取り出せなかった');
+}
+for (const y of Object.keys(names)) if (!names[y].m || !names[y].f) delete names[y];
+
+// 母の出産年齢の平均：母の年齢（5歳階級）別の出生数から、各階級の真ん中の年齢で計算する
+{
+  const j = load('nat-mother-age');
+  if (j) {
+    const mid = { '00110': 14, '00120': 17.5, '00130': 22.5, '00140': 27.5, '00150': 32.5, '00160': 37.5, '00170': 42.5, '00180': 47.5, '00190': 50.5 };
+    const t = {};
+    for (const v of j.values) { const m = mid[v['@cat01']], x = num(v); if (m && x != null) { const y = yearOf(v['@time']); t[y] = t[y] || [0, 0]; t[y][0] += m * x; t[y][1] += x; } }
+    nat.motherAge = Object.fromEntries(Object.entries(t).filter(([, a]) => a[1] > 0).map(([y, a]) => [y, +(a[0] / a[1]).toFixed(1)]));
+  }
+}
+
+// 離婚の起きやすさ：1年の離婚件数 ÷ 有配偶の女性の数（国勢調査の年のあいだはまっすぐつなぐ）
+{
+  const d = load('nat-divorce'), w = load('nat-married-women');
+  if (d && w) {
+    const wv = {};
+    for (const v of w.values) if (num(v) != null) wv[yearOf(v['@time'])] = num(v);
+    const ws = Object.keys(wv).map(Number).sort((a, b) => a - b);
+    const at = y => { if (y <= ws[0]) return wv[ws[0]]; if (y >= ws[ws.length - 1]) return wv[ws[ws.length - 1]]; const i = ws.findIndex(k => k > y); const a = ws[i - 1], b = ws[i]; return wv[a] + (wv[b] - wv[a]) * (y - a) / (b - a); };
+    nat.divorce = {};
+    for (const v of d.values) { const x = num(v), y = yearOf(v['@time']); if (x != null && y >= 1970) nat.divorce[y] = +(x / at(y)).toFixed(5); }
+  }
+}
+
+// 年齢層ごとの死因の割合（病気・事故など・自殺）：直近10年の死亡数を合わせて計算する
+{
+  const j = load('nat-cause');
+  if (j) {
+    const band = name => { const m = /^(\d+)(?:～(\d+))?歳/.exec(name || ''); if (!m) return null; const lo = +m[1], hi = m[2] ? +m[2] : lo; if (hi - lo !== 4 && !/以上/.test(name)) return null; return lo < 15 ? 'child' : lo < 40 ? 'young' : lo < 65 ? 'mid' : 'old'; };
+    const t = {};
+    for (const v of j.values) {
+      const nm = j.classes.cat01[v['@cat01']] || '';
+      const b = /以上/.test(nm) ? (parseInt(nm, 10) >= 65 ? 'old' : null) : band(nm);
+      const x = num(v); if (!b || x == null) continue;
+      t[b] = t[b] || { all: 0, ext: 0, sui: 0 };
+      t[b][{ '00000': 'all', '20000': 'ext', '20200': 'sui' }[v['@cat03']]] += x;
+    }
+    nat.cause = {};
+    for (const [b, o] of Object.entries(t)) nat.cause[b] = { ill: r4((o.all - o.ext) / o.all), acc: r4((o.ext - o.sui) / o.all), sui: r4(o.sui / o.all) };
+    nat.causeYears = [...new Set(j.values.map(v => yearOf(v['@time'])))].sort();
+  }
+}
+
+// 家庭の年収：子どものいる世帯（国民生活基礎調査の児童のいる世帯）の平均所得と分布の広がり
+{
+  const j = load('nat-income-child'), dist = load('nat-income-child-dist');
+  if (j) {
+    const ydim = Object.keys(j.classes).find(k => /^cat/.test(k) && Object.values(j.classes[k]).some(n => /^\d{4}\(/.test(n)));
+    nat.incomeMean = {};
+    for (const v of j.values) if (v['@tab'] === '2760' && num(v) != null) nat.incomeMean[clsYear(j.classes[ydim][v['@' + ydim]])] = num(v);
+    // 1985年より前は、全国消費実態調査の全世帯の年間収入の伸び（1979年→1984年）でさかのぼる（推計）
+    const L = get(income, 'L450101', A);
+    const first = Math.min(...Object.keys(nat.incomeMean).map(Number));
+    if (L[1979] && L[1984]) { nat.incomeMean[1979] = Math.round(nat.incomeMean[first] * L[1979] / L[1984]); nat.incomeEstBefore = first; }
+  }
+  if (dist && nat.incomeMean) {
+    const ydim = Object.keys(dist.classes).find(k => /^cat/.test(k) && Object.values(dist.classes[k]).some(n => /^\d{4}\(/.test(n)));
+    const cdim = Object.keys(dist.classes).find(k => /^cat/.test(k) && k !== ydim);
+    const cum = {};
+    for (const v of dist.values) if (v['@tab'] === '1370' && num(v) != null) { const y = clsYear(dist.classes[ydim][v['@' + ydim]]); (cum[y] = cum[y] || {})[v['@' + cdim]] = num(v); }
+    const bounds = Object.fromEntries(Object.entries(dist.classes[cdim]).map(([c, n]) => { const z = n.replace(/[０-９]/g, d => String.fromCharCode(d.charCodeAt(0) - 0xFEE0)); const m = /(\d+)～(\d+)万円未満/.exec(z) || /(\d+)万円未満/.exec(z); return [c, m ? (m[2] ? [+m[1], +m[2]] : [0, +m[1]]) : null]; }));
+    const sig = {};
+    for (const [y, cs] of Object.entries(cum)) {
+      const list = Object.entries(cs).filter(([c]) => bounds[c]).sort((a, b) => bounds[a[0]][0] - bounds[b[0]][0]);
+      let prev = 0, med = null;
+      for (const [c, v] of list) { if (v >= 50) { const [lo, hi] = bounds[c]; med = lo + (hi - lo) * (50 - prev) / (v - prev); break; } prev = v; }
+      const mean = nat.incomeMean[y];
+      if (med && mean > med) sig[y] = +Math.sqrt(2 * Math.log(mean / med)).toFixed(3);
+    }
+    const vs = Object.values(sig).sort((a, b) => a - b);
+    if (vs.length) { nat.incomeSigma = vs[Math.floor(vs.length / 2)]; nat.incomeSigmaByYear = sig; }
+  }
+}
+
+// 持ち家・三世代・保育所の割合を、市区町村の種類（大都市・都市・町村）ごとに合わせる。
+// 分子と分母の両方がある市区町村だけで足す。種類ごとの値が始まる年より前は、全国の値の動きに合わせてさかのぼる（推計）
+{
+  const kindOf = {};
+  for (const p of prefs) for (const m of p.munis) kindOf[m.code] = m.kind;
+  const kinds = ['大都市', '都市', '町村'];
+  const vals = j => { const o = {}; if (!j) return o; for (const v of j.values) { const x = num(v); if (x == null) continue; ((o[v['@cat01']] = o[v['@cat01']] || {})[v['@area']] = o[v['@cat01']][v['@area']] || {})[yearOf(v['@time'])] = x; } return o; };
+  // nu・de：{地域: {年: 値}}。deYear(y) で分母に使う年を選ぶ
+  const ratioByKind = (nu, de, deYear = y => y, cap = 1) => {
+    const o = Object.fromEntries(kinds.map(k => [k, {}]));
+    const acc = {};
+    for (const [a, ys] of Object.entries(nu || {})) {
+      const k = kindOf[a]; if (!k || !de || !de[a]) continue;
+      for (const [y, x] of Object.entries(ys)) { const dy = deYear(+y, Object.keys(de[a]).map(Number)); if (dy == null || !(de[a][dy] > 0)) continue; const t = ((acc[k] = acc[k] || {})[y] = acc[k][y] || [0, 0]); t[0] += x; t[1] += de[a][dy]; }
+    }
+    for (const k of kinds) for (const [y, [a, b]] of Object.entries(acc[k] || {})) if (b > 0) o[k][y] = r4(Math.min(cap, a / b));
+    return o;
+  };
+  const nearYear = (y, ys) => { const n = ys.reduce((b, c) => Math.abs(c - y) < Math.abs(b - y) ? c : b, ys[0]); return Math.abs(n - y) <= 2 ? n : null; };
+  const natOf = (j, a, b, deYear = y => y) => { const o = {}; const v = vals(j); const A0 = (v[a] || {})['00000'] || {}, B0 = (v[b] || {})['00000'] || {}; for (const [y, x] of Object.entries(A0)) { const dy = deYear(+y, Object.keys(B0).map(Number)); if (dy != null && B0[dy] > 0) o[y] = x / B0[dy]; } return o; };
+  const backcast = (byK, natS, label) => {
+    for (const k of kinds) {
+      const ys = Object.keys(byK[k]).map(Number).sort((a, b) => a - b); if (!ys.length) continue;
+      const y0 = ys[0], n0 = natS[y0] ?? natS[nearYear(y0, Object.keys(natS).map(Number))];
+      if (!n0) continue;
+      for (const [y, nv] of Object.entries(natS)) if (+y < y0) byK[k][y] = r4(Math.min(1, byK[k][y0] * nv / n0));
+      (nat.kindEstBefore = nat.kindEstBefore || {})[label] = y0;
+    }
+    return byK;
+  };
+  const h = vals(load('muni-house'));
+  if (h.H1310) nat.ownHome = backcast(ratioByKind(h.H1310, h.H3111), natOf(load('nat-house'), 'H1310', 'H3111'), 'ownHome');
+  const hh = vals(load('muni-household'));
+  if (hh.A810103) {
+    const fam = {};
+    for (const [a, ys] of Object.entries(hh.A810103)) for (const [y, x] of Object.entries(ys)) if (hh.A810102[a] && hh.A810102[a][y] != null) (fam[a] = fam[a] || {})[y] = x + hh.A810102[a][y];
+    const nh = vals(load('nat-household'));
+    const natS = {};
+    for (const [y, x] of Object.entries((nh.A810103 || {})['00000'] || {})) { const n2 = ((nh.A810102 || {})['00000'] || {})[y]; if (n2) natS[y] = x / (x + n2); }
+    nat.threeGen = backcast(ratioByKind(hh.A810103, fam), natS, 'threeGen');
+  }
+  const nu = vals(load('muni-nursery'));
+  if (nu.J2506 && hh.A1405) nat.nursery = backcast(ratioByKind(nu.J2506, hh.A1405, nearYear), (() => { const a = vals(load('nat-nursery')).J2506, b = vals(load('nat-household')).A1405; const o = {}; if (!a || !b) return o; const B = b['00000'] || {}; for (const [y, x] of Object.entries(a['00000'] || {})) { const dy = nearYear(+y, Object.keys(B).map(Number)); if (dy != null) o[y] = x / B[dy]; } return o; })(), 'nursery');
+}
+
+// 親の世代の最終学歴（中学・高校・短大高専・大学）：生まれ年ごとに、45〜59歳になった国勢調査の値を使う
+{
+  const pe = { m: {}, f: {} };
+  const put = (j, cohort, sexKey, sexCodes, eduKey, eduMap, filt) => {
+    if (!j) return;
+    const t = { m: [0, 0, 0, 0], f: [0, 0, 0, 0] };
+    for (const v of j.values) {
+      if (filt && !filt(v)) continue;
+      const sx = sexCodes[v['@' + sexKey]], e = eduMap[v['@' + eduKey]], x = num(v);
+      if (!sx || e == null || x == null) continue;
+      t[sx][e] += x;
+    }
+    for (const sx of ['m', 'f']) { const s = t[sx].reduce((a, b) => a + b, 0); if (s > 0) pe[sx][cohort] = t[sx].map(x => r4(x / s)); }
+  };
+  const e80 = load('edu-1980');
+  put(e80, 1935, 'cat02', { '001': 'm', '002': 'f' }, 'cat04', { '002': 0, '003': 0, '004': 1, '005': 2, '006': 3 }, v => v['@cat03'] === '209');
+  put(e80, 1925, 'cat02', { '001': 'm', '002': 'f' }, 'cat04', { '002': 0, '003': 0, '004': 1, '005': 2, '006': 3 }, v => v['@cat03'] === '211');
+  put(load('edu-1990'), 1945, 'cat01', { '001': 'm', '002': 'f' }, 'cat03', { '002': 0, '003': 1, '004': 2, '005': 3 });
+  put(load('edu-2000'), 1955, 'cat03', { '001': 'm', '002': 'f' }, 'cat05', { '002': 0, '003': 1, '004': 2, '005': 3 });
+  put(load('edu-2010'), 1965, 'cat02', { '001': 'm', '002': 'f' }, 'cat04', { '002': 0, '003': 1, '004': 2, '005': 3 });
+  put(load('edu-2020'), 1975, 'cat01', { '1': 'm', '2': 'f' }, 'cat03', { '11': 0, '12': 0, '13': 1, '14': 2, '15': 3, '16': 3 });
+  if (Object.keys(pe.m).length) nat.parentEdu = pe;
+}
+
+const out = { generated: new Date().toISOString(), tables: used, missing, nat, prefs, goods, names };
 fs.mkdirSync(path.dirname(OUT), { recursive: true });
 fs.writeFileSync(OUT, JSON.stringify(out));
 const muniN = prefs.reduce((s, p) => s + p.munis.length, 0);

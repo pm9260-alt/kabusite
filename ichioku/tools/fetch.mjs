@@ -223,7 +223,7 @@ async function main() {
   }
   for (const w of cfg.web) {
     const key = 'web/' + w.id;
-    if (progress[key] === 'done') continue;
+    if (!REFRESH && progress[key] === 'done' && fs.existsSync(path.join(RAW, 'web', w.id + '.html'))) continue;
     try {
       const r = await fetch(w.url);
       if (!r.ok) throw new Error('HTTP ' + r.status);

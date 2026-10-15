@@ -250,10 +250,10 @@
   }
   function eduDraw(L, sex, by) {
     var t = L.C.nat.parentEdu[sex];
-    var r = nv(t, by).v; // [中学, 高校, 短大・専門, 大学]
+    var r = nv(t, by).v; // [中学, 高校, 短大・高専, 大学]（国勢調査の区分。専門学校は高校に入る）
     var tilt = (L.incPct - 0.5) * 0.6;
     var w = [r[0] * (1 - tilt), r[1], r[2] * (1 + tilt * 0.5), r[3] * (1 + tilt)];
-    var labels = ['中学', '高校', '短大・専門', '大学'];
+    var labels = ['中学', '高校', '短大・高専', '大学'];
     return pick(L.rnd, labels, function (x) { return w[labels.indexOf(x)]; });
   }
   function pickInd(rnd, ind) {
@@ -333,7 +333,7 @@
     var evs = [
       ev(C, 'vital', y, P.name + 'で生まれた子のうち' + L.place.muniName + 'で生まれた割合', pct(share), { est: !!L.place.muniObj.est || y < (L.place.muniObj.estBefore || 0) }),
       ev(C, 'census', y, L.place.muniName + 'で働く人の産業の割合（親の仕事の抽選に使用）', indSummary(L.place.muniObj.ind)),
-      ev(C, 'income', nv(C.nat.incomeMean, y).y, 'この年の世帯の年収の分布から抽選した家庭の年収', 'およそ' + L.income + '万円'),
+      ev(C, 'income', nv(C.nat.incomeMean, y).y, 'この年の子どものいる世帯の年収の分布から抽選した家庭の年収', 'およそ' + L.income + '万円'),
       ev(C, 'census', nv(C.nat.threeGen[L.place.kind], y).y, '三世代で暮らす世帯の割合（' + L.place.kind + '）', pct(val(C.nat.threeGen[L.place.kind], y)))
     ];
     push(L, rec, '家庭', s, evs);
@@ -382,8 +382,8 @@
     // 保育園・幼稚園
     if (a === 3) {
       var nr = val(C.nat.nursery[L.place.kind], y);
-      if (rnd() < nr) push(L, rec, '家庭', (L.momJob ? '母が働いているため、' : '') + '保育園に通っている。', [ev(C, 'census', nv(C.nat.nursery[L.place.kind], y).y, '3歳で保育所に通う子の割合（' + L.place.kind + '）', pct(nr), { est: true })]);
-      else push(L, rec, '家庭', '家で過ごしている。来年から幼稚園に通う予定だ。', [ev(C, 'census', nv(C.nat.nursery[L.place.kind], y).y, '3歳で保育所に通う子の割合（' + L.place.kind + '）', pct(nr), { est: true })]);
+      if (rnd() < nr) push(L, rec, '家庭', (L.momJob ? '母が働いているため、' : '') + '保育園に通っている。', [ev(C, 'census', nv(C.nat.nursery[L.place.kind], y).y, '0〜5歳の子のうち保育所に通う子の割合（' + L.place.kind + '）', pct(nr), { est: true })]);
+      else push(L, rec, '家庭', '家で過ごしている。来年から幼稚園に通う予定だ。', [ev(C, 'census', nv(C.nat.nursery[L.place.kind], y).y, '0〜5歳の子のうち保育所に通う子の割合（' + L.place.kind + '）', pct(nr), { est: true })]);
     }
     if (a === 6) { L.stage = 'school'; push(L, rec, '学歴と仕事', '地元の公立小学校に入学した。' + (L.place.kind === '町村' ? '家から学校まで、歩いて30分ほどかかる。' : ''), [ev(C, 'school', y, '小学校の在学者', '')]); }
     // 転校（小学校のあいだ）
@@ -432,7 +432,7 @@
     if (a === 26 && !L.everMarried) L.queue.push(samesex(L) ? branchPartner(L) : branchMarry(L));
     if (!L.married && !L.divorced && a >= 18 && a <= 55) marryYear(L, rec);
     if (L.married) childYear(L, rec);
-    if (L.married && L.marriedY && y - L.marriedY <= 20 && rnd() < C.nat.divorce) {
+    if (L.married && L.marriedY && y - L.marriedY <= 20 && rnd() < (typeof C.nat.divorce === 'number' ? C.nat.divorce : val(C.nat.divorce, y))) {
       L.married = false; L.divorced = true;
       var sp = L.members.filter(function (m) { return m.role === '配偶者' && !m.gone; })[0];
       if (sp) sp.gone = true;

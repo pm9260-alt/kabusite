@@ -126,7 +126,19 @@ export function build({ test = false } = {}) {
   const N = stats ? stats.nat : {};
   // 全国の値：取り込んだものがあれば置き換える。寿命の将来（2027年以降）は将来推計がまだ取れないため仮の値のまま
   const natReal = {};
-  for (const k of ['jobs', 'unemp', 'cpi', 'indNat']) if (N[k] && Object.keys(N[k]).length) natReal[k] = N[k];
+  for (const k of ['jobs', 'unemp', 'cpi', 'indNat', 'nonreg', 'incomeMean', 'motherAge', 'divorce', 'cause', 'ownHome', 'threeGen', 'nursery', 'parentEdu']) if (N[k] && Object.keys(N[k]).length) natReal[k] = N[k];
+  if (typeof N.incomeSigma === 'number') natReal.incomeSigma = N.incomeSigma;
+  // 普及率：取り込んだ品目は置き換える。取り込んだ表が始まる年より前に仮の値がある品目は、その年だけ仮の値を残して一覧に出す
+  const goodsOut = goods.map(g => {
+    const real = stats && stats.goods && stats.goods[g.id];
+    if (!real || !Object.keys(real).length) return g;
+    const first = Math.min(...Object.keys(real).map(Number));
+    const keep = Object.fromEntries(Object.entries(g.diff).filter(([y]) => +y < first));
+    const o = { ...g, src: 'consumer', diff: { ...keep, ...real } };
+    if (Object.keys(keep).length) o.provBefore = first;
+    return o;
+  });
+  const namesOut = stats && stats.names && Object.keys(stats.names).length > 50 ? stats.names : names;
   const e0s = { m: { ...e0.m }, f: { ...e0.f } };
   if (N.e0) for (const sex of ['m', 'f']) {
     const last = Math.max(...Object.keys(N.e0[sex]).map(Number));
@@ -146,7 +158,11 @@ export function build({ test = false } = {}) {
     provisional.push('雪・海沿いの印（試験用の3都道府県の12市区町村だけ。ほかの市区町村は未設定）');
     provisional.push('1995年より前に生まれた人の市区町村の割合（1995年の割合で代用。1975〜1994年は文字認識で取り出す予定）');
   }
-  provisional.push('普及率8品目・名前の流行（取り込み前の値）');
+  for (const g of goodsOut) {
+    if (!(stats && stats.goods && stats.goods[g.id])) provisional.push(g.name + 'の普及率（通信利用動向調査。総務省のサイトに通信の許可がない）');
+    else if (g.provBefore) provisional.push(g.name + 'の普及率（' + (g.provBefore - 1) + '年以前。取り込んだ表が' + g.provBefore + '年からのため）');
+  }
+  if (namesOut === names) provisional.push('名前の流行（取り込み前の値）');
   const common = {
     meta: {
       provisional: provisional.length > 0,
@@ -163,8 +179,8 @@ export function build({ test = false } = {}) {
     nat: { ...nat, ...natReal, marryShape: { m: shapeM, f: shapeF }, marryShapeSum: { m: shapeM.reduce((a, b) => a + b, 0), f: shapeF.reduce((a, b) => a + b, 0) } },
     mort: { beta: BETA, bg: BG, q0: q0s, alpha: alphaTable(e0s, q0s, null) },
     timeline,
-    goods,
-    names,
+    goods: goodsOut,
+    names: namesOut,
     hotline,
     scenes: scenes.map(s => ({ ...s, what: s.what || WHAT[s.src] || (sources[s.src] || {}).name || '' }))
   };
