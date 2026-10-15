@@ -1,0 +1,4623 @@
+{
+ "quake2011tohoku": {
+  "title": "東日本大震災",
+  "sources": [
+   {
+    "name": "消防庁 平成23年（2011年）東北地方太平洋沖地震（東日本大震災）の被害状況（第166報、令和8年3月1日現在）",
+    "url": "https://www.fdma.go.jp/disaster/higashinihon/items/166.pdf"
+   }
+  ],
+  "census": 2010,
+  "munis": {
+   "01|函館市": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "01|釧路市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "01|苫小牧市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "01|根室市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "01|恵庭市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "01|伊達市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "01|木古内町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "01|長万部町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "01|豊浦町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "01|日高町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "01|浦河町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "01|様似町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "01|えりも町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "01|広尾町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "01|豊頃町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "01|浦幌町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "01|厚岸町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "01|浜中町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "02|青森市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "02|弘前市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "02|八戸市": {
+    "dead": 1,
+    "missing": 1,
+    "zenkai": 254
+   },
+   "02|五所川原市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "02|十和田市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "02|三沢市": {
+    "dead": 2,
+    "missing": 0,
+    "zenkai": 19
+   },
+   "02|むつ市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "02|藤崎町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "02|大鰐町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "02|七戸町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "02|六戸町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "02|東北町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "02|六ヶ所村": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "02|おいらせ町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 23
+   },
+   "02|三戸町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "02|五戸町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "02|田子町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "02|南部町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "02|階上町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 12
+   },
+   "03|盛岡市": {
+    "dead": 6,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "03|宮古市": {
+    "dead": 476,
+    "missing": 94,
+    "zenkai": 2677
+   },
+   "03|大船渡市": {
+    "dead": 423,
+    "missing": 79,
+    "zenkai": 2791
+   },
+   "03|花巻市": {
+    "dead": 1,
+    "missing": 18,
+    "zenkai": 6
+   },
+   "03|北上市": {
+    "dead": 1,
+    "missing": 1,
+    "zenkai": 30
+   },
+   "03|久慈市": {
+    "dead": 4,
+    "missing": 2,
+    "zenkai": 65
+   },
+   "03|遠野市": {
+    "dead": 4,
+    "missing": 1,
+    "zenkai": 0
+   },
+   "03|一関市": {
+    "dead": 15,
+    "missing": 2,
+    "zenkai": 57
+   },
+   "03|陸前高田市": {
+    "dead": 1606,
+    "missing": 201,
+    "zenkai": 3807
+   },
+   "03|釜石市": {
+    "dead": 994,
+    "missing": 152,
+    "zenkai": 2957
+   },
+   "03|二戸市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 2
+   },
+   "03|奥州市": {
+    "dead": 3,
+    "missing": 1,
+    "zenkai": 51
+   },
+   "03|滝沢市": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 1
+   },
+   "03|雫石町": {
+    "dead": 1,
+    "missing": 1,
+    "zenkai": 0
+   },
+   "03|岩手町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "03|紫波町": {
+    "dead": 0,
+    "missing": 1,
+    "zenkai": 0
+   },
+   "03|矢巾町": {
+    "dead": 1,
+    "missing": 1,
+    "zenkai": 0
+   },
+   "03|金ケ崎町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "03|平泉町": {
+    "dead": 0,
+    "missing": 1,
+    "zenkai": 0
+   },
+   "03|住田町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "03|大槌町": {
+    "dead": 856,
+    "missing": 415,
+    "zenkai": 3579
+   },
+   "03|山田町": {
+    "dead": 688,
+    "missing": 142,
+    "zenkai": 2762
+   },
+   "03|岩泉町": {
+    "dead": 10,
+    "missing": 0,
+    "zenkai": 177
+   },
+   "03|田野畑村": {
+    "dead": 17,
+    "missing": 15,
+    "zenkai": 225
+   },
+   "03|普代村": {
+    "dead": 0,
+    "missing": 1,
+    "zenkai": 0
+   },
+   "03|野田村": {
+    "dead": 39,
+    "missing": 19,
+    "zenkai": 311
+   },
+   "03|洋野町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 10
+   },
+   "03|一戸町": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "04|仙台市": {
+    "dead": 924,
+    "missing": 27,
+    "zenkai": 30034
+   },
+   "04|石巻市": {
+    "dead": 3553,
+    "missing": 417,
+    "zenkai": 20044
+   },
+   "04|塩竃市": {
+    "dead": 42,
+    "missing": 0,
+    "zenkai": 672
+   },
+   "04|気仙沼市": {
+    "dead": 1220,
+    "missing": 214,
+    "zenkai": 8483
+   },
+   "04|白石市": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 40
+   },
+   "04|名取市": {
+    "dead": 954,
+    "missing": 38,
+    "zenkai": 2801
+   },
+   "04|角田市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 13
+   },
+   "04|多賀城市": {
+    "dead": 219,
+    "missing": 0,
+    "zenkai": 1746
+   },
+   "04|岩沼市": {
+    "dead": 186,
+    "missing": 1,
+    "zenkai": 736
+   },
+   "04|登米市": {
+    "dead": 10,
+    "missing": 3,
+    "zenkai": 201
+   },
+   "04|栗原市": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 58
+   },
+   "04|東松島市": {
+    "dead": 1133,
+    "missing": 22,
+    "zenkai": 5519
+   },
+   "04|大崎市": {
+    "dead": 7,
+    "missing": 0,
+    "zenkai": 596
+   },
+   "04|富谷市": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 16
+   },
+   "04|蔵王町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 16
+   },
+   "04|七ヶ宿町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "04|大河原町": {
+    "dead": 2,
+    "missing": 1,
+    "zenkai": 10
+   },
+   "04|村田町": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 9
+   },
+   "04|柴田町": {
+    "dead": 5,
+    "missing": 0,
+    "zenkai": 13
+   },
+   "04|川崎町": {
+    "dead": 0,
+    "missing": 3,
+    "zenkai": 0
+   },
+   "04|丸森町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 1
+   },
+   "04|亘理町": {
+    "dead": 283,
+    "missing": 4,
+    "zenkai": 2389
+   },
+   "04|山元町": {
+    "dead": 701,
+    "missing": 17,
+    "zenkai": 2217
+   },
+   "04|松島町": {
+    "dead": 7,
+    "missing": 0,
+    "zenkai": 221
+   },
+   "04|七ヶ浜町": {
+    "dead": 79,
+    "missing": 2,
+    "zenkai": 674
+   },
+   "04|利府町": {
+    "dead": 2,
+    "missing": 0,
+    "zenkai": 56
+   },
+   "04|大和町": {
+    "dead": 1,
+    "missing": 1,
+    "zenkai": 42
+   },
+   "04|大郷町": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 50
+   },
+   "04|大衡村": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "04|色麻町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "04|加美町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 8
+   },
+   "04|涌谷町": {
+    "dead": 1,
+    "missing": 1,
+    "zenkai": 144
+   },
+   "04|美里町": {
+    "dead": 2,
+    "missing": 0,
+    "zenkai": 129
+   },
+   "04|女川町": {
+    "dead": 615,
+    "missing": 257,
+    "zenkai": 2924
+   },
+   "04|南三陸町": {
+    "dead": 620,
+    "missing": 211,
+    "zenkai": 3143
+   },
+   "05|秋田市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "05|能代市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "05|横手市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "05|大館市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "05|男鹿市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "05|湯沢市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "05|由利本荘市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "05|潟上市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "05|大仙市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "05|北秋田市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "05|にかほ市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "05|三種町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "05|井川町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "05|大潟村": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "05|美郷町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "05|羽後町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "05|東成瀬村": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "06|山形市": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "06|米沢市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "06|新庄市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "06|寒河江市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "06|上山市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "06|村山市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "06|長井市": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "06|天童市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "06|東根市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "06|尾花沢市": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "06|南陽市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "06|山辺町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "06|中山町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "06|河北町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "06|朝日町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "06|大石田町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "06|金山町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "06|最上町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "06|舟形町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "06|大蔵村": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "06|戸沢村": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "06|高畠町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "06|川西町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "07|福島市": {
+    "dead": 14,
+    "missing": 0,
+    "zenkai": 204
+   },
+   "07|会津若松市": {
+    "dead": 4,
+    "missing": 0,
+    "zenkai": 4
+   },
+   "07|喜多方市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "07|郡山市": {
+    "dead": 11,
+    "missing": 0,
+    "zenkai": 2455
+   },
+   "07|いわき市": {
+    "dead": 437,
+    "missing": 37,
+    "zenkai": 4644
+   },
+   "07|白河市": {
+    "dead": 12,
+    "missing": 0,
+    "zenkai": 240
+   },
+   "07|須賀川市": {
+    "dead": 11,
+    "missing": 1,
+    "zenkai": 1249
+   },
+   "07|相馬市": {
+    "dead": 466,
+    "missing": 19,
+    "zenkai": 1004
+   },
+   "07|二本松市": {
+    "dead": 2,
+    "missing": 0,
+    "zenkai": 11
+   },
+   "07|田村市": {
+    "dead": 14,
+    "missing": 0,
+    "zenkai": 19
+   },
+   "07|南相馬市": {
+    "dead": 1052,
+    "missing": 111,
+    "zenkai": 2323
+   },
+   "07|伊達市": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 25
+   },
+   "07|本宮市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 16
+   },
+   "07|桑折町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 55
+   },
+   "07|国見町": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 191
+   },
+   "07|川俣町": {
+    "dead": 29,
+    "missing": 0,
+    "zenkai": 28
+   },
+   "07|大玉村": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 6
+   },
+   "07|鏡石町": {
+    "dead": 2,
+    "missing": 0,
+    "zenkai": 172
+   },
+   "07|天栄村": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 72
+   },
+   "07|南会津町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "07|磐梯町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "07|猪苗代町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 18
+   },
+   "07|会津坂下町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 2
+   },
+   "07|湯川村": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "07|会津美里町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "07|下郷町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "07|西郷村": {
+    "dead": 5,
+    "missing": 0,
+    "zenkai": 43
+   },
+   "07|泉崎村": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 62
+   },
+   "07|中島村": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 3
+   },
+   "07|矢吹町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 294
+   },
+   "07|棚倉町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 1
+   },
+   "07|矢祭町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "07|塙町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "07|鮫川村": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "07|石川町": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 1
+   },
+   "07|玉川村": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "07|平田村": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 1
+   },
+   "07|浅川町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "07|古殿町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "07|三春町": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 32
+   },
+   "07|小野町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 4
+   },
+   "07|広野町": {
+    "dead": 49,
+    "missing": 1,
+    "zenkai": 160
+   },
+   "07|楢葉町": {
+    "dead": 156,
+    "missing": 2,
+    "zenkai": 147
+   },
+   "07|富岡町": {
+    "dead": 474,
+    "missing": 6,
+    "zenkai": 375
+   },
+   "07|川内村": {
+    "dead": 105,
+    "missing": 0,
+    "zenkai": 8
+   },
+   "07|大熊町": {
+    "dead": 145,
+    "missing": 0,
+    "zenkai": 322
+   },
+   "07|双葉町": {
+    "dead": 177,
+    "missing": 4,
+    "zenkai": 103
+   },
+   "07|浪江町": {
+    "dead": 598,
+    "missing": 31,
+    "zenkai": 867
+   },
+   "07|葛尾村": {
+    "dead": 42,
+    "missing": 1,
+    "zenkai": 0
+   },
+   "07|新地町": {
+    "dead": 98,
+    "missing": 10,
+    "zenkai": 439
+   },
+   "07|飯舘村": {
+    "dead": 42,
+    "missing": 1,
+    "zenkai": 0
+   },
+   "08|水戸市": {
+    "dead": 7,
+    "missing": 0,
+    "zenkai": 164
+   },
+   "08|日立市": {
+    "dead": 13,
+    "missing": 0,
+    "zenkai": 436
+   },
+   "08|土浦市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 6
+   },
+   "08|古河市": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 8
+   },
+   "08|石岡市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 22
+   },
+   "08|結城市": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 2
+   },
+   "08|龍ヶ崎市": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 1
+   },
+   "08|下妻市": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 48
+   },
+   "08|常総市": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "08|常陸太田市": {
+    "dead": 3,
+    "missing": 0,
+    "zenkai": 106
+   },
+   "08|高萩市": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 142
+   },
+   "08|北茨城市": {
+    "dead": 10,
+    "missing": 1,
+    "zenkai": 188
+   },
+   "08|笠間市": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 17
+   },
+   "08|取手市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 28
+   },
+   "08|牛久市": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 3
+   },
+   "08|つくば市": {
+    "dead": 3,
+    "missing": 0,
+    "zenkai": 8
+   },
+   "08|ひたちなか市": {
+    "dead": 3,
+    "missing": 0,
+    "zenkai": 86
+   },
+   "08|鹿嶋市": {
+    "dead": 2,
+    "missing": 0,
+    "zenkai": 511
+   },
+   "08|潮来市": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 96
+   },
+   "08|守谷市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "08|常陸大宮市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 11
+   },
+   "08|那珂市": {
+    "dead": 3,
+    "missing": 0,
+    "zenkai": 64
+   },
+   "08|筑西市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 7
+   },
+   "08|坂東市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 4
+   },
+   "08|稲敷市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 135
+   },
+   "08|かすみがうら市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 7
+   },
+   "08|桜川市": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 36
+   },
+   "08|神栖市": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 140
+   },
+   "08|行方市": {
+    "dead": 2,
+    "missing": 0,
+    "zenkai": 120
+   },
+   "08|鉾田市": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 99
+   },
+   "08|つくばみらい市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 11
+   },
+   "08|小美玉市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 18
+   },
+   "08|茨城町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 27
+   },
+   "08|大洗町": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 14
+   },
+   "08|城里町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 15
+   },
+   "08|東海村": {
+    "dead": 6,
+    "missing": 0,
+    "zenkai": 28
+   },
+   "08|大子町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "08|美浦村": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 2
+   },
+   "08|阿見町": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "08|河内町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 5
+   },
+   "08|八千代町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "08|五霞町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "08|境町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "08|利根町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 22
+   },
+   "09|宇都宮市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 9
+   },
+   "09|足利市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 1
+   },
+   "09|栃木市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "09|佐野市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 1
+   },
+   "09|鹿沼市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "09|日光市": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "09|小山市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "09|真岡市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 12
+   },
+   "09|大田原市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 7
+   },
+   "09|矢板市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 51
+   },
+   "09|那須塩原市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 12
+   },
+   "09|さくら市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 2
+   },
+   "09|那須烏山市": {
+    "dead": 2,
+    "missing": 0,
+    "zenkai": 66
+   },
+   "09|下野市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "09|上三川町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "09|益子町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 14
+   },
+   "09|茂木町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "09|市貝町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 16
+   },
+   "09|芳賀町": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 16
+   },
+   "09|壬生町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "09|野木町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "09|塩谷町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "09|高根沢町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 7
+   },
+   "09|那須町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 40
+   },
+   "09|那珂川町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 7
+   },
+   "10|前橋市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "10|高崎市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "10|桐生市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "10|伊勢崎市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "10|太田市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "10|沼田市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "10|館林市": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "10|渋川市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "10|藤岡市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "10|富岡市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "10|安中市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "10|みどり市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "10|榛東村": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "10|吉岡町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "10|甘楽町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "10|中之条町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "10|東吾妻町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "10|草津町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "10|高山村": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "10|片品村": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "10|川場村": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "10|昭和村": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "10|玉村町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "10|板倉町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "10|明和町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "10|千代田町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "10|大泉町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "10|邑楽町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|さいたま市": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 2
+   },
+   "11|川越市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|熊谷市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 1
+   },
+   "11|川口市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 1
+   },
+   "11|行田市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|秩父市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|所沢市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|飯能市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|加須市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 7
+   },
+   "11|本庄市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|東松山市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|春日部市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|羽生市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|鴻巣市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|深谷市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|上尾市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|草加市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|越谷市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|蕨市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|戸田市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|入間市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|鳩ヶ谷市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|朝霞市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|志木市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|和光市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|新座市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|桶川市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|久喜市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 12
+   },
+   "11|北本市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|八潮市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|富士見市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|三郷市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|蓮田市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|坂戸市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|幸手市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|鶴ヶ島市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|吉川市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|ふじみ野市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|伊奈町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|三芳町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|毛呂山町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|越生町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|滑川町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|嵐山町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|小川町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|川島町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|吉見町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|鳩山町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|ときがわ町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|横瀬町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|皆野町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|長瀞町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|小鹿野町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|東秩父村": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|美里町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|神川町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|上里町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|寄居町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|宮代町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|白岡市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11|杉戸町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 1
+   },
+   "11|松伏町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "12|千葉市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 30
+   },
+   "12|銚子市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 30
+   },
+   "12|市川市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 10
+   },
+   "12|船橋市": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 13
+   },
+   "12|木更津市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "12|松戸市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 8
+   },
+   "12|野田市": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 1
+   },
+   "12|茂原市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "12|成田市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 4
+   },
+   "12|佐倉市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 33
+   },
+   "12|東金市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 4
+   },
+   "12|旭市": {
+    "dead": 14,
+    "missing": 2,
+    "zenkai": 318
+   },
+   "12|習志野市": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 9
+   },
+   "12|柏市": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 1
+   },
+   "12|勝浦市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "12|市原市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "12|流山市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "12|八千代市": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 6
+   },
+   "12|我孫子市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 134
+   },
+   "12|鴨川市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "12|鎌ヶ谷市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "12|君津市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "12|富津市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "12|浦安市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 10
+   },
+   "12|四街道市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "12|袖ヶ浦市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "12|八街市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "12|印西市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 11
+   },
+   "12|白井市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "12|富里市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 11
+   },
+   "12|匝瑳市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 7
+   },
+   "12|香取市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 96
+   },
+   "12|山武市": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 43
+   },
+   "12|いすみ市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "12|大網白里市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "12|酒々井町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 1
+   },
+   "12|栄町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 10
+   },
+   "12|神崎町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 5
+   },
+   "12|多古町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 2
+   },
+   "12|東庄町": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 3
+   },
+   "12|九十九里町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "12|芝山町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "12|横芝光町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 6
+   },
+   "12|一宮町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "12|睦沢町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "12|白子町": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 1
+   },
+   "12|長柄町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "13|千代田区": {
+    "dead": 2,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "13|中央区": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "13|港区": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 2
+   },
+   "13|新宿区": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "13|文京区": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "13|台東区": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 2
+   },
+   "13|墨田区": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 5
+   },
+   "13|江東区": {
+    "dead": 2,
+    "missing": 0,
+    "zenkai": 1
+   },
+   "13|品川区": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "13|目黒区": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "13|大田区": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "13|世田谷区": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "13|渋谷区": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "13|中野区": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "13|杉並区": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 1
+   },
+   "13|豊島区": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "13|北区": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 3
+   },
+   "13|荒川区": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 1
+   },
+   "13|板橋区": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 2
+   },
+   "13|練馬区": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "13|足立区": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 3
+   },
+   "13|葛飾区": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "13|江戸川区": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "13|八王子市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "13|立川市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "13|武蔵野市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "13|三鷹市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "13|青梅市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "13|府中市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "13|調布市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "13|町田市": {
+    "dead": 2,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "13|小金井市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "13|小平市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "13|東村山市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "13|国分寺市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "13|狛江市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "13|東久留米市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "13|多摩市": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "13|稲城市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "13|羽村市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "13|西東京市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "13|日の出町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "14|横浜市": {
+    "dead": 2,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "14|川崎市": {
+    "dead": 2,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "14|相模原市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "14|横須賀市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "14|平塚市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "14|藤沢市": {
+    "dead": 2,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "14|小田原市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "14|茅ヶ崎市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "14|逗子市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "14|三浦市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "14|秦野市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "14|厚木市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "14|大和市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "14|海老名市": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "14|南足柄市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "14|綾瀬市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "14|葉山町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "14|寒川町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "14|二宮町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "14|箱根町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "14|湯河原町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "14|清川村": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "15|新潟市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "15|長岡市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "15|十日町市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "15|見附市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "15|燕市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "15|糸魚川市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "15|南魚沼市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "15|胎内市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "19|甲府市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "19|笛吹市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "19|甲州市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "19|富士川町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "20|長野市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "20|駒ヶ根市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "20|飯山市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 1
+   },
+   "20|野沢温泉村": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "20|栄村": {
+    "dead": 3,
+    "missing": 0,
+    "zenkai": 33
+   },
+   "22|下田市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "22|三島市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "22|富士市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "22|御殿場市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "24|四日市市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "24|紀北町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "27|大阪市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "36|阿南市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "39|須崎市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "39|黒潮町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   }
+  },
+  "prefZenkai": {},
+  "notes": [
+   "仙台市は市全体の数字だけのため、区には市全体の割合を使う（推計）"
+  ]
+ },
+ "quake1995hanshin": {
+  "title": "阪神・淡路大震災",
+  "sources": [
+   {
+    "name": "兵庫県 阪神・淡路大震災の市町被害数値（平成18年5月19日消防庁確定）",
+    "url": "https://web.pref.hyogo.lg.jp/kk42/pa20_000000006.html"
+   },
+   {
+    "name": "神戸市 阪神・淡路大震災の被害状況（区別の死者、2005年12月22日時点）",
+    "url": "https://www.city.kobe.lg.jp/a21572/bosai/shobo/hanshinawaji/higai2.html",
+    "note": "この作業環境から神戸市のサイトにつながらないため、検索結果に出た同ページの値を使った。北区・西区は合わせて22人で、区の分け方が確かめられないため、市全体の割合を使う"
+   }
+  ],
+  "census": 1995,
+  "munis": {
+   "28|神戸市": {
+    "dead": 4564,
+    "missing": 2,
+    "zenkai": 61800
+   },
+   "28|尼崎市": {
+    "dead": 49,
+    "missing": 0,
+    "zenkai": 5688
+   },
+   "28|西宮市": {
+    "dead": 1126,
+    "missing": 1,
+    "zenkai": 20667
+   },
+   "28|芦屋市": {
+    "dead": 443,
+    "missing": 0,
+    "zenkai": 3915
+   },
+   "28|伊丹市": {
+    "dead": 22,
+    "missing": 0,
+    "zenkai": 1395
+   },
+   "28|宝塚市": {
+    "dead": 117,
+    "missing": 0,
+    "zenkai": 3559
+   },
+   "28|川西市": {
+    "dead": 4,
+    "missing": 0,
+    "zenkai": 554
+   },
+   "28|三田市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "28|猪名川町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "28|明石市": {
+    "dead": 11,
+    "missing": 0,
+    "zenkai": 2941
+   },
+   "28|加古川市": {
+    "dead": 2,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "28|高砂市": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "28|稲美町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "28|播磨町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "28|西脇市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "28|三木市": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 25
+   },
+   "28|小野市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "28|加西市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "28|加東市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "28|多可町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "28|姫路市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "28|市川町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "28|福崎町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "28|神河町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "28|相生市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "28|赤穂市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "28|宍粟市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "28|たつの市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "28|太子町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "28|上郡町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "28|佐用町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "28|豊岡市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "28|養父市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "28|朝来市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "28|香美町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "28|新温泉町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "28|篠山市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "28|丹波市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "28|洲本市": {
+    "dead": 4,
+    "missing": 0,
+    "zenkai": 203
+   },
+   "28|南あわじ市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 181
+   },
+   "28|淡路市": {
+    "dead": 58,
+    "missing": 0,
+    "zenkai": 3076
+   }
+  },
+  "prefZenkai": {},
+  "notes": [
+   "神戸市の区の全壊は数字待ち。区の死者は神戸市の資料"
+  ],
+  "wards": {
+   "28|神戸市東灘区": {
+    "dead": 1470
+   },
+   "28|神戸市灘区": {
+    "dead": 934
+   },
+   "28|神戸市中央区": {
+    "dead": 243
+   },
+   "28|神戸市兵庫区": {
+    "dead": 556
+   },
+   "28|神戸市長田区": {
+    "dead": 921
+   },
+   "28|神戸市須磨区": {
+    "dead": 399
+   },
+   "28|神戸市垂水区": {
+    "dead": 26
+   }
+  }
+ },
+ "quake2024noto": {
+  "title": "能登半島地震",
+  "sources": [
+   {
+    "name": "消防庁 令和6年能登半島地震による被害及び消防機関等の対応状況（第123報、令和8年3月31日）",
+    "url": "https://www.fdma.go.jp/disaster/info/items/b055402cefac7721623c30034b25489118dbec38.pdf"
+   }
+  ],
+  "census": 2020,
+  "munis": {
+   "15|新潟市": {
+    "dead": 4
+   },
+   "15|上越市": {
+    "dead": 2
+   },
+   "16|富山市": {
+    "dead": 1
+   },
+   "16|高岡市": {
+    "dead": 2
+   },
+   "16|氷見市": {
+    "dead": 4
+   },
+   "16|射水市": {
+    "dead": 1
+   },
+   "17|金沢市": {
+    "dead": 1
+   },
+   "17|七尾市": {
+    "dead": 83
+   },
+   "17|小松市": {
+    "dead": 1
+   },
+   "17|輪島市": {
+    "dead": 245
+   },
+   "17|珠洲市": {
+    "dead": 191
+   },
+   "17|羽咋市": {
+    "dead": 7
+   },
+   "17|白山市": {
+    "dead": 1
+   },
+   "17|内灘町": {
+    "dead": 6
+   },
+   "17|志賀町": {
+    "dead": 27
+   },
+   "17|中能登町": {
+    "dead": 3
+   },
+   "17|穴水町": {
+    "dead": 56
+   },
+   "17|能登町": {
+    "dead": 85
+   }
+  },
+  "prefZenkai": {
+   "05": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "07": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "15": {
+    "dead": 6,
+    "missing": 0,
+    "zenkai": 111
+   },
+   "16": {
+    "dead": 8,
+    "missing": 0,
+    "zenkai": 258
+   },
+   "17": {
+    "dead": 706,
+    "missing": 2,
+    "zenkai": 6167
+   },
+   "18": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "20": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "21": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "23": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "26": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "27": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "28": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   }
+  },
+  "notes": [
+   "市町ごとの全壊は資料にないため、県の全壊を死者の割合で分ける（推計）。死者には災害関連死を含む"
+  ]
+ },
+ "quake2026kumamoto": {
+  "title": "令和8年熊本地震",
+  "sources": [
+   {
+    "name": "消防庁 令和8年熊本地震による被害及び消防機関等の対応状況（第66報、令和8年10月5日）",
+    "url": "https://www.fdma.go.jp/disaster/info/items/5995cd83e1266305fb4cf055946ff7b442b3923b.pdf"
+   }
+  ],
+  "census": 2020,
+  "munis": {
+   "43|八代市": {
+    "dead": 20
+   },
+   "43|宇城市": {
+    "dead": 3
+   },
+   "43|嘉島町": {
+    "dead": 7
+   },
+   "43|甲佐町": {
+    "dead": 1
+   },
+   "43|氷川町": {
+    "dead": 5
+   }
+  },
+  "prefZenkai": {
+   "35": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "40": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "43": {
+    "dead": 38,
+    "missing": 0,
+    "zenkai": 2408
+   },
+   "44": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "46": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   }
+  },
+  "notes": [
+   "死者38人のうち市町の分かる36人。市町ごとの全壊は資料にないため、県の全壊を死者の割合で分ける（推計）"
+  ]
+ },
+ "flood2018west": {
+  "title": "平成30年7月豪雨",
+  "sources": [
+   {
+    "name": "消防庁 平成30年7月豪雨及び台風第12号による被害状況及び消防機関等の対応状況（第60報、令和元年8月20日）",
+    "url": "https://www.fdma.go.jp/disaster/info/items/190820nanagatugouu60h.pdf"
+   }
+  ],
+  "census": 2015,
+  "munis": {
+   "21|関市": {
+    "dead": 1,
+    "missing": 0
+   },
+   "25|高島市": {
+    "dead": 1,
+    "missing": 0
+   },
+   "26|舞鶴市": {
+    "dead": 1,
+    "missing": 0
+   },
+   "26|綾部市": {
+    "dead": 3,
+    "missing": 0
+   },
+   "26|亀岡市": {
+    "dead": 1,
+    "missing": 0
+   },
+   "28|宍粟市": {
+    "dead": 1,
+    "missing": 0
+   },
+   "28|猪名川町": {
+    "dead": 1,
+    "missing": 0
+   },
+   "29|大和郡山市": {
+    "dead": 1,
+    "missing": 0
+   },
+   "33|倉敷市": {
+    "dead": 59,
+    "missing": 0
+   },
+   "33|笠岡市": {
+    "dead": 3,
+    "missing": 0
+   },
+   "33|井原市": {
+    "dead": 2,
+    "missing": 0
+   },
+   "33|総社市": {
+    "dead": 7,
+    "missing": 0
+   },
+   "33|高梁市": {
+    "dead": 2,
+    "missing": 1
+   },
+   "34|広島市": {
+    "dead": 23,
+    "missing": 2
+   },
+   "34|呉市": {
+    "dead": 28,
+    "missing": 0
+   },
+   "34|竹原市": {
+    "dead": 6,
+    "missing": 0
+   },
+   "34|三原市": {
+    "dead": 14,
+    "missing": 0
+   },
+   "34|尾道市": {
+    "dead": 2,
+    "missing": 0
+   },
+   "34|福山市": {
+    "dead": 3,
+    "missing": 0
+   },
+   "34|府中市": {
+    "dead": 3,
+    "missing": 0
+   },
+   "34|東広島市": {
+    "dead": 19,
+    "missing": 1
+   },
+   "34|安芸高田市": {
+    "dead": 2,
+    "missing": 1
+   },
+   "34|海田町": {
+    "dead": 2,
+    "missing": 0
+   },
+   "34|熊野町": {
+    "dead": 12,
+    "missing": 0
+   },
+   "34|坂町": {
+    "dead": 18,
+    "missing": 1
+   },
+   "34|神石高原町": {
+    "dead": 1,
+    "missing": 0
+   },
+   "35|岩国市": {
+    "dead": 2,
+    "missing": 0
+   },
+   "35|周南市": {
+    "dead": 1,
+    "missing": 0
+   },
+   "38|松山市": {
+    "dead": 5,
+    "missing": 0
+   },
+   "38|今治市": {
+    "dead": 2,
+    "missing": 0
+   },
+   "38|宇和島市": {
+    "dead": 13,
+    "missing": 0
+   },
+   "38|大洲市": {
+    "dead": 5,
+    "missing": 0
+   },
+   "38|西予市": {
+    "dead": 6,
+    "missing": 0
+   },
+   "38|鬼北町": {
+    "dead": 1,
+    "missing": 0
+   },
+   "39|香南市": {
+    "dead": 1,
+    "missing": 0
+   },
+   "39|大月町": {
+    "dead": 2,
+    "missing": 0
+   },
+   "40|北九州市": {
+    "dead": 2,
+    "missing": 0
+   },
+   "40|福岡市": {
+    "dead": 1,
+    "missing": 0
+   },
+   "40|筑紫野市": {
+    "dead": 1,
+    "missing": 0
+   },
+   "41|佐賀市": {
+    "dead": 1,
+    "missing": 0
+   },
+   "41|伊万里市": {
+    "dead": 1,
+    "missing": 0
+   },
+   "45|小林市": {
+    "dead": 1,
+    "missing": 0
+   },
+   "46|鹿児島市": {
+    "dead": 2,
+    "missing": 0
+   },
+   "33|新見市": {
+    "dead": 0,
+    "missing": 1
+   },
+   "33|鏡野町": {
+    "dead": 0,
+    "missing": 1
+   }
+  },
+  "prefZenkai": {
+   "01": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "05": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "07": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "09": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "12": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "13": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "14": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "16": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "17": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "18": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "19": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "20": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "21": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 12
+   },
+   "22": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "23": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "24": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "25": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "26": {
+    "dead": 5,
+    "missing": 0,
+    "zenkai": 18
+   },
+   "27": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 3
+   },
+   "28": {
+    "dead": 2,
+    "missing": 0,
+    "zenkai": 17
+   },
+   "29": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "30": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 1
+   },
+   "31": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "32": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 55
+   },
+   "33": {
+    "dead": 73,
+    "missing": 3,
+    "zenkai": 4830
+   },
+   "34": {
+    "dead": 133,
+    "missing": 5,
+    "zenkai": 1155
+   },
+   "35": {
+    "dead": 3,
+    "missing": 0,
+    "zenkai": 23
+   },
+   "36": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 3
+   },
+   "37": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 1
+   },
+   "38": {
+    "dead": 32,
+    "missing": 0,
+    "zenkai": 627
+   },
+   "39": {
+    "dead": 3,
+    "missing": 0,
+    "zenkai": 12
+   },
+   "40": {
+    "dead": 4,
+    "missing": 0,
+    "zenkai": 19
+   },
+   "41": {
+    "dead": 2,
+    "missing": 0,
+    "zenkai": 3
+   },
+   "42": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 1
+   },
+   "43": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "44": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 2
+   },
+   "45": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "46": {
+    "dead": 2,
+    "missing": 0,
+    "zenkai": 1
+   },
+   "47": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   }
+  },
+  "notes": [
+   "市町ごとの全壊は資料にないため、県の全壊を死者の割合で分ける（推計）"
+  ]
+ },
+ "typhoon2019hagibis": {
+  "title": "令和元年東日本台風（台風19号）",
+  "sources": [
+   {
+    "name": "消防庁 令和元年東日本台風及び前線による大雨による被害及び消防機関等の対応状況（第67報、令和2年10月13日）",
+    "url": "https://www.fdma.go.jp/disaster/info/items/taihuu19gou67.pdf"
+   }
+  ],
+  "census": 2015,
+  "munis": {
+   "03|宮古市": {
+    "dead": 1,
+    "missing": 0
+   },
+   "03|釜石市": {
+    "dead": 1,
+    "missing": 0
+   },
+   "03|田野畑村": {
+    "dead": 1,
+    "missing": 0
+   },
+   "04|仙台市": {
+    "dead": 2,
+    "missing": 1
+   },
+   "04|石巻市": {
+    "dead": 3,
+    "missing": 0
+   },
+   "04|角田市": {
+    "dead": 1,
+    "missing": 0
+   },
+   "04|登米市": {
+    "dead": 1,
+    "missing": 0
+   },
+   "04|蔵王町": {
+    "dead": 1,
+    "missing": 0
+   },
+   "04|丸森町": {
+    "dead": 11,
+    "missing": 1
+   },
+   "04|大和町": {
+    "dead": 1,
+    "missing": 0
+   },
+   "07|郡山市": {
+    "dead": 6,
+    "missing": 0
+   },
+   "07|いわき市": {
+    "dead": 12,
+    "missing": 0
+   },
+   "07|白河市": {
+    "dead": 2,
+    "missing": 0
+   },
+   "07|須賀川市": {
+    "dead": 3,
+    "missing": 0
+   },
+   "07|相馬市": {
+    "dead": 2,
+    "missing": 0
+   },
+   "07|二本松市": {
+    "dead": 2,
+    "missing": 0
+   },
+   "07|南相馬市": {
+    "dead": 1,
+    "missing": 0
+   },
+   "07|本宮市": {
+    "dead": 7,
+    "missing": 0
+   },
+   "07|鏡石町": {
+    "dead": 1,
+    "missing": 0
+   },
+   "07|川内村": {
+    "dead": 1,
+    "missing": 0
+   },
+   "07|飯舘村": {
+    "dead": 1,
+    "missing": 0
+   },
+   "08|桜川市": {
+    "dead": 1,
+    "missing": 0
+   },
+   "08|大子町": {
+    "dead": 1,
+    "missing": 0
+   },
+   "09|栃木市": {
+    "dead": 1,
+    "missing": 0
+   },
+   "09|足利市": {
+    "dead": 1,
+    "missing": 0
+   },
+   "09|鹿沼市": {
+    "dead": 2,
+    "missing": 0
+   },
+   "10|藤岡市": {
+    "dead": 1,
+    "missing": 0
+   },
+   "10|富岡市": {
+    "dead": 3,
+    "missing": 0
+   },
+   "11|東松山市": {
+    "dead": 2,
+    "missing": 0
+   },
+   "11|上尾市": {
+    "dead": 1,
+    "missing": 0
+   },
+   "11|鳩山町": {
+    "dead": 1,
+    "missing": 0
+   },
+   "12|千葉市": {
+    "dead": 3,
+    "missing": 0
+   },
+   "12|茂原市": {
+    "dead": 2,
+    "missing": 0
+   },
+   "12|佐倉市": {
+    "dead": 1,
+    "missing": 0
+   },
+   "12|市原市": {
+    "dead": 2,
+    "missing": 0
+   },
+   "12|長柄町": {
+    "dead": 2,
+    "missing": 0
+   },
+   "12|長南町": {
+    "dead": 2,
+    "missing": 0
+   },
+   "13|世田谷区": {
+    "dead": 1,
+    "missing": 0
+   },
+   "13|日野市": {
+    "dead": 1,
+    "missing": 0
+   },
+   "13|稲城市": {
+    "dead": 1,
+    "missing": 0
+   },
+   "14|川崎市": {
+    "dead": 1,
+    "missing": 0
+   },
+   "14|相模原市": {
+    "dead": 8,
+    "missing": 0
+   },
+   "20|長野市": {
+    "dead": 10,
+    "missing": 0
+   },
+   "20|飯山市": {
+    "dead": 1,
+    "missing": 0
+   },
+   "20|佐久市": {
+    "dead": 2,
+    "missing": 0
+   },
+   "20|東御市": {
+    "dead": 1,
+    "missing": 0
+   },
+   "20|小布施町": {
+    "dead": 1,
+    "missing": 0
+   },
+   "22|静岡市": {
+    "dead": 1,
+    "missing": 0
+   },
+   "22|御殿場市": {
+    "dead": 1,
+    "missing": 0
+   },
+   "22|牧之原市": {
+    "dead": 1,
+    "missing": 0
+   },
+   "28|神戸市": {
+    "dead": 1,
+    "missing": 0
+   }
+  },
+  "prefZenkai": {
+   "01": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "02": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "03": {
+    "dead": 3,
+    "missing": 0,
+    "zenkai": 41
+   },
+   "04": {
+    "dead": 20,
+    "missing": 2,
+    "zenkai": 327
+   },
+   "05": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "06": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 1
+   },
+   "07": {
+    "dead": 38,
+    "missing": 0,
+    "zenkai": 1445
+   },
+   "08": {
+    "dead": 2,
+    "missing": 1,
+    "zenkai": 146
+   },
+   "09": {
+    "dead": 4,
+    "missing": 0,
+    "zenkai": 83
+   },
+   "10": {
+    "dead": 4,
+    "missing": 0,
+    "zenkai": 22
+   },
+   "11": {
+    "dead": 4,
+    "missing": 0,
+    "zenkai": 107
+   },
+   "12": {
+    "dead": 12,
+    "missing": 0,
+    "zenkai": 66
+   },
+   "13": {
+    "dead": 3,
+    "missing": 0,
+    "zenkai": 36
+   },
+   "14": {
+    "dead": 9,
+    "missing": 0,
+    "zenkai": 56
+   },
+   "15": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 3
+   },
+   "16": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "17": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "18": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "19": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 2
+   },
+   "20": {
+    "dead": 15,
+    "missing": 0,
+    "zenkai": 920
+   },
+   "21": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "22": {
+    "dead": 3,
+    "missing": 0,
+    "zenkai": 7
+   },
+   "23": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "24": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "25": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "26": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "27": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "28": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 1
+   },
+   "29": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "30": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "31": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "33": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "34": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "35": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "36": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "39": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "41": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "44": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   }
+  },
+  "notes": [
+   "市町ごとの全壊は資料にないため、県の全壊を死者の割合で分ける（推計）"
+  ]
+ },
+ "flood2020kumamoto": {
+  "title": "令和2年7月豪雨",
+  "sources": [
+   {
+    "name": "消防庁 令和2年7月豪雨による被害及び消防機関等の対応状況（第57報、令和3年11月26日）",
+    "url": "https://www.fdma.go.jp/disaster/info/items/210226_ooame57.pdf"
+   }
+  ],
+  "census": 2020,
+  "munis": {
+   "16|立山町": {
+    "dead": 1,
+    "missing": 0
+   },
+   "20|飯田市": {
+    "dead": 1,
+    "missing": 0
+   },
+   "22|川根本町": {
+    "dead": 1,
+    "missing": 0
+   },
+   "34|東広島市": {
+    "dead": 2,
+    "missing": 0
+   },
+   "38|西条市": {
+    "dead": 1,
+    "missing": 0
+   },
+   "38|伊方町": {
+    "dead": 1,
+    "missing": 0
+   },
+   "40|大牟田市": {
+    "dead": 2,
+    "missing": 0
+   },
+   "42|諫早市": {
+    "dead": 2,
+    "missing": 0
+   },
+   "42|対馬市": {
+    "dead": 1,
+    "missing": 0
+   },
+   "43|八代市": {
+    "dead": 4,
+    "missing": 1
+   },
+   "43|人吉市": {
+    "dead": 21,
+    "missing": 0
+   },
+   "43|山鹿市": {
+    "dead": 2,
+    "missing": 0
+   },
+   "43|芦北町": {
+    "dead": 11,
+    "missing": 1
+   },
+   "43|津奈木町": {
+    "dead": 3,
+    "missing": 0
+   },
+   "43|錦町": {
+    "dead": 1,
+    "missing": 0
+   },
+   "43|球磨村": {
+    "dead": 25,
+    "missing": 0
+   },
+   "44|日田市": {
+    "dead": 1,
+    "missing": 0
+   },
+   "44|由布市": {
+    "dead": 5,
+    "missing": 0
+   },
+   "46|南さつま市": {
+    "dead": 1,
+    "missing": 0
+   }
+  },
+  "prefZenkai": {
+   "01": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "02": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "03": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "05": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "06": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 1
+   },
+   "07": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "10": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "12": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "13": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "14": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "15": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "16": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "18": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "19": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "20": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "21": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 6
+   },
+   "22": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "23": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "24": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "25": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "26": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "27": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "28": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 3
+   },
+   "29": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "30": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 1
+   },
+   "32": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 2
+   },
+   "33": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "34": {
+    "dead": 2,
+    "missing": 0,
+    "zenkai": 1
+   },
+   "35": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "36": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 1
+   },
+   "38": {
+    "dead": 2,
+    "missing": 0,
+    "zenkai": 1
+   },
+   "40": {
+    "dead": 2,
+    "missing": 0,
+    "zenkai": 14
+   },
+   "41": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 2
+   },
+   "42": {
+    "dead": 3,
+    "missing": 0,
+    "zenkai": 4
+   },
+   "43": {
+    "dead": 67,
+    "missing": 2,
+    "zenkai": 1493
+   },
+   "44": {
+    "dead": 6,
+    "missing": 0,
+    "zenkai": 69
+   },
+   "45": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 4
+   },
+   "46": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 25
+   }
+  },
+  "notes": [
+   "市町ごとの全壊は資料にないため、県の全壊を死者の割合で分ける（推計）"
+  ]
+ },
+ "quake2018iburi": {
+  "title": "北海道胆振東部地震",
+  "sources": [
+   {
+    "name": "消防庁 平成30年北海道胆振東部地震による被害及び消防機関等の対応状況（第35報、令和元年8月20日）",
+    "url": "https://www.fdma.go.jp/disaster/info/items/b3ad91b60531fcb1854a444954c7a97a82128a1a.pdf"
+   }
+  ],
+  "census": 2015,
+  "munis": {
+   "01|厚真町": {
+    "dead": 36,
+    "zenkai": 224
+   },
+   "01|江別市": {
+    "dead": 0,
+    "zenkai": 1
+   },
+   "01|安平町": {
+    "dead": 0,
+    "zenkai": 93
+   },
+   "01|日高町": {
+    "dead": 0,
+    "zenkai": 3
+   },
+   "01|苫小牧市": {
+    "dead": 2,
+    "zenkai": 0
+   },
+   "01|札幌市": {
+    "dead": 3,
+    "zenkai": 97
+   },
+   "01|新ひだか町": {
+    "dead": 1,
+    "zenkai": 0
+   },
+   "01|北広島市": {
+    "dead": 0,
+    "zenkai": 17
+   },
+   "01|千歳市": {
+    "dead": 0,
+    "zenkai": 1
+   },
+   "01|むかわ町": {
+    "dead": 1,
+    "zenkai": 33
+   }
+  },
+  "prefZenkai": {},
+  "notes": [
+   "札幌市は市全体の数字だけのため、区には市全体の割合を使う（推計）"
+  ]
+ },
+ "slide2014hiroshima": {
+  "title": "広島市の土砂災害",
+  "sources": [
+   {
+    "name": "消防庁 8月19日からの大雨等による広島県における被害状況及び消防の活動等について（第47報、平成28年6月24日）",
+    "url": "https://www.fdma.go.jp/disaster/info/assets/post755.pdf"
+   }
+  ],
+  "census": 2010,
+  "munis": {
+   "34|広島市安佐南区": {
+    "dead": 71,
+    "zenkai": 145
+   },
+   "34|広島市安佐北区": {
+    "dead": 6,
+    "zenkai": 33
+   }
+  },
+  "prefZenkai": {},
+  "notes": []
+ },
+ "flood2017kyushu": {
+  "title": "平成29年7月九州北部豪雨",
+  "sources": [
+   {
+    "name": "消防庁 平成29年6月30日からの梅雨前線に伴う大雨及び台風第3号の被害状況等について（第77報、平成30年10月31日）",
+    "url": "https://www.fdma.go.jp/disaster/info/items/b415db68eb0850414c74aca2f164cf3dbda5c43a.pdf"
+   }
+  ],
+  "census": 2015,
+  "munis": {
+   "34|広島市": {
+    "dead": 1
+   },
+   "34|北広島町": {
+    "dead": 1
+   },
+   "40|朝倉市": {
+    "dead": 34,
+    "missing": 2
+   },
+   "40|東峰村": {
+    "dead": 3
+   },
+   "44|日田市": {
+    "dead": 3
+   }
+  },
+  "prefZenkai": {
+   "07": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "08": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "12": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "13": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "15": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "16": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "17": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "20": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "21": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "22": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "23": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "30": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "32": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "34": {
+    "dead": 2,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "40": {
+    "dead": 37,
+    "missing": 2,
+    "zenkai": 287
+   },
+   "41": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "42": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 1
+   },
+   "43": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 1
+   },
+   "44": {
+    "dead": 3,
+    "missing": 0,
+    "zenkai": 49
+   }
+  },
+  "notes": [
+   "市町村ごとの全壊は資料にないため、県の全壊を死者の割合で分ける（推計）"
+  ]
+ },
+ "flood2015kinu": {
+  "title": "平成27年9月関東・東北豪雨",
+  "sources": [
+   {
+    "name": "消防庁 平成27年台風第18号による大雨等に係る被害状況等について（平成29年10月18日）",
+    "url": "https://www.fdma.go.jp/disaster/info/assets/post793.pdf"
+   }
+  ],
+  "census": 2015,
+  "munis": {
+   "04|栗原市": {
+    "dead": 2
+   },
+   "08|常総市": {
+    "dead": 14
+   },
+   "08|境町": {
+    "dead": 1
+   },
+   "09|鹿沼市": {
+    "dead": 1
+   },
+   "09|日光市": {
+    "dead": 1
+   },
+   "09|栃木市": {
+    "dead": 1
+   }
+  },
+  "prefZenkai": {
+   "03": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "04": {
+    "dead": 2,
+    "missing": 0,
+    "zenkai": 2
+   },
+   "05": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "06": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "07": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 3
+   },
+   "08": {
+    "dead": 15,
+    "missing": 0,
+    "zenkai": 54
+   },
+   "09": {
+    "dead": 3,
+    "missing": 0,
+    "zenkai": 22
+   },
+   "10": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "12": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "13": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "14": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "15": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "16": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "17": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "20": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "21": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "22": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "23": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "24": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "31": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "37": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   }
+  },
+  "notes": [
+   "市町ごとの全壊は資料にないため、県の全壊を死者の割合で分ける（推計）"
+  ]
+ },
+ "quake2004chuetsu": {
+  "title": "新潟県中越地震",
+  "sources": [
+   {
+    "name": "消防庁 平成16年（2004年）新潟県中越地震（平成21年10月21日更新）",
+    "url": "https://www.fdma.go.jp/disaster/info/assets/post335.pdf"
+   }
+  ],
+  "census": 2005,
+  "munis": {
+   "15|十日町市": {
+    "dead": 9
+   },
+   "15|長岡市": {
+    "dead": 28
+   },
+   "15|小千谷市": {
+    "dead": 19
+   },
+   "15|魚沼市": {
+    "dead": 5
+   },
+   "15|湯沢町": {
+    "dead": 1
+   },
+   "15|見附市": {
+    "dead": 3
+   },
+   "15|南魚沼市": {
+    "dead": 1
+   },
+   "15|燕市": {
+    "dead": 2
+   }
+  },
+  "prefZenkai": {
+   "15": {
+    "zenkai": null
+   }
+  },
+  "notes": [
+   "川口町（今の長岡市）は長岡市に合わせた。全壊は数字待ち"
+  ]
+ },
+ "quake2007chuetsuoki": {
+  "title": "新潟県中越沖地震",
+  "sources": [
+   {
+    "name": "消防庁 平成19年（2007年）新潟県中越沖地震（平成25年5月17日更新）",
+    "url": "https://www.fdma.go.jp/disaster/info/assets/post490.pdf"
+   }
+  ],
+  "census": 2005,
+  "munis": {
+   "15|新潟市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "15|長岡市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 10
+   },
+   "15|三条市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "15|柏崎市": {
+    "dead": 14,
+    "missing": 0,
+    "zenkai": 1121
+   },
+   "15|小千谷市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "15|十日町市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 1
+   },
+   "15|見附市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "15|燕市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 2
+   },
+   "15|糸魚川市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "15|妙高市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "15|上越市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 14
+   },
+   "15|阿賀野市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "15|魚沼市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "15|南魚沼市": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "15|出雲崎町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 17
+   },
+   "15|湯沢町": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "15|刈羽村": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 166
+   }
+  },
+  "prefZenkai": {},
+  "notes": []
+ },
+ "flood2026chiba": {
+  "title": "令和8年8月千葉豪雨",
+  "sources": [
+   {
+    "name": "消防庁 令和8年8月千葉豪雨による被害及び消防機関等の対応状況（第20報、令和8年9月9日）",
+    "url": "https://www.fdma.go.jp/disaster/info/items/20260813chibagouu20.pdf"
+   }
+  ],
+  "census": 2020,
+  "munis": {
+   "12|千葉市": {
+    "dead": 6
+   },
+   "12|市川市": {
+    "dead": 1
+   },
+   "12|佐倉市": {
+    "dead": 2
+   },
+   "12|柏市": {
+    "dead": 1
+   },
+   "12|市原市": {
+    "dead": 1
+   },
+   "12|八千代市": {
+    "dead": 1
+   },
+   "12|いすみ市": {
+    "dead": 1
+   }
+  },
+  "prefZenkai": {
+   "11": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "12": {
+    "dead": 13,
+    "missing": 0,
+    "zenkai": 12
+   }
+  },
+  "notes": [
+   "市町ごとの全壊は資料にないため、県の全壊を死者の割合で分ける（推計）"
+  ]
+ },
+ "typhoon2026": {
+  "title": "令和8年台風第25号・第26号",
+  "sources": [
+   {
+    "name": "消防庁 令和8年台風第25号、第26号及び前線による大雨被害及び消防機関等の対応状況（第25報、令和8年10月5日）",
+    "url": "https://www.fdma.go.jp/disaster/info/items/20260918taihuu25gou25.pdf"
+   }
+  ],
+  "census": 2020,
+  "munis": {
+   "12|茂原市": {
+    "dead": 1
+   },
+   "12|市原市": {
+    "dead": 1
+   },
+   "12|鴨川市": {
+    "dead": 4
+   },
+   "12|袖ケ浦市": {
+    "dead": 1
+   },
+   "12|印西市": {
+    "dead": 1
+   },
+   "12|山武市": {
+    "dead": 1
+   },
+   "12|長柄町": {
+    "dead": 1
+   },
+   "14|横須賀市": {
+    "dead": 3
+   },
+   "14|三浦市": {
+    "dead": 2
+   },
+   "43|玉名市": {
+    "dead": 1
+   },
+   "45|日南市": {
+    "dead": 1
+   }
+  },
+  "prefZenkai": {
+   "08": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "11": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "12": {
+    "dead": 10,
+    "missing": 0,
+    "zenkai": 59
+   },
+   "13": {
+    "dead": 0,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "14": {
+    "dead": 5,
+    "missing": 0,
+    "zenkai": 8
+   },
+   "43": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 0
+   },
+   "45": {
+    "dead": 1,
+    "missing": 0,
+    "zenkai": 0
+   }
+  },
+  "notes": [
+   "市町ごとの全壊は資料にないため、県の全壊を死者の割合で分ける（推計）"
+  ]
+ }
+}

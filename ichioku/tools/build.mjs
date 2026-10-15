@@ -152,7 +152,62 @@ export function build({ test = false } = {}) {
     })
   }));
   if (stats && badNames.length) throw new Error('出来事の市区町村の名前が統計の一覧と合わない（' + badNames.length + '件）：' + badNames.slice(0, 10).join('、'));
-  const pendingRates = eventsOut.filter(e => (e.areas || []).some(a => a.rates && Object.values(a.rates).some(v => v === null))).length;
+  // 被害の割合：data-src/stats/disasters.json の市区町村ごとの死者・行方不明者・全壊を、国勢調査の人口と一般世帯数で割る
+  const DIS_PATH = path.join(ROOT, 'data-src', 'stats', 'disasters.json');
+  const dis = fs.existsSync(DIS_PATH) ? JSON.parse(fs.readFileSync(DIS_PATH, 'utf8')) : {};
+  const popOf = {}, hhOf = {};
+  if (stats && stats.census) { Object.assign(popOf, stats.census.pop); Object.assign(hhOf, stats.census.hh); }
+  // 資料の名前と今の市区町村名の違い（字の違い・改名・合併）
+  const NAME_FIX = { '塩竃市': '塩竈市', '篠山市': '丹波篠山市', '鳩ヶ谷市': '川口市' };
+  const wardsOf = {};
+  for (const p of (stats ? stats.prefs : prefs)) for (const m of p.munis) { const w = /^(.+?市)(.+区)$/.exec(m.name); if (w) (wardsOf[p.code + '|' + w[1]] = wardsOf[p.code + '|' + w[1]] || []).push(m.code); }
+  const near = (series, y) => { const ks = Object.keys(series || {}).map(Number); if (!ks.length) return null; const k = ks.reduce((b, c) => Math.abs(c - y) < Math.abs(b - y) ? c : b); return series[k]; };
+  const disBad = [];
+  for (const e of eventsOut) {
+    const d = dis[e.id];
+    if (!d) continue;
+    // 市区町村の名前を番号に直す。区のある市の数字は、区に市全体の割合を使う（推計）
+    const per = {}; // code -> {dead, missing, zenkai, est}
+    const pdead = {};
+    for (const [key, v] of Object.entries(d.munis)) {
+      const [pc, raw] = key.split('|');
+      let nm = NAME_FIX[raw] || raw;
+      if (!muniIndex[pc + '|' + nm] && !wardsOf[pc + '|' + nm] && muniIndex[pc + '|' + nm.replace(/ヶ/g, 'ケ')]) nm = nm.replace(/ヶ/g, 'ケ');
+      pdead[pc] = (pdead[pc] || 0) + (v.dead || 0) + (v.missing || 0);
+      const code = muniIndex[pc + '|' + nm];
+      const ws = wardsOf[pc + '|' + nm];
+      if (code && per[code] && !per[code].est) { for (const k of ['dead', 'missing', 'zenkai']) if (v[k] != null) per[code][k] = (per[code][k] || 0) + v[k]; }
+      else if (code) per[code] = { ...v, codes: [code] };
+      else if (ws) for (const c of ws) per[c] = { ...v, codes: ws, est: true };
+      else disBad.push(e.title + '：' + key);
+    }
+    for (const [key, v] of Object.entries(d.wards || {})) { const c = muniIndex[key]; if (c) per[c] = { ...per[c], ...v, codes: [c], est: false, zenkai: undefined }; else disBad.push(e.title + '：' + key); }
+    const rate = (n, codes, tab) => { const den = codes.reduce((s, c) => s + (near(tab[c], d.census) || 0), 0); return den > 0 ? +Math.min(0.95, n / den).toFixed(5) : null; };
+    e.byCode = {};
+    const allCodes = new Set((e.areas || []).flatMap(a => a.rates ? (a.codes || []) : []));
+    for (const c of allCodes) {
+      const v = per[c];
+      const o = {};
+      if (!v) { o.dead = 0; o.house = 0; e.byCode[c] = o; continue; }
+      const codes = v.codes;
+      o.dead = rate((v.dead || 0) + (v.missing || 0), codes, popOf);
+      if (v.zenkai != null) o.house = rate(v.zenkai, codes, hhOf);
+      else {
+        // 市区町村ごとの全壊がない資料：県の全壊を、県の中の死者の割合で分ける（推計）
+        const pz = (d.prefZenkai || {})[c.slice(0, 2)];
+        const pd = pdead[c.slice(0, 2)];
+        if (pz && pz.zenkai != null && pd > 0) { o.house = rate(pz.zenkai * ((v.dead || 0) + (v.missing || 0)) / pd, codes, hhOf); o.houseEst = true; }
+        else o.house = null;
+      }
+      if (v.est) o.est = true;
+      e.byCode[c] = o;
+    }
+    e.disSources = d.sources;
+    e.disNotes = d.notes;
+  }
+  if (stats && disBad.length) throw new Error('被害の資料の市区町村の名前が統計の一覧と合わない（' + disBad.length + '件）：' + disBad.slice(0, 15).join('、'));
+  // 数字待ち：割合を使う地域なのに、資料がない（または全壊が出せない）出来事
+  const pendingRates = eventsOut.filter(e => (e.areas || []).some(a => a.rates && Object.entries(a.rates).some(([k, v]) => v === null && !(e.byCode && (a.codes || []).every(c => e.byCode[c] && e.byCode[c][k] != null))))).map(e => e.title);
   const timelineOut = [...timeline.map(({ hit, ...r }) => r), ...extraTimeline].sort((a, b) => a.y - b.y);
   const namesOut = stats && stats.names && Object.keys(stats.names).length > 50 ? stats.names : names;
   const e0s = { m: { ...e0.m }, f: { ...e0.f } };
@@ -179,7 +234,7 @@ export function build({ test = false } = {}) {
     else if (g.provBefore) provisional.push(g.name + 'の普及率（' + (g.provBefore - 1) + '年以前。取り込んだ表が' + g.provBefore + '年からのため）');
   }
   if (namesOut === names) provisional.push('名前の流行（取り込み前の値）');
-  if (pendingRates) provisional.push('大きな災害・事件の被害の割合（亡くなる・家を失う・避難する・仕事を失う）：' + pendingRates + '件の出来事が数字待ち。消防庁・内閣府防災などのサイトに通信の許可がない');
+  if (pendingRates.length) provisional.push('大きな災害の被害の割合（亡くなる・家を失う）：' + pendingRates.length + '件の出来事が数字待ち（' + pendingRates.join('、') + '）');
   const common = {
     meta: {
       provisional: provisional.length > 0,

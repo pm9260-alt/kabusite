@@ -247,6 +247,7 @@ if (un) {
 }
 
 /* ---------- 全国の暮らしの値（2回目の取り込み、2026-10-16） ---------- */
+const census = {};
 const fileJob = id => {
   const x = path.join(FILES, id + '.xlsx'), meta = path.join(FILES, id + '.json');
   if (!fs.existsSync(x)) { missing.push(id + '：まだ取り込んでいない'); return null; }
@@ -429,6 +430,9 @@ for (const y of Object.keys(names)) if (!names[y].m || !names[y].f) delete names
   const h = vals(load('muni-house'));
   if (h.H1310) nat.ownHome = backcast(ratioByKind(h.H1310, h.H3111), natOf(load('nat-house'), 'H1310', 'H3111'), 'ownHome');
   const hh = vals(load('muni-household'));
+  // 災害の被害の割合に使う、市区町村ごとの人口と一般世帯数（国勢調査の年ごと）
+  census.pop = Object.fromEntries(Object.entries(hh.A1101 || {}).filter(([c]) => kindOf[c]));
+  census.hh = Object.fromEntries(Object.entries(hh.A710101 || {}).filter(([c]) => kindOf[c]));
   if (hh.A810103) {
     const fam = {};
     for (const [a, ys] of Object.entries(hh.A810103)) for (const [y, x] of Object.entries(ys)) if (hh.A810102[a] && hh.A810102[a][y] != null) (fam[a] = fam[a] || {})[y] = x + hh.A810102[a][y];
@@ -510,7 +514,7 @@ const wage = {};
   }
 }
 
-const out = { generated: new Date().toISOString(), tables: used, missing, nat, prefs, goods, names, wage };
+const out = { generated: new Date().toISOString(), tables: used, missing, nat, prefs, goods, names, wage, census };
 fs.mkdirSync(path.dirname(OUT), { recursive: true });
 fs.writeFileSync(OUT, JSON.stringify(out));
 const muniN = prefs.reduce((s, p) => s + p.munis.length, 0);
