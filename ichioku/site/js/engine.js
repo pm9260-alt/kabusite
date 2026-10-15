@@ -877,6 +877,7 @@
     if (c.pref && c.pref.indexOf(L.place.pref) < 0) return false;
     if (c.homePref && (L.place.pref === L.home.pref || c.homePref.indexOf(L.home.pref) < 0)) return false;
     if (c.yrs && c.yrs.indexOf(y) < 0) return false;
+    if (c.widowed && !L.widowed) return false;
     return true;
   }
   function pickScene(L) {

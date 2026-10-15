@@ -37,7 +37,10 @@ export const sources = {
   rebit: { name: 'LGBTQ子ども・若者調査2025', org: '認定NPO法人ReBit（民間の調査）', extra: true, approved: '2026-10-16' },
   partner: { name: '全国パートナーシップ制度共同調査', org: '渋谷区・認定NPO法人虹色ダイバーシティ', extra: true, approved: '2026-10-16' },
   local: { name: '都道府県・市町村の公表資料（祭り・行事・条例など）', org: '各都道府県・市町村', extra: true, approved: '2026-10-16' },
-  shogyo: { name: '商業統計調査・経済センサス', org: '経済産業省・総務省', extra: true, approved: '2026-10-16' }
+  shogyo: { name: '商業統計調査・経済センサス', org: '経済産業省・総務省', extra: true, approved: '2026-10-16' },
+  // 年表の出来事の出典（統計ではなく公的な記録）
+  mlit: { name: '国土交通省の公表資料（航空事故調査報告・宅配便取扱個数）', org: '国土交通省' },
+  record: { name: '政府・裁判所などの公表記録（事件・大会・裁判・製品の発売）', org: '各府省・最高裁判所など' }
 };
 
 export const nat = {

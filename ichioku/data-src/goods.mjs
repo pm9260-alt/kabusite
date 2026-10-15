@@ -37,8 +37,11 @@ export const names = {
 };
 
 // 相談先（12章）。名前と番号は公開直前に最新のものを確かめる。確認前は verified: false
+// 2026-10-16 に厚生労働省「まもろうよ こころ」電話相談のページ（https://www.mhlw.go.jp/mamorouyokokoro/soudan/tel/）で確認
 export const hotline = [
-  { name: 'いのちの電話（ナビダイヤル）', tel: '0570-783-556', verified: false },
-  { name: 'よりそいホットライン', tel: '0120-279-338', verified: false },
-  { name: 'こころの健康相談統一ダイヤル', tel: '0570-064-556', verified: false }
+  { name: '#いのちSOS（24時間・無料）', tel: '0120-061-338', verified: true, checked: '2026-10-16' },
+  { name: 'よりそいホットライン（24時間・無料）', tel: '0120-279-338', verified: true, checked: '2026-10-16' },
+  { name: 'いのちの電話（ナビダイヤル）', tel: '0570-783-556', verified: true, checked: '2026-10-16' },
+  { name: 'こころの健康相談統一ダイヤル', tel: '0570-064-556', verified: true, checked: '2026-10-16' },
+  { name: '24時間子供SOSダイヤル（無料）', tel: '0120-0-78310', verified: true, checked: '2026-10-16' }
 ];
