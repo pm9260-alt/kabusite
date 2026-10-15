@@ -476,6 +476,9 @@
       if (r.hit.prefs.indexOf(L.place.pref) < 0) return;
       if (rnd() < r.hit.p) push(L, rec, '時代', fill(L, r.hit.text), [ev(C, r.src, y, r.srcNote || '災害の被害の範囲', '')]);
     });
+    // 大きな災害・事件・催し（その年にいる市区町村で判定する）
+    eventYear(L, rec);
+    if (!L.alive) return;
     // 30歳のとき地元（生まれた都道府県）にいるか
     if (a === 30) L.stats.atHome30 = !L.place.away && L.place.pref === L.home.pref;
   }
@@ -819,9 +822,84 @@
     if (w.future) L.earn.futureYears++;
   }
 
+  /* ---------- 大きな災害・事件・催し ---------- */
+  // 同じ家に暮らしている家族（子どものうちは親ときょうだい、結婚してからは配偶者と18歳未満の子）
+  function household(L) {
+    var y = L.year;
+    return L.members.filter(function (m) {
+      if (!m.alive || m.gone || m.by > y) return false;
+      if (L.married) return m.role === '配偶者' || (m.role === '子' && y - m.by < 18);
+      if (L.age < 22) return m.role === '父' || m.role === '母' || (m.sib && y - m.by < 22) || m.live;
+      return false;
+    });
+  }
+  function eventArea(L, e) {
+    var a = L.age;
+    for (var i = 0; i < (e.areas || []).length; i++) {
+      var ar = e.areas[i];
+      if (ar.pref !== L.place.pref) continue;
+      if (ar.codes && ar.codes.indexOf(L.place.muni) < 0) continue;
+      if (ar.ages && (a < ar.ages[0] || a > ar.ages[1])) return null;
+      return ar;
+    }
+    return null;
+  }
+  function eventYear(L, rec) {
+    var C = L.C, y = L.year, a = L.age, rnd = L.rnd;
+    (C.events || []).forEach(function (e) {
+      if (e.y !== y || !L.alive) return;
+      var base = ev(C, e.src, y, e.title + '（' + e.srcNote + '）', '', { verified: !!e.verified });
+      var ar = L.place.away ? null : eventArea(L, e);
+      if (!ar && e.all) {
+        for (var i = 0; i < e.all.length; i++) {
+          var g = e.all[i];
+          if (a >= g.ages[0] && a <= g.ages[1]) { if (rnd() < g.p) push(L, rec, '時代', fill(L, g.text), [base]); break; }
+        }
+        return;
+      }
+      if (!ar) return;
+      var r = ar.rates || {};
+      function rateEv(what, v) { return ev(C, e.src, y, e.title + '：' + what + '（' + (ar.rateSrc || e.srcNote) + '）', pct(v)); }
+      if (rnd() < (ar.p == null ? 1 : ar.p)) push(L, rec, '時代', fill(L, ar.text), [base]);
+      // 亡くなる（本人・同じ家の家族）
+      if (r.dead != null) {
+        household(L).forEach(function (m) {
+          if (rnd() < r.dead) { m.alive = false; m.dy = y; push(L, rec, '家庭', e.title + 'で、' + relWord(L, m) + 'の' + m.name + 'が亡くなった。', [rateEv('亡くなった人の割合', r.dead)]); }
+        });
+        if (rnd() < r.dead) { dieBy(L, rec, 'disaster', y + '年、' + a + '歳のとき、' + e.title + 'で亡くなった。', [rateEv('亡くなった人の割合', r.dead)]); return; }
+      }
+      // 家を失う・避難して町を離れる
+      var moved = false;
+      if (r.house != null && rnd() < r.house) {
+        L.ownHome = false;
+        push(L, rec, '家庭', e.title + 'で家が住めなくなり、しばらく避難所や仮設住宅で暮らした。', [rateEv('家を失った世帯の割合', r.house)]);
+        moved = rnd() < 0.3;
+      }
+      if (!moved && r.evac != null && rnd() < r.evac) moved = true;
+      if (moved && L.P.munis.length > 1) {
+        var hit = ar.codes || [];
+        var nm = pickMuni(L.P, y, rnd, L.place.muni);
+        for (var k = 0; k < 5 && hit.indexOf(nm.code) >= 0; k++) nm = pickMuni(L.P, y, rnd, L.place.muni);
+        L.place.muni = nm.code; L.place.muniName = nm.name; L.place.kind = nm.kind; L.place.muniObj = nm;
+        push(L, rec, '家庭', e.title + 'のあと、住んでいた町を離れ、' + nm.name + 'へ移って暮らすことになった。', [rateEv('町を離れて避難した人の割合', r.evac != null ? r.evac : r.house)]);
+      }
+      if (r.job != null && L.job && rnd() < r.job) {
+        L.job = null; L.stage = 'jobless'; L.lostJob = true;
+        push(L, rec, '学歴と仕事', e.title + 'で勤め先が被害を受け、仕事を失った。', [rateEv('仕事を失った人の割合', r.job)]);
+      }
+    });
+  }
+  function dieBy(L, rec, cause, text, evs) {
+    L.alive = false; L.deathAge = L.age; L.deathYear = L.year; L.cause = cause;
+    L.queue = [];
+    rec.dead = true;
+    push(L, rec, '健康', text, evs);
+  }
+
   function finishYear(L, rec) {
     var C = L.C, y = L.year, a = L.age, rnd = L.rnd;
     earnYear(L);
+    if (!L.alive) return advance(L, rec);
     {
       var dp = deathProb(C, L.P, L.sex, a, y);
       if (a >= MAX_AGE) dp = 1;

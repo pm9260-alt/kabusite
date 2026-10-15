@@ -207,7 +207,7 @@
       evs.forEach(function (e) {
         var d = el('div', 'evi');
         d.appendChild(el('p', 'src', e.name + (e.org ? '（' + e.org + '）' : '')));
-        if (e.y) d.appendChild(el('p', 'note', e.y + '年の値' + (cur && e.y !== cur.year ? '（' + cur.year + '年の値がないため、いちばん近い年を使用）' : '')));
+        if (e.y) d.appendChild(el('p', 'note', e.y + '年の値' + (!e.noYearNote && cur && e.y !== cur.year ? '（' + cur.year + '年の値がないため、いちばん近い年を使用）' : '')));
         if (e.what) d.appendChild(el('p', 'what', e.what));
         if (e.val) d.appendChild(el('p', 'val', e.val));
         var marks = [];
@@ -260,7 +260,7 @@
   }
   function srcEv(src, y, what, val, extra) {
     var s = C.sources[src] || {};
-    var e = { src: src, name: s.name || src, org: s.org || '', y: y, what: what, val: val, prov: !!C.meta.provisional };
+    var e = { src: src, name: s.name || src, org: s.org || '', y: y, what: what, val: val, prov: !!C.meta.provisional, noYearNote: true };
     if (extra) for (var k in extra) e[k] = extra[k];
     return e;
   }

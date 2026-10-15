@@ -8,6 +8,7 @@ import { prefs, natSchool } from '../data-src/prefs.mjs';
 import { timeline } from '../data-src/timeline.mjs';
 import { goods, names, hotline } from '../data-src/goods.mjs';
 import { scenes } from '../data-src/scenes.mjs';
+import { events, extraTimeline } from '../data-src/events.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, 'site', 'data');
@@ -138,6 +139,21 @@ export function build({ test = false } = {}) {
     if (Object.keys(keep).length) o.provBefore = first;
     return o;
   });
+  // 出来事：市区町村の名前を番号に直す。合わない名前があれば止める
+  const muniIndex = {};
+  for (const p of (stats ? stats.prefs : prefs)) for (const m of p.munis) muniIndex[p.code + '|' + m.name] = m.code;
+  const badNames = [];
+  const eventsOut = events.map(e => ({
+    ...e,
+    areas: (e.areas || []).map(a => {
+      const codes = a.munis ? a.munis.map(n => { const c = muniIndex[a.pref + '|' + n]; if (!c) badNames.push(e.title + '：' + a.pref + ' ' + n); return c; }) : null;
+      const { munis, ...rest } = a;
+      return { ...rest, codes };
+    })
+  }));
+  if (stats && badNames.length) throw new Error('出来事の市区町村の名前が統計の一覧と合わない（' + badNames.length + '件）：' + badNames.slice(0, 10).join('、'));
+  const pendingRates = eventsOut.filter(e => (e.areas || []).some(a => a.rates && Object.values(a.rates).some(v => v === null))).length;
+  const timelineOut = [...timeline.map(({ hit, ...r }) => r), ...extraTimeline].sort((a, b) => a.y - b.y);
   const namesOut = stats && stats.names && Object.keys(stats.names).length > 50 ? stats.names : names;
   const e0s = { m: { ...e0.m }, f: { ...e0.f } };
   if (N.e0) for (const sex of ['m', 'f']) {
@@ -163,6 +179,7 @@ export function build({ test = false } = {}) {
     else if (g.provBefore) provisional.push(g.name + 'の普及率（' + (g.provBefore - 1) + '年以前。取り込んだ表が' + g.provBefore + '年からのため）');
   }
   if (namesOut === names) provisional.push('名前の流行（取り込み前の値）');
+  if (pendingRates) provisional.push('大きな災害・事件の被害の割合（亡くなる・家を失う・避難する・仕事を失う）：' + pendingRates + '件の出来事が数字待ち。消防庁・内閣府防災などのサイトに通信の許可がない');
   const common = {
     meta: {
       provisional: provisional.length > 0,
@@ -178,7 +195,8 @@ export function build({ test = false } = {}) {
     prefs: list.map(p => ({ code: p.code, name: p.name, region: p.region, births: p.births })),
     nat: { ...nat, ...natReal, marryShape: { m: shapeM, f: shapeF }, marryShapeSum: { m: shapeM.reduce((a, b) => a + b, 0), f: shapeF.reduce((a, b) => a + b, 0) } },
     mort: { beta: BETA, bg: BG, q0: q0s, alpha: alphaTable(e0s, q0s, null) },
-    timeline,
+    timeline: timelineOut,
+    events: eventsOut,
     wage: stats && stats.wage && stats.wage.profile ? stats.wage : null,
     goods: goodsOut,
     names: namesOut,

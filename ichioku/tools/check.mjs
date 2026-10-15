@@ -90,6 +90,11 @@ function texts() {
   for (const s of C.scenes) out.push(['場面 ' + s.id, s.t]);
   for (const r of C.timeline) { out.push(['年表 ' + r.y, r.text]); if (r.hit) out.push(['年表 ' + r.y + '（自分）', r.hit.text]); if (r.short) out.push(['年表 ' + r.y + '（短）', r.short]); }
   for (const g of C.goods) { out.push(['物 ' + g.id, g.home]); out.push(['物 ' + g.id, g.own]); }
+  for (const e of C.events || []) {
+    out.push(['出来事 ' + e.id, e.title + ' ' + e.srcNote]);
+    for (const a of e.areas || []) out.push(['出来事 ' + e.id, a.text]);
+    for (const a of e.all || []) out.push(['出来事 ' + e.id, a.text]);
+  }
   for (const f of ['index.html', 'about.html', 'js/app.js', 'js/engine.js']) {
     const p = path.join(SITE, f);
     if (fs.existsSync(p)) out.push([f, stripCode(fs.readFileSync(p, 'utf8'))]);
