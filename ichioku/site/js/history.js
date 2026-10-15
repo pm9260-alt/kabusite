@@ -431,7 +431,7 @@
       var gk = L.members.filter(function (m) { return m.role === '孫' && m.parentId === k.id; }).length;
       if (gk < 3 && rnd() < (y < 1950 ? 0.15 : 0.08)) {
         var g = addMember(L, '孫', rnd() < 0.513 ? 'm' : 'f', y, { parentId: k.id });
-        push(L, rec, '家庭', who(k) + 'に子どもが生まれ、孫の' + g.name + 'ができた。', [ev(L, 'ipss', y, '出生数', '')]);
+        push(L, rec, '家庭', who(k) + 'に子どもが生まれ、' + (/アイヌ語/.test(g.name) ? '孫ができた。' : '孫の' + g.name + 'ができた。'), [ev(L, 'ipss', y, '出生数', '')]);
       }
     });
   }
