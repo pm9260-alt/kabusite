@@ -166,7 +166,27 @@
     };
     CATS.forEach(function (c) { L.cat[c] = 0; });
     familyAtBirth(L);
+    L.sm = drawMinority(L);
+    L.out = null;
     return L;
+  }
+
+  // 性的少数者かどうか（国の委託調査の出現率をもとに抽選。null は該当しない）
+  function drawMinority(L) {
+    var r = (L.C.nat.minority || {})[L.sex];
+    if (!r) return null;
+    var u = L.rnd(), acc = 0;
+    for (var k in r) { acc += r[k]; if (u < acc) return k; }
+    return null;
+  }
+  // 人口カバー率は確かめた年（2024年以降）だけ数字を出す。制度は2015年11月の渋谷区・世田谷区から
+  function coverText(C, y) { return y < 2015 ? 'まだない' : y < 2024 ? '広がり始めた時期（年ごとの数字は未確認）' : pct(val(C.nat.partnerCover, y)); }
+  function samesex(L) { return L.sm === 'gay' || L.sm === 'lesbian'; }
+  // パートナーシップ制度がその年・その場所で使えるか
+  function partnerOk(L) {
+    var from = (L.C.nat.partnerFrom || {})[L.place.pref];
+    if (!from) from = (L.C.nat.partnerFrom || {}).other || 9999;
+    return L.year >= from;
   }
 
   function familyAtBirth(L) {
@@ -340,6 +360,7 @@
       if (rnd() < deathProb(C, L.P, m.sex, y - m.by, y)) {
         m.alive = false; m.dy = y;
         if (m.role === '配偶者') { L.married = false; L.widowed = true; }
+        if (m.role === 'パートナー') { L.partner = false; L.partnerLost = true; }
         push(L, rec, '家庭', relWord(L, m) + 'の' + m.name + 'が亡くなった。' + (y - m.by) + '歳だった。', [ev(C, 'lifetable', y, (y - m.by) + '歳の人が1年のうちに亡くなる確率（生命表から推計）', (deathProb(C, L.P, m.sex, y - m.by, y) * 100).toFixed(2) + '%')]);
       }
     });
@@ -381,6 +402,7 @@
         startWork(L, rec, null, '中学を卒業して働き始めた。', true);
       }
     }
+    if (a === 17 && L.sm) L.queue.push(branchOut(L));
     if (a === 18 && L.school === 'hs') L.queue.push(branchPath(L));
     if (L.school && L.gradAge === a && L.school !== 'hs') L.queue.push(branchJob(L));
     // 仕事
@@ -407,7 +429,7 @@
     }
     if (a === 65) push(L, rec, '家庭', '年金を受け取り始めた。', [ev(C, 'law', y, '公的年金の支給開始年齢', '65歳')]);
     // 結婚
-    if (a === 26 && !L.everMarried) L.queue.push(branchMarry(L));
+    if (a === 26 && !L.everMarried) L.queue.push(samesex(L) ? branchPartner(L) : branchMarry(L));
     if (!L.married && !L.divorced && a >= 18 && a <= 55) marryYear(L, rec);
     if (L.married) childYear(L, rec);
     if (L.married && L.marriedY && y - L.marriedY <= 20 && rnd() < C.nat.divorce) {
@@ -516,6 +538,7 @@
 
   function marryYear(L, rec) {
     var C = L.C, y = L.year, a = L.age, rnd = L.rnd;
+    if (samesex(L)) return partnerYear(L, rec);
     var target = val(C.nat.everMarried[L.sex], L.by);
     var h = C.nat.marryShape[L.sex][a - 18] || 0;
     var k = -Math.log(1 - target) / C.nat.marryShapeSum[L.sex];
@@ -529,6 +552,27 @@
       push(L, rec, '家庭', (a <= 30 ? '' : '') + sp.name + 'さんと結婚した。相手は' + (L.by + diff) + '年生まれ。', [ev(C, 'vital', y, '生まれ年ごとの、50歳までに結婚する人の割合', pct(target), { est: true })]);
     }
   }
+  // 同性のパートナーとの暮らし（法律上の結婚はできない。制度があれば宣誓できる）
+  function partnerYear(L, rec) {
+    var C = L.C, y = L.year, a = L.age, rnd = L.rnd;
+    if (!L.partner) {
+      var target = val(C.nat.everMarried[L.sex], L.by);
+      var h = C.nat.marryShape[L.sex][a - 18] || 0;
+      var k = -Math.log(1 - target) / C.nat.marryShapeSum[L.sex];
+      var p = (1 - Math.exp(-k * h * (L.marryMult || 1))) * 0.7;
+      if (rnd() < p) {
+        var pt = addMember(L, 'パートナー', L.sex, L.by + Math.round(gauss(rnd) * 3));
+        L.partner = true; L.partnerY = y;
+        push(L, rec, '家庭', pt.name + 'さんと一緒に暮らし始めた。法律の上では、結婚することはできなかった。', [ev(C, 'law', y, '同性どうしの結婚を認める法律', 'なし')]);
+      }
+      return;
+    }
+    if (!L.pledged && partnerOk(L) && rnd() < (L.wantPledge ? 0.5 : 0.15)) {
+      L.pledged = true;
+      push(L, rec, '家庭', '住んでいる自治体のパートナーシップ制度で、パートナーと宣誓をした。証明書は受け取れたが、法律上の家族にはならなかった。', [ev(C, 'partner', y, 'パートナーシップ制度のある自治体に住む人の割合（人口カバー率）', coverText(C, y))]);
+    }
+  }
+
   function childYear(L, rec) {
     var C = L.C, y = L.year, rnd = L.rnd;
     var sp = L.members.filter(function (m) { return m.role === '配偶者' && m.alive && !m.gone; })[0];
@@ -600,6 +644,25 @@
     };
   }
 
+  function branchOut(L) {
+    var C = L.C, y = L.year;
+    return {
+      id: 'out', title: '打ち明けるかどうか',
+      groups: [{ id: 'o', q: (L.sm === 'trans' ? '自分の性のことを' : '自分が好きになる相手のことを') + '、誰かに打ち明けますか', options: [{ k: 'family', l: '家族に打ち明ける' }, { k: 'friend', l: '信頼できる友だちにだけ' }, { k: 'none', l: '今は誰にも言わない' }] }],
+      ev: [ev(C, 'lgbt', 2024, '働く性的少数者のうち、職場で自分のことを伝えている人の割合', '16.8%'),
+        ev(C, 'rebit', 2025, '10代の性的少数者のうち、この1年に自ら命を絶つことを考えた人の割合（民間の調査）', '53.9%')]
+    };
+  }
+  function branchPartner(L) {
+    var C = L.C, y = L.year;
+    return {
+      id: 'partner', title: 'パートナー',
+      groups: [{ id: 'p', q: '同性のパートナーとの暮らしについて、どう考えていますか', options: [{ k: 'pledge', l: '一緒に暮らし、制度があれば宣誓もしたい' }, { k: 'live', l: '一緒に暮らしたい' }, { k: 'alone', l: 'ひとりで生きていく' }] }],
+      ev: [ev(C, 'law', y, '同性どうしの結婚を認める法律', 'なし（2026年10月時点で最高裁の大法廷が審理中）'),
+        ev(C, 'partner', y, 'パートナーシップ制度のある自治体に住む人の割合（人口カバー率）', coverText(C, y))]
+    };
+  }
+
   // 自動で選ぶときは「統計どおり」に任せる（answers = null）
   function resolve(L, answers) {
     var rec = L.rec, br = rec.branch, C = L.C, P = L.P, y = L.year, rnd = L.rnd;
@@ -641,6 +704,19 @@
         txt = school + 'を卒業して地元に戻り、' + jobText(L, r.k, r.reg, r.jr);
       }
       e = push(L, rec, '学歴と仕事', txt, r.evs.concat([ev(C, 'migration', nv(P.s.ret, y).y, '県外に出た人が地元へ戻る割合', pct(val(P.s.ret, y)), { est: true })]));
+    } else if (br.id === 'out') {
+      var w = natural ? { family: 0.2, friend: 0.45, none: 0.35 } : ({ family: { family: 0.8, friend: 0.15, none: 0.05 }, friend: { family: 0.05, friend: 0.85, none: 0.1 }, none: { family: 0, friend: 0.1, none: 0.9 } })[answers.o];
+      L.out = pick(rnd, ['family', 'friend', 'none'], function (k) { return w[k]; });
+      var ot;
+      if (L.out === 'family') ot = rnd() < 0.55 ? '家族に打ち明けた。しばらく沈黙が続いたあと、「話してくれてよかった」と言われた。' : '家族に打ち明けた。「一時の気の迷いだ」と言われ、その話はそれきりになった。';
+      else if (L.out === 'friend') ot = '信頼できる友だちにだけ打ち明けた。「そうなんだ」と、いつもどおりに話を続けてくれた。';
+      else ot = (!natural && answers.o !== 'none') ? '打ち明けようとしたが、言葉が出てこなかった。誰にも言わないまま過ごした。' : '誰にも言わないまま過ごした。';
+      e = push(L, rec, '人間関係', ot, br.ev, { est: true });
+    } else if (br.id === 'partner') {
+      L.marryMult = natural ? 1 : ({ pledge: 1.7, live: 1.2, alone: 0.1 })[answers.p];
+      L.wantPledge = !natural && answers.p === 'pledge';
+      var pt2 = natural ? 'これからの暮らしのことを、ひとりで考える時間が増えた。' : ({ pledge: 'パートナーと暮らし、制度があれば宣誓もしたいと思っている。', live: 'パートナーと一緒に暮らしたいと思っている。', alone: 'ひとりで生きていくつもりでいる。' })[answers.p];
+      e = push(L, rec, '人間関係', pt2, br.ev);
     } else if (br.id === 'marry') {
       L.marryMult = natural ? 1 : ({ yes: 1.7, maybe: 1, no: 0.15 })[answers.m];
       var tt = natural ? '結婚について、まわりと話すことが増えた。' : ({ yes: '結婚したいと思っている。', maybe: '縁があれば結婚したいと思っている。', no: '結婚はしないつもりでいる。' })[answers.m];
@@ -725,6 +801,7 @@
       var s = pickScene(L);
       var mem = [];
       if (s) push(L, rec, s.cat, fill(L, s.t, mem), [ev(C, s.src, y, s.what || '', s.val || '', { verified: !!s.verified })], { sid: s.id, mem: mem });
+      if (s && s.hl) rec.hotline = true;
     }
     if (!rec.events.length) L.stats.emptyYears++;
     return advance(L, rec);
@@ -792,6 +869,14 @@
     if (c.lostParent && !L.members.some(function (m) { return (m.role === '父' || m.role === '母') && !m.alive && m.dy; })) return false;
     if (c.grand && !L.members.some(function (m) { return m.role === '孫' && m.alive; })) return false;
     if (c.ownGoods && !L.goods[c.ownGoods]) return false;
+    if (c.sm === true && !L.sm) return false;
+    if (c.sm && c.sm !== true && c.sm.indexOf(L.sm) < 0) return false;
+    if (c.out && c.out.indexOf(L.out) < 0) return false;
+    if (c.partner === true && !L.partner) return false;
+    if (c.partnerOk && !partnerOk(L)) return false;
+    if (c.pref && c.pref.indexOf(L.place.pref) < 0) return false;
+    if (c.homePref && (L.place.pref === L.home.pref || c.homePref.indexOf(L.home.pref) < 0)) return false;
+    if (c.yrs && c.yrs.indexOf(y) < 0) return false;
     return true;
   }
   function pickScene(L) {
@@ -810,7 +895,7 @@
 
   // 文中の {父} などを生きている家族の続柄に置き換える
   function fill(L, t, mem) {
-    return t.replace(/\{(父|母|きょうだい|配偶者|子|孫|祖父|祖母|町|県)\}/g, function (_, k) {
+    return t.replace(/\{(父|母|きょうだい|配偶者|パートナー|子|孫|祖父|祖母|町|県)\}/g, function (_, k) {
       if (k === '町') return L.place.away ? L.place.prefName : L.place.muniName;
       if (k === '県') return L.place.prefName;
       var list = living(L, k);
