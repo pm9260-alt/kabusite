@@ -858,8 +858,12 @@
         return;
       }
       if (!ar) return;
-      var r = ar.rates || {};
-      function rateEv(what, v) { return ev(C, e.src, y, e.title + '：' + what + '（' + (ar.rateSrc || e.srcNote) + '）', pct(v)); }
+      // 市区町村ごとの被害の割合（組み立てのときに消防庁などの資料から計算したもの）があれば、それを使う
+      var r = {}, k2, bc = e.byCode && e.byCode[L.place.muni];
+      for (k2 in (ar.rates || {})) r[k2] = ar.rates[k2];
+      if (bc && ar.rates) for (k2 in bc) if (bc[k2] != null) r[k2] = bc[k2];
+      var src2 = (e.disSources && e.disSources[0] && bc) ? e.disSources[0].name : (ar.rateSrc || e.srcNote);
+      function rateEv(what, v) { return ev(C, e.src, y, e.title + '：' + what + '（' + src2 + '）', v < 0.001 && v > 0 ? (v * 100).toFixed(3) + '%' : pct(v), { est: !!(bc && (bc.est || (what.indexOf('家') >= 0 && bc.houseEst))) }); }
       if (rnd() < (ar.p == null ? 1 : ar.p)) push(L, rec, '時代', fill(L, ar.text), [base]);
       // 亡くなる（本人・同じ家の家族）
       if (r.dead != null) {
