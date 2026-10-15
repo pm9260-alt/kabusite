@@ -1,0 +1,152 @@
+/* 1億分の1 画面の見た目
+   決まり（13章）：ゴシック体だけ。グラデーション・影・ぼかし・下線・左側だけの色・飾りの英語見出し・絵文字は使わない。
+   境界は1pxの線。強調色の意味は画面全体で同じにする。
+   --accent：押せるもの（ボタン・リンク・出来事）　--world：その年の世の中　--warn：注意と相談先 */
+:root {
+  --bg: #ffffff;
+  --surface: #f3f3f1;
+  --text: #1a1a1a;
+  --sub: #555555;
+  --line: #c9c9c6;
+  --accent: #0a58a8;
+  --on-accent: #ffffff;
+  --world: #7a4600;
+  --warn: #a3000b;
+  --prov-bg: #fff3d1;
+  --prov-text: #5a3b00;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121212;
+    --surface: #1d1d1d;
+    --text: #ececec;
+    --sub: #b4b4b4;
+    --line: #4a4a4a;
+    --accent: #7fb8ff;
+    --on-accent: #0b1a2b;
+    --world: #f2c47e;
+    --warn: #ff8f87;
+    --prov-bg: #3a2e10;
+    --prov-text: #ffe2a3;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121212;
+  --surface: #1d1d1d;
+  --text: #ececec;
+  --sub: #b4b4b4;
+  --line: #4a4a4a;
+  --accent: #7fb8ff;
+  --on-accent: #0b1a2b;
+  --world: #f2c47e;
+  --warn: #ff8f87;
+  --prov-bg: #3a2e10;
+  --prov-text: #ffe2a3;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", "YuGothic", Meiryo, sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+}
+a { color: var(--accent); text-decoration: none; font-weight: 600; }
+a:focus-visible, button:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+h1, h2, p, ul, ol { margin: 0; }
+ul, ol { padding: 0; list-style: none; }
+[hidden] { display: none !important; }
+
+#app { max-width: 480px; margin: 0 auto; padding: 12px 16px 20px; }
+.screen { display: flex; flex-direction: column; gap: 12px; min-height: calc(100vh - 32px); min-height: calc(100dvh - 32px); }
+
+/* トップ */
+.prov { background: var(--prov-bg); color: var(--prov-text); border: 1px solid var(--line); padding: 6px 10px; font-size: 13px; }
+.title { font-size: 34px; line-height: 1.2; margin-top: 8px; letter-spacing: 0.02em; }
+.title-note { font-size: 15px; font-weight: 400; color: var(--sub); margin-left: 4px; }
+.catch { font-size: 18px; font-weight: 700; }
+.lead { color: var(--text); }
+.born-box { border: 1px solid var(--line); padding: 14px; display: flex; flex-direction: column; gap: 8px; background: var(--surface); }
+.label { font-weight: 700; }
+.year-row { display: flex; gap: 8px; align-items: stretch; }
+.year-row select { flex: 1; font: inherit; font-size: 20px; font-weight: 700; padding: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--text); border-radius: 0; }
+.note { font-size: 13px; color: var(--sub); }
+.warn-text { color: var(--warn); font-size: 14px; }
+.past { font-size: 13px; color: var(--sub); }
+.foot { margin-top: auto; padding-top: 12px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+.credit { color: var(--sub); }
+
+/* ボタン */
+button { font: inherit; cursor: pointer; border-radius: 0; }
+.btn-main { background: var(--accent); color: var(--on-accent); border: 1px solid var(--accent); padding: 12px; font-size: 17px; font-weight: 700; width: 100%; }
+.btn-main:disabled { opacity: 1; background: var(--surface); color: var(--sub); border-color: var(--line); cursor: default; }
+.btn-sub { background: var(--bg); color: var(--accent); border: 1px solid var(--line); padding: 8px 10px; font-weight: 600; min-height: 40px; }
+.btn-sub[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+
+/* 人生の画面 */
+.life-head { display: flex; gap: 14px; align-items: center; border-bottom: 1px solid var(--line); padding-bottom: 8px; }
+.age { font-size: 40px; font-weight: 700; line-height: 1; min-width: 92px; }
+.age .unit { font-size: 16px; margin-left: 2px; }
+.when { font-size: 16px; font-weight: 700; }
+.place { font-size: 14px; font-weight: 400; color: var(--sub); }
+.block { display: flex; flex-direction: column; gap: 6px; }
+.h-world { font-size: 14px; color: var(--world); }
+.h-self { font-size: 14px; color: var(--text); }
+.list { display: flex; flex-direction: column; gap: 6px; }
+.item { width: 100%; text-align: left; background: var(--surface); color: var(--text); border: 1px solid var(--line); padding: 8px 10px; line-height: 1.55; }
+.item .tag { display: inline-block; font-size: 12px; color: var(--sub); margin-right: 6px; }
+.item.world-item .tag { color: var(--world); }
+.hint { font-size: 12px; color: var(--sub); }
+.controls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: auto; padding-top: 8px; border-top: 1px solid var(--line); }
+.controls .btn-sub { padding: 8px 4px; font-size: 14px; }
+
+/* 分かれ道 */
+.branch { border: 1px solid var(--accent); padding: 12px; display: flex; flex-direction: column; gap: 10px; background: var(--bg); }
+.branch h2 { font-size: 16px; }
+.branch .q { font-weight: 700; font-size: 14px; }
+.opts { display: flex; flex-wrap: wrap; gap: 6px; }
+.opts .btn-sub { flex: 1 1 40%; }
+.branch .ev-link { align-self: flex-start; background: none; border: 0; color: var(--accent); padding: 0; font-size: 13px; font-weight: 600; }
+
+/* 相談先 */
+.hotline { border: 1px solid var(--warn); padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
+.hotline .hl-title { color: var(--warn); font-weight: 700; }
+.hotline .tel { font-weight: 700; }
+
+/* 最期の画面 */
+.end-title { font-size: 22px; line-height: 1.4; margin-top: 8px; }
+.cohort { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.cohort li { border: 1px solid var(--line); padding: 8px; background: var(--surface); text-align: center; }
+.cohort .num { display: block; font-size: 26px; font-weight: 700; line-height: 1.2; }
+.cohort .cap { font-size: 12px; color: var(--sub); }
+.era { display: flex; flex-direction: column; border-top: 1px solid var(--line); }
+.era li { display: flex; gap: 10px; padding: 5px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+.era .y { min-width: 70px; color: var(--sub); }
+.end-buttons { display: flex; flex-direction: column; gap: 8px; margin-top: auto; }
+
+/* 根拠や家族を出す下の画面 */
+.sheet { position: fixed; inset: 0; background: var(--bg); z-index: 10; overflow-y: auto; }
+.sheet-body { max-width: 480px; margin: 0 auto; padding: 12px 16px 24px; display: flex; flex-direction: column; gap: 10px; }
+.sheet-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; border-bottom: 1px solid var(--line); padding-bottom: 8px; }
+.sheet-head h2 { font-size: 16px; }
+.evi { border: 1px solid var(--line); padding: 10px; display: flex; flex-direction: column; gap: 2px; background: var(--surface); }
+.evi .src { font-weight: 700; }
+.evi .what { font-size: 14px; }
+.evi .val { font-size: 18px; font-weight: 700; }
+.evi .marks { font-size: 12px; color: var(--prov-text); background: var(--prov-bg); align-self: flex-start; padding: 0 6px; }
+.fam { width: 100%; border-collapse: collapse; font-size: 14px; }
+.fam th, .fam td { border-bottom: 1px solid var(--line); padding: 6px 4px; text-align: left; }
+.fam th { color: var(--sub); font-weight: 600; }
+.logyear { border-bottom: 1px solid var(--line); padding: 6px 0; font-size: 14px; }
+.logyear .ly { font-weight: 700; }
+
+@media (max-width: 360px) {
+  .age { font-size: 34px; min-width: 76px; }
+  .controls .btn-sub { font-size: 13px; }
+}

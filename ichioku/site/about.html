@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>このサイトについて｜1億分の1（仮）</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<main id="app">
+  <section class="screen">
+    <p class="prov">試作品です。数字はすべて仮の値で、統計の取り込みが終わるまで公開しません。</p>
+    <h1 class="end-title">このサイトについて</h1>
+    <p>日本のどこかの市区町村に、ある年に、ある家庭の子として生まれ、0歳から亡くなるまでを1年ずつ生きる人生シミュレーションです。生まれる場所や家庭、時代の景気や暮らし、進学や仕事の分かれ道は、国が公開している統計の割合どおりに起きます。</p>
+    <p>どこに、いつ生まれるかは選べません。同じ日本の中でも、生まれた町と年によって暮らしが変わることを、1つの人生として体験できるように作りました。</p>
+    <div class="block">
+      <h2 class="h-self">遊び方</h2>
+      <p>生まれる年を選んで「生まれる」を押すと、1年ずつ自動で進みます。各年には「その年の世の中」と「自分の出来事」が並び、出来事を押すと、もとになった統計（統計の名前・年・数値）が出ます。中学受験・高校・18歳の進路・就職・結婚の分かれ道では、進みたい方向を選べます。選んだ方向に進みやすくなりますが、結果は統計の割合で決まります。</p>
+    </div>
+    <div class="block">
+      <h2 class="h-self">ご注意</h2>
+      <p class="warn-text">15歳以上向けです。病気や死、つらい出来事が起きることがあります。</p>
+      <p>出来事の描写は控えめにし、起きた事実だけを短く書いています。学校・会社・商品などの実在の名前は出しません。</p>
+      <p>遊んだ記録はお使いの端末のブラウザにだけ保存されます。名前や連絡先は集めません。</p>
+    </div>
+    <div class="block">
+      <h2 class="h-self">使っている統計</h2>
+      <p>このサービスは、政府統計総合窓口(e-Stat)のAPI機能を使用していますが、サービスの内容は国によって保証されたものではありません。</p>
+      <ul id="sources" class="era"></ul>
+      <p class="note">市区町村の値がない統計は、都道府県の値をもとに推計しています。推計した値には、根拠の画面で「推計」と表示します。</p>
+    </div>
+    <div class="block">
+      <h2 class="h-self">着想</h2>
+      <p><a href="https://1in8b.life/ja/" rel="noopener">80億分の1（1in8b.life）</a>に着想を得て作りました。運営者の方から制作の許可をいただいています。</p>
+    </div>
+    <footer class="foot">
+      <a href="index.html">トップへ戻る</a>
+    </footer>
+  </section>
+</main>
+<script>
+(function () {
+  var ul = document.getElementById('sources');
+  fetch('data/common.json').then(function (r) { return r.json(); }).then(function (c) {
+    Object.keys(c.sources).forEach(function (k) {
+      var s = c.sources[k];
+      var li = document.createElement('li');
+      li.textContent = s.name + '（' + s.org + '）' + (s.year ? '　' + s.year + '年公表' : '');
+      ul.appendChild(li);
+    });
+  }).catch(function () {
+    var li = document.createElement('li');
+    li.textContent = '統計の一覧を取り出せませんでした';
+    ul.appendChild(li);
+  });
+})();
+</script>
+</body>
+</html>

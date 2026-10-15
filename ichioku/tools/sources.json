@@ -1,0 +1,30 @@
+{
+  "_説明": "取り込む統計の一覧。statsCode は e-Stat の政府統計コード。tables は使う表の番号（statsDataId）で、18章の確認が済むまでは空。空のあいだは検索だけして候補を書き出す。",
+  "estat": [
+    { "id": "census-edu", "name": "国勢調査（最終学歴・市区町村）", "statsCode": "00200521", "search": "最終卒業学校 市区町村", "check18": 1, "tables": [] },
+    { "id": "census-ind", "name": "国勢調査（産業別就業者・市区町村）", "statsCode": "00200521", "search": "産業 就業者 市区町村", "check18": 1, "tables": [] },
+    { "id": "census-hh", "name": "国勢調査（世帯の構成・通勤通学の手段）", "statsCode": "00200521", "search": "世帯の家族類型 市区町村", "tables": [] },
+    { "id": "vital-births", "name": "人口動態統計（市区町村別の出生数）", "statsCode": "00450011", "search": "出生数 市区町村", "check18": 2, "tables": [] },
+    { "id": "jobs-pref", "name": "一般職業紹介状況（都道府県別の求人倍率）", "statsCode": "00450222", "search": "都道府県別 有効求人倍率", "check18": 3, "tables": [] },
+    { "id": "school-out", "name": "学校基本調査（出身高校の所在地県別 入学者数）", "statsCode": "00400001", "search": "出身高校の所在地県別 入学者数", "check18": 3, "tables": [] },
+    { "id": "school-rate", "name": "学校基本調査（進学率・都道府県）", "statsCode": "00400001", "search": "進学率 都道府県", "tables": [] },
+    { "id": "consumer-diff", "name": "消費動向調査（主要耐久消費財の普及率）", "statsCode": "00100405", "search": "主要耐久消費財 普及率", "check18": 4, "tables": [] },
+    { "id": "kakei-diff", "name": "全国家計構造調査・全国消費実態調査（耐久消費財・都道府県・年収別）", "statsCode": "00200564", "search": "主要耐久消費財 都道府県", "check18": 4, "tables": [] },
+    { "id": "timeuse", "name": "社会生活基本調査（趣味・娯楽の行動者率）", "statsCode": "00200533", "search": "趣味・娯楽 行動者率", "check18": 5, "tables": [] },
+    { "id": "retail", "name": "小売物価統計調査（主要品目の小売価格）", "statsCode": "00200571", "search": "主要品目 小売価格 年平均", "check18": 6, "tables": [] },
+    { "id": "suicide-estat", "name": "自殺統計（e-Stat にあるか）", "statsCode": "", "search": "自殺 市区町村", "check18": 7, "tables": [] },
+    { "id": "lifetable-pref", "name": "都道府県別生命表", "statsCode": "", "search": "都道府県別生命表 平均余命", "tables": [] },
+    { "id": "labor", "name": "労働力調査（失業率・非正規の割合）", "statsCode": "00200531", "search": "非正規の職員・従業員 年齢階級", "tables": [] },
+    { "id": "cpi", "name": "消費者物価指数（長期時系列）", "statsCode": "00200573", "search": "消費者物価指数 長期時系列 年平均", "tables": [] },
+    { "id": "income", "name": "国民生活基礎調査（所得の分布）", "statsCode": "00450061", "search": "所得金額階級別 世帯数", "tables": [] },
+    { "id": "wage", "name": "賃金構造基本統計調査（学歴・年齢別の賃金）", "statsCode": "00450091", "search": "学歴 年齢階級 きまって支給する現金給与額", "tables": [] },
+    { "id": "migration", "name": "住民基本台帳人口移動報告", "statsCode": "00200523", "search": "都道府県間移動者数", "tables": [] },
+    { "id": "comm", "name": "通信利用動向調査", "statsCode": "", "search": "通信利用動向調査 世帯 保有率", "tables": [] }
+  ],
+  "web": [
+    { "id": "suicide-mhlw", "name": "地域における自殺の基礎資料（厚生労働省のサイト）", "url": "https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/0000140901.html", "check18": 7, "note": "作る人の了承済み（2026-10-15）。ページからファイルの場所を集める" },
+    { "id": "names-meijiyasuda", "name": "生まれ年別の名前調査（明治安田生命）", "url": "https://www.meijiyasuda.co.jp/enjoy/ranking/year_men/", "check18": 8, "note": "作る人の了承済み（2026-10-15）。ページの場所は取得時に確かめる" },
+    { "id": "jma-normals", "name": "気象庁の平年値", "url": "https://www.data.jma.go.jp/stats/etrn/index.php", "note": "地点ごとの雪・気温" },
+    { "id": "bousai", "name": "防災白書", "url": "https://www.bousai.go.jp/kaigirep/hakusho/", "note": "災害の被害の範囲" }
+  ]
+}
