@@ -35,6 +35,11 @@ if ($fetchCode -eq 2) { exit 2 }
 node tools/transform.mjs
 node tools/build.mjs --test
 $buildCode = $LASTEXITCODE
+# 1800〜1974年生まれのための昔の統計（人口統計資料集・Wikipedia の表・Our World in Data）
+node tools/history-fetch.mjs
+node tools/history.mjs
+node tools/build-history.mjs
+if ($LASTEXITCODE -ne 0) { $buildCode = 1 }
 node tools/check.mjs --test
 $checkTest = $LASTEXITCODE
 Write-Host ('試験モード：' + [int]$sw.Elapsed.TotalSeconds + '秒')
@@ -49,6 +54,8 @@ node tools/fetch.mjs
 node tools/transform.mjs
 node tools/build.mjs
 if ($LASTEXITCODE -ne 0) { Write-Host 'データの束を作れませんでした。'; exit 1 }
+node tools/build-history.mjs
+if ($LASTEXITCODE -ne 0) { Write-Host '1800〜1974年生まれの束を作れませんでした。'; exit 1 }
 
 Write-Host '== 3. 公開前の検査 =='
 node tools/check.mjs

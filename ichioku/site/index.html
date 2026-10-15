@@ -14,15 +14,9 @@
     <p class="prov" id="prov-top">試作品です。数字はすべて仮の値で、統計の取り込みが終わるまで公開しません。</p>
     <h1 id="top-title" class="title">1億分の1<span class="title-note">（仮）</span></h1>
     <p class="catch">どこに いつ生まれるかは選べない</p>
-    <p class="lead">日本のどこかの町に、ある年に生まれます。生まれる町や家庭、進学や仕事の分かれ道は、国の統計の割合どおりに決まります。</p>
+    <p class="lead">1800〜2000年のどこかの年に、日本のどこかで生まれます。江戸の城下町かもしれないし、蝦夷地のコタンや琉球の村、戦後の団地かもしれません。生まれる場所や家、進学や仕事の分かれ道は、統計の割合どおりに決まります。</p>
     <div class="born-box">
-      <label for="year" class="label">生まれる年</label>
-      <div class="year-row">
-        <button type="button" class="btn-sub" id="year-down" aria-label="1年前にする">−</button>
-        <select id="year" aria-describedby="year-note"></select>
-        <button type="button" class="btn-sub" id="year-up" aria-label="1年後にする">＋</button>
-      </div>
-      <p class="note" id="year-note">今は1975〜2006年から選べます</p>
+      <p class="note" id="year-note">生まれる年は1800〜2000年のどの年も同じ確率で選ばれます。1975年より前の時代は統計が少なく、研究の目安や推計で埋めたところがあります</p>
       <button type="button" class="btn-main" id="born" disabled>準備中</button>
     </div>
     <p class="warn-text">15歳以上向けです。病気や死、つらい出来事が起きることがあります。</p>
@@ -98,6 +92,7 @@
 
 </main>
 <script src="js/engine.js"></script>
+<script src="js/history.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

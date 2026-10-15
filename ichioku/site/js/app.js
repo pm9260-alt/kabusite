@@ -1,7 +1,8 @@
 /* 1億分の1 画面の動き */
 (function () {
   'use strict';
-  var E = window.Ichioku;
+  var E = window.Ichioku, O = window.IchiokuOld, M = E;
+  var H = null; // 1975年より前の生まれのための束（data/history.json。必要になったときに取り出す）
   var BASE_MS = 7000;          // 1年あたりの表示時間（1倍のとき）。約80年で約10分
   var SPEEDS = [1, 2, 4];
   var C = null, prefCache = {}, P = null, L = null, cur = null;
@@ -36,18 +37,22 @@
     return getJSON('data/pref/' + code + '.json').then(function (p) { prefCache[code] = p; return p; });
   }
 
+  function getHistory() {
+    if (H) return Promise.resolve(H);
+    return getJSON('data/history.json').then(function (h) { H = h; return h; });
+  }
+  // 年号（1975年より前の生まれでは束の一覧、それ以外は昭和からの一覧）
+  var ERAS_NEW = [[1926, '昭和'], [1989, '平成'], [2019, '令和']];
+  function eraOf(y) {
+    var list = H ? H.eras : ERAS_NEW, e = null;
+    for (var i = 0; i < list.length; i++) if (list[i][0] <= y) e = list[i];
+    if (!e) return '';
+    var n = y - e[0] + 1;
+    return e[1] + (n === 1 ? '元' : n) + '年';
+  }
+
   /* ---------- トップ ---------- */
   function initTop() {
-    var sel = $('year'), r = C.meta.birthRange;
-    for (var y = r[0]; y <= r[1]; y++) {
-      var o = el('option', null, y + '年');
-      o.value = y;
-      sel.appendChild(o);
-    }
-    var last = store('ichioku-year');
-    sel.value = last && last >= r[0] && last <= r[1] ? last : 1990;
-    $('year-down').onclick = function () { if (sel.selectedIndex > 0) sel.selectedIndex--; };
-    $('year-up').onclick = function () { if (sel.selectedIndex < sel.options.length - 1) sel.selectedIndex++; };
     $('born').disabled = false;
     $('born').textContent = '生まれる';
     $('born').onclick = born;
@@ -56,15 +61,17 @@
     $('past').textContent = past.length ? 'これまでに ' + past.length + ' 回の人生を送りました（記録はこの端末のブラウザにだけ残ります）' : '';
   }
 
+  // 生まれる年は1800〜2000年のどの年も同じ確率（作る人の判断）
   function born() {
-    var year = +$('year').value;
-    store('ichioku-year', year);
-    var seed = randomSeed();
-    var code = E.pickPref(C, year, E.makeRng(seed ^ 0x9e3779b9));
+    var r = C.meta.birthRange, seed = randomSeed();
+    var year = r[0] + Math.floor(E.makeRng(seed ^ 0x51ed270b)() * (r[1] - r[0] + 1));
     $('born').disabled = true;
-    getPref(code).then(function (p) {
-      P = p;
-      L = E.newLife(C, P, { year: year, seed: seed });
+    var ready = year >= 1975 ? Promise.resolve({ pref: E.pickPref(C, year, E.makeRng(seed ^ 0x9e3779b9)) }) :
+      getHistory().then(function (h) { return O.pickBirth(C, h, year, E.makeRng(seed ^ 0x9e3779b9)); });
+    ready.then(function (b) { return getPref(b.pref).then(function (p) { return { b: b, p: p }; }); }).then(function (x) {
+      P = x.p;
+      if (year >= 1975) { M = E; L = E.newLife(C, P, { year: year, seed: seed }); }
+      else { M = O; L = O.newLife(C, H, P, { year: year, seed: seed, birth: x.b }); }
       paused = false; setPauseLabel();
       show('life');
       $('born').disabled = false;
@@ -80,7 +87,7 @@
     clearTimeout(timer);
     if (!L) return;
     if (!L.alive) { showEnd(); return; }
-    cur = E.step(L);
+    cur = M.step(L);
     render(cur);
     if (cur.branch) showBranch(cur.branch);
     else schedule();
@@ -96,7 +103,8 @@
 
   function render(r) {
     $('age').textContent = r.age;
-    $('year-now').textContent = r.year + '年';
+    var era = r.eraLabel || eraOf(r.year);
+    $('year-now').textContent = r.year + '年' + (era ? '（' + era + '）' : '');
     $('place').textContent = r.place;
     var w = $('world');
     clear(w);
@@ -158,7 +166,7 @@
     evb.onclick = function () { openEvidence(br.title, br.ev); };
     box.appendChild(evb);
     done.onclick = function () {
-      cur = E.resolve(L, answers);
+      cur = M.resolve(L, answers);
       render(cur);
       if (cur.branch) showBranch(cur.branch);
       else schedule();
@@ -229,7 +237,7 @@
       var me = el('tr');
       [ '自分', L.name, L.by + '年', '' ].forEach(function (v) { me.appendChild(el('td', null, v)); });
       t.appendChild(me);
-      E.familyList(L).forEach(function (m) {
+      M.familyList(L).forEach(function (m) {
         var tr = el('tr');
         var state = m.gone ? '別れた' : m.alive ? '' : m.dy + '年に亡くなった';
         [m.rel, m.name, m.by + '年', state].forEach(function (v) { tr.appendChild(el('td', null, v)); });
@@ -283,27 +291,43 @@
       ]);
     };
   }
+  // 1975年より前の生まれの稼ぎ（推計）
+  function renderEarnOld(co) {
+    var g = L.earn;
+    $('earn-ev').hidden = false;
+    $('earn-num').textContent = g.years ? yen(g.real) : '働いて稼いだ年はなかった';
+    var sub = [];
+    if (g.years) sub.push('働いた年 ' + g.years + '年。2025年のお金の価値に直した推計です（昔の年は1人あたりの国の豊かさの比で直しました）');
+    sub.push('同じ所・同じ年に生まれた100人の真ん中の人は ' + yen(co.earnMedian));
+    $('earn-sub').textContent = sub.join('。');
+    $('earn-ev').onclick = function () {
+      openEvidence('生涯に働いて得た稼ぎ（推計）', [
+        { name: H.sources.maddison.name, org: H.sources.maddison.org, y: 2022, what: '1人あたりの国内総生産で、1975年の働く人の平均的な年収（2025年のお金の価値で約450万円）を昔の年に直した', val: '', est: true, noYearNote: true },
+        srcEv('cpi', 2025, '消費者物価指数で2025年のお金の価値に直した', '', { prov: false })
+      ]);
+    };
+  }
   function showEnd() {
     clearTimeout(timer);
     if (!L) return;
     show('end');
     $('end-title').textContent = L.name + 'さんの一生　' + L.by + '年〜' + L.deathYear + '年（' + L.deathAge + '歳）';
-    $('end-sub').textContent = L.home.prefName + L.home.muniName + 'で生まれ、' + (L.place.away ? L.place.prefName : L.place.prefName + L.place.muniName) + 'で亡くなった。';
+    $('end-sub').textContent = L.old ? O.endText(L) : L.home.prefName + L.home.muniName + 'で生まれ、' + (L.place.away ? L.place.prefName : L.place.prefName + L.place.muniName) + 'で亡くなった。';
     renderHotline($('hotline-end'), L.cause === 'sui');
-    var co = E.cohort(C, P, L.by, L.home.muni, L.seed, 100);
-    renderEarn(co);
+    var co = L.old ? O.cohort(C, H, P, L, 100) : E.cohort(C, P, L.by, L.home.muni, L.seed, 100);
+    if (L.old) renderEarnOld(co); else renderEarn(co);
     var list = $('cohort');
     clear(list);
-    [['地元に残った人', co.stayed], ['大学へ進んだ人', co.univ], ['80歳まで生きた人', co.to80]].forEach(function (x) {
+    (co.items || [['地元に残った人', co.stayed], ['大学へ進んだ人', co.univ], ['80歳まで生きた人', co.to80]]).forEach(function (x) {
       var li = el('li');
       li.appendChild(el('span', 'num', x[1] + '人'));
       li.appendChild(el('span', 'cap', x[0]));
       list.appendChild(li);
     });
-    $('cohort-title').textContent = '同じ町（' + L.home.muniName + '）・同じ年に生まれた100人のその後';
+    $('cohort-title').textContent = L.old ? '同じ所（' + L.home.label + '）・同じ年に生まれた100人のその後' : '同じ町（' + L.home.muniName + '）・同じ年に生まれた100人のその後';
     var era = $('era');
     clear(era);
-    E.majorTimeline(C, L.by, Math.min(L.deathYear, E.FUTURE_FROM - 1), L.home.pref).forEach(function (r) {
+    (L.old ? O.majorTimeline(C, H, L) : E.majorTimeline(C, L.by, Math.min(L.deathYear, E.FUTURE_FROM - 1), L.home.pref)).forEach(function (r) {
       var li = el('li');
       li.appendChild(el('span', 'y', r.y + '年'));
       li.appendChild(el('span', null, r.t));
@@ -316,7 +340,7 @@
       era.appendChild(li);
     }
     var lives = store('ichioku-lives') || [];
-    lives.unshift({ by: L.by, place: L.home.prefName + L.home.muniName, age: L.deathAge });
+    lives.unshift({ by: L.by, place: L.old ? L.home.label : L.home.prefName + L.home.muniName, age: L.deathAge });
     store('ichioku-lives', lives.slice(0, 50));
   }
 

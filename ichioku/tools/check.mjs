@@ -10,17 +10,23 @@ const require = createRequire(import.meta.url);
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SITE = path.join(ROOT, 'site');
 const E = require(path.join(SITE, 'js', 'engine.js'));
+const O = require(path.join(SITE, 'js', 'history.js'));
 
 const args = process.argv.slice(2);
 const TEST = args.includes('--test');
 const N = +(args[args.indexOf('--n') + 1] || 0) || (TEST ? 2000 : 10000);
-const YEARS = TEST ? [1975, 1990, 2006] : Array.from({ length: 32 }, (_, i) => 1975 + i);
+const YEARS = TEST ? [1975, 1990, 2000] : Array.from({ length: 26 }, (_, i) => 1975 + i);
+// 1800〜1974年生まれ（昔の人生の進め方）。本番は5年おき、試験モードは5つの年
+const OLD_YEARS = TEST ? [1800, 1850, 1900, 1940, 1970] : Array.from({ length: 35 }, (_, i) => 1800 + i * 5);
+const OLD_N = TEST ? 200 : 600;
 const LAST_YEAR = 2026;
 
 const results = [];
+const CATS_OK = ['家庭', '地域', '時代', '健康', '人間関係', '学歴と仕事'];
 function rec(name, ok, detail, kind) { results.push({ name, ok, detail: detail || '', kind: kind || '' }); }
 
 const C = JSON.parse(fs.readFileSync(path.join(SITE, 'data', 'common.json'), 'utf8'));
+const H = JSON.parse(fs.readFileSync(path.join(SITE, 'data', 'history.json'), 'utf8'));
 const P = {};
 for (const p of C.prefs) P[p.code] = JSON.parse(fs.readFileSync(path.join(SITE, 'data', 'pref', p.code + '.json'), 'utf8'));
 
@@ -95,7 +101,14 @@ function texts() {
     for (const a of e.areas || []) out.push(['出来事 ' + e.id, a.text]);
     for (const a of e.all || []) out.push(['出来事 ' + e.id, a.text]);
   }
-  for (const f of ['index.html', 'about.html', 'js/app.js', 'js/engine.js']) {
+  // 1800〜1974年生まれの文（2026-10-16 に検査の対象から漏れていたため追加）
+  for (const s of H.scenes) out.push(['昔の場面', s.t]);
+  for (const r of H.timeline) out.push(['昔の年表 ' + r.y, r.t]);
+  for (const c of H.eraContext) out.push(['時代のようす', c.t]);
+  for (const e of H.events) out.push(['昔の出来事 ' + e.id, [e.title, e.text, e.deadText, e.note, e.src.name].join(' ')]);
+  for (const m of H.moves) out.push(['移り住む ' + m.id, m.text + ' ' + m.place]);
+  for (const k of Object.keys(H.status)) out.push(['身分 ' + k, H.status[k].name + ' ' + H.status[k].note]);
+  for (const f of ['index.html', 'about.html', 'js/app.js', 'js/engine.js', 'js/history.js']) {
     const p = path.join(SITE, f);
     if (fs.existsSync(p)) out.push([f, stripCode(fs.readFileSync(p, 'utf8'))]);
   }
@@ -109,7 +122,10 @@ function stripCode(src) { return src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^
   const hit = (list) => { const f = []; for (const [where, t] of T) for (const w of list) if (t.includes(w)) f.push(where + '「' + w + '」'); return f; };
   const b1 = hit(BANNED); rec('禁止語（11章）が入っていないか', b1.length === 0, b1.slice(0, 10).join('、'));
   const b2 = hit(BANNED_OWNER); rec('作る人が使わないと決めた言葉が入っていないか', b2.length === 0, b2.slice(0, 10).join('、'));
-  const b3 = hit(REAL); rec('実名の一覧に当たる名前が入っていないか', b3.length === 0, b3.slice(0, 10).join('、'));
+  // 実名の一覧の言葉を含むだけの別の言葉（「関東大震災」の「東大」など）はよける
+  const REAL_OK = ['関東大震災', '東京大空襲'];
+  const T0 = T.map(([w, t]) => [w, REAL_OK.reduce((x, k) => x.split(k).join(''), t)]);
+  const b3 = ((list) => { const f = []; for (const [where, t] of T0) for (const w of list) if (t.includes(w)) f.push(where + '「' + w + '」'); return f; })(REAL); rec('実名の一覧に当たる名前が入っていないか', b3.length === 0, b3.slice(0, 10).join('、'));
   const chars = [];
   for (const [where, t] of T) {
     if (HANGUL.test(t)) chars.push(where + '（ハングル）');
@@ -286,10 +302,84 @@ cmp('平均寿命が元の統計から±3年以内か', sim.life, 1, '歳');
 cmp('婚姻率（50歳までに結婚）が元の統計から±3ポイント以内か', sim.marr, 100, '%');
 cmp('非正規の割合（25〜34歳）が元の統計から±3ポイント以内か', sim.nonreg, 100, '%');
 
+/* ---------- 5. 1800〜1974年生まれ ---------- */
+{
+  const noSrc = H.events.filter(e => !e.src || !e.src.name);
+  rec('昔の出来事の全件に根拠があるか', noSrc.length === 0, noSrc.map(e => e.id).join('、'));
+  const badRate = H.events.flatMap(e => Object.entries(e.rates).flatMap(([y, r]) => Object.entries(r).filter(([, v]) => !(v >= 0 && v < 0.6)).map(([k, v]) => e.id + ' ' + y + ' ' + k + '=' + v)));
+  rec('昔の出来事の亡くなる割合が0〜60%の中か', badRate.length === 0, badRate.slice(0, 5).join('、'));
+  const badScene = H.scenes.filter(s => !s.t || !s.cat || !s.a || (s.y && s.y[0] > s.y[1]) || CATS_OK.indexOf(s.cat) < 0);
+  rec('昔の場面の書き方が正しいか', badScene.length === 0, badScene.slice(0, 5).map(s => (s.t || '').slice(0, 15)).join('、'));
+  const tlY = new Set(H.timeline.map(r => r.y));
+  const ctxMiss = [];
+  for (let y = 1800; y <= 1974; y++) if (!tlY.has(y) && !H.eraContext.some(c => y >= c.from && y <= c.to)) ctxMiss.push(y);
+  rec('1800〜1974年の「その年の世の中」が空の年がないか', ctxMiss.length === 0, ctxMiss.join('、'));
+}
+const old = { lives: 0, err: [], badText: [], contra: [], jp: [], empty: 0, years: 0, q0: { s: 0, n: 0, t: 0 }, elem: { s: 0, n: 0, t: 0 }, hs: { s: 0, n: 0, t: 0 }, marr: { s: 0, n: 0, t: 0 }, prov: {}, pref: {} };
+const t1 = Date.now();
+const JP_SCENES = new Set(H.scenes.filter(s => s.jp).map(s => s.t));
+for (const by of OLD_YEARS) {
+  for (let i = 0; i < OLD_N; i++) {
+    const seed = (by * 100003 + i * 7 + 1) >>> 0;
+    try {
+      const b = O.pickBirth(C, H, by, E.makeRng(seed ^ 0x9e3779b9));
+      const L = O.autoRun(O.newLife(C, H, P[b.pref] || null, { year: by, seed, birth: b }));
+      old.lives++;
+      old.prov[b.prov] = 1; old.pref[b.pref] = 1;
+      if (L.alive) old.err.push(by + '年生まれの人生が最後まで進まなかった');
+      for (const r of L.log) {
+        old.years++;
+        if (!r.events.length && r.age < 95) old.empty++;
+        if (!r.world.items.length) old.err.push(r.year + '年の世の中が空');
+        for (const e of r.events) {
+          if (/undefined|NaN|null|\{|\}|アイヌ語の名前/.test(e.t)) old.badText.push(r.year + ' ' + e.t.slice(0, 30));
+          if ((L.ainu || L.ryukyu) && JP_SCENES.has(e.t)) old.jp.push(e.t.slice(0, 20));
+          for (const v of e.ev) if (/undefined|NaN/.test(String(v.val) + v.what + v.name)) old.badText.push('根拠 ' + r.year + ' ' + v.what);
+        }
+      }
+      const mom = L.members.find(m => m.role === '母'), dad = L.members.find(m => m.role === '父');
+      for (const p of [mom, dad]) { const d = by - p.by; if (d < 15 || d > 62) old.contra.push('親と子の年齢差 ' + d); }
+      for (const k of L.members.filter(m => m.role === '子')) { const d = k.by - by; if (d < 14 || d > 62) old.contra.push('自分と子の年齢差 ' + d); }
+      // 統計との比較
+      old.q0.n++; old.q0.s += L.deathAge === 0 ? 1 : 0; old.q0.t += O.deathProb(L, L.sex, 0, by);
+      if (by + 6 >= 1873 && by + 6 <= 1920 && L.deathAge >= 7) { old.elem.n++; old.elem.s += L.stats.school ? 1 : 0; old.elem.t += lerp(H.nat.elem[L.sex], by + 6); }
+      if (by + 15 >= 1950 && by + 15 <= 1974 && L.deathAge >= 16 && !L.stats.abroad) { old.hs.n++; old.hs.s += L.stats.mid ? 1 : 0; old.hs.t += lerp(H.nat.hs[L.sex], by + 15); }
+      if (L.deathAge >= 50 && by >= 1870) { old.marr.n++; old.marr.s += L.everMarried ? 1 : 0; old.marr.t += 1 - lerp(H.nat.neverMarried[L.sex], by + 45); }
+    } catch (e) { old.err.push(by + '年 ' + e.message); }
+  }
+}
+function lerp(s, y) { const ks = Object.keys(s).map(Number).sort((a, b) => a - b); if (y <= ks[0]) return s[ks[0]]; if (y >= ks[ks.length - 1]) return s[ks[ks.length - 1]]; for (let i = 1; i < ks.length; i++) if (y <= ks[i]) { const a = ks[i - 1], b = ks[i]; return s[a] + (s[b] - s[a]) * (y - a) / (b - a); } return 0; }
+// 抽選で選ばれなかった旧国・都道府県も、生まれる場所を指定して1人ずつ回す
+const forcedOld = [];
+for (const n of Object.keys(H.prov).filter(n => !H.prov[n].parent)) {
+  if (old.prov[n]) continue;
+  const p = H.prov[n], src = p.subs ? H.prov[p.subs[0]] : p, pref = Object.keys(src.prefs)[0];
+  try { const L = O.autoRun(O.newLife(C, H, P[pref], { year: 1820, seed: 12345, birth: { prov: n, sub: p.subs ? p.subs[0] : null, pref } })); if (L.alive) forcedOld.push(n); } catch (e) { forcedOld.push(n + '（' + e.message + '）'); }
+}
+for (const c of Object.keys(P)) {
+  if (old.pref[c]) continue;
+  try { const b = { prov: null, sub: null, pref: c }; const cand = Object.keys(H.prov).find(n => !H.prov[n].subs && H.prov[n].prefs && H.prov[n].prefs[c]); b.prov = H.prov[cand].parent || cand; b.sub = H.prov[cand].parent ? cand : null; const L = O.autoRun(O.newLife(C, H, P[c], { year: 1930, seed: 54321, birth: b })); if (L.alive) forcedOld.push(c); } catch (e) { forcedOld.push(c + '（' + e.message + '）'); }
+}
+const oldSecs = ((Date.now() - t1) / 1000).toFixed(0);
+rec('1800〜1974年生まれの人生が止まらずに最後まで動くか', old.err.length === 0 && forcedOld.length === 0, old.err.slice(0, 5).concat(forcedOld.slice(0, 5)).join('、') || old.lives + '人分（' + oldSecs + '秒）。抽選で選ばれなかった旧国・都道府県も1人ずつ回した');
+rec('昔の人生の文に、名前の置き換え漏れや表示できない値がないか', old.badText.length === 0, [...new Set(old.badText)].slice(0, 5).join('、'));
+rec('アイヌと琉球の人に本土の風習の場面が出ていないか', old.jp.length === 0, [...new Set(old.jp)].slice(0, 5).join('、'));
+rec('昔の人生の家族の年齢に矛盾がないか', old.contra.length === 0, [...new Set(old.contra)].slice(0, 5).join('、'));
+rec('昔の人生で自分の出来事が空の年が2%以下か（95歳以上を除く）', old.empty / old.years <= 0.02, (old.empty / old.years * 100).toFixed(1) + '%', '目標');
+function cmpOld(name, o, unit, tol) {
+  if (!o.n) { rec(name, false, '数えられる人がいない'); return; }
+  const a = o.s / o.n * 100, b = o.t / o.n * 100;
+  rec(name, Math.abs(a - b) <= tol, '回した結果 ' + a.toFixed(1) + unit + '／元の統計 ' + b.toFixed(1) + unit + '（差 ' + (a - b).toFixed(1) + '）');
+}
+cmpOld('昔の人生：0歳で亡くなる割合が元の数字から±3ポイント以内か', old.q0, '%', 3);
+cmpOld('昔の人生：小学校に通った割合（1873〜1920年に6歳）が元の統計から±3ポイント以内か', old.elem, '%', 3);
+cmpOld('昔の人生：高校進学率（1950〜1974年に15歳）が元の統計から±3ポイント以内か', old.hs, '%', 3);
+cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3ポイント以内か', old.marr, '%', 3);
+
 /* ---------- 結果 ---------- */
 const lines = [];
 lines.push('公開前の検査　' + new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }) + '（日本時間）');
-lines.push((TEST ? '試験モード' : '本番') + '：生まれ年 ' + YEARS.length + '年分 × ' + N + '人 = ' + sim.lives + '人分の人生（' + secs + '秒）');
+lines.push((TEST ? '試験モード' : '本番') + '：生まれ年 ' + YEARS.length + '年分 × ' + N + '人 = ' + sim.lives + '人分の人生（' + secs + '秒）。1800〜1974年生まれは ' + OLD_YEARS.length + '年分 × ' + OLD_N + '人 = ' + old.lives + '人分（' + oldSecs + '秒）');
 lines.push('');
 for (const r of results) lines.push((r.ok ? '合格　' : (r.kind === '目標' ? '未達　' : '不合格')) + '　' + r.name + (r.detail ? '　…　' + r.detail : ''));
 const fails = results.filter(r => !r.ok && r.kind !== '目標');
