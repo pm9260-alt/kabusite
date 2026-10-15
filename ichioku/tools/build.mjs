@@ -11,6 +11,19 @@ import { scenes } from '../data-src/scenes.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, 'site', 'data');
+// 取り込んだ統計（tools/transform.mjs が作る）。ないときは data-src の仮の値だけで作る
+const STATS_PATH = path.join(ROOT, 'data-src', 'stats', 'stats.json');
+const stats = fs.existsSync(STATS_PATH) ? JSON.parse(fs.readFileSync(STATS_PATH, 'utf8')) : null;
+// 試験モードで使う3都道府県
+const TEST_PREFS = ['05', '13', '28'];
+// まだ取り込みで置き換えていない全国の値（national.mjs の記憶にもとづく仮の値）。取り込みで置き換えたら外す
+const NAT_PROVISIONAL = {
+  nonreg: '25〜34歳の非正規の割合（労働力調査）', incomeMean: '世帯の平均所得（国民生活基礎調査）', incomeSigma: '所得の分布の広がり（国民生活基礎調査）',
+  motherAge: '母の出産年齢（人口動態統計）', sibDist: 'きょうだいの人数（出生動向基本調査）', dualIncome: '共働きの割合（労働力調査）',
+  ownHome: '持ち家の割合（国勢調査）', threeGen: '三世代の世帯の割合（国勢調査）', nursery: '保育所に通う割合', parentEdu: '親の世代の最終学歴（国勢調査）',
+  everMarried: '50歳までに結婚する割合（国勢調査・将来推計）', divorce: '離婚の起きやすさ（人口動態統計）', leaveAtBirth: '出産で仕事をやめる割合（出生動向基本調査）',
+  moveChild: '子どもの時期の引っ越し（住民基本台帳人口移動報告）', cause: '年齢層ごとの死因（人口動態統計）'
+};
 const BETA = 0.1, BG = 0.0003;
 
 const WHAT = {
@@ -71,33 +84,84 @@ function solveAlpha(target, q00) {
   }
   return Math.exp((lo + hi) / 2);
 }
-function alphaTable(diff) {
+// e0s：0歳の平均余命の系列、q0s：0歳で亡くなる確率の系列。diff は都道府県の差（数字か、年ごとの系列）
+function alphaTable(e0s, q0s, diff) {
   const out = { m: {}, f: {} };
   for (const sex of ['m', 'f']) {
-    for (const y of Object.keys(e0[sex]).map(Number)) {
-      out[sex][y] = +solveAlpha(e0[sex][y] + (diff ? diff[sex] : 0), nearest(q0, y)).toPrecision(6);
+    for (const y of Object.keys(e0s[sex]).map(Number)) {
+      const d = !diff ? 0 : typeof diff[sex] === 'number' ? diff[sex] : (Object.keys(diff[sex] || {}).length ? nearest(diff[sex], y) : 0);
+      out[sex][y] = +solveAlpha(e0s[sex][y] + d, nearest(q0s, y)).toPrecision(6);
     }
   }
   return out;
 }
 const mulSeries = (s, m, cap) => Object.fromEntries(Object.entries(s).map(([k, v]) => [k, +Math.min(cap ?? 1, v * m).toFixed(4)]));
 
+// 取り込んだ都道府県の束を、人生の進め方が使う形にする
+function prefFromStats(sp) {
+  const proto = prefs.find(p => p.code === sp.code);
+  const flags = {};
+  if (proto) for (const m of proto.munis) flags[m.code] = { snow: m.snow, coast: m.coast, car: m.car };
+  return {
+    code: sp.code, name: sp.name, region: sp.region, births: sp.births,
+    munis: sp.munis.map(m => {
+      const f = flags[m.code] || {};
+      const o = { code: m.code, name: m.name, kind: m.kind, share: m.share, ind: m.ind, estBefore: Math.max(m.shareFrom || 0, m.realFrom || 0) };
+      for (const k of ['snow', 'coast', 'car']) if (f[k]) o[k] = true;
+      if (m.indEst) o.indEst = true;
+      return o;
+    }),
+    s: { ...sp.s, ret: proto ? proto.ret : RET_PROVISIONAL },
+    sEst: sp.est,
+    e0diff: sp.e0diff,
+    provisional: ['ret']
+  };
+}
+// 県外に出た人が地元へ戻る割合は、まだ取り込みで置き換えていない（仮の値）
+const RET_PROVISIONAL = { 1995: 0.4, 2010: 0.38, 2020: 0.36 };
+
 export function build({ test = false } = {}) {
   fs.mkdirSync(path.join(OUT, 'pref'), { recursive: true });
   const shapeM = marryShape('m'), shapeF = marryShape('f');
+  const N = stats ? stats.nat : {};
+  // 全国の値：取り込んだものがあれば置き換える。寿命の将来（2027年以降）は将来推計がまだ取れないため仮の値のまま
+  const natReal = {};
+  for (const k of ['jobs', 'unemp', 'cpi', 'indNat']) if (N[k] && Object.keys(N[k]).length) natReal[k] = N[k];
+  const e0s = { m: { ...e0.m }, f: { ...e0.f } };
+  if (N.e0) for (const sex of ['m', 'f']) {
+    const last = Math.max(...Object.keys(N.e0[sex]).map(Number));
+    for (const y of Object.keys(e0s[sex]).map(Number)) if (y <= last) delete e0s[sex][y];
+    Object.assign(e0s[sex], N.e0[sex]);
+  }
+  const q0s = N.q0 && Object.keys(N.q0).length ? N.q0 : q0;
+  const list = stats ? stats.prefs.filter(p => !test || TEST_PREFS.includes(p.code)).map(prefFromStats) : prefs;
+  const provisional = [];
+  for (const [k, label] of Object.entries(NAT_PROVISIONAL)) if (!natReal[k]) provisional.push(label);
+  for (const k of ['jobs', 'unemp', 'cpi']) if (!natReal[k]) provisional.push('全国の' + { jobs: '有効求人倍率', unemp: '完全失業率', cpi: '消費者物価指数' }[k]);
+  if (!N.e0) provisional.push('平均寿命（生命表）');
+  provisional.push('2027年以降の平均寿命（将来推計人口。国立社会保障・人口問題研究所のサイトに通信の許可がない）');
+  if (!stats) provisional.push('都道府県・市区町村のすべての値');
+  else {
+    provisional.push('県外に出た人が地元へ戻る割合（' + list.length + '都道府県）');
+    provisional.push('雪・海沿いの印（試験用の3都道府県の12市区町村だけ。ほかの市区町村は未設定）');
+    provisional.push('1995年より前に生まれた人の市区町村の割合（1995年の割合で代用。1975〜1994年は文字認識で取り出す予定）');
+  }
+  provisional.push('普及率8品目・名前の流行（取り込み前の値）');
   const common = {
     meta: {
-      provisional: true,
-      note: 'この束の数字はすべて仮の値です。統計の取り込みが終わるまで公開できません。',
+      provisional: provisional.length > 0,
+      provisionalItems: provisional,
+      note: provisional.length ? 'この束にはまだ仮の値が含まれます（' + provisional.length + '項目）。統計の取り込みが終わるまで公開できません。' : '',
       built: new Date().toISOString(),
       birthRange: [1975, 2006],
       futureFrom: 2027,
-      mode: test ? 'test' : 'full'
+      mode: test ? 'test' : 'full',
+      stats: stats ? { generated: stats.generated, tables: stats.tables.map(t => ({ name: t.name, table: t.table, updated: t.updated, fetched: t.fetched })), missing: stats.missing } : null
     },
     sources,
-    prefs: prefs.map(p => ({ code: p.code, name: p.name, region: p.region, births: p.births })),
-    nat: { ...nat, marryShape: { m: shapeM, f: shapeF }, marryShapeSum: { m: shapeM.reduce((a, b) => a + b, 0), f: shapeF.reduce((a, b) => a + b, 0) } },
-    mort: { beta: BETA, bg: BG, q0, alpha: alphaTable(null) },
+    prefs: list.map(p => ({ code: p.code, name: p.name, region: p.region, births: p.births })),
+    nat: { ...nat, ...natReal, marryShape: { m: shapeM, f: shapeF }, marryShapeSum: { m: shapeM.reduce((a, b) => a + b, 0), f: shapeF.reduce((a, b) => a + b, 0) } },
+    mort: { beta: BETA, bg: BG, q0: q0s, alpha: alphaTable(e0s, q0s, null) },
     timeline,
     goods,
     names,
@@ -105,7 +169,12 @@ export function build({ test = false } = {}) {
     scenes: scenes.map(s => ({ ...s, what: s.what || WHAT[s.src] || (sources[s.src] || {}).name || '' }))
   };
   fs.writeFileSync(path.join(OUT, 'common.json'), JSON.stringify(common));
-  for (const p of prefs) {
+  for (const p of list) {
+    if (stats) {
+      const bundle = { code: p.code, name: p.name, region: p.region, provisional: p.provisional.length > 0, provisionalItems: p.provisional, munis: p.munis, s: p.s, sEst: p.sEst, alpha: alphaTable(e0s, q0s, p.e0diff) };
+      fs.writeFileSync(path.join(OUT, 'pref', p.code + '.json'), JSON.stringify(bundle));
+      continue;
+    }
     const bundle = {
       code: p.code, name: p.name, region: p.region, provisional: true,
       munis: p.munis.map(m => ({ ...m, est: !!p.est })),
@@ -117,14 +186,17 @@ export function build({ test = false } = {}) {
         priv: p.priv, privHs: p.privHs, out: p.out, outJob: p.outJob, ret: p.ret,
         jobs: { 1975: p.mult.jobs }, income: { 1975: p.mult.income }
       },
-      alpha: alphaTable(p.e0diff)
+      alpha: alphaTable(e0s, q0s, p.e0diff)
     };
     fs.writeFileSync(path.join(OUT, 'pref', p.code + '.json'), JSON.stringify(bundle));
   }
-  return { common, prefCount: prefs.length };
+  // 前の束に残っている、今回作らなかった都道府県のファイルを消す（試験モードと本番の切り替えで混ざらないように）
+  const keep = new Set(list.map(p => p.code + '.json'));
+  for (const f of fs.readdirSync(path.join(OUT, 'pref'))) if (!keep.has(f)) fs.unlinkSync(path.join(OUT, 'pref', f));
+  return { common, prefCount: list.length, muniCount: list.reduce((s, p) => s + p.munis.length, 0) };
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
   const r = build({ test: process.argv.includes('--test') });
-  console.log('データの束を作りました：都道府県 ' + r.prefCount + '、場面 ' + r.common.scenes.length + '、年表 ' + r.common.timeline.length + '行');
+ console.log('データの束を作りました：都道府県 ' + r.prefCount + '、市区町村 ' + r.muniCount + '、場面 ' + r.common.scenes.length + '、年表 ' + r.common.timeline.length + '行');
 }

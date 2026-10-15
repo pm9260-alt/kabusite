@@ -331,7 +331,7 @@
     s += L.ownHome ? '家は持ち家。' : '家は借家。';
     if (L.threeGen) s += '父方の祖父母と一緒に暮らしている。';
     var evs = [
-      ev(C, 'vital', y, P.name + 'で生まれた子のうち' + L.place.muniName + 'で生まれた割合', pct(share), { est: !!L.place.muniObj.est }),
+      ev(C, 'vital', y, P.name + 'で生まれた子のうち' + L.place.muniName + 'で生まれた割合', pct(share), { est: !!L.place.muniObj.est || y < (L.place.muniObj.estBefore || 0) }),
       ev(C, 'census', y, L.place.muniName + 'で働く人の産業の割合（親の仕事の抽選に使用）', indSummary(L.place.muniObj.ind)),
       ev(C, 'income', nv(C.nat.incomeMean, y).y, 'この年の世帯の年収の分布から抽選した家庭の年収', 'およそ' + L.income + '万円'),
       ev(C, 'census', nv(C.nat.threeGen[L.place.kind], y).y, '三世代で暮らす世帯の割合（' + L.place.kind + '）', pct(val(C.nat.threeGen[L.place.kind], y)))

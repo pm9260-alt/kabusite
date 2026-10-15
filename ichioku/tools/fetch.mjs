@@ -3,6 +3,7 @@
 //   node tools/fetch.mjs --survey   18章の確認。表を検索して、何年分あるかを logs/18-survey.txt にまとめる
 //   node tools/fetch.mjs --test     試験モード（表ごとに少しだけ取る）
 //   node tools/fetch.mjs            本番
+//   node tools/fetch.mjs --refresh  取り込み済みの表も取り直す（統計が新しくなったとき）
 // 途中で止まっても、次に動かすと続きから始める（logs/progress.json に進みを残す）。
 // 失敗した統計は飛ばして先へ進み、最後に logs/skipped.txt に一覧を書く。
 import fs from 'node:fs';
@@ -17,6 +18,7 @@ const API = 'https://api.e-stat.go.jp/rest/3.0/app/json/';
 const args = process.argv.slice(2);
 const SURVEY = args.includes('--survey');
 const TEST = args.includes('--test');
+const REFRESH = args.includes('--refresh');
 const cfg = JSON.parse(fs.readFileSync(path.join(ROOT, 'tools', 'sources.json'), 'utf8'));
 fs.mkdirSync(RAW, { recursive: true });
 fs.mkdirSync(LOGS, { recursive: true });
@@ -125,6 +127,71 @@ async function fetchTable(id, job, tableId) {
   return 'ok';
 }
 
+// 表番号と絞り込みの条件が決まっている表（sources.json の pull）。全ページをつないで1つのファイルにする
+async function fetchPull(id, job) {
+  const key = 'pull/' + job.id;
+  const out = path.join(RAW, 'pull', job.id + '.json');
+  if (!REFRESH && progress[key] === 'done' && fs.existsSync(out)) return 'skip';
+  fs.mkdirSync(path.dirname(out), { recursive: true });
+  let start = 1, classes = null, table = null;
+  const values = [];
+  for (let page = 0; page < 200; page++) {
+    const q = new URLSearchParams({ appId: id, lang: 'J', statsDataId: job.statsDataId, startPosition: String(start), limit: '100000', metaGetFlg: page === 0 ? 'Y' : 'N', ...(job.params || {}) });
+    const j = await getJSON(API + 'getStatsData?' + q);
+    const root = j.GET_STATS_DATA || {};
+    const st = (root.RESULT || {}).STATUS;
+    if (st !== 0 && st !== '0') throw new Error('e-Stat の応答：' + txt((root.RESULT || {}).ERROR_MSG));
+    const sd = root.STATISTICAL_DATA || {};
+    if (page === 0) {
+      table = { id: job.statsDataId, stat: txt((sd.TABLE_INF || {}).STAT_NAME), title: txt((sd.TABLE_INF || {}).TITLE), updated: txt((sd.TABLE_INF || {}).UPDATED_DATE) };
+      classes = {};
+      for (const o of asArr((sd.CLASS_INF || {}).CLASS_OBJ)) classes[o['@id']] = Object.fromEntries(asArr(o.CLASS).map(c => [c['@code'], c['@name']]));
+    }
+    for (const v of asArr((sd.DATA_INF || {}).VALUE)) values.push(v);
+    const next = (sd.RESULT_INF || {}).NEXT_KEY;
+    if (!next) break;
+    start = +next;
+  }
+  if (!values.length) throw new Error('数字が1つも返ってこなかった（条件 ' + JSON.stringify(job.params || {}) + '）');
+  fs.writeFileSync(out, JSON.stringify({ job: job.id, name: job.name, src: job.src, table, params: job.params || {}, fetched: new Date().toISOString(), classes, values }));
+  progress[key] = 'done';
+  saveProgress();
+  return values.length;
+}
+
+// Excel で置かれている表（sources.json の files）。同じ題名のうち一番新しく更新されたものを取る
+async function fetchFile(id, job) {
+  const key = 'files/' + job.id;
+  const out = path.join(RAW, 'files', job.id + '.xlsx');
+  if (!REFRESH && progress[key] === 'done' && fs.existsSync(out)) return 'skip';
+  fs.mkdirSync(path.dirname(out), { recursive: true });
+  const found = [];
+  let start = 1;
+  for (let page = 0; page < 20; page++) {
+    const q = new URLSearchParams({ appId: id, lang: 'J', statsCode: job.statsCode, searchWord: job.search, limit: '100', startPosition: String(start) });
+    const j = await getJSON(API + 'getDataCatalog?' + q);
+    const root = j.GET_DATA_CATALOG || {};
+    for (const c of asArr((root.DATA_CATALOG_LIST_INF || {}).DATA_CATALOG_INF)) for (const r of asArr((c.RESOURCES || {}).RESOURCE)) {
+      const name = txt((r.TITLE || {}).NAME) || txt(r.TITLE);
+      if (name === job.title && /XLS/i.test(txt(r.FORMAT))) found.push({ url: txt(r.URL), modified: txt(r.LAST_MODIFIED_DATE) });
+    }
+    const next = (root.DATA_CATALOG_LIST_INF || {}).NEXT_KEY;
+    if (!next) break;
+    start = +next;
+  }
+  if (!found.length) throw new Error('題名「' + job.title + '」のファイルが見つからない');
+  found.sort((a, b) => b.modified.localeCompare(a.modified));
+  const r = await fetch(found[0].url);
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  const buf = Buffer.from(await r.arrayBuffer());
+  if (buf.readUInt32LE(0) !== 0x04034b50) throw new Error('Excel（.xlsx）ではないファイルが返ってきた');
+  fs.writeFileSync(out, buf);
+  fs.writeFileSync(out.replace(/\.xlsx$/, '.json'), JSON.stringify({ job: job.id, name: job.name, src: job.src, url: found[0].url, modified: found[0].modified, fetched: new Date().toISOString() }));
+  progress[key] = 'done';
+  saveProgress();
+  return found[0].modified;
+}
+
 async function main() {
   const id = appId();
   if (!id) {
@@ -132,6 +199,14 @@ async function main() {
     process.exit(2);
   }
   if (SURVEY) return survey(id);
+  for (const job of cfg.pull || []) {
+    try { const r = await fetchPull(id, job); console.log(job.name + '：' + (r === 'skip' ? '取り込み済み' : r + '個の数字を取り込んだ')); }
+    catch (e) { skipped.push(job.name + '（表 ' + job.statsDataId + '）：' + e.message); }
+  }
+  for (const job of cfg.files || []) {
+    try { const r = await fetchFile(id, job); console.log(job.name + '：' + (r === 'skip' ? '取り込み済み' : r + ' 更新のファイルを取り込んだ')); }
+    catch (e) { skipped.push(job.name + '：' + e.message); }
+  }
   for (const job of cfg.estat) {
     if (!job.tables.length) {
       try {

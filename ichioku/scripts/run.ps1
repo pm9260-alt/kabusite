@@ -32,6 +32,7 @@ Write-Host '== 1. 試験モード（3都道府県・少しのデータで全工�
 node tools/fetch.mjs --test
 $fetchCode = $LASTEXITCODE
 if ($fetchCode -eq 2) { exit 2 }
+node tools/transform.mjs
 node tools/build.mjs --test
 $buildCode = $LASTEXITCODE
 node tools/check.mjs --test
@@ -45,6 +46,7 @@ if ($TestOnly) { exit $checkTest }
 
 Write-Host '== 2. 本番（全国分） =='
 node tools/fetch.mjs
+node tools/transform.mjs
 node tools/build.mjs
 if ($LASTEXITCODE -ne 0) { Write-Host 'データの束を作れませんでした。'; exit 1 }
 
