@@ -256,8 +256,21 @@ rec('場面が空の年がないか', sim.empty === 0, sim.empty + '年');
 rec('同じ人生の中で同じ場面が2回出ていないか', sim.dupe === 0, sim.dupe + '回');
 rec('能力・家族・時代の矛盾がないか', sim.contra.length === 0, [...new Set(sim.contra)].slice(0, 8).join('、'));
 rec('使える年の範囲の外で出た場面がないか', sim.yearOut.length === 0, [...new Set(sim.yearOut)].slice(0, 8).join('、'));
-const missMuni = Object.values(P).flatMap(p => p.munis.filter(m => !sim.muniHit[m.code]).map(m => p.name + m.name));
-rec('自動で回した人生で全市区町村が実際に選ばれたか', missMuni.length === 0, missMuni.join('、'));
+// 統計どおりの割合で回すと、出生数がごく少ない村は選ばれないことがある（作る人の判断 E-1、2026-10-16）。
+// 選ばれなかった市区町村は、生まれる町を指定して1人ずつ人生を最後まで回し、止まらずに動くかを確かめる
+const missMuni = Object.values(P).flatMap(p => p.munis.filter(m => !sim.muniHit[m.code]).map(m => ({ p, m })));
+const forcedBad = [];
+missMuni.forEach(({ p, m }, i) => {
+  const by = YEARS[i % YEARS.length];
+  try {
+    const L = E.autoRun(E.newLife(C, p, { year: by, muniCode: m.code, seed: (by * 7919 + i * 104729 + 17) >>> 0 }));
+    if (L.home.muni !== m.code) forcedBad.push(p.name + m.name + '（別の町で生まれた）');
+    else if (L.alive) forcedBad.push(p.name + m.name + '（人生が最後まで進まなかった）');
+    else if (L.stats.emptyYears) forcedBad.push(p.name + m.name + '（場面が空の年がある）');
+  } catch (e) { forcedBad.push(p.name + m.name + '（止まった：' + e.message + '）'); }
+});
+rec('全市区町村で人生が最後まで動くか', forcedBad.length === 0,
+  forcedBad.length ? forcedBad.slice(0, 20).join('、') : '自動で回した人生で選ばれた ' + (Object.values(P).reduce((t, p) => t + p.munis.length, 0) - missMuni.length) + '、選ばれなかった ' + missMuni.length + ' は町を指定して1人ずつ回した');
 function cmp(name, o, scale, unit) {
   if (!o.n) { rec(name, false, '数えられる人がいない'); return; }
   const a = o.s / o.n * scale, b = o.t / o.n * scale;
