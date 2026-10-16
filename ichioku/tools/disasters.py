@@ -3,7 +3,7 @@
 # 使い方：python3 tools/disasters.py
 #   PDF は pdftotext（poppler）で文字と位置を取り出す。取り出した数字は、資料の都道府県の小計・合計と照らし合わせ、
 #   合わなければ止まる。
-import json, os, re, subprocess, sys, urllib.request, html as H
+import json, os, re, subprocess, sys, urllib.request, urllib.parse, html as H
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CACHE = os.path.join(ROOT, 'raw', 'disasters')
@@ -167,11 +167,13 @@ for tr in re.findall(r'<tr.*?</tr>', re.findall(r'<table.*?</table>', s, re.S)[0
 check('阪神・淡路大震災 死者', sum(v['dead'] for v in m.values()), 6402)
 # 神戸市の区ごとの死者（神戸市「阪神・淡路大震災の被害状況」2005年12月22日時点、合計4,571人）。区ごとの全壊は数字待ち
 kobe = {'神戸市東灘区': 1470, '神戸市灘区': 934, '神戸市中央区': 243, '神戸市兵庫区': 556, '神戸市長田区': 921, '神戸市須磨区': 399, '神戸市垂水区': 26}
+# 区ごとの全壊は神戸市の資料（つながらない）にあるため、市全体の全壊世帯を区の死者の割合で分ける（推計）
+kz = m[('兵庫県', '神戸市')]['zenkai']; kd = m[('兵庫県', '神戸市')]['dead']
 put('quake1995hanshin', '阪神・淡路大震災', [
     {'name': '兵庫県 阪神・淡路大震災の市町被害数値（平成18年5月19日消防庁確定）', 'url': 'https://web.pref.hyogo.lg.jp/kk42/pa20_000000006.html'},
     {'name': '神戸市 阪神・淡路大震災の被害状況（区別の死者、2005年12月22日時点）', 'url': 'https://www.city.kobe.lg.jp/a21572/bosai/shobo/hanshinawaji/higai2.html', 'note': 'この作業環境から神戸市のサイトにつながらないため、検索結果に出た同ページの値を使った。北区・西区は合わせて22人で、区の分け方が確かめられないため、市全体の割合を使う'}],
-    1995, m, notes=['神戸市の区の全壊は数字待ち。区の死者は神戸市の資料'])
-result['quake1995hanshin']['wards'] = {'28|' + k: {'dead': v} for k, v in kobe.items()}
+    1995, m, notes=['区の死者は神戸市の資料。区の全壊は、市全体の全壊世帯（61,800）を区の死者の割合で分けた推計'])
+result['quake1995hanshin']['wards'] = {'28|' + k: {'dead': v, 'zenkai': round(kz * v / kd), 'zenkaiEst': True} for k, v in kobe.items()}
 
 # ---------- 能登半島地震（消防庁 第123報、令和8年3月31日） ----------
 pdf = fetch(FDMA + 'items/b055402cefac7721623c30034b25489118dbec38.pdf', 'noto123.pdf')
@@ -285,8 +287,34 @@ for nm, n in re.findall(r'^\s*(\S[\s\S]{0,6}?)【死者\s*(\d+)\s*名】', t, re
     if nm == '川口町': nm = '長岡市'  # 2010年に長岡市へ編入
     d[nm] = d.get(nm, 0) + int(n)
 check('新潟県中越地震 死者', sum(d.values()), 68)
+# 全壊（世帯）：別紙1の表は市町村が横に並ぶ。合併した市は「まとめの列」（見出しなし）のあとに旧市町村の列が続く。
+# 数字の右端と見出しの右端の位置で列を決め、見出しのある列の合計が県の全壊世帯（3,138）と合うことを確かめる
+def transposed_row(pdf, pages, total):
+    allp = words(pdf)
+    cols = {}  # 見出しのある列：名前 -> 値
+    groups = []  # (見出しのない列の値, 次の見出しの名前)
+    for pi in pages:
+        ws = allp[pi]
+        y = sorted(w[1] for w in ws if w[4] == '世帯')[0]
+        nums = sorted([(w[2], num(w[4])) for w in ws if abs(w[1] - y) < 2 and num(w[4]) is not None and w[0] > 190])
+        heads = sorted([(w[2], w[4]) for w in ws if 100 < w[1] < 120 and re.fullmatch(r'[^\d（）]+[市町村]', w[4])])
+        for xe, v in nums:
+            h = [n for he, n in heads if -3 <= xe - he <= 12]
+            if h: cols[h[0]] = cols.get(h[0], 0) + v
+            else:
+                nxt = [n for he, n in heads if he > xe]
+                groups.append((v, nxt[0] if nxt else None))
+    check('新潟県中越地震 全壊世帯（市町村の列の合計）', sum(cols.values()), total)
+    return cols, groups
+cols, groups = transposed_row(fetch(FDMA + 'assets/post335.pdf', 'chuetsu.pdf'), [11, 12, 13], 3138)
+gt = {nxt: v for v, nxt in groups}
+zen = {'長岡市': gt['長岡市'] + cols.get('川口町', 0), '小千谷市': cols['小千谷市'], '十日町市': gt['十日町市'], '魚沼市': gt['堀之内町']}
+check('新潟県中越地震 魚沼市（旧町村の合計）', zen['魚沼市'], sum(cols.get(n, 0) for n in ['堀之内町', '小出町', '湯之谷村', '広神村', '守門村', '入広瀬村']))
+check('新潟県中越地震 十日町市（旧市町村の合計）', zen['十日町市'], sum(cols.get(n, 0) for n in ['十日町市', '川西町', '中里村', '松代町', '松之山町']))
+mz = {('新潟県', k): {'dead': v, 'zenkai': zen.get(k)} for k, v in d.items()}
+for k, v in zen.items(): mz.setdefault(('新潟県', k), {'dead': 0, 'zenkai': v})
 put('quake2004chuetsu', '新潟県中越地震', [{'name': '消防庁 平成16年（2004年）新潟県中越地震（平成21年10月21日更新）', 'url': FDMA + 'assets/post335.pdf'}], 2005,
-    {('新潟県', k): {'dead': v} for k, v in d.items()}, {'15': {'zenkai': None}}, ['川口町（今の長岡市）は長岡市に合わせた。全壊は数字待ち'])
+    mz, notes=['川口町（今の長岡市）は長岡市に合わせた。全壊は別紙1の全壊世帯（合併後の市のまとめの列）'])
 
 # ---------- 新潟県中越沖地震（消防庁 平成25年5月17日更新、被害情報各市町村内訳） ----------
 pdf = fetch(FDMA + 'assets/post490.pdf', 'chuetsuoki.pdf')
@@ -315,6 +343,85 @@ bd = breakdown(between(t, '≪死者の内訳≫', r'≪|\n\s*\d\s'))
 check('台風25号・26号 死者', sum(bd.values()), 17)
 put('typhoon2026', '令和8年台風第25号・第26号', [{'name': '消防庁 令和8年台風第25号、第26号及び前線による大雨被害及び消防機関等の対応状況（第25報、令和8年10月5日）', 'url': u}], 2020,
     {k: {'dead': v} for k, v in bd.items()}, pref_table(pdf), ['市町ごとの全壊は資料にないため、県の全壊を死者の割合で分ける（推計）'])
+
+# ---------- 1978〜1993年と2016年の5つの災害（2026-10-17 に数字待ちを埋めた） ----------
+WIKI = lambda t: 'https://ja.wikipedia.org/w/index.php?title=' + urllib.parse.quote(t) + '&action=raw'
+BOUSAI = 'https://www.bousai.go.jp/kyoiku/kyokun/kyoukunnokeishou/rep/'
+
+# 宮城県沖地震（1978年）：仙台市の死者16人は仙台市「1978年宮城県沖地震」（この作業環境から仙台市のサイトにつながらないため、検索結果に出た同ページの値）。
+# 全壊は宮城県の1,377戸（宮城県の発表）を、県の死者27人のうちの仙台市の割合で分ける（推計）。区には市全体の割合を使う
+put('quake1978miyagi', '宮城県沖地震', [
+    {'name': '仙台市 1978年宮城県沖地震（死者16人、うちブロック塀の倒壊11人）', 'url': 'https://www.city.sendai.jp/kekaku/kurashi/anzen/saigaitaisaku/kanren/1978nen.html', 'note': 'この作業環境から仙台市のサイトにつながらないため、検索結果に出た同ページの値を使った'},
+    {'name': '宮城県の被害（死者27人、住宅の全壊1,377戸）', 'url': 'https://www.town.murata.miyagi.jp/kurashi/iza/taishin/file/01.pdf'}], 1980,
+    {('宮城県', '仙台市'): {'dead': 16}}, {'04': {'zenkai': 1377, 'dead': 27}},
+    ['全壊は県の数を死者の割合で仙台市に分けた推計。区には市全体の割合を使う（推計）'])
+
+# 長崎大水害（1982年）：内閣府「災害教訓の継承に関する専門調査会報告書 1982 長崎豪雨災害」第1章 表1-2（長崎県『7.23長崎大水害の記録』）
+pdf = fetch(BOUSAI + '1982_nagasaki_gouu/pdf/1982--nagasakiGOUU_05_chap1.pdf', 'bousai_nagasaki1982_chap1.pdf')
+t = text(pdf)
+blk = between(t, '表1－2 長崎県の被害状況', r'計\s+棟')
+def nums(label):
+    mm = re.search(label + r'\s+(?:人|棟)([^\n]*)', blk)
+    return [int(x.replace(',', '')) for x in re.findall(r'\d[\d,]*', mm.group(1))]
+dead, missing, zen = nums('死者'), nums('行方不明者'), nums('全壊')
+check('長崎大水害 長崎県の死者', dead[0], 295)
+check('長崎大水害 長崎市の全壊', zen[2], 447)
+put('flood1982nagasaki', '長崎大水害', [{'name': '内閣府 災害教訓の継承に関する専門調査会報告書「1982 長崎豪雨災害」第1章 表1-2（長崎県『7.23長崎大水害の記録』）', 'url': BOUSAI + '1982_nagasaki_gouu/pdf/1982--nagasakiGOUU_05_chap1.pdf'}], 1980,
+    {('長崎県', '長崎市'): {'dead': dead[1], 'missing': missing[1], 'zenkai': zen[2]}}, notes=['長崎市の死者258人・行方不明4人・全壊447棟'])
+
+# 雲仙普賢岳の火砕流（1991年）：内閣府「1990-1995 雲仙普賢岳噴火」第1章 表1-7（6月3日の死者等）と表1-9（家屋被害）
+pdf = fetch(BOUSAI + '1990_unzen_funka/pdf/5_chap1.pdf', 'bousai_unzen_chap1.pdf')
+t = text(pdf)
+b7 = between(t, '表1－7', '出典')
+job = {k: int(v) for k, v in re.findall(r'(消防団員|報道関係|警察官|火山研究者|タクシー|一般人)\s*(\d+)人', b7)}
+check('雲仙 6月3日の死者・行方不明者', sum(job.values()), 43)
+local = job['消防団員'] + job['警察官'] + job['タクシー'] + job['一般人']  # 報道関係者と火山研究者は島の外から来ていた
+b9 = between(t, '表1－9 家屋被害の一覧', '出典')
+b9 = b9[:re.search(r'\n\s*4\.\s*8\.', b9).start()]  # 1991年（平成3年）の行だけ。「4.8.」から1992年
+shima = fuka = 0
+for line in b9.split('\n'):
+    mm = re.search(r'(火砕流|土石流|噴石)\s+([\d\s]+?)\s*(島原市[^\n]*)', line)
+    if not mm: continue
+    v = [int(x) for x in mm.group(2).split()]
+    # 数字が4つ以上の行だけ、いちばん左が全壊（3つ以下の行は全壊がなく、計・非住家・合計だけ）
+    if len(v) < 4 or mm.group(1) == '噴石': continue
+    z, where = v[0], mm.group(3)
+    if '深江町' in where: shima += z / 2; fuka += z / 2  # 2つの町にまたがる回は半分ずつ（推計）
+    else: shima += z
+check('雲仙 1991年の全壊（6/3・6/8・6/30・9/15）', round(shima + fuka), 49 + 70 + 49 + 53)
+put('volcano1991unzen', '雲仙普賢岳の火砕流', [{'name': '内閣府 災害教訓の継承に関する専門調査会報告書「1990-1995 雲仙普賢岳噴火」第1章 表1-7・表1-9（『雲仙・普賢岳噴火災害誌』）', 'url': BOUSAI + '1990_unzen_funka/pdf/5_chap1.pdf'}], 1990,
+    {('長崎県', '島原市'): {'dead': local, 'zenkai': round(shima)}, ('長崎県', '南島原市'): {'dead': 0, 'zenkai': round(fuka)}},
+    notes=['6月3日の死者・行方不明者43人のうち、報道関係者16人と火山研究者3人は島の外から来ていたため、住む人の数から外した', '1991年の全壊のうち島原市と深江町（今の南島原市）にまたがる回は半分ずつに分けた（推計）'])
+
+# 北海道南西沖地震（1993年）：Wikipedia「北海道南西沖地震」の被害の表（北海道南西沖地震対策本部、1993年）
+w = open(fetch(WIKI('北海道南西沖地震'), 'wiki_okushiri.txt'), encoding='utf-8').read()
+r = re.search(r'!奥尻町\s*\n\|(\d+)\|\|(\d+)\|\|(\d+)\|\|(\d+)', w)
+put('quake1993okushiri', '北海道南西沖地震', [{'name': '北海道南西沖地震の被害（北海道南西沖地震対策本部、1993年）', 'url': 'https://ja.wikipedia.org/wiki/北海道南西沖地震', 'note': 'Wikipedia の表から取り出した'}], 1990,
+    {('北海道', '奥尻町'): {'dead': int(r.group(1)), 'missing': int(r.group(2)), 'zenkai': int(r.group(4))}})
+check('北海道南西沖地震 奥尻町の死者・行方不明者', int(r.group(1)) + int(r.group(2)), 202)
+
+# 熊本地震（2016年）：市町村の死者は熊本県「熊本地震等に係る被害状況について【第356報】」（Wikipedia の表）、県の全壊は消防庁 第121報
+w = open(fetch(WIKI('熊本地震 (2016年)'), 'wiki_kumamoto2016.txt'), encoding='utf-8').read()
+tb = between(w, '熊本地震 死者の内訳', r'\|\}')
+m = {}
+pref = None
+for line in tb.split('\n|-'):
+    pm = re.search(r'\[\[(熊本県|大分県)\]\]', line)
+    if pm: pref = pm.group(1)
+    names = re.findall(r'\[\[(?:[^\]|]+\|)?([^\]|]+[市町村])\]\]', line)
+    v = re.findall(r'\|\s*(\d+)\s*(?=\|\||\s*$)', line)
+    if not names or not v: continue
+    m[(pref, names[-1])] = {'dead': int(v[-1])}  # いちばん右の「計」
+check('熊本地震 死者の合計', sum(x['dead'] for x in m.values()), 279)
+pdf = fetch(FDMA + 'items/kumamoto.pdf', 'kumamoto2016_121.pdf')
+# 「２ 被害の状況」の表：県名・死者・重傷・軽傷・全壊の順
+r = re.search(r'\n\s*熊本県\s+([\d,]+)\s+([\d,]+)\s+([\d,]+)\s+([\d,]+)', text(pdf))
+pz = {'43': {'dead': num(r.group(1)), 'zenkai': num(r.group(4))}}
+check('熊本地震 熊本県の全壊', pz['43']['zenkai'], 8657)
+put('quake2016kumamoto', '熊本地震', [
+    {'name': '熊本県 平成28(2016)年熊本地震等に係る被害状況について【第356報】（市町村の死者。直接死・災害関連死・豪雨による関連死）', 'url': 'https://ja.wikipedia.org/wiki/熊本地震_(2016年)', 'note': 'この作業環境から熊本県のサイトにつながらないため、同報を出典とする Wikipedia の表から取り出した'},
+    {'name': '消防庁 熊本県熊本地方を震源とする地震（第121報、平成31年4月12日）', 'url': FDMA + 'items/kumamoto.pdf'}], 2015, m, pz,
+    ['市町村ごとの全壊は資料にないため、県の全壊を死者の割合で分ける（推計）。熊本市の区には市全体の割合を使う（推計）'])
 
 json.dump(result, open(OUT, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
 print('保存しました：', ', '.join(f"{k}（{len(v['munis'])}市区町村）" for k, v in result.items()))

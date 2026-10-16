@@ -2678,29 +2678,43 @@
   },
   "prefZenkai": {},
   "notes": [
-   "神戸市の区の全壊は数字待ち。区の死者は神戸市の資料"
+   "区の死者は神戸市の資料。区の全壊は、市全体の全壊世帯（61,800）を区の死者の割合で分けた推計"
   ],
   "wards": {
    "28|神戸市東灘区": {
-    "dead": 1470
+    "dead": 1470,
+    "zenkai": 19905,
+    "zenkaiEst": true
    },
    "28|神戸市灘区": {
-    "dead": 934
+    "dead": 934,
+    "zenkai": 12647,
+    "zenkaiEst": true
    },
    "28|神戸市中央区": {
-    "dead": 243
+    "dead": 243,
+    "zenkai": 3290,
+    "zenkaiEst": true
    },
    "28|神戸市兵庫区": {
-    "dead": 556
+    "dead": 556,
+    "zenkai": 7529,
+    "zenkaiEst": true
    },
    "28|神戸市長田区": {
-    "dead": 921
+    "dead": 921,
+    "zenkai": 12471,
+    "zenkaiEst": true
    },
    "28|神戸市須磨区": {
-    "dead": 399
+    "dead": 399,
+    "zenkai": 5403,
+    "zenkaiEst": true
    },
    "28|神戸市垂水区": {
-    "dead": 26
+    "dead": 26,
+    "zenkai": 352,
+    "zenkaiEst": true
    }
   }
  },
@@ -3998,45 +4012,45 @@
   ],
   "census": 2015,
   "munis": {
-   "01|厚真町": {
-    "dead": 36,
-    "zenkai": 224
+   "01|札幌市": {
+    "dead": 3,
+    "zenkai": 97
    },
-   "01|江別市": {
-    "dead": 0,
-    "zenkai": 1
-   },
-   "01|安平町": {
-    "dead": 0,
-    "zenkai": 93
+   "01|むかわ町": {
+    "dead": 1,
+    "zenkai": 33
    },
    "01|日高町": {
     "dead": 0,
     "zenkai": 3
    },
-   "01|苫小牧市": {
-    "dead": 2,
-    "zenkai": 0
-   },
-   "01|札幌市": {
-    "dead": 3,
-    "zenkai": 97
-   },
-   "01|新ひだか町": {
-    "dead": 1,
-    "zenkai": 0
+   "01|江別市": {
+    "dead": 0,
+    "zenkai": 1
    },
    "01|北広島市": {
     "dead": 0,
     "zenkai": 17
    },
+   "01|新ひだか町": {
+    "dead": 1,
+    "zenkai": 0
+   },
+   "01|安平町": {
+    "dead": 0,
+    "zenkai": 93
+   },
    "01|千歳市": {
     "dead": 0,
     "zenkai": 1
    },
-   "01|むかわ町": {
-    "dead": 1,
-    "zenkai": 33
+   "01|厚真町": {
+    "dead": 36,
+    "zenkai": 224
+   },
+   "01|苫小牧市": {
+    "dead": 2,
+    "zenkai": 0
    }
   },
   "prefZenkai": {},
@@ -4355,37 +4369,41 @@
   "census": 2005,
   "munis": {
    "15|十日町市": {
-    "dead": 9
+    "dead": 9,
+    "zenkai": 107
    },
    "15|長岡市": {
-    "dead": 28
+    "dead": 28,
+    "zenkai": 2146
    },
    "15|小千谷市": {
-    "dead": 19
+    "dead": 19,
+    "zenkai": 635
    },
    "15|魚沼市": {
-    "dead": 5
+    "dead": 5,
+    "zenkai": 75
    },
    "15|湯沢町": {
-    "dead": 1
+    "dead": 1,
+    "zenkai": null
    },
    "15|見附市": {
-    "dead": 3
+    "dead": 3,
+    "zenkai": null
    },
    "15|南魚沼市": {
-    "dead": 1
+    "dead": 1,
+    "zenkai": null
    },
    "15|燕市": {
-    "dead": 2
-   }
-  },
-  "prefZenkai": {
-   "15": {
+    "dead": 2,
     "zenkai": null
    }
   },
+  "prefZenkai": {},
   "notes": [
-   "川口町（今の長岡市）は長岡市に合わせた。全壊は数字待ち"
+   "川口町（今の長岡市）は長岡市に合わせた。全壊は別紙1の全壊世帯（合併後の市のまとめの列）"
   ]
  },
  "quake2007chuetsuoki": {
@@ -4618,6 +4636,190 @@
   },
   "notes": [
    "市町ごとの全壊は資料にないため、県の全壊を死者の割合で分ける（推計）"
+  ]
+ },
+ "quake1978miyagi": {
+  "title": "宮城県沖地震",
+  "sources": [
+   {
+    "name": "仙台市 1978年宮城県沖地震（死者16人、うちブロック塀の倒壊11人）",
+    "url": "https://www.city.sendai.jp/kekaku/kurashi/anzen/saigaitaisaku/kanren/1978nen.html",
+    "note": "この作業環境から仙台市のサイトにつながらないため、検索結果に出た同ページの値を使った"
+   },
+   {
+    "name": "宮城県の被害（死者27人、住宅の全壊1,377戸）",
+    "url": "https://www.town.murata.miyagi.jp/kurashi/iza/taishin/file/01.pdf"
+   }
+  ],
+  "census": 1980,
+  "munis": {
+   "04|仙台市": {
+    "dead": 16
+   }
+  },
+  "prefZenkai": {
+   "04": {
+    "zenkai": 1377,
+    "dead": 27
+   }
+  },
+  "notes": [
+   "全壊は県の数を死者の割合で仙台市に分けた推計。区には市全体の割合を使う（推計）"
+  ]
+ },
+ "flood1982nagasaki": {
+  "title": "長崎大水害",
+  "sources": [
+   {
+    "name": "内閣府 災害教訓の継承に関する専門調査会報告書「1982 長崎豪雨災害」第1章 表1-2（長崎県『7.23長崎大水害の記録』）",
+    "url": "https://www.bousai.go.jp/kyoiku/kyokun/kyoukunnokeishou/rep/1982_nagasaki_gouu/pdf/1982--nagasakiGOUU_05_chap1.pdf"
+   }
+  ],
+  "census": 1980,
+  "munis": {
+   "42|長崎市": {
+    "dead": 258,
+    "missing": 4,
+    "zenkai": 447
+   }
+  },
+  "prefZenkai": {},
+  "notes": [
+   "長崎市の死者258人・行方不明4人・全壊447棟"
+  ]
+ },
+ "volcano1991unzen": {
+  "title": "雲仙普賢岳の火砕流",
+  "sources": [
+   {
+    "name": "内閣府 災害教訓の継承に関する専門調査会報告書「1990-1995 雲仙普賢岳噴火」第1章 表1-7・表1-9（『雲仙・普賢岳噴火災害誌』）",
+    "url": "https://www.bousai.go.jp/kyoiku/kyokun/kyoukunnokeishou/rep/1990_unzen_funka/pdf/5_chap1.pdf"
+   }
+  ],
+  "census": 1990,
+  "munis": {
+   "42|島原市": {
+    "dead": 24,
+    "zenkai": 135
+   },
+   "42|南島原市": {
+    "dead": 0,
+    "zenkai": 86
+   }
+  },
+  "prefZenkai": {},
+  "notes": [
+   "6月3日の死者・行方不明者43人のうち、報道関係者16人と火山研究者3人は島の外から来ていたため、住む人の数から外した",
+   "1991年の全壊のうち島原市と深江町（今の南島原市）にまたがる回は半分ずつに分けた（推計）"
+  ]
+ },
+ "quake1993okushiri": {
+  "title": "北海道南西沖地震",
+  "sources": [
+   {
+    "name": "北海道南西沖地震の被害（北海道南西沖地震対策本部、1993年）",
+    "url": "https://ja.wikipedia.org/wiki/北海道南西沖地震",
+    "note": "Wikipedia の表から取り出した"
+   }
+  ],
+  "census": 1990,
+  "munis": {
+   "01|奥尻町": {
+    "dead": 175,
+    "missing": 27,
+    "zenkai": 426
+   }
+  },
+  "prefZenkai": {},
+  "notes": []
+ },
+ "quake2016kumamoto": {
+  "title": "熊本地震",
+  "sources": [
+   {
+    "name": "熊本県 平成28(2016)年熊本地震等に係る被害状況について【第356報】（市町村の死者。直接死・災害関連死・豪雨による関連死）",
+    "url": "https://ja.wikipedia.org/wiki/熊本地震_(2016年)",
+    "note": "この作業環境から熊本県のサイトにつながらないため、同報を出典とする Wikipedia の表から取り出した"
+   },
+   {
+    "name": "消防庁 熊本県熊本地方を震源とする地震（第121報、平成31年4月12日）",
+    "url": "https://www.fdma.go.jp/disaster/info/items/kumamoto.pdf"
+   }
+  ],
+  "census": 2015,
+  "munis": {
+   "43|熊本市": {
+    "dead": 90
+   },
+   "43|宇土市": {
+    "dead": 12
+   },
+   "43|宇城市": {
+    "dead": 13
+   },
+   "43|美里町": {
+    "dead": 2
+   },
+   "43|菊池市": {
+    "dead": 4
+   },
+   "43|合志市": {
+    "dead": 7
+   },
+   "43|大津町": {
+    "dead": 4
+   },
+   "43|菊陽町": {
+    "dead": 6
+   },
+   "43|阿蘇市": {
+    "dead": 21
+   },
+   "43|高森町": {
+    "dead": 3
+   },
+   "43|南阿蘇村": {
+    "dead": 31
+   },
+   "43|西原村": {
+    "dead": 9
+   },
+   "43|御船町": {
+    "dead": 10
+   },
+   "43|嘉島町": {
+    "dead": 5
+   },
+   "43|益城町": {
+    "dead": 45
+   },
+   "43|甲佐町": {
+    "dead": 3
+   },
+   "43|山都町": {
+    "dead": 3
+   },
+   "43|八代市": {
+    "dead": 4
+   },
+   "43|氷川町": {
+    "dead": 3
+   },
+   "43|上天草市": {
+    "dead": 1
+   },
+   "44|由布市": {
+    "dead": 3
+   }
+  },
+  "prefZenkai": {
+   "43": {
+    "dead": 270,
+    "zenkai": 8657
+   }
+  },
+  "notes": [
+   "市町村ごとの全壊は資料にないため、県の全壊を死者の割合で分ける（推計）。熊本市の区には市全体の割合を使う（推計）"
   ]
  }
 }

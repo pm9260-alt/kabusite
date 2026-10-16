@@ -208,7 +208,7 @@ export function build({ test = false } = {}) {
       else if (ws) for (const c of ws) per[c] = { ...v, codes: ws, est: true };
       else disBad.push(e.title + '：' + key);
     }
-    for (const [key, v] of Object.entries(d.wards || {})) { const c = muniIndex[key]; if (c) per[c] = { ...per[c], ...v, codes: [c], est: false, zenkai: undefined }; else disBad.push(e.title + '：' + key); }
+    for (const [key, v] of Object.entries(d.wards || {})) { const c = muniIndex[key]; if (c) per[c] = { ...per[c], ...v, codes: [c], est: false, zenkai: v.zenkai, zenkaiEst: !!v.zenkaiEst }; else disBad.push(e.title + '：' + key); }
     const rate = (n, codes, tab) => { const den = codes.reduce((s, c) => s + (near(tab[c], d.census) || 0), 0); return den > 0 ? +Math.min(0.95, n / den).toFixed(5) : null; };
     e.byCode = {};
     const allCodes = new Set((e.areas || []).flatMap(a => a.rates ? (a.codes || []) : []));
@@ -218,7 +218,7 @@ export function build({ test = false } = {}) {
       if (!v) { o.dead = 0; o.house = 0; e.byCode[c] = o; continue; }
       const codes = v.codes;
       o.dead = rate((v.dead || 0) + (v.missing || 0), codes, popOf);
-      if (v.zenkai != null) o.house = rate(v.zenkai, codes, hhOf);
+      if (v.zenkai != null) { o.house = rate(v.zenkai, codes, hhOf); if (v.zenkaiEst) o.houseEst = true; }
       else {
         // 市区町村ごとの全壊がない資料：県の全壊を、県の中の死者の割合で分ける（推計）
         const pz = (d.prefZenkai || {})[c.slice(0, 2)];
