@@ -6,7 +6,7 @@
   var BASE_MS = 7000;          // 1年あたりの表示時間（1倍のとき）。約80年で約10分
   var SPEEDS = [1, 2, 4, 8, 16];
   var C = null, prefCache = {}, P = null, L = null, cur = null;
-  var timer = null, paused = false, speedIdx = 0, sheetPaused = false;
+  var timer = null, paused = false, speedIdx = 0, sheetPaused = false, auto = false;
 
   function $(id) { return document.getElementById(id); }
   function el(tag, cls, text) {
@@ -76,11 +76,32 @@
     });
   }
   // 記録した答えをたどって、shown の年まで進める。答えが尽きたところの分かれ道はそのまま返す
+  // 重点の記録（[年, 重点] の並び）から、その年の重点を決める
+  function focusAt(g, y) {
+    var f = null;
+    (g.focus || []).forEach(function (x) { if (x[0] <= y) f = x[1]; });
+    return f;
+  }
+  // 分かれ道に答える。おまかせで選んだ答えには _auto、統計どおりに任せた答えには _none の印が付いている
+  function answerBranch(r, a) {
+    var br = r.branch, real = a && a._none ? null : a;
+    if (real && real._auto) { real = {}; for (var k in a) if (k.charAt(0) !== '_') real[k] = a[k]; }
+    var nr = M.resolve(L, real);
+    if (a && a._auto) {
+      var labels = (br.groups || []).map(function (g) {
+        var o = real && g.options.filter(function (x) { return x.k === real[g.id]; })[0];
+        return o ? o.l : '統計どおり';
+      });
+      (r.autoPicked = r.autoPicked || []).push(br.title + '（' + (labels.length ? labels.join('・') : '統計どおり') + '）');
+    }
+    return nr;
+  }
   function replayTo(g, untilYear) {
     var i = 0, r = null;
     while (L.alive) {
+      L.focus = focusAt(g, L.year);
       r = M.step(L);
-      while (r && r.branch && i < g.answers.length) r = M.resolve(L, g.answers[i++]);
+      while (r && r.branch && i < g.answers.length) { L.focus = focusAt(g, L.year); r = answerBranch(r, g.answers[i++]); }
       if (r && r.branch) break;
       if (untilYear != null && r && r.year >= untilYear) break;
       if (untilYear == null && !L.alive) break;
@@ -92,7 +113,7 @@
   function born() {
     var seed = randomSeed();
     $('born').disabled = true;
-    G = { v: 1, seed: seed, year: yearOfSeed(seed), answers: [], marks: [] };
+    G = { v: 1, seed: seed, year: yearOfSeed(seed), answers: [], marks: [], focus: [], auto: auto };
     makeLife(seed).then(function () {
       paused = false; setPauseLabel();
       show('life');
@@ -107,7 +128,7 @@
   function resume() {
     var g = store('ichioku-current');
     if (!g || !g.seed) return;
-    G = g; G.marks = G.marks || [];
+    G = g; G.marks = G.marks || []; G.focus = G.focus || []; auto = !!G.auto;
     makeLife(g.seed).then(function () {
       (G.marks || []).forEach(function (k) { L.marks[k] = 1; });
       cur = replayTo(G, G.shown);
@@ -119,11 +140,11 @@
   }
   // これまでの人生をもう一度見る（最期の画面を開き直す）
   function reopen(rec) {
-    G = { v: 1, seed: rec.seed, year: rec.year, answers: rec.answers || [], marks: rec.marks || [], done: true, farewell: rec.farewell || '' };
+    G = { v: 1, seed: rec.seed, year: rec.year, answers: rec.answers || [], marks: rec.marks || [], focus: rec.focus || [], done: true, farewell: rec.farewell || '' };
     makeLife(rec.seed).then(function () {
       (G.marks || []).forEach(function (k) { L.marks[k] = 1; });
       var g2 = { answers: G.answers }, i = 0, r;
-      while (L.alive) { r = M.step(L); while (r && r.branch) r = M.resolve(L, i < g2.answers.length ? g2.answers[i++] : null); }
+      while (L.alive) { L.focus = focusAt(G, L.year); r = M.step(L); while (r && r.branch) r = answerBranch(r, i < g2.answers.length ? g2.answers[i++] : null); }
       cur = r;
       showEnd(true);
     });
@@ -438,10 +459,31 @@
     if (!L) return;
     if (!L.alive) { showEnd(); return; }
     cur = M.step(L);
+    autoResolve();
     render(cur);
     saveCurrent();
     if (cur.branch) showBranch(cur.branch);
     else schedule();
+  }
+  // おまかせが入っているときは、節目の問いかけ以外の分かれ道を重点に沿って選ぶ
+  function autoResolve() {
+    while (auto && cur && cur.branch && !cur.branch.ask) {
+      var a = E.autoAnswer(cur.branch, L.focus) || { _none: 1 };
+      a._auto = 1;
+      recordAnswer(a);
+      cur = answerBranch(cur, a);
+    }
+  }
+  function setFocus(f) {
+    L && (L.focus = f);
+    if (G && !G.done) { G.focus = G.focus || []; G.focus.push([L ? L.year : 0, f]); saveCurrent(); }
+    renderFocus();
+  }
+  function renderFocus() {
+    var f = L ? L.focus : null;
+    Array.prototype.forEach.call(document.querySelectorAll('.focus-opts .btn-sub'), function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-f') === f ? 'true' : 'false'); });
+    $('auto').setAttribute('aria-pressed', auto ? 'true' : 'false');
+    $('auto').textContent = auto ? 'おまかせ：入れている' : 'おまかせ：入れていない';
   }
   function schedule() {
     clearTimeout(timer);
@@ -499,6 +541,7 @@
     $('card-birth-life').hidden = r.age !== 0;
     renderTree(r.year);
     renderSt(r);
+    renderFocus();
   }
 
   // 節目の問いかけ：一行だけ書き残せる。答えは人生の進み方に関わらない
@@ -670,6 +713,7 @@
         var d = el('div', 'logyear');
         d.appendChild(el('p', 'ly', r.year + '年　' + r.age + '歳　' + r.place));
         r.events.forEach(function (e) { d.appendChild(el('p', null, e.t)); });
+        (r.autoPicked || []).forEach(function (t) { d.appendChild(el('p', 'auto-line', 'おまかせで選んだ：' + t)); });
         (L.notes || []).filter(function (n) { return n.year === r.year && n.text; }).forEach(function (n) { d.appendChild(el('p', 'note-line', r.age + '歳の問い「' + n.q + '」　' + n.text)); });
         c.appendChild(d);
       });
@@ -725,6 +769,79 @@
       ]);
     };
   }
+  /* ---------- 人生地図と生き残りの曲線（最期の画面） ---------- */
+  function openYear(r) {
+    openSheet(r.year + '年　' + r.age + '歳', function (c) {
+      c.appendChild(el('p', 'note', r.place));
+      if (!r.events.length) c.appendChild(el('p', null, 'この年の記録はありません'));
+      r.events.forEach(function (e, i) {
+        var b = el('button', 'item', e.t);
+        b.type = 'button';
+        b.onclick = function () { openEvidence(e.t, e.ev, r.year + ':' + i); };
+        c.appendChild(b);
+      });
+      (r.autoPicked || []).forEach(function (t) { c.appendChild(el('p', 'auto-line', 'おまかせで選んだ：' + t)); });
+    });
+  }
+  function renderLifeMap() {
+    var box = $('lifemap'), lg = $('legend');
+    clear(box); clear(lg);
+    var used = {};
+    L.log.forEach(function (r, i) {
+      if (i % 10 === 0) box.appendChild(el('span', 'row-age', r.age + '歳'));
+      var isDeath = !L.alive && i === L.log.length - 1;
+      var k = E.yearKind(r, L, isDeath);
+      used[k] = 1;
+      var b = el('button');
+      b.type = 'button';
+      if (k) b.style.background = 'var(--m' + k + ')';
+      if (isDeath) b.className = 'on-death';
+      b.setAttribute('aria-label', r.year + '年 ' + r.age + '歳' + (k ? ' ' + E.MAP_KINDS[k] : '') + (isDeath ? ' 亡くなった年' : ''));
+      b.title = r.year + '年 ' + r.age + '歳' + (k ? '・' + E.MAP_KINDS[k] : '');
+      b.onclick = function () { openYear(r); };
+      box.appendChild(b);
+    });
+    for (var k = 1; k <= 7; k++) {
+      var sp = el('span');
+      var sw = el('i'); sw.style.background = 'var(--m' + k + ')';
+      sp.appendChild(sw); sp.appendChild(document.createTextNode(E.MAP_KINDS[k] + (used[k] ? '' : '（なし）')));
+      lg.appendChild(sp);
+    }
+    var sp0 = el('span'); var sw0 = el('i'); sw0.style.background = 'var(--bg)'; sp0.appendChild(sw0); sp0.appendChild(document.createTextNode('大きな出来事のない年')); lg.appendChild(sp0);
+    var sp1 = el('span'); var sw1 = el('i'); sw1.style.outline = '2px solid var(--text)'; sw1.style.outlineOffset = '-2px'; sp1.appendChild(sw1); sp1.appendChild(document.createTextNode('亡くなった年')); lg.appendChild(sp1);
+  }
+  function renderCurve() {
+    var box = $('curve');
+    clear(box);
+    var W = 340, Hh = 200, x0 = 34, y0 = 10, pw = W - x0 - 10, ph = Hh - y0 - 28, MAXA = 110;
+    var l = 1, pts = [], v = Object.create(L);
+    for (var a = 0; a <= MAXA; a++) {
+      pts.push([x0 + pw * a / MAXA, y0 + ph * (1 - l)]);
+      var q = a >= MAXA ? 1 : (L.old ? O.deathProb(v, L.sex, a, L.by + a) : E.deathProb(C, P, L.sex, a, L.by + a));
+      l *= 1 - q;
+    }
+    var line = cssVar('--line'), text = cssVar('--text'), sub = cssVar('--sub'), acc = cssVar('--accent');
+    var s = svg('svg', { viewBox: '0 0 ' + W + ' ' + Hh, role: 'img', 'aria-label': L.by + '年生まれの' + (L.sex === 'm' ? '男' : '女') + 'の人が各年齢で生きている割合と、' + L.name + 'さんが亡くなった' + L.deathAge + '歳の位置' });
+    [0, 0.5, 1].forEach(function (f) {
+      var yy = y0 + ph * (1 - f);
+      s.appendChild(svg('line', { x1: x0, y1: yy, x2: x0 + pw, y2: yy, stroke: line, 'stroke-width': 1 }));
+      s.appendChild(svg('text', { x: x0 - 4, y: yy + 4, 'text-anchor': 'end', 'font-size': 10, fill: sub }, Math.round(f * 100) + '%'));
+    });
+    [0, 20, 40, 60, 80, 100].forEach(function (a) {
+      var xx = x0 + pw * a / MAXA;
+      s.appendChild(svg('text', { x: xx, y: y0 + ph + 14, 'text-anchor': 'middle', 'font-size': 10, fill: sub }, a + '歳'));
+    });
+    s.appendChild(svg('path', { d: 'M' + pts.map(function (p) { return p[0].toFixed(1) + ' ' + p[1].toFixed(1); }).join('L'), fill: 'none', stroke: acc, 'stroke-width': 2 }));
+    var dx = x0 + pw * Math.min(L.deathAge, MAXA) / MAXA;
+    s.appendChild(svg('line', { x1: dx, y1: y0, x2: dx, y2: y0 + ph, stroke: text, 'stroke-width': 1 }));
+    var lab = L.deathAge + '歳で亡くなった';
+    s.appendChild(svg('text', { x: dx > W / 2 ? dx - 4 : dx + 4, y: y0 + 12, 'text-anchor': dx > W / 2 ? 'end' : 'start', 'font-size': 11, fill: text }, lab));
+    box.appendChild(s);
+    var sv = survival(L.deathAge), p1 = function (x) { return (x * 100 >= 1 ? Math.round(x * 100) : (x * 100).toFixed(1)) + '%'; };
+    var who = '同じ' + L.by + '年に生まれた' + (L.sex === 'm' ? '男' : '女') + (L.deathAge < 15 ? 'の子' : 'の人') + 'のうち、';
+    $('curve-note').textContent = (L.deathAge === 0 ? who + '1歳の誕生日を迎えられなかった子はおよそ' + p1(1 - survival(1)) : who + L.deathAge + '歳まで生きた人はおよそ' + p1(sv)) + '。生命表から計算しました' + (L.by < 1975 ? '（1975年より前の生まれは、平均寿命と乳児死亡率から作った推計の生命表です）' : '');
+  }
+
   function showEnd(again) {
     clearTimeout(timer);
     if (!L) return;
@@ -733,6 +850,8 @@
     $('end-title').textContent = L.name + 'さんの一生　' + L.by + '年〜' + L.deathYear + '年（' + L.deathAge + '歳）';
     $('end-sub').textContent = L.old ? O.endText(L) : L.home.prefName + L.home.muniName + 'で生まれ、' + (L.place.away ? L.place.prefName : L.place.prefName + L.place.muniName) + 'で亡くなった。';
     renderHotline($('hotline-end'), L.cause === 'sui');
+    renderLifeMap();
+    renderCurve();
     var notes = (L.notes || []).filter(function (n) { return n.text; });
     $('notes-block').hidden = !notes.length;
     clear($('notes'));
@@ -766,7 +885,7 @@
     if (!again) {
       try { localStorage.removeItem('ichioku-current'); } catch (e) { /* 保存できない環境 */ }
       var lives = (store('ichioku-lives') || []).filter(function (x) { return x && x.seed; });
-      lives.unshift({ v: 1, seed: L.seed, year: L.by, answers: G ? G.answers : [], marks: L.marks ? Object.keys(L.marks) : [], name: L.name, place: L.old ? L.home.label : L.home.prefName + L.home.muniName, age: L.deathAge, dy: L.deathYear, farewell: '' });
+      lives.unshift({ v: 1, seed: L.seed, year: L.by, answers: G ? G.answers : [], focus: G ? G.focus || [] : [], marks: L.marks ? Object.keys(L.marks) : [], name: L.name, place: L.old ? L.home.label : L.home.prefName + L.home.muniName, age: L.deathAge, dy: L.deathYear, farewell: '' });
       store('ichioku-lives', lives.slice(0, 10));
       if (G) G.done = true;
     }
@@ -785,6 +904,7 @@
       (function go() {
         if (!L || !L.alive) { if (L) showEnd(); return; }
         cur = M.step(L);
+        autoResolve();
         render(cur);
         saveCurrent();
         if (cur.branch) { showBranch(cur.branch); return; }
@@ -797,6 +917,19 @@
     $('family').onclick = openFamily;
     $('log').onclick = openLog;
     $('st4').onclick = openSt;
+    Array.prototype.forEach.call(document.querySelectorAll('.focus-opts .btn-sub'), function (b) {
+      b.onclick = function () { var f = b.getAttribute('data-f'); setFocus(L && L.focus === f ? null : f); };
+    });
+    $('auto').onclick = function () {
+      auto = !auto;
+      if (G) { G.auto = auto; if (!G.done) saveCurrent(); }
+      renderFocus();
+      // 分かれ道で止まっているときに入れたら、そのまま選んで進む
+      if (auto && cur && cur.branch && !cur.branch.ask && L && L.alive) {
+        autoResolve(); render(cur); saveCurrent();
+        if (cur.branch) showBranch(cur.branch); else { $('branch').hidden = true; schedule(); }
+      }
+    };
     $('num-income-box').onclick = openMoney;
     $('num-sav-box').onclick = openMoney;
     $('end-log').onclick = openLog;

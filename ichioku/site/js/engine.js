@@ -99,10 +99,21 @@
   function pct(v) { return Math.round(v * 100) + '%'; }
 
   /* ---------- 死亡の確率（生命表から作った係数を使う） ---------- */
+  // 簡易生命表の年齢ごとの死亡率の形（mort.shape）に、その年・その県の平均寿命に合う強さ（alpha）を掛ける。
+  // 形の表がないときは、なだらかな曲線（ゴンペルツの式）で近似する
+  function shapeRow(S, sex, year) {
+    var ys = S.years, best = ys[0];
+    for (var i = 1; i < ys.length; i++) if (Math.abs(ys[i] - year) < Math.abs(best - year)) best = ys[i];
+    return S[sex][best];
+  }
   function deathProb(C, P, sex, age, year) {
     var tab = (P && P.alpha) ? P.alpha : C.mort.alpha;
     var alpha = val(tab[sex], year), beta = C.mort.beta, bg = C.mort.bg;
     if (age === 0) return val(C.mort.q0, year);
+    if (C.mort.shape) {
+      var row = shapeRow(C.mort.shape, sex, year);
+      return clamp(1 - Math.pow(1 - row[Math.min(age, row.length - 1)], alpha), 0, 1);
+    }
     var h = alpha / beta * (Math.exp(beta * (age + 1)) - Math.exp(beta * age)) + bg;
     return clamp(1 - Math.exp(-h), 0, 1);
   }
@@ -1047,8 +1058,11 @@
     var tieT = 50 + 5 * ind.social + (L.married ? 12 : 0) + Math.min(kids, 3) * 3;
     if (a < 18) tieT += parents * 6;
     if (a >= 70 && !L.married) tieT -= 8;
-    // 目安は一気に変わらず、1年に4割ずつ近づく
+    // 今年の重点で、目安を少しだけ動かす
     var tg = { body: bodyT, sat: satT, learn: learnT, tie: tieT };
+    var fb = L.focus && FOCUS_BONUS[L.focus];
+    if (fb) for (var fk in fb) { tg[fk] += fb[fk]; why.push({ k: fk, d: fb[fk], t: '今年の重点「' + FOCUS[L.focus] + '」', ev: [], focus: true }); }
+    // 目安は一気に変わらず、1年に4割ずつ近づく
     if (!S.base) S.base = tg;
     else ST_KEYS.forEach(function (k) { S.base[k] += (tg[k] - S.base[k]) * 0.4; });
     var v = {
@@ -1079,6 +1093,57 @@
     if (!L.st4 || !L.st4.v) return 1;
     var d = L.st4.v.body - stLin(BODY_AGE, age);
     return clamp(Math.exp(-BODY_K * d) / BODY_NORM, 0.6, 1.8);
+  }
+
+  /* ---------- 人生地図：その年のいちばん大きな出来事の種類（7種類まで） ----------
+     強い順に 災害・戦争 > 病気・けが > 結婚 > 子ども > 学び > 仕事 > 引っ越し。どれでもない年は 0 */
+  var MAP_KINDS = ['', '学び', '仕事', '結婚', '子ども', '病気・けが', '災害・戦争', '引っ越し'];
+  var MAP_RULES = [
+    [6, /空襲|地震|津波|洪水|台風|噴火|大火|戦死|召集|出征|戦地|家が焼け|焼け出さ|浸水|飢饉|凶作|疎開|引き揚げ/],
+    [5, /入院|手術|骨折|寝込|療養|持病|と診断され|体調を崩|けがをし|大けが|病気になっ|病気にかか|高い熱|結核にかか|インフルエンザにかか/],
+    [3, /さんと結婚した|と結婚した|夫婦になった|嫁いだ|婿に入|パートナーと暮らし始め|と一緒に暮らし始め/],
+    [4, /(長男|長女|次男|次女|三男|三女|四男|四女|男の子|女の子|子ども)が生まれた/],
+    [1, /に入学した|へ進んだ|に進んだ|進学した|卒業し|寺子屋|藩校|村学校|資格を取|学び始め|夜学/],
+    [2, /働き始め|働きに出|就職|勤め先|奉公|定年|仕事をやめ|職を失|家業を継/],
+    [7, /引っ越し|転校|移り住|上京し|移民|渡った|村を出/]
+  ];
+  function yearKind(rec, L, dead) {
+    if ((dead || rec.dead) && L) return L.cause === 'disaster' || L.cause === 'war' ? 6 : (L.cause === 'ill' ? 5 : 0);
+    var best = 0, rank = 99;
+    (rec.events || []).forEach(function (e) {
+      for (var i = 0; i < MAP_RULES.length; i++) {
+        if (i >= rank) break;
+        var k = MAP_RULES[i][0];
+        if (!MAP_RULES[i][1].test(e.t)) continue;
+        if ((k === 5 || k === 1 || k === 2 || k === 7) && (WHO_OTHER.test(e.t) || /子どもの|息子の|娘の|孫の/.test(e.t))) continue;
+        best = k; rank = i; break;
+      }
+    });
+    return best;
+  }
+
+  /* ---------- 今年の重点とおまかせ ----------
+     重点は4つの数値の伸び方を少し変えるだけ（からだは亡くなる確率の補正にも入る）。分かれ道の結果は今までどおり統計の割合で決まる。
+     おまかせは、重点に沿った答えを選ぶ。重点がないときは統計どおりに進む（答えなし）。 */
+  var FOCUS = { study: '学ぶ', earn: '稼ぐ', family: '家族', body: 'からだ', save: '貯める' };
+  var FOCUS_BONUS = { study: { learn: 5 }, earn: { sat: 3, tie: -2 }, family: { tie: 6 }, body: { body: 4 }, save: { sat: -1 } };
+  var FOCUS_PICK = {
+    study: { take: 'take', course: 'gen', path: 'univ', loc: 'away', dir: 'care', m: 'maybe', o: 'friend', p: 'live', out: 'go', marry: 'yes', pathOld: 'study' },
+    earn: { take: 'no', course: 'voc', path: 'work', loc: 'away', dir: 'office', m: 'maybe', o: 'friend', p: 'live', out: 'go', marry: 'yes', pathOld: 'work' },
+    family: { take: 'no', course: 'gen', path: 'semi', loc: 'local', dir: 'care', m: 'yes', o: 'family', p: 'pledge', out: 'stay', marry: 'yes', pathOld: 'work' },
+    body: { take: 'no', course: 'gen', path: 'semi', loc: 'local', dir: 'service', m: 'maybe', o: 'friend', p: 'live', out: 'stay', marry: 'yes', pathOld: 'study' },
+    save: { take: 'no', course: 'voc', path: 'work', loc: 'local', dir: 'office', m: 'maybe', o: 'friend', p: 'live', out: 'stay', marry: 'yes', pathOld: 'work' }
+  };
+  function autoAnswer(br, focus) {
+    if (!br || br.ask) return null;
+    if (!focus || !FOCUS_PICK[focus]) return null;
+    var t = FOCUS_PICK[focus], a = {};
+    (br.groups || []).forEach(function (g) {
+      var want = g.id === 'path' && br.kind === 'path' ? t.pathOld : t[g.id];
+      var ok = g.options.some(function (o) { return o.k === want; });
+      a[g.id] = ok ? want : g.options[0].k;
+    });
+    return a;
   }
 
   /* ---------- お金の見える化（手取り・今の物価・米に直した目安・貯金） ----------
@@ -1130,6 +1195,7 @@
       L.money = { r: r, q: q, sav: 0, incSum: 0, incN: 0, focus: null };
     }
     var M = L.money, inc = rec.income, pr = priceOf(L, y), why = [];
+    M.focus = L.focus || null;
     var out = { est: y < 1975 || !!(inc && inc.est), why: why, priceSrc: pr.src, perNow: 1 / pr.p };
     if (inc && inc.real > 0) {
       M.incSum += inc.real; M.incN++;
@@ -1481,6 +1547,6 @@
     pickPref: pickPref, newLife: newLife, step: step, resolve: resolve, autoRun: autoRun,
     cohort: cohort, majorTimeline: majorTimeline, familyList: familyList, fill: fill, sceneOk: sceneOk,
     pickCause: pickCause, deathStory: deathStory, ev: ev, askFor: askFor, answerAsk: answerAsk, ASK_AGES: ASK_AGES,
-    statusYear: statusYear, bodyMult: bodyMult, moneyYear: moneyYear, ST_KEYS: ST_KEYS, ST_NAMES: ST_NAMES
+    statusYear: statusYear, bodyMult: bodyMult, moneyYear: moneyYear, autoAnswer: autoAnswer, FOCUS: FOCUS, yearKind: yearKind, MAP_KINDS: MAP_KINDS, ST_KEYS: ST_KEYS, ST_NAMES: ST_NAMES
   };
 });

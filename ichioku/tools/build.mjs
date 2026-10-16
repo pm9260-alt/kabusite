@@ -57,12 +57,39 @@ const WHAT = {
   shogyo: '大型の小売店の数と売場面積'
 };
 
+// 年齢ごとの亡くなりやすさの形（簡易生命表の死亡率。2007〜2025年）。105歳から上は100〜104歳の伸び方でのばす
+// 形の表があるときは、alpha は「形の表の死亡率を何倍の強さにするか」の係数になる（1 なら表のまま）
+let SHAPE = null;
+function makeShape(LQ) {
+  if (!LQ || !Object.keys(LQ).length) return null;
+  const ys = Object.keys(LQ).map(Number).sort((a, b) => a - b);
+  const pick = [...new Set([ys[0], 2010, 2015, 2020, ys[ys.length - 1]].filter(y => LQ[y]))];
+  const out = { years: pick };
+  for (const sex of ['m', 'f']) {
+    out[sex] = {};
+    for (const y of pick) {
+      const q = LQ[y][sex].slice(0, 105);
+      const r = Math.pow(q[104] / q[99], 1 / 5);
+      for (let a = 105; a < 120; a++) q[a] = Math.min(0.95, q[a - 1] * r);
+      out[sex][y] = q.map(v => +(+v).toPrecision(4));
+    }
+  }
+  return out;
+}
+function shapeQ(sex, y, a) {
+  const ys = SHAPE.years;
+  let best = ys[0];
+  for (const k of ys) if (Math.abs(k - y) < Math.abs(best - y)) best = k;
+  const t = SHAPE[sex][best];
+  return t[Math.min(a, t.length - 1)];
+}
 // 0歳の平均余命 e を満たす係数 alpha を二分法で探す
-function e0Of(alpha, q00) {
+function e0Of(alpha, q00, sex, y) {
   let l = 1, e = 0;
   for (let a = 0; a < 120; a++) {
     let q;
     if (a === 0) q = q00;
+    else if (SHAPE) q = 1 - Math.pow(1 - shapeQ(sex, y, a), alpha);
     else { const h = alpha / BETA * (Math.exp(BETA * (a + 1)) - Math.exp(BETA * a)) + BG; q = 1 - Math.exp(-h); }
     const next = l * (1 - q);
     e += (l + next) / 2;
@@ -77,11 +104,11 @@ function nearest(series, y) {
   for (const k of ks) if (Math.abs(k - y) < Math.abs(best - y)) best = k;
   return series[best];
 }
-function solveAlpha(target, q00) {
-  let lo = Math.log(1e-8), hi = Math.log(1e-2);
+function solveAlpha(target, q00, sex, y) {
+  let lo = SHAPE ? Math.log(0.05) : Math.log(1e-8), hi = SHAPE ? Math.log(20) : Math.log(1e-2);
   for (let i = 0; i < 80; i++) {
     const mid = (lo + hi) / 2;
-    if (e0Of(Math.exp(mid), q00) > target) lo = mid; else hi = mid;
+    if (e0Of(Math.exp(mid), q00, sex, y) > target) lo = mid; else hi = mid;
   }
   return Math.exp((lo + hi) / 2);
 }
@@ -91,7 +118,7 @@ function alphaTable(e0s, q0s, diff) {
   for (const sex of ['m', 'f']) {
     for (const y of Object.keys(e0s[sex]).map(Number)) {
       const d = !diff ? 0 : typeof diff[sex] === 'number' ? diff[sex] : (Object.keys(diff[sex] || {}).length ? nearest(diff[sex], y) : 0);
-      out[sex][y] = +solveAlpha(e0s[sex][y] + d, nearest(q0s, y)).toPrecision(6);
+      out[sex][y] = +solveAlpha(e0s[sex][y] + d, nearest(q0s, y), sex, y).toPrecision(6);
     }
   }
   return out;
@@ -217,6 +244,7 @@ export function build({ test = false } = {}) {
     Object.assign(e0s[sex], N.e0[sex]);
   }
   const q0s = N.q0 && Object.keys(N.q0).length ? N.q0 : q0;
+  SHAPE = makeShape(N.lifeQx);
   const list = stats ? stats.prefs.filter(p => !test || TEST_PREFS.includes(p.code)).map(prefFromStats) : prefs;
   const provisional = [];
   for (const [k, label] of Object.entries(NAT_PROVISIONAL)) if (!natReal[k]) provisional.push(label);
@@ -249,7 +277,7 @@ export function build({ test = false } = {}) {
     sources,
     prefs: list.map(p => ({ code: p.code, name: p.name, region: p.region, births: p.births })),
     nat: { ...nat, ...natReal, marryShape: { m: shapeM, f: shapeF }, marryShapeSum: { m: shapeM.reduce((a, b) => a + b, 0), f: shapeF.reduce((a, b) => a + b, 0) } },
-    mort: { beta: BETA, bg: BG, q0: q0s, alpha: alphaTable(e0s, q0s, null) },
+    mort: { beta: BETA, bg: BG, q0: q0s, alpha: alphaTable(e0s, q0s, null), ...(SHAPE ? { shape: SHAPE } : {}) },
     timeline: timelineOut,
     events: eventsOut,
     wage: stats && stats.wage && stats.wage.profile ? stats.wage : null,

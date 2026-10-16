@@ -524,6 +524,103 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
   rec('F 金額の単位が時代に合い（1870年までは両と石、1871年からは円と手取り）、どの金額にも出典が付くか', bad.length === 0 && shown > 0, bad.slice(0, 8).join('、') || n + '人分・' + shown + '年分の年収');
 }
 
+/* ---------- G 今年の重点とおまかせ ---------- */
+{
+  const bad = []; let n = 0;
+  const FOCI = [null, 'study', 'earn', 'family', 'body', 'save'];
+  const play = (mk, M, focusOf) => {
+    const L = mk(); let g = 0; const ans = [];
+    while (L.alive && g++ < 130) {
+      L.focus = focusOf(L.year);
+      let r = M.step(L);
+      while (r && r.branch) {
+        if (r.branch.ask) { ans.push({ text: '' }); r = M.resolve(L, { text: '' }); continue; }
+        const a = E.autoAnswer(r.branch, L.focus);
+        if (a) for (const gr of r.branch.groups) if (!gr.options.some(o => o.k === a[gr.id])) bad.push(L.by + '年生まれ：' + r.branch.title + ' の答え ' + a[gr.id] + ' が選択肢にない');
+        ans.push(a); r = M.resolve(L, a);
+      }
+    }
+    return { L, sig: L.log.map(r => r.year + ':' + r.events.map(e => e.t).join('|') + ':' + (r.st ? r.st.body : '')).join('\n') + '#' + L.deathAge };
+  };
+  for (let i = 0; i < 60; i++) {
+    const f1 = FOCI[i % 6], f2 = FOCI[(i + 2) % 6];
+    let mk, M;
+    if (i % 2) { const by = 1975 + (i * 5) % 26, seed = i * 4241 + 1; mk = () => E.newLife(C, P[E.pickPref(C, by, E.makeRng(seed ^ 0x9e3779b9))], { year: by, seed }); M = E; }
+    else { const oy = 1800 + (i * 29) % 175, os = i * 1013 + 7, ob = O.pickBirth(C, H, oy, E.makeRng(os ^ 0x9e3779b9)); mk = () => O.newLife(C, H, P[ob.pref] || null, { year: oy, seed: os, birth: ob }); M = O; }
+    const fo = y => (y % 40 < 20 ? f1 : f2);
+    const a = play(mk, M, fo), b = play(mk, M, fo);
+    n++;
+    if (a.L.alive) bad.push(a.L.by + '年生まれ：おまかせで最期まで進まなかった');
+    if (a.sig !== b.sig) bad.push(a.L.by + '年生まれ：同じ重点とおまかせで作り直すと違う人生になった');
+  }
+  rec('G おまかせを入れたまま最期まで止まらずに進み（節目の問いかけだけ止まる）、重点を変えても作り直しが一致するか', bad.length === 0, bad.slice(0, 8).join('、') || n + '人分');
+}
+
+/* ---------- 生命表との照らし合わせ（その年の死亡率のままで何%が90歳・100歳まで生きるか） ---------- */
+{
+  const ST = JSON.parse(fs.readFileSync(path.join(ROOT, 'data-src', 'stats', 'stats.json'), 'utf8'));
+  const LQ = (ST.nat || {}).lifeQx || {};
+  const bad = [], notes = [];
+  for (const y of [2010, 2020, 2024]) {
+    if (!LQ[y]) continue;
+    for (const sex of ['m', 'f']) {
+      let lr = 1, lm = 1;
+      const real = {}, model = {};
+      for (let a = 0; a <= 100; a++) {
+        if (a === 90 || a === 100) { real[a] = lr; model[a] = lm; }
+        lr *= 1 - LQ[y][sex][a]; lm *= 1 - E.deathProb(C, null, sex, a, y);
+      }
+      for (const a of [90, 100]) {
+        const d = (model[a] - real[a]) * 100;
+        notes.push(y + '年' + (sex === 'm' ? '男' : '女') + a + '歳 ' + (model[a] * 100).toFixed(1) + '%／' + (real[a] * 100).toFixed(1) + '%');
+        if (Math.abs(d) > 3) bad.push(y + '年' + (sex === 'm' ? '男' : '女') + a + '歳の差 ' + d.toFixed(1));
+      }
+    }
+  }
+  rec('90歳・100歳まで生きる割合が簡易生命表から±3ポイント以内か（その年の死亡率のまま）', bad.length === 0 && notes.length > 0, bad.join('、') || notes.filter(x => /2024/.test(x)).join('、'));
+}
+
+/* ---------- H 人生地図と生き残りの曲線 ---------- */
+{
+  const bad = []; const kinds = new Set(); let n = 0, zero = 0, old110 = 0;
+  for (let i = 0; i < 80; i++) {
+    let L;
+    if (i % 2) { const by = 1975 + (i * 7) % 26, seed = i * 2207 + 5; L = E.autoRun(E.newLife(C, P[E.pickPref(C, by, E.makeRng(seed ^ 0x9e3779b9))], { year: by, seed })); }
+    else { const oy = 1800 + (i * 23) % 175, os = i * 977 + 3, ob = O.pickBirth(C, H, oy, E.makeRng(os ^ 0x9e3779b9)); L = O.autoRun(O.newLife(C, H, P[ob.pref] || null, { year: oy, seed: os, birth: ob })); }
+    n++;
+    if (L.deathAge === 0) zero++;
+    L.log.forEach((r, j) => { const k = E.yearKind(r, L, j === L.log.length - 1); if (!(k >= 0 && k <= 7)) bad.push('種類の番号がおかしい ' + k); kinds.add(k); });
+    if (L.log.length !== L.deathAge + 1) bad.push(L.by + '年生まれ：マスの数（' + L.log.length + '）が年齢と合わない');
+  }
+  if (E.MAP_KINDS.length - 1 > 7) bad.push('色が7色より多い');
+  // 生き残りの曲線：0歳と110歳でも描けるか（生命表の値が0〜1の中で減っていくか）
+  for (const [by, sex] of [[1800, 'm'], [1900, 'f'], [1975, 'm'], [2000, 'f']]) {
+    let l = 1;
+    for (let a = 0; a <= 110; a++) {
+      const v = Object.create({ C, H, P: P['13'], old: by < 1975, pref: '13', kind: 'town', sex });
+      const q = a >= 110 ? 1 : (by < 1975 ? O.deathProb(v, sex, a, by + a) : E.deathProb(C, P['13'], sex, a, by + a));
+      if (!(q >= 0 && q <= 1)) { bad.push(by + '年生まれ ' + a + '歳：亡くなる確率が0〜1の外'); break; }
+      l *= 1 - q;
+    }
+    if (l !== 0) bad.push(by + '年生まれ：110歳で曲線が0にならない');
+  }
+  rec('H 人生地図が1年1マスで7色までに収まり、生き残りの曲線が0歳から110歳まで描けるか', bad.length === 0, bad.slice(0, 6).join('、') || n + '人分（0歳で亡くなった ' + zero + '人を含む）・使った種類 ' + [...kinds].filter(Boolean).length);
+}
+// 人生地図の7色が、明るい画面と暗い画面の背景から見分けられるか（図形なので3以上）
+{
+  const css = fs.readFileSync(path.join(SITE, 'css', 'style.css'), 'utf8');
+  const light = vars((css.match(/:root\s*\{([\s\S]*?)\}/) || [])[1] || '');
+  const dark = vars((css.match(/:root\[data-theme="dark"\]\s*\{([\s\S]*?)\}/) || [])[1] || '');
+  const low = [];
+  for (const [name, set] of [['明るい画面', light], ['暗い画面', dark]]) for (let k = 1; k <= 7; k++) {
+    const c = set['--m' + k];
+    if (!c) { low.push(name + ' --m' + k + ' がない'); continue; }
+    const r = ratio(c, set['--bg']);
+    if (r < 3) low.push(name + ' --m' + k + ' = ' + r.toFixed(2));
+  }
+  rec('H 人生地図の色が背景から見分けられるか（コントラスト比3以上）', low.length === 0, low.join('、'));
+}
+
 /* ---------- 結果 ---------- */
 const lines = [];
 lines.push('公開前の検査　' + new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }) + '（日本時間）');

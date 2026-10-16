@@ -17,6 +17,13 @@
   --reborn-bg: #7a4600;
   --reborn-text: #ffffff;
   --dead: #8a8a86;
+  --m1: #2f6db5;
+  --m2: #8a6d00;
+  --m3: #b03a6f;
+  --m4: #c25a00;
+  --m5: #6b4fa0;
+  --m6: #a3000b;
+  --m7: #2e7d4f;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
@@ -35,6 +42,13 @@
     --reborn-bg: #f2c47e;
     --reborn-text: #1a1206;
     --dead: #8e8e8e;
+    --m1: #7fb2f0;
+    --m2: #d9b84a;
+    --m3: #f08ab8;
+    --m4: #f5a25a;
+    --m5: #b9a2ec;
+    --m6: #ff8f87;
+    --m7: #7fd1a1;
     color-scheme: dark;
   }
 }
@@ -53,6 +67,13 @@
   --reborn-bg: #f2c47e;
   --reborn-text: #1a1206;
   --dead: #8e8e8e;
+  --m1: #7fb2f0;
+  --m2: #d9b84a;
+  --m3: #f08ab8;
+  --m4: #f5a25a;
+  --m5: #b9a2ec;
+  --m6: #ff8f87;
+  --m7: #7fd1a1;
   color-scheme: dark;
 }
 
@@ -201,3 +222,17 @@ button { font: inherit; cursor: pointer; border-radius: 0; }
 .money-row { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
 .money-row .mv { font-weight: 700; text-align: right; }
 .ev-list { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.focus-box { display: flex; flex-direction: column; gap: 6px; border-top: 1px solid var(--line); padding-top: 8px; }
+.focus-box .fk { font-size: 13px; color: var(--sub); margin: 0; }
+.focus-opts { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+.focus-opts .btn-sub { padding: 6px 2px; min-height: 40px; font-size: 14px; }
+.auto-line { color: var(--sub); }
+/* 人生地図（1年＝1マス・横10マス）と生き残りの曲線 */
+.lifemap { display: grid; grid-template-columns: 2.6em repeat(10, 1fr); gap: 2px; align-items: center; }
+.lifemap .row-age { font-size: 11px; color: var(--sub); text-align: right; padding-right: 4px; }
+.lifemap button { aspect-ratio: 1 / 1; border: 1px solid var(--line); background: var(--bg); padding: 0; min-width: 0; cursor: pointer; }
+.lifemap button.on-death { outline: 2px solid var(--text); outline-offset: -2px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 13px; margin-top: 6px; }
+.legend span { display: inline-flex; align-items: center; gap: 4px; }
+.legend i { display: inline-block; width: 12px; height: 12px; border: 1px solid var(--line); }
+.curve svg { width: 100%; height: auto; display: block; }

@@ -419,6 +419,22 @@ for (const y of Object.keys(names)) if (!names[y].m || !names[y].f) delete names
   }
 }
 
+// 年齢別の死亡率（簡易生命表・全国。1歳刻みで0〜104歳。2007年から）。年齢ごとの亡くなりやすさの形に使う
+{
+  const j = load('nat-lifetable');
+  if (j) {
+    const t = {};
+    for (const v of j.values) {
+      const nm = j.classes.cat01[v['@cat01']] || '', m = /^(\d+)年$/.exec(nm), x = num(v);
+      if (!m || x == null) continue;
+      const y = yearOf(v['@time']), sex = v['@cat02'] === '10' ? 'm' : 'f', a = +m[1];
+      ((t[y] = t[y] || { m: [], f: [] })[sex])[a] = x;
+    }
+    nat.lifeQx = {};
+    for (const [y, o] of Object.entries(t)) if (o.m.length >= 100 && o.f.length >= 100 && !o.m.includes(undefined) && !o.f.includes(undefined)) nat.lifeQx[y] = o;
+  }
+}
+
 // 年齢層ごとの死因の割合（病気・事故など・自殺）：直近10年の死亡数を合わせて計算する
 {
   const j = load('nat-cause');

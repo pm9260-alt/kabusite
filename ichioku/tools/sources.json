@@ -45,6 +45,7 @@
     {"id": "nat-life-feel", "name": "国民生活基礎調査（世帯数の構成割合，生活意識・年次別）", "src": "income", "statsDataId": "0002137131", "params": {"cdCat01": "1,2,3,5,6"}},
     {"id": "nat-kakei-takehome", "name": "家計調査（用途分類・総数・年次。勤労者世帯の実収入・可処分所得・平均貯蓄率）", "src": "kakeichosa", "statsDataId": "0002070003", "params": {"cdCat01": "019,233,252", "cdCat02": "02,04", "cdArea": "00000"}},
     {"id": "nat-kakei-saving", "name": "家計調査（貯蓄・負債編。貯蓄現在高五分位・世帯主の年齢階級別の年間収入と貯蓄）", "src": "kakeichosa", "statsDataId": "0002210027", "params": {"cdCat01": "011,012", "cdCat02": "03", "cdCat03": "01,02,03,04,05"}},
+    {"id": "nat-lifetable", "name": "簡易生命表（年齢別の死亡率・全国。2007年〜）", "src": "lifetable", "statsDataId": "0003109558", "params": {"cdTab": "130"}},
     {"id": "nat-divorce", "name": "人口動態統計（年次別離婚件数・全国）", "src": "vital", "statsDataId": "0003411861", "params": {"cdArea": "00000", "cdTab": "10310"}},
     {"id": "nat-married-women", "name": "社会・人口統計体系 都道府県データ（有配偶人口・女・全国）", "src": "census", "statsDataId": "0000010101", "params": {"cdCat01": "A1602002", "cdArea": "00000"}},
     {"id": "nat-cause", "name": "人口動態統計（死因簡単分類・年齢（5歳階級）別死亡数）", "src": "vital", "statsDataId": "0003411699", "params": {"cdCat02": "00100", "cdCat03": "00000,20000,20200"}},

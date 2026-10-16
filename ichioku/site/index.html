@@ -67,6 +67,18 @@
     </div>
     <div id="branch" class="branch" hidden></div>
     <div id="hotline" class="hotline" hidden></div>
+    <div class="focus-box" id="focus-box">
+      <p class="fk">今年の重点（押すと選ぶ・もう一度押すと外す）</p>
+      <div class="focus-opts" role="group" aria-label="今年の重点">
+        <button type="button" class="btn-sub" data-f="study" aria-pressed="false">学ぶ</button>
+        <button type="button" class="btn-sub" data-f="earn" aria-pressed="false">稼ぐ</button>
+        <button type="button" class="btn-sub" data-f="family" aria-pressed="false">家族</button>
+        <button type="button" class="btn-sub" data-f="body" aria-pressed="false">からだ</button>
+        <button type="button" class="btn-sub" data-f="save" aria-pressed="false">貯める</button>
+      </div>
+      <button type="button" class="btn-sub" id="auto" aria-pressed="false">おまかせ：入れていない</button>
+      <p class="note">重点は4つの数値の伸び方を少し変えます。おまかせを入れると、分かれ道の答えを重点に沿って選びます（重点がなければ統計どおり）。節目の問いかけでは止まります</p>
+    </div>
     <nav class="controls" aria-label="進め方">
       <button type="button" class="btn-sub" id="pause">一時停止</button>
       <button type="button" class="btn-sub" id="speed">速さ 1倍</button>
@@ -90,6 +102,17 @@
       <p id="earn-num" class="earn-num"></p>
       <p id="earn-sub" class="note"></p>
       <button type="button" class="ev-link" id="earn-ev">もとになった統計</button>
+    </div>
+    <div class="block">
+      <h2 class="h-self">人生地図</h2>
+      <div class="lifemap" id="lifemap" role="group" aria-label="1年を1マスにした人生地図"></div>
+      <div class="legend" id="legend"></div>
+      <p class="note">1年を1マスにして、横10マスで折り返しています。その年のいちばん大きな出来事の種類で色を分けました。マスを押すと、その年の記録が出ます</p>
+    </div>
+    <div class="block curve">
+      <h2 class="h-self">生き残りの曲線</h2>
+      <div id="curve"></div>
+      <p class="note" id="curve-note"></p>
     </div>
     <div class="block" id="notes-block" hidden>
       <h2 class="h-self">節目に書き残した一行</h2>
