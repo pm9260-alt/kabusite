@@ -63,7 +63,12 @@
 
   /* ---------- 人生を作る・作り直す ---------- */
   // 記録するのは「種の数・分かれ道で選んだ答え・印」だけ。開き直すときは同じ種で人生を作り直す
-  var G = null; // { v, seed, year, answers: [], marks: [], shown: 表示している年 }
+  // 記録：{ v: 2, seed, year, answers, marks, focus, auto, shown, house: { chain: [{ memberId, answers, marks, focus }] } }
+  // 2人目からの人生は、1人目の種ときょうだいの番号から決まる。新しい乱数は保存しない（作る人の指示書「きょうだいとして生きる」5）
+  var G = null;
+  var houseLives = []; // この家で終えた人生（いま遊んでいる人より前の人）
+  function seg() { return G && G.house && G.house.chain.length ? G.house.chain[G.house.chain.length - 1] : G; }
+  function lifeSeedOf(g, memberId) { return ((g.seed ^ Math.imul(memberId, 0x9e3779b1)) >>> 0) || 1; }
   function yearOfSeed(seed) { var r = C.meta.birthRange; return r[0] + Math.floor(E.makeRng(seed ^ 0x51ed270b)() * (r[1] - r[0] + 1)); }
   function makeLife(seed) {
     var year = yearOfSeed(seed);
@@ -167,13 +172,70 @@
     }
     return r;
   }
-  function saveCurrent() { if (G && L && L.alive) { G.shown = cur ? cur.year : L.by; store('ichioku-current', G); } }
+  function saveCurrent() { if (G && L && L.alive && !G.done) { G.shown = cur ? cur.year : L.by; store('ichioku-current', G); } }
+
+  /* ---------- きょうだいとして生きる：家の人生を順にたどる ---------- */
+  // 前の人が亡くなるまでの年は、画面に出さずに統計どおりに進める（分かれ道は統計どおり・節目の問いかけは空の答え）
+  function preRun(start) {
+    var guard = 0;
+    while (L.alive && L.year < start && guard++ < 130) {
+      var r = M.step(L);
+      while (r && r.branch) r = M.resolve(L, r.branch.ask ? { text: '' } : null);
+      if (r) r.pre = true;
+    }
+  }
+  function playFull(g) {
+    var i = 0, r = null;
+    while (L.alive) { L.focus = focusAt(g, L.year); r = M.step(L); while (r && r.branch) { L.focus = focusAt(g, L.year); r = answerBranch(r, i < g.answers.length ? g.answers[i++] : null); } }
+    return r;
+  }
+  function lifeSummary(Lx, k, first) {
+    var rel = '';
+    if (k > 0 && first) { var id = G.house.chain[k - 1].memberId, m = first.members.filter(function (x) { return x.id === id; })[0]; if (m) rel = m.role; }
+    return { name: Lx.name, by: Lx.by, age: Lx.deathAge, heir: !!Lx.heir, rel: rel };
+  }
+  // 亡くなった人から、きょうだい（memberId）へ引き継ぐ
+  function inheritFrom(Lp, memberId) {
+    var MM = Lp.old ? O : E, h = MM.houseOf(Lp, []);
+    return getPref(Lp.old ? h.home.pref : Lp.P.code).then(function (p) {
+      P = p; M = MM;
+      var opt = { house: h, memberId: memberId, seed: lifeSeedOf(G, memberId) };
+      L = Lp.old ? O.newLife(C, H, P, opt) : E.newLife(C, P, opt);
+      L.marks = {};
+      comps = [];
+      preRun(Math.max(h.deathYear, L.by));
+      return L;
+    });
+  }
+  // 記録から家の人生を作り直す。最後の人は untilYear まで（null なら最期まで）
+  var firstLife = null;
+  function buildHouse(g, untilYear) {
+    houseLives = [];
+    return makeLife(g.seed).then(function () {
+      firstLife = L;
+      var segs = [g].concat(g.house && g.house.chain ? g.house.chain : []), k = 0;
+      function next() {
+        var sg = segs[k];
+        (sg.marks || []).forEach(function (key) { L.marks[key] = 1; });
+        if (k < segs.length - 1) {
+          playFull(sg);
+          houseLives.push(lifeSummary(L, k, firstLife));
+          k++;
+          return inheritFrom(L, segs[k].memberId).then(next);
+        }
+        return untilYear == null ? playFull(sg) : replayTo(sg, untilYear);
+      }
+      return next();
+    });
+  }
   // 生まれる年は1000〜2000年のどの年も同じ確率（作る人の判断 2026-10-16）
   function born() {
     var seed = randomSeed();
     $('born').disabled = true;
-    G = { v: 1, seed: seed, year: yearOfSeed(seed), answers: [], marks: [], focus: [], auto: auto };
+    G = { v: 2, seed: seed, year: yearOfSeed(seed), answers: [], marks: [], focus: [], auto: auto };
+    houseLives = [];
     makeLife(seed).then(function () {
+      firstLife = L;
       paused = false; setPauseLabel();
       show('life');
       $('born').disabled = false;
@@ -187,10 +249,9 @@
   function resume() {
     var g = store('ichioku-current');
     if (!g || !g.seed) return;
-    G = g; G.marks = G.marks || []; G.focus = G.focus || []; auto = !!G.auto;
-    makeLife(g.seed).then(function () {
-      (G.marks || []).forEach(function (k) { L.marks[k] = 1; });
-      cur = replayTo(G, G.shown);
+    G = g; G.marks = G.marks || []; G.focus = G.focus || []; auto = !!G.auto; G.done = false;
+    buildHouse(G, G.shown).then(function (r) {
+      cur = r;
       autoResolve();
       paused = true; setPauseLabel();
       show('life');
@@ -200,16 +261,13 @@
   }
   // これまでの人生をもう一度見る（最期の画面を開き直す）
   function reopen(rec) {
-    G = { v: 1, seed: rec.seed, year: rec.year, answers: rec.answers || [], marks: rec.marks || [], focus: rec.focus || [], done: true };
-    makeLife(rec.seed).then(function () {
-      (G.marks || []).forEach(function (k) { L.marks[k] = 1; });
-      var g2 = { answers: G.answers }, i = 0, r;
-      while (L.alive) { L.focus = focusAt(G, L.year); r = M.step(L); while (r && r.branch) r = answerBranch(r, i < g2.answers.length ? g2.answers[i++] : null); }
+    G = { v: 2, seed: rec.seed, year: rec.year, answers: rec.answers || [], marks: rec.marks || [], focus: rec.focus || [], house: rec.house || null, done: true };
+    buildHouse(G, null).then(function (r) {
       cur = r;
       showEnd(true);
     });
   }
-  function recordAnswer(a) { if (G && !G.done) { G.answers.push(a); saveCurrent(); } }
+  function recordAnswer(a) { if (G && !G.done) { seg().answers.push(a); saveCurrent(); } }
 
   /* ---------- いつも更新される数字 ---------- */
   // 千円単位の額を、その年のお金の単位で書く（1600年より前は貫文、1871年より前は両。1両＝1円として数える）
@@ -461,10 +519,10 @@
 
   function updateLife(fn) {
     var lives = store('ichioku-lives') || [];
-    for (var i = 0; i < lives.length; i++) if (lives[i] && lives[i].seed === (L && L.seed)) { fn(lives[i]); break; }
+    for (var i = 0; i < lives.length; i++) if (lives[i] && G && lives[i].seed === G.seed) { fn(lives[i]); break; }
     store('ichioku-lives', lives);
   }
-  function saveLifeMarks() { updateLife(function (x) { x.marks = Object.keys(L.marks || {}); }); }
+  function saveLifeMarks() { updateLife(function (x) { x.marks = G.marks || []; x.house = G.house || null; }); }
 
   /* ---------- 共有用の画像 ---------- */
   function shareLabel(v) {
@@ -544,7 +602,7 @@
   }
   function setFocus(f) {
     L && (L.focus = f);
-    if (G && !G.done) { G.focus = G.focus || []; G.focus.push([L ? L.year : 0, f]); saveCurrent(); }
+    if (G && !G.done) { var sg = seg(); sg.focus = sg.focus || []; sg.focus.push([L ? L.year : 0, f]); saveCurrent(); }
     renderFocus();
   }
   function renderFocus() {
@@ -576,6 +634,9 @@
     var best = null, rank = 99;
     var dead = L && !L.alive && L.log[L.log.length - 1] === r;
     if (dead && r.events.length) return { t: evText(r.events[r.events.length - 1]), ev: r.events[r.events.length - 1].ev, i: r.events.length - 1 };
+    // 引き継いだ年は、前の人が亡くなったことと家を継ぐことを先に出す
+    var hs = r.events.map(function (e, i) { return { e: e, i: i }; }).filter(function (x) { return x.e.house; });
+    if (hs.length) return { t: hs.map(function (x) { return evText(x.e); }).join(''), ev: hs[0].e.ev, i: hs[0].i };
     r.events.forEach(function (e, i) {
       var k = E.yearKind({ events: [e] }, null, false), rk = k ? KIND_RANK[k] : e.cat !== '時代' ? 7 : 8;
       if (rk < rank) { rank = rk; best = { t: evText(e), ev: e.ev, i: i }; }
@@ -749,7 +810,7 @@
         mb.type = 'button';
         mb.onclick = function () {
           if (L.marks[key]) delete L.marks[key]; else L.marks[key] = 1;
-          if (G) { G.marks = Object.keys(L.marks); if (G.done) saveLifeMarks(); else saveCurrent(); }
+          if (G) { seg().marks = Object.keys(L.marks); if (G.done) saveLifeMarks(); else saveCurrent(); }
           mb.textContent = L.marks[key] ? '印を外す' : '印を付ける';
           if (cur && !$('screen-life').hidden) render(cur);
         };
@@ -801,7 +862,10 @@
         marked.forEach(function (x) { md.appendChild(el('p', null, x.r.year + '年　' + x.r.age + '歳　' + evText(x.e))); });
         c.appendChild(md);
       }
-      L.log.concat(cur && L.log.indexOf(cur) < 0 ? [cur] : []).forEach(function (r) {
+      var preDone = false;
+      L.log.concat(cur && L.log.indexOf(cur) < 0 ? [cur] : []).forEach(function (r, ix) {
+        if (r.pre && !preDone && L.house && L.house.prevName) { preDone = true; c.appendChild(el('p', 'ly pre-h', L.house.prevName + 'が亡くなるまで（画面に出さずに進めた年）')); }
+        if (!r.pre && preDone === true) { preDone = 'end'; c.appendChild(el('p', 'ly pre-h', 'ここから' + L.name + 'として生きた年')); }
         var d = el('div', 'logyear');
         d.appendChild(el('p', 'ly', r.year + '年　' + r.age + '歳　' + r.place));
         r.events.forEach(function (e) { d.appendChild(el('p', null, evText(e))); });
@@ -1033,6 +1097,7 @@
     $('comps-end').parentNode.hidden = !comps.length;
     renderMap($('map-end'), L.log, { end: true });
 
+    renderHouse();
     var co = L.old ? O.cohort(C, H, P, L, 100) : E.cohort(C, P, L.by, L.home.muni, L.seed, 100);
     if (L.old) renderEarnOld(co); else renderEarn(co);
     var list = $('cohort');
@@ -1060,11 +1125,47 @@
     }
     if (!again) {
       try { localStorage.removeItem('ichioku-current'); } catch (e) { /* 保存できない環境 */ }
-      var lives = (store('ichioku-lives') || []).filter(function (x) { return x && x.seed; });
-      lives.unshift({ v: 1, seed: L.seed, year: L.by, answers: G ? G.answers : [], focus: G ? G.focus || [] : [], marks: L.marks ? Object.keys(L.marks) : [], name: L.name, place: L.old ? L.home.label : L.home.prefName + L.home.muniName, age: L.deathAge, dy: L.deathYear });
+      // 同じ家の人生は1件にまとめる（1人目の種で見分ける）
+      var lives = (store('ichioku-lives') || []).filter(function (x) { return x && x.seed && (!G || x.seed !== G.seed); });
+      var names = houseLives.map(function (h) { return h.name; }).concat([L.name]);
+      if (G) lives.unshift({ v: 2, seed: G.seed, year: G.year, answers: G.answers || [], focus: G.focus || [], marks: G.marks || [], house: G.house || null, names: names, name: L.name, by: L.by, place: L.old ? L.home.label : L.home.prefName + L.home.muniName, age: L.deathAge, dy: L.deathYear });
       store('ichioku-lives', lives.slice(0, 10));
       if (G) G.done = true;
     }
+  }
+
+  /* ---------- きょうだいとして生きる（最期の画面） ---------- */
+  function lifeLine(h) {
+    return h.by + '年生まれ　' + (h.rel ? h.rel + ' ' : '') + h.name + '　' + (h.heir ? '家を継ぎ、' : '') + (h.age === 0 ? '1歳にならずに' : h.age + '歳で') + '亡くなる';
+  }
+  function renderHouse() {
+    var hl = $('house-lives'), cl = $('kyodai-list');
+    clear(hl); clear(cl);
+    var all = houseLives.concat([lifeSummary(L, houseLives.length, firstLife)]);
+    $('house-block').hidden = all.length < 2;
+    all.forEach(function (h) { hl.appendChild(el('li', null, lifeLine(h))); });
+    var cands = (L.old ? O : E).heirCandidates(L);
+    $('kyodai-block').hidden = !cands.length;
+    cands.forEach(function (c) {
+      var b = el('button', 'btn-sub kyodai-btn', c.later ? c.role + '（' + c.later + '年後に生まれる）として生きる' : c.role + ' ' + c.name + '（' + c.age + '歳）として生きる');
+      b.type = 'button';
+      b.onclick = function () { liveAsSibling(c); };
+      cl.appendChild(b);
+    });
+  }
+  function liveAsSibling(c) {
+    if (!G || !L) return;
+    G.house = G.house || { chain: [] };
+    houseLives.push(lifeSummary(L, houseLives.length, firstLife));
+    G.house.chain.push({ memberId: c.id, answers: [], marks: [], focus: [] });
+    G.done = false;
+    inheritFrom(L, c.id).then(function () {
+      cur = null;
+      paused = false; setPauseLabel();
+      show('life');
+      saveCurrent();
+      nextYear();
+    });
   }
 
   /* ---------- 操作 ---------- */
@@ -1115,7 +1216,7 @@
     $('card-birth-life').onclick = function () { openCard('birth'); };
     $('card-birth').onclick = function () { openCard('birth'); };
     $('card-end').onclick = function () { openCard('end'); };
-    $('reborn').onclick = function () { clearTimeout(timer); closeSheetQuiet(); L = null; cur = null; born(); };
+    $('reborn').onclick = function () { clearTimeout(timer); closeSheetQuiet(); L = null; cur = null; houseLives = []; born(); };
     $('resume').onclick = resume;
     $('clear-all').onclick = function () {
       if (!window.confirm('これまでの人生と途中の記録をすべて消します。よろしいですか？')) return;
@@ -1131,7 +1232,8 @@
     clear(list);
     past.forEach(function (x) {
       var li = el('li');
-      var b = el('button', 'item', x.year + '年〜' + x.dy + '年　' + x.age + '歳　' + x.name + '（' + x.place + '）');
+      var who = x.names && x.names.length > 1 ? x.names.join(' → ') + '（' + x.names.length + '人）' : x.name;
+      var b = el('button', 'item', (x.by || x.year) + '年〜' + x.dy + '年　' + x.age + '歳　' + who + '（' + x.place + '）');
       b.type = 'button';
       b.onclick = function () { reopen(x); };
       li.appendChild(b);

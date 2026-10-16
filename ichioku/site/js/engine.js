@@ -257,6 +257,7 @@
       if (!m.alive || m.gone || m.by >= y || !fixedYear(L, m) || m.fixDy !== y) return;
       m.alive = false; m.dy = y;
       var e = push(L, rec, '家庭', relWord(L, m) + 'の' + m.name + 'が' + (y - m.by) + '歳で亡くなった。', [ev(L.C, 'vital', y, '前の人生で起きた家族の死', '', { noYearNote: true })]);
+      if (m.prevLife) e.house = true;
       if (m.prevLife) e.short = relWord(L, m) + 'の' + m.name + 'が亡くなった。';
     });
   }
@@ -480,6 +481,7 @@
         if (fixedYear(L, m) && m.fixDy === y) {
           m.alive = false; m.dy = y;
           var fe0 = push(L, rec, '家庭', relWord(L, m) + 'の' + m.name + 'が、生まれて1年もたたずに亡くなった。', [ev(C, 'vital', y, '前の人生で起きた家族の死', '', { noYearNote: true })]);
+          if (m.prevLife) fe0.house = true;
           fe0.short = relWord(L, m) + 'の' + m.name + 'が亡くなった。';
         }
         return;
@@ -489,6 +491,7 @@
         if (m.fixDy !== y) return;
         m.alive = false; m.dy = y;
         var fe = push(L, rec, '家庭', relWord(L, m) + 'の' + m.name + 'が' + (y - m.by) + '歳で亡くなった。', [ev(C, 'vital', y, '前の人生で起きた家族の死', '', { noYearNote: true })]);
+        if (m.prevLife) fe.house = true;
         if (m.prevLife) fe.short = relWord(L, m) + 'の' + m.name + 'が亡くなった。';
         return;
       }

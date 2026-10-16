@@ -381,7 +381,7 @@
     L.heirF = h.id === 0 && L.sex === 'f' && h.how === 'muko';
     if (rec && L.heir && !was && L.age >= 1) {
       var dead = L.members.filter(function (m) { return m.sib && m.sex === 'm' && m.dy === L.year && m.by < L.by; })[0];
-      if (dead) push(L, rec, '家庭', who(dead) + 'が亡くなり、家を継ぐことになった。', [heirEv(L, L.year)]);
+      if (dead) push(L, rec, '家庭', who(dead) + 'が亡くなり、家を継ぐことになった。', [heirEv(L, L.year)], { house: true });
     }
   }
   // 引き継いだ家族の生死を記録どおりにする年か
@@ -393,6 +393,7 @@
       if (!m.alive || m.gone || m.by >= y || !fixedYear(L, m) || m.fixDy !== y) return;
       m.alive = false; m.dy = y;
       var e = push(L, rec, '家庭', who(m) + 'が' + (y - m.by) + '歳で亡くなった。', [ev(L, LIFE_SRC, y, '前の人生で起きた家族の死', '', { noYearNote: true })]);
+      if (m.prevLife) e.house = true;
       if (m.prevLife) e.short = who(m) + 'が亡くなった。';
     });
   }
@@ -593,6 +594,7 @@
         if (fixedYear(L, m) && m.fixDy === y) {
           m.alive = false; m.dy = y;
           var fe0 = push(L, rec, '家庭', who(m) + 'が、生まれて1年もたたずに亡くなった。', [ev(L, LIFE_SRC, y, '前の人生で起きた家族の死', '', { noYearNote: true })]);
+          if (m.prevLife) fe0.house = true;
           fe0.short = relWord(m) + 'の' + m.name + 'が亡くなった。';
         }
         return;
@@ -603,6 +605,7 @@
         m.alive = false; m.dy = y;
         var fa = y - m.by;
         var fe = push(L, rec, '家庭', who(m) + 'が' + (fa === 0 ? '生まれて1年もたたずに' : fa + '歳で') + '亡くなった。', [ev(L, LIFE_SRC, y, '前の人生で起きた家族の死', '', { noYearNote: true })]);
+        if (m.prevLife) fe.house = true;
         if (m.prevLife) fe.short = relWord(m) + 'の' + m.name + 'が亡くなった。';
         return;
       }

@@ -283,3 +283,9 @@ button { font: inherit; cursor: pointer; border-radius: 0; }
 .origin-k { font-weight: 700; }
 .origin-n { color: var(--sub); }
 .end-credit { font-size: 12px; text-align: center; margin-top: 16px; }
+
+/* きょうだいとして生きる */
+.kyodai-list { display: flex; flex-direction: column; gap: 6px; }
+.kyodai-btn { text-align: left; padding: 10px 12px; }
+.house-lives li { padding: 4px 0; border-top: 1px solid var(--line); font-size: 14px; }
+.pre-h { margin-top: 12px; color: var(--sub); }
