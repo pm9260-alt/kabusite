@@ -249,6 +249,27 @@
     L.out = null;
     return L;
   }
+  // ほかの抽選の順番を変えないための別の乱数
+  function rnd2(L) { if (!L.r2) L.r2 = makeRng(((L.seed ^ 0x2545f491) >>> 0) || 1); return L.r2(); }
+  // 妻の氏を選んだ結婚（夫妻の氏別婚姻件数。2014年以前は2015年の値）
+  function wifeNameYear(L, rec) {
+    var t = L.C.nat.wifeName;
+    if (!t || !Object.keys(t).length) return;
+    var v = val(t, L.year);
+    if (rnd2(L) >= v) return;
+    push(L, rec, '家庭', L.sex === 'm' ? '結婚して、妻の名字を名乗ることにした。' : '結婚して、夫が自分の名字を名乗ることになった。', [ev(L.C, 'vital', nv(t, L.year).y, '婚姻届で妻の氏を選んだ夫婦の割合（夫妻の氏別婚姻件数）', (v * 100).toFixed(1) + '%')]);
+  }
+  // 戦後の形：家制度はなくなったが、長男が家や墓を継ぐ考え方は残った（分かれ道にはせず、出来事として出す）
+  function eldestSon(L) { return L.sex === 'm' && !L.members.some(function (m) { return m.sib && m.sex === 'm' && m.by < L.by && m.alive && !m.gone; }); }
+  function postwarYear(L, rec) {
+    var y = L.year, a = L.age;
+    if (y < 1948 || !eldestSon(L) || L.place.away && a < 40) return;
+    if (!L.grave && L.dad && !L.dad.alive && L.dad.dy === y && a >= 18) { L.grave = true; push(L, rec, '家庭', '父が亡くなり、長男として実家の墓を守ることになった。', [ev(L.C, 'census', y, '家制度はなくなったが、長男が家や墓を継ぐ考え方は残った', '', { est: true, noYearNote: true })]); }
+    if (!L.withParents && a >= 35 && a <= 55 && L.mom && L.mom.alive && y - L.mom.by >= 70 && rnd2(L) < 0.1) {
+      L.withParents = true;
+      push(L, rec, '家庭', '年老いた母と同居することになった。', [ev(L.C, 'census', nv(L.C.nat.threeGen[L.place.kind] || L.C.nat.threeGen['都市'], y).y, '三世代で暮らす世帯の割合（' + L.place.kind + '）', pct(val(L.C.nat.threeGen[L.place.kind] || L.C.nat.threeGen['都市'], y)), { est: true })]);
+    }
+  }
   function fixedYear(L, m) { return L.house && L.year <= L.house.deathYear && m.fixDy !== undefined; }
   // 生まれた年に、前の人生で亡くなった家族（ふだんは0歳の年に家族の死を抽選しないため、記録どおりにここで出す）
   function fixedDeathsAtBirth(L, rec) {
@@ -502,6 +523,7 @@
         push(L, rec, '家庭', relWord(L, m) + 'の' + m.name + 'が亡くなった。' + (y - m.by) + '歳だった。', [ev(C, 'lifetable', y, (y - m.by) + '歳の人が1年のうちに亡くなる確率（生命表から推計）', (deathProb(C, L.P, m.sex, y - m.by, y) * 100).toFixed(2) + '%')]);
       }
     });
+    if (!protectedYear(L)) postwarYear(L, rec);
     // 孫（子がいない人に孫は生まれない）
     var kids = L.members.filter(function (m) { return m.role === '子' && m.alive && y - m.by >= 24 && y - m.by <= 42; });
     kids.forEach(function (k) {
@@ -709,6 +731,7 @@
       var sp = addMember(L, '配偶者', L.sex === 'm' ? 'f' : 'm', L.by + diff);
       L.married = true; L.everMarried = true; L.marriedY = y; L.divorced = false; L.widowed = false;
       push(L, rec, '家庭', (a <= 30 ? '' : '') + sp.name + 'さんと結婚した。相手は' + (L.by + diff) + '年生まれ。', [ev(C, 'vital', y, '生まれ年ごとの、50歳までに結婚する人の割合', pct(target), { est: true })]);
+      wifeNameYear(L, rec);
     }
   }
   // 同性のパートナーとの暮らし（法律上の結婚はできない。制度があれば宣誓できる）
@@ -1700,7 +1723,7 @@
 
   return {
     FUTURE_FROM: FUTURE_FROM, CATS: CATS, TARGET: TARGET,
-    houseOf: houseOf, heirCandidates: heirCandidates, satAdd: satAdd, satDone: satDone,
+    houseOf: houseOf, heirCandidates: heirCandidates, satAdd: satAdd, satDone: satDone, postwarYear: postwarYear, wifeNameYear: wifeNameYear,
     makeRng: makeRng, nv: nv, val: val, deathProb: deathProb, invNorm: invNorm,
     pickPref: pickPref, newLife: newLife, step: step, resolve: resolve, autoRun: autoRun,
     cohort: cohort, majorTimeline: majorTimeline, familyList: familyList, fill: fill, sceneOk: sceneOk,

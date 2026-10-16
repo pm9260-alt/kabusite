@@ -30,6 +30,7 @@
   ],
   "_説明_pull": "pull は表番号と絞り込みの条件が決まっている取り込み。raw/pull/<id>.json に保存し、tools/transform.mjs が data-src/stats/stats.json に直す。",
   "pull": [
+    {"id": "nat-wifename", "name": "人口動態統計（夫の氏・妻の氏別の婚姻件数・全国、2015年〜）", "src": "vital", "statsDataId": "0003411953", "params": {"cdArea": "00000", "cdCat02": "00100"}},
     {"id": "pref-births", "name": "社会・人口統計体系 都道府県データ（出生数・乳児死亡数）", "src": "vital", "statsDataId": "0000010101", "params": {"cdCat01": "A4101,A4281"}},
     {"id": "pref-births-vital", "name": "人口動態統計（都道府県別にみた年次別出生数）", "src": "vital", "statsDataId": "0003411597", "params": {"cdTab": "10040"}},
     {"id": "pref-school", "name": "社会・人口統計体系 都道府県データ（学校の卒業者・進学者・生徒数）", "src": "school", "statsDataId": "0000010105", "params": {"cdCat01": "E3701,E3801,E3501,E350101,E4501,E4513,E4603,E4604,E460410,E470202,E470205,E470206,E6402"}},

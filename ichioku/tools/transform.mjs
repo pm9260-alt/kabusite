@@ -240,6 +240,14 @@ if (cpi) {
   nat.cpi = {};
   for (const v of cpi.values) { const t = String(v['@time']); if (/^\d{4}000000$/.test(t) && num(v) != null) nat.cpi[yearOf(t)] = num(v); }
 }
+// 妻の氏を選んだ結婚の割合（夫妻の氏別婚姻件数。作る人の指示書「継がない子の道」7）
+const wn = load('nat-wifename');
+if (wn) {
+  const tot = {}, wife = {};
+  for (const v of wn.values) { const y = yearOf(v['@time']), x = num(v); if (x == null) continue; if (v['@cat01'] === '00100') tot[y] = x; if (v['@cat01'] === '00120') wife[y] = x; }
+  nat.wifeName = {};
+  for (const y of Object.keys(tot)) if (wife[y] != null && tot[y] > 0) nat.wifeName[y] = +(wife[y] / tot[y]).toFixed(4);
+}
 const un = load('nat-unemp');
 if (un) {
   nat.unemp = {};

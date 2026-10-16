@@ -196,7 +196,7 @@ export function build({ test = false } = {}) {
   const N = stats ? stats.nat : {};
   // 全国の値：取り込んだものがあれば置き換える。寿命の将来（2027年以降）は将来推計がまだ取れないため仮の値のまま
   const natReal = {};
-  for (const k of ['jobs', 'unemp', 'cpi', 'indNat', 'nonreg', 'incomeMean', 'motherAge', 'divorce', 'cause', 'ownHome', 'threeGen', 'nursery', 'parentEdu', 'deathPlace', 'causeDetail', 'lifeFeel', 'takeHome', 'saveRate', 'savingRatio']) if (N[k] && Object.keys(N[k]).length) natReal[k] = N[k];
+  for (const k of ['jobs', 'unemp', 'cpi', 'indNat', 'nonreg', 'incomeMean', 'motherAge', 'divorce', 'cause', 'ownHome', 'threeGen', 'nursery', 'parentEdu', 'deathPlace', 'causeDetail', 'lifeFeel', 'takeHome', 'saveRate', 'savingRatio', 'wifeName']) if (N[k] && Object.keys(N[k]).length) natReal[k] = N[k];
   if (typeof N.incomeSigma === 'number') natReal.incomeSigma = N.incomeSigma;
   if (extra) for (const k of ['dualIncome', 'everMarried', 'leaveAtBirth', 'moveChild']) if (extra.nat[k] && Object.keys(extra.nat[k]).length) natReal[k] = extra.nat[k];
   // きょうだいの人数：妻の生まれ年ごとの子どもの数の割合（出生動向基本調査。人口統計資料集 表4-23）。子どもがいる家の1人・2人・3人・4人以上だけを使う

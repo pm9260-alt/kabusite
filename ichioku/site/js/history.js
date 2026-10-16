@@ -303,7 +303,7 @@
     return {
       old: true, seed: L.seed0 || L.seed, deathYear: L.deathYear, deathAge: L.deathAge, cause: L.cause,
       prev: { name: L.name, sex: L.sex, by: L.by, heir: !!L.heir, surname: L.surname || null },
-      members: mem, status: L.status, ainu: L.ainu, ryukyu: L.ryukyu, home: home, goods: L.goods || {},
+      members: mem, status: L.status, ainu: L.ainu, ryukyu: L.ryukyu, home: home, goods: L.goods || {}, incPct: L.incPct, surname: L.surnameOld || L.surname || null,
       chain: (chain || []).slice()
     };
   }
@@ -326,7 +326,7 @@
       edu: null, school: null, job: null, married: false, everMarried: false, abroad: null,
       stats: { school: false, mid: false, to5: false, to60: false, events: 0 },
       earn: { real: 0, years: 0, est: true },
-      status: h.status, ainu: h.ainu, ryukyu: h.ryukyu, goods: {}, inherited: true, surname: h.prev.surname || null
+      status: h.status, ainu: h.ainu, ryukyu: h.ryukyu, goods: {}, inherited: true
     };
     CATS.forEach(function (c) { L.cat[c] = 0; });
     L.house = { deathYear: h.deathYear, prevName: h.prev.name, prevSex: h.prev.sex, prevBy: h.prev.by, prevAge: h.deathAge, prevHeir: h.prev.heir, chain: h.chain };
@@ -357,6 +357,9 @@
     L.home = { pref: L.pref, prov: L.prov, sub: L.sub, prefName: H.prefNames[L.pref], muniName: '', label: placeLabel(L) };
     L.home0 = { prov: L.prov, sub: L.sub, pref: L.pref, kind: L.kind, muni: L.muni, muniName: L.muniName };
     for (var g in h.goods) if (h.goods[g] <= L.by) L.goods[g] = h.goods[g];
+    L.rnd2 = E.makeRng((seed ^ 0x2545f491) >>> 0);
+    L.incPct = h.incPct != null ? h.incPct : L.rnd2();
+    L.surname = h.surname || pickSurname(L, L.rnd2);
     updateHeir(L, null);
     return L;
   }
@@ -379,7 +382,7 @@
     L.house.heirId = h.id; L.house.heirHow = h.how;
     L.heir = h.id === 0 && L.sex === 'm';
     L.heirF = h.id === 0 && L.sex === 'f' && h.how === 'muko';
-    if (rec && L.heir && !was && L.age >= 1) {
+    if (rec && L.heir && !was && (L.age >= 1 || L.inherited)) {
       var dead = L.members.filter(function (m) { return m.sib && m.sex === 'm' && m.dy === L.year && m.by < L.by; })[0];
       if (dead) push(L, rec, '家庭', who(dead) + 'が亡くなり、家を継ぐことになった。', [heirEv(L, L.year)], { house: true });
     }
@@ -396,6 +399,7 @@
       if (m.prevLife) e.house = true;
       if (m.prevLife) e.short = who(m) + 'が亡くなった。';
     });
+    updateHeir(L, rec);
   }
   function protectedYear(L) { return L.protectUntil != null && L.year <= L.protectUntil; }
 
@@ -426,6 +430,10 @@
     L.adoptU = clamp(rnd() + ({ city: -0.08, town: 0, village: 0.06, fish: 0.06, kotan: 0.1 })[L.kind], 0.002, 0.998);
     L.home = { pref: L.pref, prov: L.prov, sub: L.sub, prefName: H.prefNames[L.pref], muniName: '', label: placeLabel(L) };
     L.home0 = { prov: L.prov, sub: L.sub, pref: L.pref, kind: L.kind, muni: L.muni, muniName: L.muniName };
+    // 家の豊かさ（小作・自作・地主の目安）と家の名字は、ほかの抽選の順番を変えないよう別の乱数で決める
+    L.rnd2 = E.makeRng((seed ^ 0x2545f491) >>> 0);
+    L.incPct = L.rnd2();
+    L.surname = pickSurname(L, L.rnd2);
     updateHeir(L, null);
     return L;
   }
@@ -618,6 +626,8 @@
       }
     });
     updateHeir(L, rec);
+    // 1948年からの戦後の形（長男と墓・親との同居）。history の人生では場所の種類を今の区分に合わせる
+    if (y >= 1948 && !protectedYear(L) && !L.abroad) { var pk = L.place; L.place = { away: false, kind: L.kind === 'city' ? '大都市' : L.kind === 'town' ? '都市' : '町村' }; E.postwarYear(L, rec); L.place = pk; }
     // 自分の子の誕生
     if (L.married && L.kidPlan && L.kidPlan.length && L.kidPlan[0] === y) {
       L.kidPlan.shift();
@@ -670,6 +680,7 @@
   function lifeYear(L, rec) {
     var y = L.year, a = L.age;
     schoolYear(L, rec);
+    ieYear(L, rec);
     workYear(L, rec);
     moveYear(L, rec);
     marryYear(L, rec);
@@ -811,7 +822,7 @@
 
   /* 仕事 */
   var JOB = {
-    farm: '家の田畑の仕事', fish: '漁の仕事', samurai: '藩のお勤め', shop: '商いの仕事', craft: '職人の仕事', temple: '寺や神社の務め', leather: '皮革や草履作りの仕事',
+    hoko: '奉公', kozo: '商店の小僧', farm: '家の田畑の仕事', fish: '漁の仕事', samurai: '藩のお勤め', shop: '商いの仕事', craft: '職人の仕事', temple: '寺や神社の務め', leather: '皮革や草履作りの仕事',
     ainu: '漁や狩りと、和人の漁場での仕事', ryuOff: '王府の役人の見習い',
     court: '朝廷の役所の務め', genin: '主人の家の田畑や雑用の仕事', hunt: '漁や狩りと、毛皮や干し魚の取り引き', bushiMed: '主君に仕える武士の務め', kawara: '河原での皮作りや井戸掘り、清めの仕事', factory: '工場勤め', build: '大工や土木の仕事', silk: '製糸工場の女工', clerk: '会社や役所の勤め', teacher: '学校の先生', maid: '女中奉公', store: '商店の店員', office: '事務員'
   };
@@ -860,7 +871,7 @@
   /* 引っ越し・海外へ */
   function moveYear(L, rec) {
     var H = L.H, y = L.year, a = L.age, rnd = L.rnd;
-    if (L.abroad || a < 16 || a > 30 || L.school) return;
+    if (L.abroad || a < 16 || a > 30 || L.school || L.hoko) return;
     for (var i = 0; i < H.moves.length; i++) {
       var mv = H.moves[i];
       if (y < mv.y[0] || y > mv.y[1]) continue;
@@ -912,11 +923,19 @@
       }
       return;
     }
-    if (L.never || L.school) return;
+    if (L.never || L.school || (L.hoko && !L.hoko.done)) return;
     var again = L.everMarried && (L.widowed || L.divorced);
     if (again) {
       if (a < 50 && rnd() < (a < 35 ? 0.2 : 0.07)) doMarry(L, rec, true, null);
       return;
+    }
+    if (a >= L.marryAt && a < 55 && L.sex === 'm' && !L.heir && !L.adopted && !L.mukoNo && !L.muko && ieOK(L) && L.status !== 'bushi') {
+      var hr = heirlessRates(L), pm = clamp((hr.muko + hr.adopt) / hr.supply, 0, 0.6);
+      if (L.rnd2() < pm / 0.8) {
+        L.queue.push({ title: '婿養子の話', kind: 'muko', rate: 0.8, groups: [{ id: 'muko', q: '跡取りの男子がいない家から、婿養子に来てほしいという話が来た。受ける？', options: [{ k: 'yes', l: '婿養子に入る' }, { k: 'no', l: '断る' }] }],
+          ev: [ev(L, 'ipss', near(H.nat.children, L.mom.by), '跡取りの男子がいない家の割合（妻が産んだ子どもの数と、20歳まで生きる割合から計算した目安）', pct(hr.muko + hr.adopt), { est: true })] });
+        return;
+      }
     }
     if (a >= L.marryAt && a < 55) L.queue.push({ title: '縁談', kind: 'marry', groups: [{ id: 'marry', q: '縁談が持ち込まれた。受ける？', options: [{ k: 'yes', l: '受ける' }, { k: 'no', l: '断る' }] }],
       ev: [ev(L, 'ipss', near(H.nat.marriage[L.sex], y), '平均初婚年齢（' + (L.sex === 'm' ? '夫' : '妻') + '。1898年以前は村の研究の目安）', lin(H.nat.marriage[L.sex], y).toFixed(1) + '歳', { est: y < 1899 }), ev(L, 'ipss', near(H.nat.neverMarried[L.sex], y), '50歳まで一度も結婚しない人の割合', pct(lin(H.nat.neverMarried[L.sex], y)))] });
@@ -934,7 +953,7 @@
     var gap = Math.round(lin({ 1800: 4.5, 1900: 4.2, 1950: 2.9, 1974: 2.6 }, y) + gauss(rnd) * 3);
     var sby = L.sex === 'm' ? L.by + Math.max(-2, gap) : L.by - Math.max(-2, gap);
     var sp = addMember(L, '配偶者', L.sex === 'm' ? 'f' : 'm', sby, { live: true, st: L.status });
-    L.spouse = sp; L.married = true; L.everMarried = true; L.widowed = null; L.divorced = null;
+    L.spouse = sp; L.married = true; L.everMarried = true; L.widowed = null; L.divorced = null; L.marriedY = y;
     var wifeBy = L.sex === 'f' ? L.by : sby, wifeAge = y - wifeBy;
     var total = drawKids(rnd, childDist(H, wifeBy), false);
     if (again) total = Math.floor(total / 2);
@@ -942,10 +961,185 @@
     var t = y + 1 + Math.floor(rnd() * 2);
     for (var i = 0; i < total; i++) { if (t - wifeBy > 44) break; L.kidPlan.push(t); t += 2 + Math.floor(rnd() * 2); }
     var spn = /アイヌ語/.test(sp.name) ? '同じコタンの相手' : sp.name;
-    var txt = again ? '再婚した。相手は' + spn + '。' : (y < 1947 ? '親が決めた縁談で、' : '') + spn + 'と結婚した。' + (L.sex === 'f' && (y < 1947) ? '嫁いで相手の家に入った。' : '');
+    var txt = again ? '再婚した。相手は' + spn + '。' : (y < 1947 ? '親が決めた縁談で、' : '') + spn + 'と結婚した。' + (L.sex === 'f' && (y < 1947) ? (L.heirF ? '跡取りの男子がいない家のため、婿を迎えた（婿養子）。' + spn + 'が家に入り、家の名字を名乗った。' : '嫁いで相手の家に入った。') : '');
+    L.heirFAtMarry = !!(L.sex === 'f' && y < 1947 && L.heirF && !again);
+    if (L.sex === 'f' && y < 1947 && L.heirF) { L.tookMuko = true; sp.muko = true; }
     if (L.sex === 'f' && L.job && L.job !== 'farm' && y < 1960) L.job = L.kind === 'village' || L.kind === 'fish' ? 'farm' : 'home';
     push(L, rec, '家庭', txt, evs || [ev(L, LIFE_SRC, y, '再婚', '', { est: true })]);
+    if (y >= 1948) E.wifeNameYear(L, rec);
   }
+
+  /* ---------- 継がない子の道（奉公・分家・婿養子・養子）1947年まで ----------
+     作る人の指示書「きょうだいとして生きる・継がない子の道」6。跡取り（6-1）は updateHeir。 */
+  var SURNAMES = ['佐藤', '鈴木', '高橋', '田中', '伊藤', '渡辺', '山本', '中村', '小林', '加藤', '吉田', '山田', '佐々木', '山口', '松本', '井上', '木村', '林', '斎藤', '清水', '山崎', '森', '池田', '橋本', '阿部', '石川', '山下', '中島', '石井', '小川', '前田', '岡田', '長谷川', '藤田', '後藤', '近藤', '村上', '遠藤', '青木', '坂本', '福田', '太田', '西村', '藤井', '岡本', '藤原', '中野', '三浦', '原田', '松田'];
+  // 家の名字（江戸時代の百姓・町人は公には名乗れなかったため、家の呼び名として持たせる）。アイヌ・琉球・中世より前の家には持たせない
+  function pickSurname(L, r) {
+    if (L.status === 'ainu' || L.status === 'satsumon' || L.ryukyu || L.by < 1600) return null;
+    return SURNAMES[Math.floor(r() * SURNAMES.length)];
+  }
+  function otherSurname(L) { var s0 = L.surname; for (var i = 0; i < 20; i++) { var t = SURNAMES[Math.floor(L.rnd2() * SURNAMES.length)]; if (t !== s0) return t; } return '中川'; }
+  function tier(L) { return L.incPct < 0.4 ? 0 : L.incPct < 0.8 ? 1 : 2; }
+  var TIER_NAME = ['小作（家の豊かさが下の4割）', '自作（中ほどの4割）', '地主（上の2割）'];
+  // 奉公に出る割合の目安（美濃国安八郡西条村、1773〜1869年。速水融『歴史人口学の世界』）
+  var HOKO = { m: [0.62, 0.30, 0.40], f: [0.72, 0.60, 0.30] };
+  // 武士の当主のうち養子の割合（徳島藩の知行取。村越一哲 2001）
+  var BUSHI_ADOPT = [[1601, 0.097], [1651, 0.185], [1701, 0.340], [1751, 0.476], [1801, 0.380]];
+  function bushiAdoptT(y) { var t = BUSHI_ADOPT[0][1]; BUSHI_ADOPT.forEach(function (b) { if (y >= b[0]) t = b[1]; }); return t; }
+  // 生まれた家の世代で、20歳まで生きる子の割合（その年ごとの亡くなる確率から）
+  function surv20(L, sex) { var l = 1; for (var a = 0; a < 20; a++) l *= 1 - dp(L, sex, a, L.by + a); return l; }
+  // 跡取りの男子がいない家の数と、跡取りでない男子の数（妻の生まれ年別の子どもの数と亡くなる割合から。新しい割合の数字は足さない）
+  function heirlessRates(L) {
+    var d = childDist(L.H, L.mom.by), m4 = d.dist[4] > 0 ? Math.max(4, (d.mean - (d.dist[1] + 2 * d.dist[2] + 3 * d.dist[3])) / d.dist[4]) : 4;
+    var ps = 0.513 * surv20(L, 'm'), pd = 0.487 * surv20(L, 'f');
+    var muko = 0, adopt = 0, supply = 0, heirs = 0, sons = 0;
+    d.dist.forEach(function (w, n) {
+      var k = n === 4 ? m4 : n;
+      var p0 = Math.pow(1 - ps, k), none = Math.pow(1 - ps - pd, k);
+      muko += w * (p0 - none); adopt += w * none;
+      supply += w * (k * ps - (1 - p0)); heirs += w * (1 - p0); sons += w * k * ps;
+    });
+    return { muko: muko, adopt: adopt, supply: Math.max(0.01, supply), heirShare: sons > 0 ? heirs / sons : 1 };
+  }
+  function ieOK(L) { return L.year <= 1947 && L.year >= 1600 && !L.abroad && !L.ainu && !L.ryukyu && ['hyakusho', 'chonin', 'bushi', 'heimin', 'shizoku'].indexOf(L.status) >= 0; }
+  function hokoEv(L, rate) { return [ev(L, 'hayami', 1869, '奉公に出る割合の目安（' + TIER_NAME[tier(L)] + '・' + (L.sex === 'm' ? '男子' : '女子') + '。江戸後期の1つの村の研究をもとにした目安）', pct(rate), { est: true, noYearNote: true })]; }
+  function ieYear(L, rec) {
+    var y = L.year, a = L.age, sx = L.sex;
+    if (!ieOK(L) || !L.alive) return;
+    if (L.hoko && !L.hoko.done) { hokoYear(L, rec); return; }
+    // 奉公に出るか（百姓・町人・明治からの平民の子。男子は跡取りでない子、娘は跡取りかどうかにかかわらず）
+    var commoner = ['hyakusho', 'chonin', 'heimin'].indexOf(L.status) >= 0;
+    var ageOk = sx === 'm' ? a >= 12 && a <= 15 : a >= 13 && a <= 15;
+    if (commoner && ageOk && !L.hokoAsked && !L.job && (!L.school || a === 15) && !(sx === 'm' && L.heir)) {
+      L.hokoAsked = { y: y, tier: tier(L), sex: sx };
+      var rate = HOKO[sx][tier(L)];
+      L.queue.push({ title: y < 1872 ? '奉公に出るか' : '働きに出るか', kind: 'hoko', rate: rate,
+        groups: [{ id: 'hoko', q: y < 1872 ? (sx === 'm' ? '町の商家へ丁稚奉公に出る？' : 'よその家へ女中奉公に出る？') : '家を出て働きに出る？', options: [{ k: 'go', l: y < 1872 ? '奉公に出る' : '働きに出る' }, { k: 'stay', l: '家に残る' }] }], ev: hokoEv(L, rate) });
+      return;
+    }
+    // 分家（跡取りでない男子・25歳ごろ）
+    if (sx === 'm' && !L.heir && !L.bunke && !L.muko && !L.adopted && a === 25 && !L.bunkeAsked) {
+      L.bunkeAsked = true;
+      var pb = null, why;
+      if (L.status === 'hyakusho' && y < 1872) { pb = tier(L) === 2 ? 0.3 : 0; why = tier(L) === 2 ? '分けられる田畑のある家（地主・自作の上位）' : '分地制限令で、田畑の少ない家は分けられない'; }
+      else if (L.status === 'bushi' && y < 1872) { pb = 0.03; why = '家禄は分けられないことが多く、藩に認められたときだけ'; }
+      if (pb) L.queue.push({ title: '分家するか', kind: 'bunke', rate: pb, groups: [{ id: 'bunke', q: L.status === 'bushi' ? '藩に願い出て、新しく家を立てる？' : '田畑を分けてもらい、分家する？', options: [{ k: 'yes', l: '分家する' }, { k: 'no', l: '家に残る' }] }],
+        ev: [ev(L, 'bunchi', 1673, '分家の目安（' + why + '）', pct(pb), { est: true, noYearNote: true })] });
+      else if (pb === 0 && L.status === 'hyakusho' && y >= 1673) push(L, rec, '家庭', '分けてもらえる田畑はなく、兄の家で暮らし続けた（部屋住み）', [ev(L, 'bunchi', 1673, '分地制限令（名主は20石、一般の百姓は10石に満たない場合は田畑を分けられない）', '')]);
+      return;
+    }
+    // 武士の次男・三男：他家の養子の話（17〜25歳）
+    if (L.status === 'bushi' && y < 1872 && sx === 'm' && !L.heir && !L.adopted && !L.yoshiAsked && a >= 17 && a <= 25 && L.rnd2() < 0.5) {
+      L.yoshiAsked = true;
+      var t = bushiAdoptT(y), hr = heirlessRates(L), hf = hr.heirShare;
+      var py = clamp(t / (1 - t) * hf / Math.max(0.05, 1 - hf), 0, 0.95);
+      L.queue.push({ title: '養子の話', kind: 'yoshi', rate: py, groups: [{ id: 'yoshi', q: '跡取りのいない武士の家から、養子に迎えたいという話が来た。受ける？', options: [{ k: 'yes', l: '養子に入る' }, { k: 'no', l: '断る' }] }],
+        ev: [ev(L, 'murakoshi', y, '武士の当主のうち養子の人の割合（徳島藩の知行取。ほかの藩にも使う目安）', pct(t), { est: true })] });
+      return;
+    }
+    // 跡取りの武士：20歳で当主の見込み（父が亡くなると家督を継ぐ）
+    // 跡取りの武士は、父が亡くなるか隠居する（60歳）と当主になる
+    if (L.status === 'bushi' && sx === 'm' && L.heir && !L.toshu && a >= 15 && y < 1872 && L.dad && (!L.dad.alive || y - L.dad.by >= 60)) {
+      L.toshu = 'heir';
+      push(L, rec, '家庭', L.dad.alive ? '父が隠居し、家督を継いだ' : '父の跡を継ぎ、家督を継いだ', [heirEv(L, y)]);
+    }
+    // 明治からの分家（戸籍の上で新しい家を立てる。都市に出た次男・三男が結婚を機に）
+    if (y >= 1898 && sx === 'm' && !L.heir && L.married && !L.bunke && L.marriedY === y - 1 && (L.kind === 'city' || L.moved) && L.rnd2() < 0.5) {
+      L.bunke = y;
+      push(L, rec, '家庭', '結婚を機に、戸籍の上で生まれた家から分家し、新しい家を立てた', [ev(L, 'meijiCivil', 1898, '分家（戸籍の上で新しい家を立てる。都市に出た次男・三男が結婚を機に分家する流れの目安）', '', { est: true })]);
+    }
+    // 分家したあとの場面
+    if (L.bunke && y > L.bunke && L.rnd2() < 0.15) push(L, rec, '家庭', ['本家の法事に呼ばれ、親類が集まった', '正月に本家へあいさつに行った', '田植えの時期に、本家の手伝いに出た', '本家とのあいだで、行き来が続いた'][Math.floor(L.rnd2() * 4)], [ev(L, LIFE_SRC, y, '分家と本家の付き合い', '', { noYearNote: true })]);
+    // 婿養子・養子に入ったあとの場面
+    if ((L.muko || L.adopted) && y - (L.mukoY || 0) <= 6 && y > (L.mukoY || 0) && L.rnd2() < 0.3) push(L, rec, '家庭', ['妻の家の親と同じ屋根の下で暮らし、気をつかう日々が続いた', '家の決まりや家業を、一から覚えた', '実家との行き来は、だんだん減っていった'][Math.floor(L.rnd2() * 3)], [ev(L, LIFE_SRC, y, '婿養子・養子の暮らし', '', { noYearNote: true })]);
+  }
+  function resolveHoko(L, rec, br, answers) {
+    var w = wantFrom(answers, 'hoko'), y = L.year, sx = L.sex;
+    if (L.rnd2() >= nudge(br.rate, w, 'go')) { push(L, rec, '学歴と仕事', w === 'go' ? '奉公に出たかったが、家の働き手として残ることになった' : '家に残り、家の仕事を手伝うことになった', br.ev); return; }
+    L.hokoAsked.went = true;
+    var home = { prov: L.prov, sub: L.sub, pref: L.pref, kind: L.kind, muni: L.muni, muniName: L.muniName };
+    var dur = Math.round(clamp(13.5 + gauss(L.rnd2) * 2.5, 8, 19));
+    if (L.status === 'chonin' && sx === 'm') dur = Math.round(clamp(18 + gauss(L.rnd2) * 3, 12, 24));
+    // 行き先：江戸後期は大都市より町場が多かった。7割を近くの町場、3割を大都市とする（目安）
+    var big = L.rnd2() < 0.3, dest;
+    if (big) {
+      var to = bigCity(L.pref);
+      if (y < 1872 && to === '40') to = '27';
+      L.pref = to; L.kind = 'city'; L.muniName = null; L.muni = null;
+      if (y < 1889) { L.prov = { 13: '武蔵', 27: '摂津', 23: '尾張', 40: '筑前' }[to]; L.sub = null; }
+      dest = 'city';
+    } else {
+      L.kind = 'town';
+      var mu = pickMuni(L); if (mu) { L.muni = mu.code; L.muniName = mu.name; }
+      dest = 'town';
+    }
+    var job = y < 1872 ? 'hoko' : sx === 'f' ? ((['20', '21', '19'].indexOf(home.pref) >= 0 || L.rnd2() < 0.4) && y >= 1886 && y <= 1935 ? 'silk' : 'maid') : (L.rnd2() < 0.5 ? 'kozo' : 'factory');
+    L.job = job; L.lastJob = JOB[job] || JOB.hoko;
+    L.hoko = { from: y, until: y + dur, home: home, dest: dest, job: job };
+    var where = placeLabel(L);
+    var txt = y < 1872 ? where + 'の' + (sx === 'm' ? '商家へ丁稚奉公に出た。' : '商家へ女中奉公に出た。') + '年季は' + dur + '年の約束だった' :
+      job === 'silk' ? where + 'の製糸工場へ女工として働きに出た。寄宿舎に入り、朝から晩まで繭から糸を繰った' : job === 'kozo' ? where + 'の商店へ小僧として住み込みで働きに出た' : job === 'maid' ? where + 'の家へ住み込みの女中として働きに出た' : where + 'の工場へ働きに出た';
+    push(L, rec, '学歴と仕事', txt, br.ev);
+  }
+  function hokoYear(L, rec) {
+    var h = L.hoko, y = L.year, a = L.age, sx = L.sex;
+    if (y >= h.until) {
+      h.done = true;
+      L.queue.push({ title: '年季が明けた', kind: 'hokoEnd', groups: [{ id: 'end', q: '年季が明けた。これからどうする？', options: [{ k: 'home', l: '村に戻る' }, { k: 'stay', l: '町に残る' }] }],
+        ev: [ev(L, 'hayami', 1869, '女子の奉公の期間は平均13〜14年。無事に戻って結婚する場合は26〜28歳になっていた（男子は記録がないため同じ幅を目安にした）', '', { est: true, noYearNote: true })] });
+      return;
+    }
+    // 町人の家の男子：丁稚→手代→番頭。のれん分けはごく一部
+    if (L.status === 'chonin' && sx === 'm' && y < 1872) {
+      if (a === 18 && !h.tedai) { h.tedai = true; push(L, rec, '学歴と仕事', '奉公先で手代になり、帳場や得意先回りを任されるようになった', [ev(L, 'hayami', 1869, '商家の奉公（丁稚→手代→番頭。割合の統計はない）', '', { est: true, noYearNote: true })]); return; }
+      if (a === 28 && !h.banto) { h.banto = true; push(L, rec, '学歴と仕事', '番頭になり、店の切り盛りを任された', [ev(L, 'hayami', 1869, '商家の奉公（丁稚→手代→番頭。割合の統計はない）', '', { est: true, noYearNote: true })]); return; }
+      if (h.banto && !h.noren && a >= 30 && a <= 36 && L.rnd2() < 0.008) { h.noren = true; h.until = y; L.noren = true; push(L, rec, '学歴と仕事', '長年の働きが認められ、店を分けてもらい、自分の店を持った（のれん分け）', [ev(L, 'hayami', 1869, 'のれん分け（割合の統計はなく、数%の珍しい出来事にとどめた）', '', { est: true, noYearNote: true })]); return; }
+    }
+    if (L.rnd2() < 0.35) {
+      var list = y < 1872 ? (sx === 'm' ? ['盆の藪入りで、久しぶりに家へ帰った', '正月の藪入りに、親へ土産を買って帰った', '使いに走り回り、帳面のつけ方を覚えた', '奉公先で熱を出して寝込み、家のことを思った'] : ['盆の藪入りで、久しぶりに家へ帰った', '台所の仕事と子守りを任されるようになった', '奉公先のおかみさんに裁縫を習った', '奉公先で熱を出して寝込み、家のことを思った']) :
+        ['盆と正月に、休みをもらって家へ帰った', '稼いだお金の多くを、家へ送った', '同じ村から来た仲間と、故郷の話をした', '働きすぎて体を壊し、しばらく寝込んだ'];
+      push(L, rec, '学歴と仕事', list[Math.floor(L.rnd2() * list.length)], [ev(L, 'hayami', 1869, '奉公先での暮らし', '', { est: true, noYearNote: true })]);
+    }
+  }
+  function resolveHokoEnd(L, rec, br, answers) {
+    var w = wantFrom(answers, 'end'), h = L.hoko;
+    var stay = L.rnd2() < nudge(0.3, w, 'stay');
+    // 奉公先で結婚相手を見つけた人は町に残る
+    var met = !L.married && L.rnd2() < 0.15;
+    if (stay || met || L.noren) {
+      L.job = L.sex === 'm' ? (L.noren ? 'shop' : 'shop') : 'maid';
+      push(L, rec, '地域', met ? '年季が明けた。奉公先で知り合った相手と所帯を持つことにし、町に残った' : '年季が明けたが、村には戻らず町に残って働くことにした', br.ev);
+      if (met) { L.marryAt = L.age; L.never = false; }
+      return;
+    }
+    L.prov = h.home.prov; L.sub = h.home.sub; L.pref = h.home.pref; L.kind = h.home.kind; L.muni = h.home.muni; L.muniName = h.home.muniName;
+    L.job = null;
+    if (!L.married) L.marryAt = Math.max(L.marryAt, L.age + Math.floor(L.rnd2() * 2));
+    push(L, rec, '地域', '年季が明け、村へ戻った', br.ev);
+  }
+  function resolveBunke(L, rec, br, answers) {
+    var w = wantFrom(answers, 'bunke');
+    if (L.rnd2() >= nudge(br.rate, w, 'yes')) { push(L, rec, '家庭', '分家の話はまとまらず、家に残った（部屋住み）', br.ev); return; }
+    L.bunke = L.year;
+    push(L, rec, '家庭', L.status === 'bushi' ? '藩に願い出て認められ、新しく家を立てた（分家）' : '田畑を分けてもらい、近くに家を建てて分家した', br.ev);
+  }
+  function resolveMuko(L, rec, br, answers) {
+    var w = wantFrom(answers, 'muko');
+    if (L.rnd2() >= nudge(br.rate, w, 'yes')) { push(L, rec, '家庭', '婿養子の話を断った', br.ev); L.mukoNo = true; return; }
+    var old = L.surname, nw = otherSurname(L);
+    L.surnameOld = old; L.surname = nw; L.muko = true; L.mukoY = L.year;
+    doMarry(L, rec, false, br.ev);
+    L.spouse.mukoWife = true;
+    rec.events[rec.events.length - 1].t = nw + '家の婿養子に入り、' + L.spouse.name + 'と結婚した。名字が' + nw + 'に変わった（旧姓 ' + old + '）';
+  }
+  function resolveYoshi(L, rec, br, answers) {
+    var w = wantFrom(answers, 'yoshi');
+    if (L.rnd2() >= nudge(br.rate, w, 'yes')) { push(L, rec, '家庭', '養子の話を断り、家に残った（部屋住み）', br.ev); return; }
+    var old = L.surname, nw = otherSurname(L);
+    L.surnameOld = old; L.surname = nw; L.adopted = true; L.mukoY = L.year; L.toshu = 'adopted';
+    push(L, rec, '家庭', nw + '家の養子に入り、家督を継ぐことになった。名字が' + nw + 'に変わった（旧姓 ' + old + '）', br.ev);
+  }
+  // 名字を添えた名前（婿養子・養子に入った人だけ、旧姓を添える）
+  function displayName(L) { return L.surnameOld ? L.surname + L.name + '（旧姓 ' + L.surnameOld + '）' : L.name; }
 
   /* 召集（戦争） */
   function warYear(L, rec) {
@@ -1177,6 +1371,11 @@
       else if (br.kind === 'path') resolvePath(L, rec, br, answers);
       else if (br.kind === 'out') resolveOut(L, rec, br, answers);
       else if (br.kind === 'marry') resolveMarry(L, rec, br, answers);
+      else if (br.kind === 'hoko') resolveHoko(L, rec, br, answers);
+      else if (br.kind === 'hokoEnd') resolveHokoEnd(L, rec, br, answers);
+      else if (br.kind === 'bunke') resolveBunke(L, rec, br, answers);
+      else if (br.kind === 'muko') resolveMuko(L, rec, br, answers);
+      else if (br.kind === 'yoshi') resolveYoshi(L, rec, br, answers);
     }
     if (L.alive && L.queue.length) { rec.branch = L.queue.shift(); return rec; }
     finishYear(L, rec);
@@ -1240,7 +1439,7 @@
     return { share: lin(prefSeries(H, L.pref), y), where: H.prefNames[L.pref] };
   }
   return {
-    houseOf: houseOf, heirCandidates: heirCandidates, heirOf: heirOf,
+    houseOf: houseOf, heirCandidates: heirCandidates, heirOf: heirOf, displayName: displayName, heirlessRates: heirlessRates,
     eraLabel: eraLabel, pickBirth: pickBirth, newLife: newLife, step: step, resolve: resolve, autoRun: autoRun,
     cohort: cohort, majorTimeline: majorTimeline, familyList: familyList, endText: endText, placeLabel: placeLabel, deathProb: dp, birthShare: birthShare
   };

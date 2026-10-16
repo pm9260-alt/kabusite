@@ -189,10 +189,12 @@
     while (L.alive) { L.focus = focusAt(g, L.year); r = M.step(L); while (r && r.branch) { L.focus = focusAt(g, L.year); r = answerBranch(r, i < g.answers.length ? g.answers[i++] : null); } }
     return r;
   }
+  // 婿養子・養子に入った人は新しい名字と旧姓を添える
+  function dispName(Lx) { Lx = Lx || L; return Lx && Lx.old && O.displayName ? O.displayName(Lx) : Lx.name; }
   function lifeSummary(Lx, k, first) {
     var rel = '';
     if (k > 0 && first) { var id = G.house.chain[k - 1].memberId, m = first.members.filter(function (x) { return x.id === id; })[0]; if (m) rel = m.role; }
-    return { name: Lx.name, by: Lx.by, age: Lx.deathAge, heir: !!Lx.heir, rel: rel };
+    return { name: dispName(Lx), by: Lx.by, age: Lx.deathAge, heir: !!(Lx.heir || Lx.toshu), rel: rel };
   }
   // 亡くなった人から、きょうだい（memberId）へ引き継ぐ
   function inheritFrom(Lp, memberId) {
@@ -432,7 +434,8 @@
     function node(m, self) {
       var dead = self ? false : (!m.alive && m.dy != null && m.dy <= year);
       var age = self ? year - L.by : (dead ? m.dy - m.by : year - m.by);
-      return { label: self ? '自分' : rel(m), name: (self ? L.name : m.name) || '', sub: dead ? m.dy + '年没・' + age + '歳' : (m && m.gone ? '別れた' : age + '歳'), dead: dead, self: !!self, gone: !!(m && m.gone), by: self ? L.by : m.by, id: self ? 0 : m.id, m: m };
+      var selfName = L.surnameOld ? L.surname + L.name : L.name;
+      return { label: self ? '自分' : rel(m), name: (self ? selfName : m.name) || '', sub: self && L.surnameOld ? '旧姓 ' + L.surnameOld + '・' + age + '歳' : dead ? m.dy + '年没・' + age + '歳' : (m && m.gone ? '別れた' : age + '歳'), dead: dead, self: !!self, gone: !!(m && m.gone), by: self ? L.by : m.by, id: self ? 0 : m.id, m: m };
     }
     var NW = 88, NH = 46, GX = 8, GY = 26;
     var rows = [[], [], [], [], []];
@@ -566,7 +569,7 @@
       } else {
         var from = L.old ? L.home.label : L.home.prefName + L.home.muniName;
         var to = L.old ? O.placeLabel(L) : (L.place.away ? L.place.prefName : L.place.prefName + L.place.muniName);
-        K.end(cv, { L: L, name: L.name, from: from, to: to, summary: ['学び：' + eduLabel(), '仕事：' + (L.lastJob || '働きに出ることはなかった'), '家族：' + familyLabel()], note: '' });
+        K.end(cv, { L: L, name: dispName(), from: from, to: to, summary: ['学び：' + eduLabel(), '仕事：' + (L.lastJob || '働きに出ることはなかった'), '家族：' + familyLabel()], note: '' });
         cv.setAttribute('aria-label', L.name + 'さんの最期のカード');
       }
       c.appendChild(cv);
@@ -1133,7 +1136,7 @@
     if (!L) return;
     show('end');
     drawAvatar('avatar-end', L.deathYear, L.deathAge);
-    $('end-title').textContent = L.name + 'さんの一生　' + L.by + '年〜' + L.deathYear + '年（' + L.deathAge + '歳）';
+    $('end-title').textContent = dispName() + 'さんの一生　' + L.by + '年〜' + L.deathYear + '年（' + L.deathAge + '歳）';
     $('end-sub').textContent = L.old ? O.endText(L) : L.home.prefName + L.home.muniName + 'で生まれ、' + (L.place.away ? L.place.prefName : L.place.prefName + L.place.muniName) + 'で亡くなった。';
     renderHotline($('hotline-end'), L.cause === 'sui');
     renderLifeMap();

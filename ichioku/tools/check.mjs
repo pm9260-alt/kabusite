@@ -836,6 +836,93 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
   rec('L 一生の浮き沈みの曲線が200人分すべてで描け、点の数・いちばん高い年と低い年の印・0歳の一生・比べる線の途切れ・文字の重なりとはみ出し（幅320・390・768・1366）・コントラストが合っているか', bad.length === 0, [...new Set(bad)].slice(0, 8).join('、') || n + '人分（0歳で亡くなった ' + zero + '人・比べる線が途切れた ' + cmpCut + '件）');
 }
 
+/* ---------- M きょうだいとして生きる・継がない子の道（作る人の指示書 第2版 2026-10-17） ---------- */
+{
+  const res = {};
+  const seedOf = (s0, id) => ((s0 ^ Math.imul(id, 0x9e3779b1)) >>> 0) || 1;
+  const firstLife = (by, seed) => {
+    if (by >= 1975) { const p0 = P[E.pickPref(C, by, E.makeRng(seed ^ 0x9e3779b9))]; return E.newLife(C, p0, { year: by, seed }); }
+    const b0 = O.pickBirth(C, H, by, E.makeRng(seed ^ 0x9e3779b9)); return O.newLife(C, H, P[b0.pref] || null, { year: by, seed, birth: b0 });
+  };
+  const inherit = (Lp, id, s0) => { const MM = Lp.old ? O : E, h = MM.houseOf(Lp); return Lp.old ? O.newLife(C, H, P[h.home.pref], { house: h, memberId: id, seed: seedOf(s0, id) }) : E.newLife(C, Lp.P, { house: h, memberId: id, seed: seedOf(s0, id) }); };
+  const playTo = (M, L, until) => { while (L.alive && L.year < until) { let r = M.step(L); while (r && r.branch) r = M.resolve(L, r.branch.ask ? { text: '' } : null); } return L; };
+  const run = (M, L) => M.autoRun(L);
+  // 1〜4
+  { const bad = []; let n = 0, withC = 0;
+    for (let s0 = 1; n < 100 && s0 < 20000; s0++) {
+      const by = 1700 + (s0 * 37) % 275, L = run(O, firstLife(by, s0));
+      if (L.deathAge > 5) continue; n++;
+      const cs = O.heirCandidates(L), alive = L.members.some(m => m.sib && !m.gone && ((m.alive && m.by <= L.deathYear) || (m.by > L.deathYear && L.mom.alive)));
+      if (!!cs.length !== alive) bad.push(by + '年：候補の有無が生きているきょうだいと合わない');
+      if (!cs.length) continue; withC++;
+      const c = cs[s0 % cs.length], L2 = run(O, inherit(L, c.id, s0));
+      for (const m of L.members.filter(m => ['父', '母', '祖父', '祖母'].includes(m.role))) {
+        const m2 = L2.members.find(x => x.id === m.id);
+        const d1 = m.dy != null && m.dy <= L.deathYear ? m.dy : null, d2 = m2 && m2.dy != null && m2.dy <= L.deathYear ? m2.dy : null;
+        if (!m2 || m2.name !== m.name || m2.by !== m.by || d1 !== d2) bad.push(by + '年：' + m.role + 'が前の人生と違う');
+      }
+      for (const r of L2.log.filter(r => r.year <= L.deathYear)) for (const e of r.events) if (e.cat === '家庭' && /亡くなった/.test(e.t) && !/前の人生/.test(JSON.stringify(e.ev)) && !/幼くして/.test(e.t)) bad.push(by + '年：前の人生にない家族の死 ' + e.t.slice(0, 20));
+      const pv = L2.members.find(m => m.prevLife);
+      if (!pv || pv.alive || pv.dy !== L.deathYear) bad.push(by + '年：前の主人公が亡くなった家族として出ない');
+    }
+    res['1〜4 候補・家族の一致・前の人生にない死・家系図（0〜5歳で亡くなった' + n + '件、候補あり' + withC + '件）'] = bad; }
+  // 5 家督：1898〜1947年に跡取りの長男が亡くなったら、次に年長の生きている男子が跡取り。1948年からは跡取りの場面が出ない
+  { const bad = []; let n = 0;
+    for (let s0 = 1; n < 40 && s0 < 60000; s0++) {
+      const by = 1890 + s0 % 50, L = run(O, firstLife(by, s0));
+      if (L.sex !== 'm' || !L.heir || L.deathYear > 1946 || L.deathYear < 1898) continue;
+      const bro = L.members.filter(m => m.sib && m.sex === 'm' && !m.gone && m.alive && m.by <= L.deathYear && m.by > L.by).sort((a, b) => a.by - b.by)[0];
+      if (!bro) continue; n++;
+      const L2 = playTo(O, inherit(L, bro.id, s0), L.deathYear + 1);
+      if (!L2.heir) bad.push(by + '年：次に年長の男子が跡取りにならない');
+      if (!L2.log.some(r => r.year === L.deathYear && r.events.some(e => /家を継ぐことになった/.test(e.t)))) bad.push(by + '年：「家を継ぐことになった」が出ない');
+    }
+    for (let s0 = 1; s0 < 200; s0++) { const L = run(O, firstLife(1940 + s0 % 35, s0)); if (L.log.some(r => r.year >= 1948 && r.events.some(e => /家を継ぐことになった|家督を継いだ/.test(e.t)))) bad.push('1948年より後に跡取りの場面が出た'); }
+    res['5 家督（1898〜1947年の長男が亡くなった' + n + '件）と1948年からの家督の場面'] = bad; }
+  // 6 3人続けた家を作り直すと一致する（10家）
+  { const bad = []; let n = 0;
+    const build = s0 => { const by = 1700 + (s0 * 13) % 270; let L = run(O, firstLife(by, s0)); const sig = []; for (let k = 0; k < 3; k++) { sig.push(L.name + ':' + L.deathAge + ':' + L.cause + ':' + L.log.map(r => r.events.map(e => e.t).join('|')).join('/')); if (k === 2) break; const cs = O.heirCandidates(L); if (!cs.length) return null; L = run(O, inherit(L, cs[0].id, s0)); } return sig.join('#'); };
+    for (let s0 = 1; n < 10 && s0 < 3000; s0++) { const a1 = build(s0); if (!a1) continue; n++; if (build(s0) !== a1) bad.push('種 ' + s0 + '：作り直すと違う'); }
+    res['6 3人続けた家の作り直し（' + n + '家）'] = bad; }
+  // 10〜13 奉公・跡取り・武士の養子・分家
+  { const bad = [], hk = {}, bushi = { a: 0, t: 0 }; let n = 0, kosaku = 0;
+    const N10 = TEST ? 8000 : 20000; // 指示書は3,000件。1つの区分が数百人になり偶然のぶれで±5を超えるため、人数を増やして確かめる
+    for (let s0 = 1; n < N10 && s0 < 2000000; s0++) {
+      const by = 1700 + s0 % 161, L = firstLife(by, s0);
+      if (L.status !== 'hyakusho' && L.status !== 'bushi') continue;
+      if (L.status === 'hyakusho') n++;
+      run(O, L);
+      if (L.status === 'hyakusho' && L.hokoAsked) { const k = L.hokoAsked.sex + L.hokoAsked.tier; (hk[k] = hk[k] || [0, 0])[1]++; if (L.hokoAsked.went) hk[k][0]++; }
+      if (L.status === 'bushi' && L.sex === 'm' && L.toshu && by >= 1701 && by <= 1800) { bushi.t++; if (L.toshu === 'adopted') bushi.a++; }
+      if (L.status === 'hyakusho' && L.bunke && L.incPct < 0.4 && L.bunke >= 1673) kosaku++;
+      // 11 跡取りは1人。男子がいる家で娘が跡取りにならない
+      const h = O.heirOf(L);
+      if (h.how === 'muko' && L.members.some(m => m.sib && m.sex === 'm' && m.alive && !m.gone && m.by <= L.year)) bad.push('男子がいるのに娘が跡取り');
+      if (L.heirFAtMarry && !L.tookMuko) bad.push('男子がいない家の娘が婿を取らずに嫁いだ');
+    }
+    const T = { m: [0.62, 0.30, 0.40], f: [0.72, 0.60, 0.30] }, rows = [];
+    for (const k of Object.keys(hk).sort()) { const v = hk[k][0] / hk[k][1], t = T[k[0]][+k[1]]; rows.push(k + ' ' + (v * 100).toFixed(1) + '%/' + t * 100 + '%'); if (Math.abs(v - t) > 0.05) bad.push('奉公の割合 ' + k + ' ' + (v * 100).toFixed(1) + '%（表 ' + t * 100 + '%）'); }
+    const tA = (0.340 + 0.476) / 2, vA = bushi.t ? bushi.a / bushi.t : 0;
+    if (Math.abs(vA - tA) > 0.05) bad.push('武士の当主のうち養子 ' + (vA * 100).toFixed(1) + '%（表の1701〜1800年の平均 ' + (tA * 100).toFixed(1) + '%）');
+    if (kosaku) bad.push('小作の家で分家が起きた ' + kosaku + '件');
+    res['10〜13 奉公の割合（百姓' + n + '人：' + rows.join('、') + '）・跡取り・武士の養子（当主' + bushi.t + '人）・小作の分家'] = bad; }
+  // 14 名字と旧姓
+  { const bad = []; let n = 0;
+    for (let s0 = 1; n < 30 && s0 < 80000; s0++) { const L = firstLife(1700 + s0 % 200, s0); if (L.status !== 'hyakusho' || L.sex !== 'm') continue; run(O, L); if (!L.muko && !L.adopted) continue; n++; if (!L.surnameOld || O.displayName(L) !== L.surname + L.name + '（旧姓 ' + L.surnameOld + '）') bad.push('名字の出し方'); }
+    const app = fs.readFileSync(path.join(SITE, 'js', 'app.js'), 'utf8');
+    if (!/dispName\(\) \+ 'さんの一生/.test(app) || !/name: dispName\(\)/.test(app) || !/'旧姓 ' \+ L\.surnameOld/.test(app)) bad.push('最期の画面・共有用の画像・家系図に新しい名字と旧姓が出ない');
+    res['14 婿養子・養子に入った人の名字と旧姓（' + n + '人）'] = bad; }
+  // 15 1948年からの生まれに奉公・分家・婿養子・養子の分かれ道が出ない
+  { const bad = [];
+    for (let s0 = 1; s0 < 300; s0++) {
+      const by = 1948 + s0 % 53, L = firstLife(by, s0), M = by >= 1975 ? E : O, kinds = new Set();
+      while (L.alive) { let r = M.step(L); while (r && r.branch) { kinds.add(r.branch.kind || r.branch.id); r = M.resolve(L, r.branch.ask ? { text: '' } : null); } }
+      for (const k of ['hoko', 'hokoEnd', 'bunke', 'muko', 'yoshi']) if (kinds.has(k)) bad.push(by + '年生まれに ' + k);
+    }
+    res['15 1948年からの生まれ（300人）に奉公・分家・婿養子・養子の分かれ道が出ない'] = bad; }
+  for (const [k, b] of Object.entries(res)) rec('M ' + k, b.length === 0, [...new Set(b)].slice(0, 6).join('、'));
+}
+
 /* ---------- J サイトとしての周りの機能 ---------- */
 {
   const bad = [];
