@@ -325,7 +325,7 @@
   function step(L) {
     if (!L.alive) return null;
     var y = L.year, a = L.age;
-    var rec = { year: y, age: a, place: placeLabel(L), world: worldLine(L, y, a), events: [], branch: null, future: y >= FUTURE_FROM };
+    var rec = { year: y, age: a, place: placeLabel(L), pin: { pref: L.place.pref, muni: L.place.muni || null }, world: worldLine(L, y, a), events: [], branch: null, future: y >= FUTURE_FROM };
     L.rec = rec;
     if (a === 0) birthEvent(L, rec);
     else {

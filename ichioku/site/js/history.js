@@ -235,6 +235,12 @@
     if (!list.length) list = L.P.munis;
     return pick(L.rnd, list, function (m) { return Math.sqrt(E.val(m.share, 1995)); });
   }
+  // 地図のピンの場所：今の市区町村が分かればその市区町村、分からなければ都道府県（旧国）の中ほど。海外は地図に出さない
+  function pinOf(L) {
+    if (L.abroad) return { abroad: true };
+    var m = L.muniName && L.P && L.P.munis ? L.P.munis.filter(function (x) { return x.name === L.muniName; })[0] : null;
+    return { pref: L.pref, muni: m ? m.code : null, prov: L.prov || null };
+  }
   var KIND_WORD = { city: '町なか', town: '町', village: '村', fish: '浜の村', kotan: 'コタン（アイヌの村）' };
   function placeLabel(L) {
     if (L.abroad) return L.abroadPlace;
@@ -394,7 +400,7 @@
   function step(L) {
     if (!L.alive) return null;
     var y = L.year, a = L.age;
-    var rec = { year: y, age: a, eraLabel: eraLabel(L.H, y), place: placeLabel(L), world: worldLine(L, y, a), events: [], branch: null, future: y >= FUTURE_FROM };
+    var rec = { year: y, age: a, eraLabel: eraLabel(L.H, y), place: placeLabel(L), pin: pinOf(L), world: worldLine(L, y, a), events: [], branch: null, future: y >= FUTURE_FROM };
     L.rec = rec;
     if (a === 0) birthEvent(L, rec);
     else {

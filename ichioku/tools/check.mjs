@@ -461,7 +461,7 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
 }
 
 /* ---------- 6. 本家から取り入れた仕組み ---------- */
-// A：節目の問いかけ（5・15・30・50・70歳）。その年齢まで生きた人生ではすべて止まり、それより前に亡くなれば出ない
+// A：入力欄はなくした（作る人の指示 2026-10-17）。節目の問いかけは画面では止まらずに空の答えで進み、人生の中身は変わらない
 {
   const bad = [];
   const run = (M, L) => {
@@ -469,11 +469,11 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
     let g = 0;
     while (L.alive && g++ < 130) {
       let r = M.step(L);
-      while (r && r.branch) { if (r.branch.ask) { asked.push(r.age); if (!r.branch.q) bad.push('問いの文がない'); } r = M.resolve(L, r.branch.ask ? { text: 'テスト' } : null); }
+      while (r && r.branch) { if (r.branch.ask) asked.push(r.age); r = M.resolve(L, r.branch.ask ? { text: '' } : null); }
     }
     const want = E.ASK_AGES.filter(x => x <= L.deathAge);
     if (asked.join(',') !== want.join(',')) bad.push(L.by + '年生まれ（' + L.deathAge + '歳）：' + asked.join(',') + ' / 期待 ' + want.join(','));
-    if ((L.notes || []).filter(n => n.text).length !== want.length) bad.push('書いた一行が残っていない');
+    if ((L.notes || []).some(n => n.text)) bad.push('空の答えなのに書き残しがある');
   };
   for (let i = 0; i < 60; i++) {
     const by = [1980, 1990, 2000][i % 3];
@@ -481,7 +481,12 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
     const oy = 1000 + (i * 83) % 975, b = O.pickBirth(C, H, oy, E.makeRng(i + 5));
     run(O, O.newLife(C, H, P[b.pref] || null, { year: oy, seed: i * 89 + 7, birth: b }));
   }
-  rec('A 節目の問いかけが5・15・30・50・70歳で止まり、書いた一行が残るか', bad.length === 0, bad.slice(0, 5).join('、') || '120人分');
+  // 画面に文字を入力する欄がないか（index.html と app.js）
+  const html = fs.readFileSync(path.join(SITE, 'index.html'), 'utf8'), app = fs.readFileSync(path.join(SITE, 'js', 'app.js'), 'utf8');
+  if (/<input|<textarea/.test(html)) bad.push('index.html に入力欄がある');
+  if (/createElement\('input'\)|ask-input|farewell/.test(app)) bad.push('app.js に入力欄が残っている');
+  if (!/cur\.branch\.ask \|\| auto/.test(app)) bad.push('節目の問いかけを画面で止めずに進める処理がない');
+  rec('A 入力欄がなく、節目の問いかけは画面で止まらずに進むか（120人分の人生と画面のファイル）', bad.length === 0, bad.slice(0, 5).join('、'));
   const qs = new Set();
   for (let i = 0; i < 400; i++) for (const a of E.ASK_AGES) {
     const by = 1000 + (i * 7) % 1001;
@@ -631,7 +636,7 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
     if (a.L.alive) bad.push(a.L.by + '年生まれ：おまかせで最期まで進まなかった');
     if (a.sig !== b.sig) bad.push(a.L.by + '年生まれ：同じ重点とおまかせで作り直すと違う人生になった');
   }
-  rec('G おまかせを入れたまま最期まで止まらずに進み（節目の問いかけだけ止まる）、重点を変えても作り直しが一致するか', bad.length === 0, bad.slice(0, 8).join('、') || n + '人分');
+  rec('G おまかせを入れたまま最期まで止まらずに進み、重点を変えても作り直しが一致するか', bad.length === 0, bad.slice(0, 8).join('、') || n + '人分');
 }
 
 /* ---------- 生命表との照らし合わせ（その年の死亡率のままで何%が90歳・100歳まで生きるか） ---------- */
@@ -725,6 +730,49 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
   const avg = total / years;
   if (avg * 10 > 50) bad.push('1年あたりの計算が長い（平均 ' + avg.toFixed(2) + 'ミリ秒）');
   rec('I 同じ日に生まれた4人を毎年進めても、1年の計算が50ミリ秒以内か（古いスマホは10倍遅いとみる）', bad.length === 0, bad.join('、') || '平均 ' + avg.toFixed(2) + 'ミリ秒・いちばん長い年 ' + worst.toFixed(1) + 'ミリ秒（' + years + '年分）');
+}
+
+/* ---------- K 画面の整理・日本地図・ドット絵・原作の表記（作る人の指示 2026-10-17） ---------- */
+{
+  const bad = [];
+  // 日本地図：47都道府県の形と、全市区町村の位置があるか。人生の毎年の場所が地図に置けるか
+  let MAPJ = null;
+  try { MAPJ = JSON.parse(fs.readFileSync(path.join(SITE, 'data', 'map.json'), 'utf8')); } catch (e) { bad.push('data/map.json がない（python3 -I tools/map.py で作る）'); }
+  if (MAPJ) {
+    const kb = fs.statSync(path.join(SITE, 'data', 'map.json')).size / 1024;
+    if (kb > 900) bad.push('map.json が大きい（' + Math.round(kb) + 'KB）');
+    for (let i = 1; i <= 47; i++) { const pc = String(i).padStart(2, '0'); if (!MAPJ.prefs[pc] || !MAPJ.center[pc]) bad.push(pc + ' の形がない'); }
+    const noPos = Object.values(P).flatMap(p => p.munis.filter(m => !MAPJ.munis[m.code]).map(m => p.name + m.name));
+    if (noPos.length) bad.push('地図に位置がない市区町村 ' + noPos.length + '（' + noPos.slice(0, 5).join('、') + '）');
+    const xy = pin => !pin || pin.abroad ? 'abroad' : (pin.muni && MAPJ.munis[pin.muni]) || (pin.pref && MAPJ.center[pin.pref]);
+    for (let i = 0; i < 60; i++) {
+      let L;
+      if (i % 2) { const by = 1975 + (i * 7) % 26, seed = i * 331 + 9; L = E.autoRun(E.newLife(C, P[E.pickPref(C, by, E.makeRng(seed ^ 0x9e3779b9))], { year: by, seed })); }
+      else { const oy = 1000 + (i * 89) % 975, os = i * 557 + 1, ob = O.pickBirth(C, H, oy, E.makeRng(os ^ 0x9e3779b9)); L = O.autoRun(O.newLife(C, H, P[ob.pref] || null, { year: oy, seed: os, birth: ob })); }
+      const miss = L.log.filter(r => !r.pin || !xy(r.pin));
+      if (miss.length) bad.push(L.by + '年生まれ：地図に置けない年 ' + miss.length + '（' + miss[0].year + '年 ' + miss[0].place + '）');
+    }
+  }
+  // いつも見える画面：ドット絵・年齢・年・場所・地図・その年の1文・進め方だけ。ほかは「くわしく」の中
+  const html = fs.readFileSync(path.join(SITE, 'index.html'), 'utf8');
+  const life = html.slice(html.indexOf('id="screen-life"'), html.indexOf('id="details"'));
+  for (const id of ['world', 'events', 'st4', 'nums', 'tree', 'comps', 'focus-box']) if (life.includes('id="' + id + '"')) bad.push('「' + id + '」がいつも見える所にある');
+  if (!/id="details" hidden/.test(html)) bad.push('くわしくの中身がふだん隠れていない');
+  // 原作の表記：トップ・このサイトについて・共有用の画像に、原作の名前と場所と許可を得たことがあるか
+  for (const f of ['index.html', 'about.html']) {
+    const h = fs.readFileSync(path.join(SITE, f), 'utf8');
+    if (!h.includes('https://1in8b.life/ja/') || !h.includes('80億分の1') || !h.includes('許可を得て制作') || !h.includes('2026年10月16日')) bad.push(f + '：原作の表記が足りない');
+  }
+  if (!fs.readFileSync(path.join(SITE, 'js', 'card.js'), 'utf8').includes('80億分の1')) bad.push('共有用の画像に原作の表記がない');
+  // ドット絵：48×64 の整数倍で描き、輪郭線が付いているか
+  global.window = { devicePixelRatio: 3 }; global.self = global;
+  require(path.join(SITE, 'js', 'avatar.js'));
+  const cols = new Set(); let calls = 0;
+  const cv = { clientWidth: 96, width: 0, height: 0, getContext: () => ({ clearRect() {}, fillRect() { calls++; }, set fillStyle(v) { cols.add(v); } }) };
+  global.self.IchiokuAvatar.draw(cv, { year: 1990, age: 30, sex: 'f', seed: 3, alive: true, place: { kind: '都市' } });
+  if (cv.width % 48 || cv.height % 64 || cv.width / 48 !== cv.height / 64) bad.push('ドット絵の大きさが 48×64 の整数倍でない（' + cv.width + '×' + cv.height + '）');
+  if (![...cols].some(c => /^rgb\(/.test(c))) bad.push('ドット絵に輪郭線がない');
+  rec('K 画面を絞り（地図・その年の1文だけ）、全市区町村が地図に置け、原作の表記があり、ドット絵がくっきり描けるか', bad.length === 0, bad.slice(0, 8).join('、'));
 }
 
 /* ---------- J サイトとしての周りの機能 ---------- */

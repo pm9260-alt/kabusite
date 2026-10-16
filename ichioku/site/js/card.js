@@ -52,6 +52,8 @@
   function title(ctx) {
     font(ctx, 26, true); ctx.fillStyle = ACCENT; ctx.fillText('1億分の1', 420, 92);
     ctx.strokeStyle = RULE; ctx.beginPath(); ctx.moveTo(420, 112.5); ctx.lineTo(W - 48, 112.5); ctx.stroke();
+    // 原作の表記（共有された画像だけを見た人にも分かるように）
+    fit(ctx, '原作「80億分の1」（1in8b.life）の作者の許可を得て制作', 420, 606, W - 420 - 48, 16, false, SUB, 12);
   }
 
   // 誕生カード：生まれた年（和暦つき）・場所・性別・名前・この年この所で生まれた割合
@@ -68,7 +70,7 @@
     fit(ctx, 'この年に日本で生まれた子のうち', 420, 560, mw, 20, false, SUB, 14);
   }
 
-  // 最期のカード：名前・生年〜没年・享年・生まれた所と亡くなった所・要約3行・節目の一行
+  // 最期のカード：名前・生年〜没年・享年・生まれた所と亡くなった所・要約3行
   function end(canvas, o) {
     canvas.width = W; canvas.height = H;
     var ctx = canvas.getContext('2d'), L = o.L, mw = W - 420 - 48;
@@ -83,7 +85,6 @@
       fit(ctx, s, 436, y, mw - 32, 24, false, TEXT, 16);
       y += 54;
     });
-    if (o.note) wrap(ctx, '「' + o.note + '」', 420, y + 22, mw, 24, ACCENT, 34);
   }
 
   // 共有：使える端末では共有の画面、使えない端末では画像を保存する

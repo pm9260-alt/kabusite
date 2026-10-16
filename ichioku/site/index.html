@@ -35,86 +35,111 @@
         <a href="contact.html">問い合わせ先</a>
         <a href="changelog.html">更新履歴</a>
       </nav>
-      <p class="credit"><a href="https://1in8b.life/ja/" rel="noopener">80億分の1（1in8b.life）</a>に着想を得て作りました</p>
+      <div class="origin">
+        <p class="origin-k">原作</p>
+        <p><a href="https://1in8b.life/ja/" rel="noopener">80億分の1</a>（https://1in8b.life/ja/）</p>
+        <p class="origin-n">原作の作者の方から直接許可を得て制作しています（2026年10月16日）。本作は日本の統計で人生をたどる形に作り直したもので、内容の責任は本作の作り手にあります</p>
+      </div>
     </footer>
   </section>
 
   <section id="screen-life" class="screen" hidden aria-live="polite">
     <header class="life-head">
-      <canvas id="avatar" class="avatar" width="24" height="32" role="img" aria-label=""></canvas>
-      <div class="age"><span id="age">0</span><span class="unit">歳</span></div>
-      <div class="when">
-        <div id="year-now">1975年</div>
+      <canvas id="avatar" class="avatar" width="48" height="64" role="img" aria-label=""></canvas>
+      <div class="life-id">
+        <div class="age"><span id="age">0</span><span class="unit">歳</span></div>
+        <div id="year-now" class="year-now">1975年</div>
         <div id="place" class="place"></div>
       </div>
     </header>
-    <button type="button" class="st4" id="st4" aria-label="4つの数値。押すと今年の理由が出ます">
-      <span class="st-row"><span class="st-k">からだ</span><span class="st-bar"><span class="st-fill" id="st-body"></span></span><span class="st-v" id="st-body-v">—</span></span>
-      <span class="st-row"><span class="st-k">暮らしの満足</span><span class="st-bar"><span class="st-fill" id="st-sat"></span></span><span class="st-v" id="st-sat-v">—</span></span>
-      <span class="st-row"><span class="st-k">学び</span><span class="st-bar"><span class="st-fill" id="st-learn"></span></span><span class="st-v" id="st-learn-v">—</span></span>
-      <span class="st-row"><span class="st-k">つながり</span><span class="st-bar"><span class="st-fill" id="st-tie"></span></span><span class="st-v" id="st-tie-v">—</span></span>
-      <span class="st-note" id="st-note">押すと今年の理由が出ます</span>
-    </button>
-    <div class="nums" id="nums" aria-label="いつも更新される数字">
-      <button type="button" class="num-box num-btn" id="num-income-box"><span class="k">その年の年収</span><span class="v" id="num-income">—</span><span class="n" id="num-income-n"></span></button>
-      <button type="button" class="num-box num-btn" id="num-sav-box"><span class="k">貯金</span><span class="v" id="num-sav">—</span><span class="n" id="num-sav-n"></span></button>
-      <div class="num-box"><span class="k">ここまでの稼ぎ</span><span class="v" id="num-earn">—</span><span class="n">今のお金の価値</span></div>
-      <div class="num-box"><span class="k">同い年の人で生きている割合</span><span class="v" id="num-alive">—</span><span class="n" id="num-alive-n"></span></div>
+    <div class="map-box">
+      <svg id="map" class="jmap" role="img" aria-label="日本地図"></svg>
+      <p class="map-note" id="map-note"></p>
     </div>
-    <div class="block">
-      <h2 class="h-world">その年の世の中</h2>
-      <ul id="world" class="list"></ul>
-    </div>
-    <div class="block">
-      <h2 class="h-self">自分の出来事</h2>
-      <ul id="events" class="list"></ul>
-      <p class="hint">出来事を押すと、もとになった統計が出ます</p>
-      <button type="button" class="btn-sub" id="card-birth-life" hidden>誕生カードを作る</button>
-    </div>
-    <div class="block">
-      <h2 class="h-self">家系図</h2>
-      <div class="tree-wrap" id="tree"></div>
-      <p class="hint">これまでに出てきた3親等までの家族。亡くなった人は灰色で、亡くなった年を添えています</p>
-    </div>
-    <div class="block">
-      <div class="comp-head">
-        <h2 class="h-self">同じ日に日本で生まれた4人</h2>
-        <button type="button" class="btn-sub" id="comp-toggle" aria-expanded="true" aria-controls="comps">閉じる</button>
+    <div class="now">
+      <p class="now-ev" id="now-ev"></p>
+      <div class="now-row">
+        <button type="button" class="link-btn" id="now-why">もとになった統計</button>
+        <button type="button" class="link-btn" id="now-more" hidden></button>
       </div>
-      <ul id="comps" class="comps"></ul>
-      <p class="hint" id="comps-hint">同じ統計で、日本のどこかに生まれた4人の今。生まれる県は、その年の出生数の割合で決まりました</p>
+      <button type="button" class="change" id="change" hidden></button>
     </div>
     <div id="branch" class="branch" hidden></div>
     <div id="hotline" class="hotline" hidden></div>
-    <div class="focus-box" id="focus-box">
-      <p class="fk">今年の重点（押すと選ぶ・もう一度押すと外す）</p>
-      <div class="focus-opts" role="group" aria-label="今年の重点">
-        <button type="button" class="btn-sub" data-f="study" aria-pressed="false">学ぶ</button>
-        <button type="button" class="btn-sub" data-f="earn" aria-pressed="false">稼ぐ</button>
-        <button type="button" class="btn-sub" data-f="family" aria-pressed="false">家族</button>
-        <button type="button" class="btn-sub" data-f="body" aria-pressed="false">からだ</button>
-        <button type="button" class="btn-sub" data-f="save" aria-pressed="false">貯める</button>
-      </div>
-      <button type="button" class="btn-sub" id="auto" aria-pressed="false">おまかせ：入れていない</button>
-      <p class="note">重点は4つの数値の伸び方を少し変えます。おまかせを入れると、分かれ道の答えを重点に沿って選びます（重点がなければ統計どおり）。節目の問いかけでは止まります</p>
-    </div>
     <nav class="controls" aria-label="進め方">
       <button type="button" class="btn-sub" id="pause">一時停止</button>
       <button type="button" class="btn-sub" id="speed">速さ 1倍</button>
-      <button type="button" class="btn-sub" id="next">次の年へ</button>
       <button type="button" class="btn-sub" id="skip">次の分かれ道まで</button>
-      <button type="button" class="btn-sub" id="family">家族</button>
-      <button type="button" class="btn-sub" id="log">これまで</button>
-      <button type="button" class="btn-reborn" id="reborn">生まれ変わる</button>
+      <button type="button" class="btn-sub" id="detail">くわしく</button>
     </nav>
+    <!-- くわしく：ふだんは隠し、「くわしく」を押したときだけ下の画面（シート）に出す -->
+    <div id="details" hidden>
+      <div class="d-btns">
+        <button type="button" class="btn-sub" id="log">これまで</button>
+        <button type="button" class="btn-sub" id="family">家族の一覧</button>
+        <button type="button" class="btn-sub" id="next">次の年へ</button>
+        <button type="button" class="btn-sub" id="card-birth-life" hidden>誕生カード</button>
+        <button type="button" class="btn-reborn" id="reborn">生まれ変わる</button>
+      </div>
+      <div class="block">
+        <h2 class="h-world">その年の世の中</h2>
+        <ul id="world" class="list"></ul>
+      </div>
+      <div class="block">
+        <h2 class="h-self">自分の出来事</h2>
+        <ul id="events" class="list"></ul>
+        <p class="hint">出来事を押すと、もとになった統計が出ます</p>
+      </div>
+      <button type="button" class="st4" id="st4" aria-label="4つの数値。押すと今年の理由が出ます">
+        <span class="st-row"><span class="st-k">からだ</span><span class="st-bar"><span class="st-fill" id="st-body"></span></span><span class="st-v" id="st-body-v">—</span></span>
+        <span class="st-row"><span class="st-k">暮らしの満足</span><span class="st-bar"><span class="st-fill" id="st-sat"></span></span><span class="st-v" id="st-sat-v">—</span></span>
+        <span class="st-row"><span class="st-k">学び</span><span class="st-bar"><span class="st-fill" id="st-learn"></span></span><span class="st-v" id="st-learn-v">—</span></span>
+        <span class="st-row"><span class="st-k">つながり</span><span class="st-bar"><span class="st-fill" id="st-tie"></span></span><span class="st-v" id="st-tie-v">—</span></span>
+        <span class="st-note" id="st-note">押すと今年の理由が出ます</span>
+      </button>
+      <div class="nums" id="nums" aria-label="お金と生きている割合">
+        <button type="button" class="num-box num-btn" id="num-income-box"><span class="k">その年の年収</span><span class="v" id="num-income">—</span><span class="n" id="num-income-n"></span></button>
+        <button type="button" class="num-box num-btn" id="num-sav-box"><span class="k">貯金</span><span class="v" id="num-sav">—</span><span class="n" id="num-sav-n"></span></button>
+        <div class="num-box"><span class="k">ここまでの稼ぎ</span><span class="v" id="num-earn">—</span><span class="n">今のお金の価値</span></div>
+        <div class="num-box"><span class="k">同い年の人で生きている割合</span><span class="v" id="num-alive">—</span><span class="n" id="num-alive-n"></span></div>
+      </div>
+      <div class="block">
+        <h2 class="h-self">家系図</h2>
+        <div class="tree-wrap" id="tree"></div>
+        <p class="hint">これまでに出てきた3親等までの家族。亡くなった人は灰色で、亡くなった年を添えています</p>
+      </div>
+      <div class="block">
+        <h2 class="h-self">同じ日に日本で生まれた4人</h2>
+        <ul id="comps" class="comps"></ul>
+        <p class="hint">同じ統計で、日本のどこかに生まれた4人の今</p>
+      </div>
+      <div class="focus-box" id="focus-box">
+        <p class="fk">今年の重点（押すと選ぶ・もう一度押すと外す）</p>
+        <div class="focus-opts" role="group" aria-label="今年の重点">
+          <button type="button" class="btn-sub" data-f="study" aria-pressed="false">学ぶ</button>
+          <button type="button" class="btn-sub" data-f="earn" aria-pressed="false">稼ぐ</button>
+          <button type="button" class="btn-sub" data-f="family" aria-pressed="false">家族</button>
+          <button type="button" class="btn-sub" data-f="body" aria-pressed="false">からだ</button>
+          <button type="button" class="btn-sub" data-f="save" aria-pressed="false">貯める</button>
+        </div>
+        <button type="button" class="btn-sub" id="auto" aria-pressed="false">おまかせ：入れていない</button>
+        <p class="note">重点は4つの数値の伸び方を少し変えます。おまかせを入れると、分かれ道の答えを重点に沿って選びます（重点がなければ統計どおり）</p>
+      </div>
+    </div>
   </section>
 
   <section id="screen-end" class="screen" hidden aria-labelledby="end-title">
     <div class="end-head">
-      <canvas id="avatar-end" class="avatar" width="24" height="32" role="img" aria-label=""></canvas>
+      <canvas id="avatar-end" class="avatar" width="48" height="64" role="img" aria-label=""></canvas>
       <h1 id="end-title" class="end-title"></h1>
     </div>
     <p id="end-sub" class="lead"></p>
+    <div class="block map-box">
+      <h2 class="h-self">生きた場所</h2>
+      <svg id="map-end" class="jmap" role="img" aria-label="生きた場所の地図"></svg>
+      <ol id="stops" class="stops"></ol>
+      <p class="map-note" id="map-end-note"></p>
+    </div>
     <div id="hotline-end" class="hotline" hidden></div>
     <div class="block">
       <h2 class="h-self">生涯に働いて得た賃金</h2>
@@ -132,14 +157,6 @@
       <h2 class="h-self">生き残りの曲線</h2>
       <div id="curve"></div>
       <p class="note" id="curve-note"></p>
-    </div>
-    <div class="block" id="notes-block" hidden>
-      <h2 class="h-self">節目に書き残した一行</h2>
-      <ul id="notes" class="list"></ul>
-    </div>
-    <div class="block">
-      <h2 class="h-self">この人へひとこと</h2>
-      <input type="text" id="farewell" class="ask-input" maxlength="40" placeholder="一行で（40字まで・書かなくてもよい）" aria-label="この人へひとこと（40字まで）">
     </div>
     <div class="block">
       <h2 class="h-self" id="cohort-title">同じ町・同じ年に生まれた100人のその後</h2>
@@ -163,6 +180,7 @@
       <button type="button" class="btn-main" id="again">もう一度生まれる</button>
       <button type="button" class="btn-sub" id="end-log">一生をふり返る</button>
     </div>
+    <p class="credit end-credit">原作 <a href="https://1in8b.life/ja/" rel="noopener">80億分の1</a>（作者の方の許可を得て制作）</p>
   </section>
 
   <div id="sheet" class="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sheet-title">

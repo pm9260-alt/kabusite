@@ -17,6 +17,8 @@
   --reborn-bg: #7a4600;
   --reborn-text: #ffffff;
   --dead: #8a8a86;
+  --map-land: #ebe6dc;
+  --map-line: #b5ab99;
   --m1: #2f6db5;
   --m2: #8a6d00;
   --m3: #b03a6f;
@@ -42,6 +44,8 @@
     --reborn-bg: #f2c47e;
     --reborn-text: #1a1206;
     --dead: #8e8e8e;
+  --map-land: #2b2a27;
+  --map-line: #5c574d;
     --m1: #7fb2f0;
     --m2: #d9b84a;
     --m3: #f08ab8;
@@ -67,6 +71,8 @@
   --reborn-bg: #f2c47e;
   --reborn-text: #1a1206;
   --dead: #8e8e8e;
+  --map-land: #2b2a27;
+  --map-line: #5c574d;
   --m1: #7fb2f0;
   --m2: #d9b84a;
   --m3: #f08ab8;
@@ -121,7 +127,7 @@ button { font: inherit; cursor: pointer; border-radius: 0; }
 
 /* 人生の画面 */
 .life-head { display: flex; gap: 14px; align-items: center; border-bottom: 1px solid var(--line); padding-bottom: 8px; }
-.avatar { width: 72px; height: 96px; image-rendering: pixelated; image-rendering: crisp-edges; flex: none; background: var(--surface); }
+.avatar { width: 96px; height: 128px; image-rendering: pixelated; image-rendering: crisp-edges; flex: none; background: var(--surface); }
 .end-head { display: flex; gap: 14px; align-items: center; }
 .age { font-size: 40px; font-weight: 700; line-height: 1; min-width: 92px; }
 .age .unit { font-size: 16px; margin-left: 2px; }
@@ -135,7 +141,7 @@ button { font: inherit; cursor: pointer; border-radius: 0; }
 .item .tag { display: inline-block; font-size: 12px; color: var(--sub); margin-right: 6px; }
 .item.world-item .tag { color: var(--world); }
 .hint { font-size: 12px; color: var(--sub); }
-.controls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: auto; padding-top: 8px; border-top: 1px solid var(--line); }
+.controls { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: auto; padding-top: 8px; border-top: 1px solid var(--line); }
 .controls .btn-sub { padding: 8px 4px; font-size: 14px; }
 
 /* 分かれ道 */
@@ -250,3 +256,30 @@ button { font: inherit; cursor: pointer; border-radius: 0; }
 .set-row { display: flex; flex-wrap: wrap; gap: 6px; }
 .set-row .btn-sub { min-width: 5.5em; }
 .foot-links { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+
+/* 人生の画面：いつも見えるのはドット絵・年齢と年・地図・その年の1文だけ（2026-10-17） */
+.life-id { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.year-now { font-size: 16px; font-weight: 700; }
+.map-box { margin: 10px 0 0; }
+.jmap { display: block; width: 100%; aspect-ratio: 1.3 / 1; background: var(--bg); border: 1px solid var(--line); }
+.jmap g { cursor: pointer; }
+.jmap g:focus { outline: none; }
+.jmap g:focus-visible circle:first-child { stroke: var(--accent); stroke-width: 1; }
+.map-note { font-size: 11px; color: var(--sub); margin: 4px 0 0; }
+.now { margin: 12px 0 8px; min-height: 96px; }
+.now-ev { font-size: 18px; line-height: 1.6; margin: 0 0 6px; }
+.now-row { display: flex; gap: 14px; flex-wrap: wrap; }
+.link-btn { background: none; border: 0; padding: 4px 0; color: var(--accent); font: inherit; font-size: 14px; cursor: pointer; }
+.change { display: inline-block; margin-top: 6px; background: var(--surface); border: 1px solid var(--line); color: var(--text); font: inherit; font-size: 13px; padding: 4px 8px; cursor: pointer; }
+.d-btns { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-bottom: 12px; }
+.stops { list-style: none; padding: 0; margin: 8px 0 0; font-size: 14px; }
+.stops li { display: flex; gap: 10px; padding: 4px 0; border-top: 1px solid var(--line); }
+.stops .y { flex: none; min-width: 96px; color: var(--sub); }
+@media (max-width: 380px) { .avatar { width: 72px; height: 96px; } .now-ev { font-size: 16px; } }
+
+/* 原作の表記 */
+.origin { margin: 16px 0 0; padding: 10px 12px; background: var(--surface); border: 1px solid var(--line); font-size: 13px; }
+.origin p { margin: 2px 0; }
+.origin-k { font-weight: 700; }
+.origin-n { color: var(--sub); }
+.end-credit { font-size: 12px; text-align: center; margin-top: 16px; }

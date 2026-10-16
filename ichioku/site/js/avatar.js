@@ -1,6 +1,8 @@
 /* 1億分の1 主人公のドット絵
    生まれ年・その年の年齢・男女・身分・仕事・学校・住む場所から、時代に合った髪型と服を選んで 24×32 の点で描く。
-   乱数は使わず、同じ人なら同じ色になるよう人生の番号（seed）から色を選ぶ。 */
+   乱数は使わず、同じ人なら同じ色になるよう人生の番号（seed）から色を選ぶ。
+   くっきり見せるため（2026-10-17）：24×32 で描いたあと、ドット絵向けの拡大（Scale2x）で 48×64 にして斜めの線をなめらかにし、
+   まわりに1マスの輪郭線（となりの色を暗くした色）を付ける。画面には、端末の細かさに合わせた整数倍で描く（ぼけを防ぐ）。 */
 (function (root) {
   'use strict';
   var W = 24, H = 32;
@@ -38,10 +40,68 @@
     return function (x, y, w, h, c) { if (!c) return; ctx.fillStyle = c; ctx.fillRect(x, y, w, h); };
   }
 
+  var W2 = W * 2, H2 = H * 2;
+  // Scale2x（EPX）：1マスを2×2に分け、まわりの色がそろっている角だけその色にする
+  function scale2x(src) {
+    var out = new Array(W2 * H2);
+    function at(x, y) { x = Math.max(0, Math.min(W - 1, x)); y = Math.max(0, Math.min(H - 1, y)); return src[y * W + x]; }
+    for (var y = 0; y < H; y++) for (var x = 0; x < W; x++) {
+      var P = at(x, y), A = at(x, y - 1), B = at(x + 1, y), C = at(x - 1, y), D = at(x, y + 1);
+      var e0 = P, e1 = P, e2 = P, e3 = P;
+      if (C === A && C !== D && A !== B) e0 = A;
+      if (A === B && A !== C && B !== D) e1 = B;
+      if (D === C && D !== B && C !== A) e2 = C;
+      if (B === D && B !== A && D !== C) e3 = D;
+      out[(2 * y) * W2 + 2 * x] = e0; out[(2 * y) * W2 + 2 * x + 1] = e1;
+      out[(2 * y + 1) * W2 + 2 * x] = e2; out[(2 * y + 1) * W2 + 2 * x + 1] = e3;
+    }
+    return out;
+  }
+  function darker(c) {
+    var n = parseInt(c.slice(1), 16), k = 0.42;
+    return 'rgb(' + Math.round((n >> 16 & 255) * k) + ',' + Math.round((n >> 8 & 255) * k) + ',' + Math.round((n & 255) * k) + ')';
+  }
   function draw(canvas, L) {
+    // 1) 24×32 で描く（色は '#rrggbb' の文字で持つ。重ね塗りの半透明は下の色と混ぜる）
+    var px = new Array(W * H);
+    function hex(n) { return '#' + ('00000' + n.toString(16)).slice(-6); }
+    function mix(base, rgba) {
+      var m = rgba.match(/rgba\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)/);
+      if (!m) return base;
+      var b = base ? parseInt(base.slice(1), 16) : 0xffffff, a = +m[4];
+      var r0 = (b >> 16 & 255) * (1 - a) + (+m[1]) * a, g0 = (b >> 8 & 255) * (1 - a) + (+m[2]) * a, b0 = (b & 255) * (1 - a) + (+m[3]) * a;
+      return hex((Math.round(r0) << 16) | (Math.round(g0) << 8) | Math.round(b0));
+    }
+    var fake = {
+      set fillStyle(c) { this._c = c; }, get fillStyle() { return this._c; },
+      fillRect: function (x, y, w, h) {
+        for (var yy = Math.max(0, y); yy < Math.min(H, y + h); yy++) for (var xx = Math.max(0, x); xx < Math.min(W, x + w); xx++) {
+          var c = this._c, i = yy * W + xx;
+          if (c.length === 4 && c.charAt(0) === '#') c = '#' + c.charAt(1) + c.charAt(1) + c.charAt(2) + c.charAt(2) + c.charAt(3) + c.charAt(3);
+          px[i] = c.charAt(0) === '#' ? c.toLowerCase() : mix(px[i], c);
+        }
+      },
+      clearRect: function () {}
+    };
+    var desc = drawSmall(fake, L);
+    // 2) 48×64 になめらかに拡大し、3) 輪郭線を付ける
+    var big = scale2x(px), outl = big.slice();
+    for (var y = 0; y < H2; y++) for (var x = 0; x < W2; x++) {
+      if (big[y * W2 + x]) continue;
+      var nb = null;
+      [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(function (d) { var xx = x + d[0], yy = y + d[1]; if (!nb && xx >= 0 && yy >= 0 && xx < W2 && yy < H2 && big[yy * W2 + xx]) nb = big[yy * W2 + xx]; });
+      if (nb) outl[y * W2 + x] = darker(nb);
+    }
+    // 4) 端末の細かさに合わせた整数倍で描く
+    var css = canvas.clientWidth || 96, dpr = (typeof window !== 'undefined' && window.devicePixelRatio) || 1;
+    var N = Math.max(1, Math.round(css * dpr / W2));
+    canvas.width = W2 * N; canvas.height = H2 * N;
     var ctx = canvas.getContext('2d');
-    canvas.width = W; canvas.height = H;
-    ctx.clearRect(0, 0, W, H);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (var i = 0; i < outl.length; i++) if (outl[i]) { ctx.fillStyle = outl[i]; ctx.fillRect((i % W2) * N, Math.floor(i / W2) * N, N, N); }
+    return desc;
+  }
+  function drawSmall(ctx, L) {
     var r = painter(ctx), k = lookOf(L);
     var sizeKey = k.a <= 1 ? 'baby' : k.a <= 11 ? 'child' : k.a <= 16 ? 'teen' : 'adult';
     if (sizeKey === 'baby') { drawBaby(r, k); return describe(k); }
@@ -53,7 +113,7 @@
     drawBody(r, g, clothes, k);
     drawHead(r, g, hair, k);
     if (clothes.hat) drawHat(r, g, clothes.hat);
-    if (clothes.sword) { r(5, g.bt + 5, 1, 1, '#555'); r(6, g.bt + 6, 1, 1, '#555'); r(7, g.bt + 7, 1, 1, BLACK); }
+    if (clothes.sword) { r(5, g.bt + 5, 1, 1, '#555555'); r(6, g.bt + 6, 1, 1, '#555555'); r(7, g.bt + 7, 1, 1, BLACK); }
     if (k.a >= 78) { r(19, g.bt + 3, 1, H - g.bt - 4, '#7a5432'); r(18, g.bt + 3, 1, 1, '#7a5432'); }
     return describe(k, clothes, hair);
   }
