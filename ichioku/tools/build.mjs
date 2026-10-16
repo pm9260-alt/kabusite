@@ -139,8 +139,11 @@ function oldShares(sp) {
   const T = [1980, 1985, 1990, 1995, 2000, 2005, 2010];
   const tot = {};
   for (const t of T) tot[t] = sp.munis.reduce((a, m) => a + ((extra.u14[m.code] || {})[t] || 0), 0);
+  // 1980年より後にできた区（札幌市清田区など）は区の数字がないため、市全体の15歳未満人口の動きを使う
+  const own = new Set(sp.munis.map(m => m.code));
+  const parentOf = c => Object.keys(extra.u14).filter(k => k.slice(0, 2) === c.slice(0, 2) && k[2] === '1' && k < c && !own.has(k)).sort().pop();
   const sh = (m, t) => {
-    const u = extra.u14[m.code];
+    const u = extra.u14[m.code] && extra.u14[m.code][1980] != null ? extra.u14[m.code] : extra.u14[parentOf(m.code)];
     if (!u) return null;
     const i = Math.max(0, Math.min(T.length - 2, T.findIndex((x, k) => t >= x && t < (T[k + 1] || 1e9))));
     const a = T[i], b = T[i + 1], w = (t - a) / (b - a);
