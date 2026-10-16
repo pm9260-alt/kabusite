@@ -89,7 +89,7 @@
       var yrs = document.createElement('span'); yrs.className = 'es-years'; yrs.textContent = a + '〜' + b + '年';
       head.appendChild(name); head.appendChild(yrs);
       var bar = document.createElement('span'); bar.className = 'es-bar';
-      var fill = document.createElement('span'); fill.className = 'es-fill ' + (i % 2 ? 'tone-b' : 'tone-a');
+      var fill = document.createElement('span'); fill.className = 'es-fill e' + i;
       fill.style.width = (n / max * 100).toFixed(1) + '%';
       bar.appendChild(fill);
       var pct = document.createElement('span'); pct.className = 'es-pct'; pct.textContent = (n / span() * 100).toFixed(1) + '%';
@@ -99,7 +99,12 @@
     });
   }
 
-  /* ---------- 千年の盤（1年＝1マス、横50年で折り返す） ---------- */
+  /* ---------- 千年の盤（1年＝1マス、横50年で折り返す）。この端末で生まれた年のマスを時代の色で埋める ---------- */
+  function bornYears() {
+    var o = {};
+    try { (JSON.parse(localStorage.getItem('ichioku-born-years') || '[]') || []).forEach(function (y) { o[y] = 1; }); } catch (e) { /* 保存できない環境 */ }
+    return o;
+  }
   var NS = 'http://www.w3.org/2000/svg', cells = [], picked = null, played = false, hopTimer = null;
   function svgEl(tag, attrs, text) {
     var n = document.createElementNS(NS, tag);
@@ -131,12 +136,14 @@
     var every = cw < 9 ? 200 : 100; // 年の文字が重ならない間隔
     var rows = Math.ceil(span() / COLS), H = Math.ceil(TOP + rows * (cw + gap) + 8);
     var svg = svgEl('svg', { width: W, height: H, viewBox: '0 0 ' + W + ' ' + H, role: 'img',
-      'aria-label': R0 + '年から' + R1 + '年までの' + span() + '年を、1年1マスで並べた盤。マスの色は時代ごとに交互に変えています' });
+      'aria-label': R0 + '年から' + R1 + '年までの' + span() + '年を、1年1マスで並べた盤。この端末で生まれた年のマスが、時代ごとの色で埋まります' });
     cells = [];
+    var got = bornYears(), nGot = 0;
     for (var y = R0; y <= R1; y++) {
       var k = y - R0, r = Math.floor(k / COLS), c = k % COLS, ei = eraIndex(y);
       var rect = svgEl('rect', { x: (LAB + c * (cw + gap)).toFixed(2), y: (TOP + r * (cw + gap)).toFixed(2), width: cw.toFixed(2), height: cw.toFixed(2),
-        'class': 'bd-cell ' + (ei % 2 ? 'tone-b' : 'tone-a'), 'data-y': y });
+        'class': 'bd-cell e' + ei + (got[y] ? ' got' : ''), 'data-y': y });
+      if (got[y]) nGot++;
       if (!played && !reduce) rect.style.animationDelay = (r * 45) + 'ms';
       svg.appendChild(rect);
       cells.push(rect);
@@ -145,6 +152,8 @@
       }
     }
     if (!played && !reduce) svg.classList.add('bd-enter');
+    var bf = $('board-fill');
+    if (bf) bf.textContent = nGot ? 'この端末で生まれた年 ' + nGot.toLocaleString('ja-JP') + '／' + span().toLocaleString('ja-JP') + 'マス' : 'まだこの端末で生まれた年はありません';
     while (box.firstChild) box.removeChild(box.firstChild);
     box.appendChild(svg);
     if (picked != null) mark(picked);
@@ -197,6 +206,7 @@
     }).catch(function () { /* 読めないときは初めの範囲のまま */ });
   } catch (e) { /* fetch のない環境 */ }
 
+  window.IchiokuTop = { refresh: function () { board(); } };
   var rt = null, lastW = $('board') ? $('board').clientWidth : 0;
   window.addEventListener('resize', function () {
     clearTimeout(rt);

@@ -315,6 +315,40 @@
       return { id: m.id, role: m.role, name: m.by > dy ? null : m.name, sex: m.sex, by: m.by, age: m.by > dy ? null : dy - m.by, later: m.by > dy ? m.by - dy : 0 };
     });
   }
+  // 子として生きる：亡くなった年に生きている子
+  function childCandidates(L) {
+    var dy = L.deathYear, NUM = ['長', '次', '三', '四', '五', '六', '七', '八', '九'];
+    var kids = L.members.filter(function (m) { return m.role === '子'; }).sort(function (a, b) { return a.by - b.by || a.id - b.id; });
+    return kids.filter(function (m) { return !m.gone && m.alive && m.by <= dy; }).map(function (m) {
+      var n = kids.filter(function (x) { return x.sex === m.sex; }).indexOf(m);
+      return { id: m.id, role: (NUM[n] || (n + 1) + '番目の') + (m.sex === 'm' ? '男' : '女'), name: m.name, sex: m.sex, by: m.by, age: dy - m.by, later: 0, child: true };
+    });
+  }
+  // 子の目から見た家：亡くなった人と配偶者が親、ほかの子がきょうだい、亡くなった人の親が祖父母。住む所と身分と名字は亡くなったときの親のもの
+  function childHouse(L, memberId, chain) {
+    var h = houseOf(L, chain), kid = L.members.filter(function (m) { return m.id === memberId; })[0];
+    if (!kid) throw new Error('引き継ぐ子がいない');
+    var pRole = L.sex === 'm' ? '父' : '母', oRole = L.sex === 'm' ? '母' : '父', side = L.sex === 'm' ? '父方' : '母方';
+    var sp = L.members.filter(function (m) { return m.role === '配偶者'; })[0];
+    var mem = [], maxId = 0;
+    L.members.forEach(function (m0) {
+      maxId = Math.max(maxId, m0.id);
+      var role = m0.role === '子' ? 'kid' : m0 === sp ? oRole : m0.role === '父' ? '祖父' : m0.role === '母' ? '祖母' : null;
+      if (!role) return;
+      var o = {}; for (var k in m0) if (k !== 'fixDy') o[k] = m0[k];
+      if (role === 'kid') { o.sib = true; o.role = '子'; }
+      else { o.sib = false; o.role = role; o.live = true; if (role === '祖父' || role === '祖母') o.side = side; }
+      mem.push(o);
+    });
+    if (!sp) mem.push({ id: maxId + 2, role: oRole, sex: L.sex === 'm' ? 'f' : 'm', by: L.by + (L.sex === 'm' ? 2 : -2), name: null, alive: true, dy: null, gone: true, live: true });
+    h.members = mem;
+    h.home = L.abroad ? L.home0 : { prov: L.prov, sub: L.sub, pref: L.pref, kind: L.kind, muni: L.muni, muniName: L.muniName };
+    if (L.sex === 'f' && sp && sp.st) h.status = sp.st;
+    h.surname = L.surname || null;
+    h.prev.surname = L.surname || null;
+    h.gen = 'child';
+    return h;
+  }
   function inheritLife(C, H, P, opts) {
     var h = opts.house, me = h.members.filter(function (m) { return m.id === opts.memberId; })[0];
     if (!me) throw new Error('引き継ぐきょうだいがいない');
@@ -341,13 +375,16 @@
       if (!m.gone) { m.alive = !(m.fixDy != null && m.fixDy < me.by); m.before = !m.alive; if (m.alive) m.dy = null; }
       L.members.push(m);
     });
-    // 前の主人公も、きょうだいとして家族に入れる
-    var pv = { id: maxId + 1, role: sibRole(h.prev.sex, h.prev.by, me.by), sex: h.prev.sex, by: h.prev.by, name: h.prev.name, sib: true, live: true, alive: true, dy: null, fixDy: h.deathYear, prevLife: true };
+    // 前の主人公も家族に入れる（きょうだいのときはきょうだい、子のときは親）
+    var kidGen = h.gen === 'child';
+    var pv = { id: maxId + 1, role: kidGen ? (h.prev.sex === 'm' ? '父' : '母') : sibRole(h.prev.sex, h.prev.by, me.by), sex: h.prev.sex, by: h.prev.by, name: h.prev.name, sib: !kidGen, live: true, alive: true, dy: null, fixDy: h.deathYear, prevLife: true };
     if (pv.fixDy < me.by) { pv.alive = false; pv.before = true; pv.dy = pv.fixDy; }
     L.members.push(pv);
     L.dad = L.members.filter(function (m) { return m.role === '父'; })[0];
     L.mom = L.members.filter(function (m) { return m.role === '母'; })[0];
+    L.members.forEach(function (m) { if (!m.name) m.name = nameFor(L, m.sex, m.by, L.status); });
     L.name = me.name || nameFor(L, L.sex, L.by, L.status);
+    if (kidGen) L.house.gen = 'child';
     L.fAge = L.by - L.dad.by; L.mAge = L.by - L.mom.by;
     L.sibs = L.members.filter(function (m) { return m.sib && !m.gone; }).length;
     L.protectUntil = h.deathYear;
@@ -380,8 +417,9 @@
     var h = heirOf(L), was = !!L.heir;
     L.house = L.house || {};
     L.house.heirId = h.id; L.house.heirHow = h.how;
-    L.heir = h.id === 0 && L.sex === 'm';
-    L.heirF = h.id === 0 && L.sex === 'f' && h.how === 'muko';
+    // 家督を親類などの養子が継いだ家では、もう跡取りにはならない
+    L.heir = h.id === 0 && L.sex === 'm' && !L.passed;
+    L.heirF = h.id === 0 && L.sex === 'f' && h.how === 'muko' && !L.passed;
     if (rec && L.heir && !was && (L.age >= 1 || L.inherited)) {
       var dead = L.members.filter(function (m) { return m.sib && m.sex === 'm' && m.dy === L.year && m.by < L.by; })[0];
       if (dead) push(L, rec, '家庭', who(dead) + 'が亡くなり、家を継ぐことになった。', [heirEv(L, L.year)], { house: true });
@@ -1036,11 +1074,26 @@
         ev: [ev(L, 'murakoshi', y, '武士の当主のうち養子の人の割合（徳島藩の知行取。ほかの藩にも使う目安）', pct(t), { est: true })] });
       return;
     }
-    // 跡取りの武士：20歳で当主の見込み（父が亡くなると家督を継ぐ）
-    // 跡取りの武士は、父が亡くなるか隠居する（60歳）と当主になる
-    if (L.status === 'bushi' && sx === 'm' && L.heir && !L.toshu && a >= 15 && y < 1872 && L.dad && (!L.dad.alive || y - L.dad.by >= 60)) {
-      L.toshu = 'heir';
-      push(L, rec, '家庭', L.dad.alive ? '父が隠居し、家督を継いだ' : '父の跡を継ぎ、家督を継いだ', [heirEv(L, y)]);
+    // 武士の家督の受け継ぎ：父が亡くなるか隠居する（60歳）とき。当主が養子になる家の割合を表に合わせる
+    // （作る人の判断 2026-10-17：「当主が養子だった家」で数える。男子がいない家のほか、男子がいても親類や武士でない家から養子を迎えた家を含める）
+    if (L.status === 'bushi' && y < 1872 && !L.adopted && !L.succ && a >= 15 && L.dad && (!L.dad.alive || y - L.dad.by >= 60)) {
+      var tA = bushiAdoptT(y);
+      var sons = L.members.filter(function (m) { return m.sib && m.sex === 'm' && m.alive && !m.gone && m.by <= y; }).length + (sx === 'm' ? 1 : 0);
+      var adopted = true;
+      if (sons) {
+        // 男の主人公の家には必ず男子がいるので、男子のいない家の分（p0）は女の主人公の家だけで見込む
+        var p0 = 0;
+        if (sx === 'f') { var hr0 = heirlessRates(L); p0 = clamp(hr0.muko + hr0.adopt, 0, 0.9); }
+        adopted = L.rnd2() < clamp((tA - p0) / (1 - p0), 0, 0.95);
+      }
+      L.succ = { y: y, adopted: adopted, t: tA };
+      var ws = L.dad.alive ? '父が隠居し、' : '父が亡くなり、', aev = [ev(L, 'murakoshi', y, '武士の当主のうち養子の人の割合（徳島藩の知行取。ほかの藩にも使う目安）', pct(tA), { est: true })];
+      if (sx === 'm' && L.heir && !adopted) { L.toshu = 'heir'; push(L, rec, '家庭', ws + '家督を継いだ', [heirEv(L, y)]); }
+      else if (sx === 'm' && L.heir) {
+        L.passed = true; L.heir = false;
+        push(L, rec, '家庭', ws + ['家督は、親類から迎えた養子が継ぐことになった。自分は部屋住みの身となった', '藩の許しを得て、家督は他家から迎えた養子が継ぐことになった。自分は部屋住みとなった'][Math.floor(L.rnd2() * 2)], aev);
+      } else if (adopted) push(L, rec, '家庭', ws + (sons ? '家督は、親類から迎えた養子が継いだ' : sx === 'f' && L.heirF ? '家督は、婿を迎えて継ぐことになった' : '跡取りの男子がおらず、家督は養子が継いだ'), aev);
+      else push(L, rec, '家庭', ws + (sx === 'm' ? '家督は兄が継いだ' : '家督は兄弟が継いだ'), [heirEv(L, y)]);
     }
     // 明治からの分家（戸籍の上で新しい家を立てる。都市に出た次男・三男が結婚を機に）
     if (y >= 1898 && sx === 'm' && !L.heir && L.married && !L.bunke && L.marriedY === y - 1 && (L.kind === 'city' || L.moved) && L.rnd2() < 0.5) {
@@ -1439,7 +1492,7 @@
     return { share: lin(prefSeries(H, L.pref), y), where: H.prefNames[L.pref] };
   }
   return {
-    houseOf: houseOf, heirCandidates: heirCandidates, heirOf: heirOf, displayName: displayName, heirlessRates: heirlessRates,
+    houseOf: houseOf, heirCandidates: heirCandidates, childCandidates: childCandidates, childHouse: childHouse, heirOf: heirOf, displayName: displayName, heirlessRates: heirlessRates,
     eraLabel: eraLabel, pickBirth: pickBirth, newLife: newLife, step: step, resolve: resolve, autoRun: autoRun,
     cohort: cohort, majorTimeline: majorTimeline, familyList: familyList, endText: endText, placeLabel: placeLabel, deathProb: dp, birthShare: birthShare
   };

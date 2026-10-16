@@ -1,10 +1,10 @@
-/* 1000分の1 共有用の画像（誕生カード・最期のカード）
+/* 1000分の1 共有用の画像（最期のカードだけ）
    1200×630 の横長。ゴシック体・1pxの線だけ・グラデーションや影なし・絵文字なし。
    画面の明るさの設定にかかわらず、いつも明るい色で描く（共有先で見やすいように）。 */
 (function (root) {
   'use strict';
   var W = 1200, H = 630;
-  var BG = '#ffffff', TEXT = '#1a1a1a', SUB = '#555555', RULE = '#c9c9c6', ACCENT = '#0a58a8', SURF = '#f3f3f1';
+  var BG = '#ffffff', TEXT = '#1a1a1a', SUB = '#555555', RULE = '#c9c9c6', ACCENT = '#0a58a8', SURF = '#f3f3f1', BENI = '#a3132f', ON_BENI = '#ffffff';
   var FONT = '"Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", Meiryo, sans-serif';
 
   function font(ctx, size, bold) { ctx.font = (bold ? '700 ' : '400 ') + size + 'px ' + FONT; }
@@ -26,7 +26,8 @@
     var line = '', lines = [];
     for (var i = 0; i < text.length; i++) {
       var t = line + text[i];
-      if (ctx.measureText(t).width > maxW && line) { lines.push(line); line = text[i]; } else line = t;
+      // 行の頭に句読点や閉じかっこを置かない（前の行へぶら下げる）
+      if (ctx.measureText(t).width > maxW && line && '、。」）・'.indexOf(text[i]) < 0) { lines.push(line); line = text[i]; } else line = t;
     }
     if (line) lines.push(line);
     if (lines.length > 2) { lines = lines.slice(0, 2); lines[1] = lines[1].slice(0, -1) + '…'; }
@@ -38,53 +39,40 @@
     ctx.strokeStyle = RULE; ctx.lineWidth = 1; ctx.strokeRect(0.5, 0.5, W - 1, H - 1);
     ctx.textBaseline = 'alphabetic';
   }
-  // ドット絵を大きく描く（ぼかさない）
-  function figure(ctx, L, year, age) {
-    var A = root.IchiokuAvatar;
-    ctx.fillStyle = SURF; ctx.fillRect(40, 40, 336, 550);
-    if (!A) return;
-    var c = document.createElement('canvas');
-    var v = Object.create(L); v.year = year; v.age = age;
-    A.draw(c, v);
-    ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(c, 64, 99, 288, 384);
-  }
-  function title(ctx) {
-    font(ctx, 26, true); ctx.fillStyle = ACCENT; ctx.fillText('1000分の1', 420, 92);
-    ctx.strokeStyle = RULE; ctx.beginPath(); ctx.moveTo(420, 112.5); ctx.lineTo(W - 48, 112.5); ctx.stroke();
-    // 原作の表記（共有された画像だけを見た人にも分かるように）
-    fit(ctx, '原作「80億分の1」（1in8b.life）の作者の許可を得て制作', 420, 606, W - 420 - 48, 16, false, SUB, 12);
-  }
-
-  // 誕生カード：生まれた年（和暦つき）・場所・性別・名前・この年この所で生まれた割合
-  function birth(canvas, o) {
-    canvas.width = W; canvas.height = H;
-    var ctx = canvas.getContext('2d'), L = o.L, mw = W - 420 - 48;
-    base(ctx); figure(ctx, L, L.by, 0); title(ctx);
-    fit(ctx, L.by + '年' + (o.era ? '（' + o.era + '）' : '') + 'に生まれた', 420, 172, mw, 40, true);
-    fit(ctx, o.place, 420, 236, mw, 34, false, TEXT, 18);
-    fit(ctx, (L.sex === 'm' ? '男の子' : '女の子') + '　' + (o.name || ''), 420, 300, mw, 46, true);
-    ctx.fillStyle = SURF; ctx.fillRect(420, 350, mw, 150);
-    fit(ctx, o.shareWhat, 444, 396, mw - 48, 22, false, SUB, 14);
-    fit(ctx, o.shareText, 444, 462, mw - 48, 52, true, TEXT, 24);
-    fit(ctx, 'この年に日本で生まれた子のうち', 420, 560, mw, 20, false, SUB, 14);
-  }
-
-  // 最期のカード：名前・生年〜没年・享年・生まれた所と亡くなった所・要約3行
+  // 最期のカード：上に紅の帯（原作の届け出の帯にならう）、左に名前・生年〜没年・生まれた所と亡くなった所・ひとこと、右にドット絵、下に一生の浮き沈みの線
   function end(canvas, o) {
     canvas.width = W; canvas.height = H;
-    var ctx = canvas.getContext('2d'), L = o.L, mw = W - 420 - 48;
-    base(ctx); figure(ctx, L, L.deathYear, L.deathAge); title(ctx);
-    fit(ctx, (o.name || '') + 'さんの一生', 420, 168, mw, 44, true);
-    fit(ctx, L.by + '年〜' + L.deathYear + '年　' + L.deathAge + '歳', 420, 220, mw, 30, false);
-    fit(ctx, o.from + 'で生まれ', 420, 270, mw, 24, false, SUB, 16);
-    fit(ctx, o.to + 'で亡くなった', 420, 306, mw, 24, false, SUB, 16);
-    var y = 360;
-    o.summary.slice(0, 3).forEach(function (s) {
-      ctx.fillStyle = SURF; ctx.fillRect(420, y - 30, mw, 44);
-      fit(ctx, s, 436, y, mw - 32, 24, false, TEXT, 16);
-      y += 54;
-    });
+    var ctx = canvas.getContext('2d'), L = o.L, mw = 760;
+    base(ctx);
+    ctx.fillStyle = BENI; ctx.fillRect(0, 0, W, 88);
+    font(ctx, 34, true); ctx.fillStyle = ON_BENI; ctx.fillText('1000分の1', 48, 58);
+    font(ctx, 22, false); ctx.textAlign = 'right'; ctx.fillText('一生の記録　' + L.by + '–' + L.deathYear, W - 48, 56); ctx.textAlign = 'left';
+    // ドット絵
+    ctx.fillStyle = SURF; ctx.fillRect(W - 48 - 280, 124, 280, 380);
+    var A = root.IchiokuAvatar;
+    if (A) {
+      var c = document.createElement('canvas'), v = Object.create(L);
+      v.year = L.deathYear; v.age = L.deathAge;
+      A.draw(c, v);
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(c, W - 48 - 280 + 20, 134, 240, 320);
+    }
+    fit(ctx, (o.name || '') + 'さん', 48, 192, mw, 64, true, TEXT, 30);
+    fit(ctx, L.by + '年〜' + L.deathYear + '年　' + L.deathAge + '歳', 48, 248, mw, 32, false, TEXT, 18);
+    fit(ctx, o.from + 'で生まれ、' + o.to + 'で亡くなった', 48, 296, mw, 24, false, SUB, 14);
+    if (o.line) wrap(ctx, o.line, 48, 356, mw, 28, TEXT, 42);
+    // 一生の浮き沈み（0〜100。印や文字は付けない）
+    var sat = (o.sat || []).filter(function (x) { return x != null; });
+    var gx = 48, gy = 436, gw = mw, gh = 96;
+    ctx.strokeStyle = RULE; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(gx, gy + gh / 2 + 0.5); ctx.lineTo(gx + gw, gy + gh / 2 + 0.5); ctx.stroke();
+    if (sat.length > 1) {
+      ctx.strokeStyle = TEXT; ctx.lineWidth = 3; ctx.lineJoin = 'round'; ctx.beginPath();
+      sat.forEach(function (s, i) { var x = gx + gw * i / (sat.length - 1), y = gy + gh * (1 - s / 100); if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); });
+      ctx.stroke();
+    }
+    font(ctx, 16, false); ctx.fillStyle = SUB; ctx.fillText('一生の浮き沈み', gx, gy + gh + 26);
+    fit(ctx, '原作「80億分の1」（1in8b.life）の作者の許可を得て制作', 48, 604, W - 96, 16, false, SUB, 12);
   }
 
   // 共有：使える端末では共有の画面、使えない端末では画像を保存する
@@ -107,5 +95,5 @@
     });
   }
 
-  root.IchiokuCard = { birth: birth, end: end, share: share, W: W, H: H };
+  root.IchiokuCard = { end: end, share: share, W: W, H: H };
 })(typeof self !== 'undefined' ? self : this);

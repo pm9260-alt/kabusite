@@ -502,7 +502,7 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
 {
   const src = fs.readFileSync(path.join(SITE, 'js', 'card.js'), 'utf8');
   const col = k => (src.match(new RegExp(k + " = '(#[0-9a-f]{6})'")) || [])[1];
-  const pairs = [['TEXT', 'BG'], ['SUB', 'BG'], ['ACCENT', 'BG'], ['TEXT', 'SURF'], ['SUB', 'SURF']];
+  const pairs = [['TEXT', 'BG'], ['SUB', 'BG'], ['TEXT', 'SURF'], ['ON_BENI', 'BENI']];
   const low = pairs.filter(([f, b]) => !col(f) || !col(b) || ratio(col(f), col(b)) < 4.5).map(([f, b]) => f + '/' + b + (col(f) && col(b) ? ' = ' + ratio(col(f), col(b)).toFixed(2) : ' 色が見つからない'));
   rec('B 共有用の画像の文字と背景のコントラスト比が4.5以上か', low.length === 0, low.join('、'));
   const forbid = /shadow|Gradient|filter\s*=|blur/i.test(src.replace(/\/\*[\s\S]*?\*\//g, ''));
@@ -755,11 +755,12 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
       if (miss.length) bad.push(L.by + '年生まれ：地図に置けない年 ' + miss.length + '（' + miss[0].year + '年 ' + miss[0].place + '）');
     }
   }
-  // いつも見える画面：ドット絵・年齢・年・場所・地図・その年の1文・進め方だけ。ほかは「くわしく」の中
+  // いつも見える画面：ドット絵・年齢・年・場所・地図・人生の記録（新しい順・多くて6行）・進め方だけ。ほかは「くわしく」の中
   const html = fs.readFileSync(path.join(SITE, 'index.html'), 'utf8');
   const life = html.slice(html.indexOf('id="screen-life"'), html.indexOf('id="details"'));
   for (const id of ['world', 'events', 'st4', 'nums', 'tree', 'comps', 'focus-box']) if (life.includes('id="' + id + '"')) bad.push('「' + id + '」がいつも見える所にある');
   if (!/id="details" hidden/.test(html)) bad.push('くわしくの中身がふだん隠れていない');
+  if (!life.includes('id="feed"') || !/FEED_MAX = [1-6];/.test(fs.readFileSync(path.join(SITE, 'js', 'app.js'), 'utf8'))) bad.push('人生の記録がないか、6行より多い');
   // 原作の表記：トップ・このサイトについて・共有用の画像に、原作の名前と場所と許可を得たことがあるか
   for (const f of ['index.html', 'about.html']) {
     const h = fs.readFileSync(path.join(SITE, f), 'utf8');
@@ -774,7 +775,7 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
   global.self.IchiokuAvatar.draw(cv, { year: 1990, age: 30, sex: 'f', seed: 3, alive: true, place: { kind: '都市' } });
   if (cv.width % 48 || cv.height % 64 || cv.width / 48 !== cv.height / 64) bad.push('ドット絵の大きさが 48×64 の整数倍でない（' + cv.width + '×' + cv.height + '）');
   if (![...cols].some(c => /^rgb\(/.test(c))) bad.push('ドット絵に輪郭線がない');
-  rec('K 画面を絞り（地図・その年の1文だけ）、全市区町村が地図に置け、原作の表記があり、ドット絵がくっきり描けるか', bad.length === 0, bad.slice(0, 8).join('、'));
+  rec('K 画面を絞り（地図・人生の記録6行まで）、全市区町村が地図に置け、原作の表記があり、ドット絵がくっきり描けるか', bad.length === 0, bad.slice(0, 8).join('、'));
 }
 
 /* ---------- L 一生の浮き沈みの曲線（作る人の指示書 2026-10-17） ---------- */
@@ -847,6 +848,33 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
   const inherit = (Lp, id, s0) => { const MM = Lp.old ? O : E, h = MM.houseOf(Lp); return Lp.old ? O.newLife(C, H, P[h.home.pref], { house: h, memberId: id, seed: seedOf(s0, id) }) : E.newLife(C, Lp.P, { house: h, memberId: id, seed: seedOf(s0, id) }); };
   const playTo = (M, L, until) => { while (L.alive && L.year < until) { let r = M.step(L); while (r && r.branch) r = M.resolve(L, r.branch.ask ? { text: '' } : null); } return L; };
   const run = (M, L) => M.autoRun(L);
+  // 子として生きる（作る人の指示 2026-10-17）：親が亡くなった年・ほかの家族の生き死にが前の人生と食い違わないか
+  { const bad = []; let n = 0, tried = 0;
+    const NK = TEST ? 60 : 200;
+    for (let s0 = 1; n < NK && s0 < 40000; s0++) {
+      const by = s0 % 2 ? 1000 + (s0 * 53) % 975 : 1950 + (s0 * 7) % 51, L = run(by >= 1975 ? E : O, firstLife(by, s0));
+      const MM = L.old ? O : E, cs = MM.childCandidates(L);
+      if (!cs.length) continue;
+      const c = cs[s0 % cs.length], kid = L.members.find(m => m.id === c.id);
+      tried++;
+      let L2;
+      try {
+        const h = MM.childHouse(L, c.id, []);
+        L2 = L.old ? O.newLife(C, H, P[h.home.pref], { house: h, memberId: c.id, seed: seedOf(s0, c.id) }) : E.newLife(C, P[h.pref] || L.P, { house: h, memberId: c.id, seed: seedOf(s0, c.id) });
+        L2 = run(MM, L2);
+      } catch (e) { bad.push(by + '年：' + e.message); continue; }
+      n++;
+      if (L2.by !== kid.by || L2.sex !== kid.sex || L2.name !== kid.name) bad.push(by + '年：子の生まれ年・性別・名前が違う');
+      const pv = L2.members.find(m => m.prevLife);
+      if (!pv || pv.role !== (L.sex === 'm' ? '父' : '母')) bad.push(by + '年：亡くなった人が親になっていない');
+      else if (pv.dy !== L.deathYear && L2.deathYear >= L.deathYear) bad.push(by + '年：親の亡くなった年が違う（' + pv.dy + '／' + L.deathYear + '）');
+      for (const m0 of L.members.filter(m => m.role === '子' && m.id !== c.id && !m.alive && m.dy != null && m.dy <= L.deathYear && m.dy >= kid.by)) {
+        const m2 = L2.members.find(m => m.id === m0.id);
+        if (!m2 || m2.dy !== m0.dy) bad.push(by + '年：きょうだいの亡くなった年が違う');
+      }
+    }
+    res['子として生きる：' + n + '件（親の亡くなった年・子の名前と生まれ年・きょうだいの生き死にが前の人生と合うか）'] = n >= NK * 0.8 ? bad : bad.concat(['試せた件数が少ない ' + n + '／' + tried]);
+  }
   // 1〜4
   { const bad = []; let n = 0, withC = 0;
     for (let s0 = 1; n < 100 && s0 < 20000; s0++) {
@@ -885,7 +913,7 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
     for (let s0 = 1; n < 10 && s0 < 3000; s0++) { const a1 = build(s0); if (!a1) continue; n++; if (build(s0) !== a1) bad.push('種 ' + s0 + '：作り直すと違う'); }
     res['6 3人続けた家の作り直し（' + n + '家）'] = bad; }
   // 10〜13 奉公・跡取り・武士の養子・分家
-  { const bad = [], hk = {}, bushi = { a: 0, t: 0 }; let n = 0, kosaku = 0;
+  { const bad = [], hk = {}, bushi = { a: 0, t: 0, e: 0 }; let n = 0, kosaku = 0;
     const N10 = TEST ? 8000 : 20000; // 指示書は3,000件。1つの区分が数百人になり偶然のぶれで±5を超えるため、人数を増やして確かめる
     for (let s0 = 1; n < N10 && s0 < 2000000; s0++) {
       const by = 1700 + s0 % 161, L = firstLife(by, s0);
@@ -893,7 +921,7 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
       if (L.status === 'hyakusho') n++;
       run(O, L);
       if (L.status === 'hyakusho' && L.hokoAsked) { const k = L.hokoAsked.sex + L.hokoAsked.tier; (hk[k] = hk[k] || [0, 0])[1]++; if (L.hokoAsked.went) hk[k][0]++; }
-      if (L.status === 'bushi' && L.sex === 'm' && L.toshu && by >= 1701 && by <= 1800) { bushi.t++; if (L.toshu === 'adopted') bushi.a++; }
+      if (L.status === 'bushi' && L.succ && L.succ.y >= 1701 && L.succ.y <= 1800) { bushi.t++; bushi.e += L.succ.t; if (L.succ.adopted) bushi.a++; }
       if (L.status === 'hyakusho' && L.bunke && L.incPct < 0.4 && L.bunke >= 1673) kosaku++;
       // 11 跡取りは1人。男子がいる家で娘が跡取りにならない
       const h = O.heirOf(L);
@@ -902,10 +930,11 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
     }
     const T = { m: [0.62, 0.30, 0.40], f: [0.72, 0.60, 0.30] }, rows = [];
     for (const k of Object.keys(hk).sort()) { const v = hk[k][0] / hk[k][1], t = T[k[0]][+k[1]]; rows.push(k + ' ' + (v * 100).toFixed(1) + '%/' + t * 100 + '%'); if (Math.abs(v - t) > 0.05) bad.push('奉公の割合 ' + k + ' ' + (v * 100).toFixed(1) + '%（表 ' + t * 100 + '%）'); }
-    const tA = (0.340 + 0.476) / 2, vA = bushi.t ? bushi.a / bushi.t : 0;
-    if (Math.abs(vA - tA) > 0.05) bad.push('武士の当主のうち養子 ' + (vA * 100).toFixed(1) + '%（表の1701〜1800年の平均 ' + (tA * 100).toFixed(1) + '%）');
+    // 当主が養子だった家の割合（作る人の判断 2026-10-17）：生まれた家で家督が受け継がれたとき（1701〜1800年）に、継いだのが養子だった割合と、その年の表の値の平均を比べる
+    const tA = bushi.t ? bushi.e / bushi.t : 0, vA = bushi.t ? bushi.a / bushi.t : 0;
+    if (bushi.t < 100 || Math.abs(vA - tA) > 0.05) bad.push('当主が養子だった家 ' + (vA * 100).toFixed(1) + '%（表の値の平均 ' + (tA * 100).toFixed(1) + '%・' + bushi.t + '家）');
     if (kosaku) bad.push('小作の家で分家が起きた ' + kosaku + '件');
-    res['10〜13 奉公の割合（百姓' + n + '人：' + rows.join('、') + '）・跡取り・武士の養子（当主' + bushi.t + '人）・小作の分家'] = bad; }
+    res['10〜13 奉公の割合（百姓' + n + '人：' + rows.join('、') + '）・跡取り・当主が養子だった家（' + bushi.t + '家 ' + (bushi.t ? (bushi.a / bushi.t * 100).toFixed(1) : '0') + '%）・小作の分家'] = bad; }
   // 14 名字と旧姓
   { const bad = []; let n = 0;
     for (let s0 = 1; n < 30 && s0 < 80000; s0++) { const L = firstLife(1700 + s0 % 200, s0); if (L.status !== 'hyakusho' || L.sex !== 'm') continue; run(O, L); if (!L.muko && !L.adopted) continue; n++; if (!L.surnameOld || O.displayName(L) !== L.surname + L.name + '（旧姓 ' + L.surnameOld + '）') bad.push('名字の出し方'); }
@@ -942,25 +971,40 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
     if (!h.includes('js/prefs.js')) bad.push(f + '：明るさの設定を取り込んでいない');
     for (const q of pages) if (q !== 'index.html' && !h.includes('href="' + q + '"') && f !== q) bad.push(f + '：' + q + ' への案内がない');
   }
-  for (const f of ['index.html', 'about.html']) if (!fs.readFileSync(path.join(SITE, f), 'utf8').includes('id="settings"')) bad.push(f + '：明るさと授業用の表示の切り替えがない');
+  for (const f of ['index.html', 'about.html']) if (!fs.readFileSync(path.join(SITE, f), 'utf8').includes('id="settings"')) bad.push(f + '：明るさの切り替えがない');
   const pr = fs.readFileSync(path.join(SITE, 'js', 'prefs.js'), 'utf8');
-  for (const k of ["'auto'", "'light'", "'dark'", 'ichioku-theme', 'ichioku-class']) if (!pr.includes(k)) bad.push('prefs.js に ' + k + ' がない');
+  for (const k of ["'auto'", "'light'", "'dark'", 'ichioku-theme']) if (!pr.includes(k)) bad.push('prefs.js に ' + k + ' がない');
   rec('J ホーム画面に追加（manifest とアイコン）・明るさの切り替え・ページ（プライバシー・問い合わせ先・更新履歴）がそろっているか', bad.length === 0, bad.slice(0, 8).join('、'));
 
-  // 授業用の表示：自ら命を絶つ・事件・事故・戦争・災害で亡くなった文と、つらい場面に短い一行が付いているか
-  const miss = []; let cnt = 0;
-  for (let i = 0; i < 3000 && cnt < 40; i++) {
-    let L;
-    if (i % 2) { const by = 1975 + i % 26, seed = i * 31337 + 7; L = E.autoRun(E.newLife(C, P[E.pickPref(C, by, E.makeRng(seed ^ 0x9e3779b9))], { year: by, seed })); }
-    else { const oy = 1900 + (i * 7) % 75, os = i * 7907 + 1, ob = O.pickBirth(C, H, oy, E.makeRng(os ^ 0x9e3779b9)); L = O.autoRun(O.newLife(C, H, P[ob.pref] || null, { year: oy, seed: os, birth: ob })); }
-    if (!['sui', 'acc', 'war', 'disaster'].includes(L.cause)) continue;
-    cnt++;
-    const last = L.log[L.log.length - 1], de = last.events.filter(e => e.cat === '健康').pop();
-    if (!de || !de.short) miss.push(L.by + '年生まれ（' + L.cause + '）');
+  // 遊ぶ画面に「統計」の文言を出さない（作る人の指示 2026-10-17。出どころは「このサイトについて」だけ）
+  {
+    const bad2 = [], strip = t => t.replace(/\/\*[\s\S]*?\*\//g, '').replace(/<!--[\s\S]*?-->/g, '').split('\n').map(l => l.replace(/(^|[^:'"])\/\/.*$/, '$1')).join('\n');
+    const html = strip(fs.readFileSync(path.join(SITE, 'index.html'), 'utf8')).replace(/<script[\s\S]*?<\/script>/g, '');
+    if (/統計/.test(html.replace(/<[^>]+>/g, ' ').replace(/content="[^"]*"/g, ''))) bad2.push('index.html の文に「統計」');
+    if (/統計/.test((html.match(/content="[^"]*"/g) || []).join(' '))) bad2.push('index.html の説明（description）に「統計」');
+    for (const f of ['app.js', 'top.js', 'curve.js', 'card.js', 'prefs.js']) {
+      const m = strip(fs.readFileSync(path.join(SITE, 'js', f), 'utf8')).match(/'[^'\n]*統計[^'\n]*'/g);
+      if (m) bad2.push(f + '：' + m[0]);
+    }
+    let n = 0;
+    for (let i = 0; i < 60; i++) {
+      let L;
+      if (i % 2) { const by = 1975 + (i * 3) % 26, seed = i * 4441 + 3; L = E.newLife(C, P[E.pickPref(C, by, E.makeRng(seed ^ 0x9e3779b9))], { year: by, seed }); }
+      else { const oy = 1000 + (i * 97) % 975, os = i * 3301 + 5, ob = O.pickBirth(C, H, oy, E.makeRng(os ^ 0x9e3779b9)); L = O.newLife(C, H, P[ob.pref] || null, { year: oy, seed: os, birth: ob }); }
+      const M = L.old ? O : E; let g = 0;
+      while (L.alive && g++ < 130) {
+        let r = M.step(L);
+        const texts = [];
+        while (r && r.branch) { const br = r.branch; texts.push(br.title || '', ...(br.groups || []).flatMap(gr => [gr.q || '', ...gr.options.map(o => o.l)])); r = M.resolve(L, br.ask ? { text: '' } : Object.fromEntries((br.groups || []).map(gr => [gr.id, gr.options[0].k]))); }
+        for (const e of r.events) texts.push(e.t);
+        for (const it of (r.world && r.world.items) || []) texts.push(it.t);
+        const hit = texts.find(t => /統計/.test(t));
+        if (hit) bad2.push(L.by + '年生まれ ' + r.year + '年：' + hit.slice(0, 40));
+        n++;
+      }
+    }
+    rec('N 遊ぶ画面（トップ・人生・最期・出来事・分かれ道）に「統計」の文言を出していないか', bad2.length === 0, [...new Set(bad2)].slice(0, 6).join('、') || n + '年分の出来事を確かめた');
   }
-  const hlNoShort = C.scenes.filter(s => s.hl && /命を絶|傷つけ|消えてしまいたい/.test(s.t) && !s.short).map(s => s.id);
-  if (hlNoShort.length) miss.push('短い一行のない場面：' + hlNoShort.join('・'));
-  rec('J 授業用の表示：つらい亡くなり方と場面に短い一行が付いているか', miss.length === 0 && cnt > 0, miss.slice(0, 6).join('、') || cnt + '人分の亡くなり方を確かめた');
   const contact = fs.readFileSync(path.join(SITE, 'contact.html'), 'utf8');
   rec('問い合わせ先が載っているか', !/決めしだい/.test(contact), '運営者が問い合わせ先を決めたら contact.html に書く', '目標');
 }

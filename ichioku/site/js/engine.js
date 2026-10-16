@@ -197,6 +197,58 @@
       return { id: m.id, role: m.role, name: m.by > dy ? null : m.name, sex: m.sex, by: m.by, age: m.by > dy ? null : dy - m.by, later: m.by > dy ? m.by - dy : 0 };
     });
   }
+  // 子として生きる：亡くなった人の子（亡くなった年に生きている子）
+  function kidLabel(L, m) {
+    var same = L.members.filter(function (x) { return x.role === '子' && x.sex === m.sex; }).sort(function (a, b) { return a.by - b.by || a.id - b.id; });
+    var n = same.indexOf(m), NUM = ['長', '次', '三', '四', '五', '六', '七', '八', '九'];
+    return (NUM[n] || (n + 1) + '番目の') + (m.sex === 'm' ? '男' : '女');
+  }
+  function childCandidates(L) {
+    var dy = L.deathYear;
+    return L.members.filter(function (m) { return m.role === '子' && !m.gone && m.alive && m.by <= dy; }).sort(function (a, b) { return a.by - b.by; }).map(function (m) {
+      return { id: m.id, role: kidLabel(L, m), name: m.name, sex: m.sex, by: m.by, age: dy - m.by, later: 0, child: true };
+    });
+  }
+  // 子の目から見た家：亡くなった人と配偶者が親、ほかの子がきょうだい、亡くなった人の親が祖父母
+  var EDU4 = { '中学': '中学', '高校': '高校', '短大・専門': '短大・高専', '大学': '大学' };
+  function childHouse(L, memberId, chain) {
+    var h = houseOf(L, chain), kid = L.members.filter(function (m) { return m.id === memberId; })[0];
+    if (!kid) throw new Error('引き継ぐ子がいない');
+    var r2 = makeRng(((L.seed ^ Math.imul(memberId, 0x85ebca6b)) >>> 0) || 1);
+    var pRole = L.sex === 'm' ? '父' : '母', oRole = L.sex === 'm' ? '母' : '父', side = L.sex === 'm' ? '父方' : '母方';
+    var sp = L.members.filter(function (m) { return m.role === '配偶者'; }).sort(function (a, b) { return Math.abs(a.by - L.by) - Math.abs(b.by - L.by); })[0];
+    var mem = [], maxId = 0;
+    L.members.forEach(function (m0) {
+      maxId = Math.max(maxId, m0.id);
+      var role = m0.role === '子' ? 'kid' : m0 === sp ? oRole : m0.role === '父' ? '祖父' : m0.role === '母' ? '祖母' : null;
+      if (!role) return;
+      var o = {}; for (var k in m0) if (k !== 'fixDy') o[k] = m0[k];
+      if (role === 'kid') { o.sib = true; o.role = '子'; }
+      else { o.sib = false; o.role = role; if (role === '祖父' || role === '祖母') o.side = side; else delete o.side; }
+      mem.push(o);
+    });
+    if (!sp) mem.push({ id: maxId + 2, role: oRole, sex: L.sex === 'm' ? 'f' : 'm', by: L.by + (L.sex === 'm' ? 2 : -2), name: null, alive: true, dy: null, gone: true });
+    // 生まれた場所：その子が生まれた年に親が住んでいた所
+    var at = L.log.filter(function (r) { return r.year === kid.by; })[0], pin = at && at.pin && !at.pin.abroad ? at.pin : null;
+    h.homeMuni = pin && pin.muni ? pin.muni : L.home.muni;
+    h.pref = pin && pin.pref ? pin.pref : L.home.pref;
+    var moves = [], prev = h.homeMuni, lastMuni = h.homeMuni;
+    L.log.forEach(function (r) { if (r.year > kid.by && r.year < kid.by + 18 && r.pin && r.pin.muni && !r.pin.abroad && r.pin.muni !== prev) { moves.push({ year: r.year, muni: r.pin.muni }); prev = r.pin.muni; } if (r.pin && r.pin.muni && !r.pin.abroad) lastMuni = r.pin.muni; });
+    h.moves = moves;
+    h.placeMuni = L.deathYear - kid.by < 18 ? lastMuni : h.homeMuni;
+    var myEdu = EDU4[L.edu] || '中学', spEdu = sp && sp.edu ? sp.edu : myEdu;
+    h.parentEdu = L.sex === 'm' ? { dad: myEdu, mom: spEdu } : { dad: spEdu, mom: myEdu };
+    var myInd = L.lastInd != null ? L.lastInd : null, ind = (muniOf(L.P, h.homeMuni) || {}).ind || L.C.nat.indNat;
+    var otherInd = pickInd(r2, ind);
+    h.dadJob = L.sex === 'm' ? (myInd != null ? myInd : otherInd) : otherInd;
+    h.momJob = L.sex === 'f' ? myInd : (r2() < 0.5 ? pickInd(r2, ind) : null);
+    var eduRank = { '中学': 0.3, '高校': 0.45, '短大・高専': 0.6, '大学': 0.75 }[myEdu];
+    h.incPct = Math.min(0.99, Math.max(0.01, 0.5 * L.incPct + 0.5 * eduRank + (r2() - 0.5) * 0.2));
+    h.threeGen = false;
+    h.members = mem;
+    h.gen = 'child';
+    return h;
+  }
   function muniOf(P, code) { return P.munis.filter(function (m) { return m.code === code; })[0] || null; }
   function inheritLife(C, P, opts) {
     var h = opts.house, me = h.members.filter(function (m) { return m.id === opts.memberId; })[0];
@@ -231,12 +283,15 @@
       if (!m.gone) { m.alive = !(m.fixDy != null && m.fixDy < me.by); m.before = !m.alive; if (m.alive) m.dy = null; else m.dy = m.fixDy; }
       L.members.push(m);
     });
-    var pv = { id: maxId + 1, role: sibRole(h.prev.sex, h.prev.by, me.by), sex: h.prev.sex, by: h.prev.by, name: h.prev.name, sib: true, alive: true, dy: null, fixDy: h.deathYear, prevLife: true };
+    var kidGen = h.gen === 'child';
+    var pv = { id: maxId + 1, role: kidGen ? (h.prev.sex === 'm' ? '父' : '母') : sibRole(h.prev.sex, h.prev.by, me.by), sex: h.prev.sex, by: h.prev.by, name: h.prev.name, sib: !kidGen, alive: true, dy: null, fixDy: h.deathYear, prevLife: true };
     if (pv.fixDy < me.by) { pv.alive = false; pv.before = true; pv.dy = pv.fixDy; }
     L.members.push(pv);
     L.dad = L.members.filter(function (m) { return m.role === '父'; })[0];
     L.mom = L.members.filter(function (m) { return m.role === '母'; })[0];
+    L.members.forEach(function (m) { if (!m.name) m.name = nameFor(L, m.sex, m.by); });
     L.name = me.name || nameFor(L, L.sex, L.by);
+    if (kidGen) L.house.gen = 'child';
     L.fAge = L.by - L.dad.by; L.mAge = L.by - L.mom.by;
     L.sibs = L.members.filter(function (m) { return m.sib && !m.gone; }).length;
     L.incPct = h.incPct; L.adoptU = h.adoptU; L.parentEdu = h.parentEdu; L.dadJob = h.dadJob; L.momJob = h.momJob;
@@ -585,7 +640,7 @@
     }
     // 女性の再就職
     if (L.stage === 'home' && L.youngestBy && y - L.youngestBy >= 6 && a < 60 && rnd() < 0.14) {
-      L.job = { ind: pickInd(rnd, (L.place.muniObj || {}).ind || C.nat.indNat), reg: false, since: y }; L.lastJob = IND[L.job.ind].job;
+      L.job = { ind: pickInd(rnd, (L.place.muniObj || {}).ind || C.nat.indNat), reg: false, since: y }; L.lastJob = IND[L.job.ind].job; L.lastInd = L.job.ind;
       L.stage = 'work';
       push(L, rec, '学歴と仕事', '子どもが小学校に上がり、近くの職場でパートとして働き始めた。', [ev(C, 'labor', y, '女性の年齢別の働く人の割合', '')]);
     }
@@ -693,7 +748,7 @@
     var againF = L.lostJob ? 1.6 : 1;
     var pNon = clamp(base * 1.1 * eduF * sexF * jrF * againF, 0.02, 0.85);
     var reg = rnd() >= pNon;
-    L.job = { ind: k, reg: reg, since: y }; L.lastJob = IND[k].job + (reg ? '' : '（非正規）');
+    L.job = { ind: k, reg: reg, since: y }; L.lastJob = IND[k].job + (reg ? '' : '（非正規）'); L.lastInd = k;
     L.stage = 'work';
     var evs = [
       ev(C, 'jobs', nv(C.nat.jobs, y).y, P.name + 'のこの年の有効求人倍率', jrPref.toFixed(2) + '倍', { est: true }),
@@ -1723,7 +1778,7 @@
 
   return {
     FUTURE_FROM: FUTURE_FROM, CATS: CATS, TARGET: TARGET,
-    houseOf: houseOf, heirCandidates: heirCandidates, satAdd: satAdd, satDone: satDone, postwarYear: postwarYear, wifeNameYear: wifeNameYear,
+    houseOf: houseOf, heirCandidates: heirCandidates, childCandidates: childCandidates, childHouse: childHouse, satAdd: satAdd, satDone: satDone, postwarYear: postwarYear, wifeNameYear: wifeNameYear,
     makeRng: makeRng, nv: nv, val: val, deathProb: deathProb, invNorm: invNorm,
     pickPref: pickPref, newLife: newLife, step: step, resolve: resolve, autoRun: autoRun,
     cohort: cohort, majorTimeline: majorTimeline, familyList: familyList, fill: fill, sceneOk: sceneOk,

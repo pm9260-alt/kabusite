@@ -23,6 +23,16 @@
   --on-beni: #ffffff;
   --bar: #2c6a66;
   --bar2: #679591;
+  --era0: #b0306a;
+  --era1: #2f6b3a;
+  --era2: #6b4fa0;
+  --era3: #a8381c;
+  --era4: #946800;
+  --era5: #1f5f8b;
+  --era6: #8a5a2b;
+  --era7: #00798a;
+  --era8: #c04a00;
+  --era9: #4b6584;
   --track: #e6ebe9;
   --area: #e9efed;
   --rule: #dfe3e1;
@@ -57,6 +67,16 @@
   --on-beni: #2a0008;
   --bar: #7cc4bd;
   --bar2: #3f726d;
+  --era0: #ff8fc0;
+  --era1: #7fd18a;
+  --era2: #b9a3f0;
+  --era3: #ff9a7a;
+  --era4: #f2c45a;
+  --era5: #7fb8f0;
+  --era6: #d9a77a;
+  --era7: #5fd3e0;
+  --era8: #ffad6b;
+  --era9: #a9bdd6;
   --track: #2a302e;
   --area: #1d2624;
   --rule: #2e3331;
@@ -91,6 +111,16 @@
   --on-beni: #2a0008;
   --bar: #7cc4bd;
   --bar2: #3f726d;
+  --era0: #ff8fc0;
+  --era1: #7fd18a;
+  --era2: #b9a3f0;
+  --era3: #ff9a7a;
+  --era4: #f2c45a;
+  --era5: #7fb8f0;
+  --era6: #d9a77a;
+  --era7: #5fd3e0;
+  --era8: #ffad6b;
+  --era9: #a9bdd6;
   --track: #2a302e;
   --area: #1d2624;
   --rule: #2e3331;
@@ -162,7 +192,7 @@ button { font: inherit; cursor: pointer; border-radius: 0; }
 .item .tag { display: inline-block; font-size: 12px; color: var(--sub); margin-right: 6px; }
 .item.world-item .tag { color: var(--world); }
 .hint { font-size: 12px; color: var(--sub); }
-.controls { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: auto; padding-top: 8px; border-top: 1px solid var(--line); }
+.controls { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: auto; padding-top: 8px; border-top: 1px solid var(--line); position: sticky; bottom: 0; background: var(--bg); padding-bottom: 8px; z-index: 2; }
 .controls .btn-sub { padding: 8px 4px; font-size: 14px; }
 
 /* 分かれ道 */
@@ -287,16 +317,41 @@ button { font: inherit; cursor: pointer; border-radius: 0; }
 .jmap g:focus { outline: none; }
 .jmap g:focus-visible circle:first-child { stroke: var(--accent); stroke-width: 1; }
 .map-note { font-size: 11px; color: var(--sub); margin: 4px 0 0; }
+.life-top { position: sticky; top: 0; z-index: 3; display: flex; justify-content: space-between; align-items: center; background: var(--bg); padding: 6px 0; margin-bottom: 6px; border-bottom: 1px solid var(--line); }
+.lt-name { font-size: 15px; font-weight: 700; }
+.reborn-top { min-height: 36px; padding: 6px 12px; font-size: 14px; }
+.life-head .life-id { flex: 1 1 auto; }
+.life-head .avatar { width: 72px; height: 96px; }
+.mini-map { flex: none; width: 116px; padding: 0; border: 0; background: none; cursor: pointer; align-self: flex-start; }
+.mini-map .jmap { aspect-ratio: 1.3 / 1; }
+.next-life { display: flex; flex-direction: column; gap: 8px; margin: 12px 0 18px; }
+.h-next { font-size: 18px; margin: 0 0 2px; }
+.kyodai-list { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.kyodai-btn { background: var(--accent); color: var(--on-accent); border-color: var(--accent); min-height: 48px; font-size: 16px; text-align: left; padding: 10px 14px; }
+.end-fact { font-size: 15px; margin: 6px 0 0; }
+.ybar { height: 4px; background: var(--track); margin-top: 4px; }
+.ybar span { display: block; height: 100%; width: 0; background: var(--beni); }
 .now { margin: 12px 0 8px; min-height: 96px; }
-.now-ev { font-size: 18px; line-height: 1.6; margin: 0 0 6px; }
-.now-row { display: flex; gap: 14px; flex-wrap: wrap; }
+.rec-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.rec-head h2 { font-size: 18px; margin: 0; }
+.rec-head span { font-size: 12px; color: var(--sub); }
+.feed { list-style: none; padding: 0; margin: 6px 0 4px; }
+.feed li + li { border-top: 1px solid var(--line); }
+.feed-row { display: flex; gap: 12px; width: 100%; text-align: left; background: none; border: 0; padding: 10px 0; color: var(--text); font: inherit; cursor: pointer; }
+.feed-row:disabled { cursor: default; color: var(--text); }
+.feed-row .fa { flex: none; min-width: 44px; font-size: 13px; color: var(--sub); padding-top: 3px; }
+.feed-row .ft { font-size: 16px; line-height: 1.7; }
+.feed li:first-child .ft { font-size: 18px; }
+.feed-row.w .ft { color: var(--world); }
+.feed-row.quiet .ft { color: var(--sub); }
+.now-row { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
 .link-btn { background: none; border: 0; padding: 4px 0; color: var(--accent); font: inherit; font-size: 14px; cursor: pointer; }
 .change { display: inline-block; margin-top: 6px; background: var(--surface); border: 1px solid var(--line); color: var(--text); font: inherit; font-size: 13px; padding: 4px 8px; cursor: pointer; }
 .d-btns { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-bottom: 12px; }
 .stops { list-style: none; padding: 0; margin: 8px 0 0; font-size: 14px; }
 .stops li { display: flex; gap: 10px; padding: 4px 0; border-top: 1px solid var(--line); }
 .stops .y { flex: none; min-width: 96px; color: var(--sub); }
-@media (max-width: 380px) { .avatar { width: 72px; height: 96px; } .now-ev { font-size: 16px; } }
+@media (max-width: 380px) { .avatar { width: 72px; height: 96px; } .feed li:first-child .ft { font-size: 16px; } }
 
 /* 原作の表記 */
 .origin { margin: 16px 0 0; padding: 10px 12px; background: var(--surface); border: 1px solid var(--line); font-size: 13px; }
@@ -306,8 +361,6 @@ button { font: inherit; cursor: pointer; border-radius: 0; }
 .end-credit { font-size: 12px; text-align: center; margin-top: 16px; }
 
 /* きょうだいとして生きる */
-.kyodai-list { display: flex; flex-direction: column; gap: 6px; }
-.kyodai-btn { text-align: left; padding: 10px 12px; }
 .house-lives li { padding: 4px 0; border-top: 1px solid var(--line); font-size: 14px; }
 .pre-h { margin-top: 12px; color: var(--sub); }
 
@@ -365,8 +418,28 @@ button { font: inherit; cursor: pointer; border-radius: 0; }
 /* 千年の盤 */
 .board { width: 100%; min-height: 120px; }
 .board svg { display: block; touch-action: manipulation; }
-.bd-cell.tone-a { fill: var(--bar); }
-.bd-cell.tone-b { fill: var(--bar2); }
+.bd-cell { fill: var(--track); }
+.bd-cell.got.e0 { fill: var(--era0); }
+.bd-cell.got.e1 { fill: var(--era1); }
+.bd-cell.got.e2 { fill: var(--era2); }
+.bd-cell.got.e3 { fill: var(--era3); }
+.bd-cell.got.e4 { fill: var(--era4); }
+.bd-cell.got.e5 { fill: var(--era5); }
+.bd-cell.got.e6 { fill: var(--era6); }
+.bd-cell.got.e7 { fill: var(--era7); }
+.bd-cell.got.e8 { fill: var(--era8); }
+.bd-cell.got.e9 { fill: var(--era9); }
+.es-fill.e0 { background: var(--era0); }
+.es-fill.e1 { background: var(--era1); }
+.es-fill.e2 { background: var(--era2); }
+.es-fill.e3 { background: var(--era3); }
+.es-fill.e4 { background: var(--era4); }
+.es-fill.e5 { background: var(--era5); }
+.es-fill.e6 { background: var(--era6); }
+.es-fill.e7 { background: var(--era7); }
+.es-fill.e8 { background: var(--era8); }
+.es-fill.e9 { background: var(--era9); }
+
 .bd-cell { cursor: pointer; }
 .bd-cell.on { fill: var(--beni); stroke: var(--text); stroke-width: 1.5; paint-order: stroke; }
 .board .bd-label { fill: var(--sub); font-family: inherit; font-size: 10.5px; font-variant-numeric: tabular-nums; }
