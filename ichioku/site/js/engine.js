@@ -546,7 +546,13 @@
     if (samesex(L)) return partnerYear(L, rec);
     var target = val(C.nat.everMarried[L.sex], L.by);
     var h = C.nat.marryShape[L.sex][a - 18] || 0;
-    var k = -Math.log(1 - target) / C.nat.marryShapeSum[L.sex];
+    // 統計は「50歳までに結婚した割合」なので、50歳までの形の合計で割る。
+    // 同性を好きな人は別の流れ（パートナー）に進むため、その分を除いた人の中で統計に合うようにする
+    var shp = C.nat.marryShape[L.sex], sum50 = 0;
+    for (var i = 0; i < 32 && i < shp.length; i++) sum50 += shp[i];
+    var ss = ((C.nat.minority || {})[L.sex] || {})[L.sex === 'm' ? 'gay' : 'lesbian'] || 0;
+    var t2 = Math.min(0.98, target / (1 - ss));
+    var k = -Math.log(1 - t2) / (sum50 || C.nat.marryShapeSum[L.sex]);
     var mult = L.marryMult || 1;
     var p = 1 - Math.exp(-k * h * mult);
     if (L.divorced || L.widowed) p *= 0.4;
@@ -914,7 +920,7 @@
     earnYear(L, rec);
     if (!L.alive) return advance(L, rec);
     {
-      var dp = deathProb(C, L.P, L.sex, a, y);
+      var dp = clamp(deathProb(C, L.P, L.sex, a, y) * bodyMult(L, a), 0, 1);
       if (a >= MAX_AGE) dp = 1;
       if (rnd() < dp) { die(L, rec, dp); return advance(L, rec); }
     }
@@ -929,6 +935,7 @@
     return advance(L, rec);
   }
   function advance(L, rec) {
+    statusYear(L, rec);
     L.log.push(rec);
     L.rec = null;
     if (L.alive) { L.year++; L.age++; }
@@ -949,6 +956,129 @@
     ].concat(cd ? [ev(C, 'vital', cd.years[cd.years.length - 1], 'この年齢の死因のうち「' + cd.name + '」の割合（' + cd.years[0] + '〜' + cd.years[cd.years.length - 1] + '年の死亡数から）', pct(cd.share))] : []).concat(st.evs));
   }
 
+
+  /* ---------- 4つの状態の数値（からだ・暮らしの満足・学び・つながり。0〜100） ----------
+     毎年の出来事と統計から決める。数値は「亡くなる確率」の補正にだけ使い、出来事そのものは決めない。
+     別の乱数（種から作る）を使うので、ほかの抽選の順番は変わらない。1975年より前は推計の印を付ける。 */
+  var ST_KEYS = ['body', 'sat', 'learn', 'tie'];
+  var ST_NAMES = { body: 'からだ', sat: '暮らしの満足', learn: '学び', tie: 'つながり' };
+  // 年齢ごとのからだの目安（生命表で亡くなる確率が上がっていく形に合わせた目安。推計）
+  var BODY_AGE = [[0, 66], [3, 78], [15, 84], [25, 84], [40, 79], [55, 72], [65, 66], [75, 57], [85, 45], [95, 30], [110, 15]];
+  // 学校や学歴ごとの学びの目安（推計）
+  var LEARN_EDU = { '寺子屋': 50, '藩校': 58, '村学校': 48, '小学校': 48, '中学': 55, '中学校': 55, '高校': 62, '旧制の上の学校': 74, '短大・専門': 68, '大学': 75, '大学院': 82 };
+  // 出来事の文から数値を動かす決まり。others が true の決まりは、家族や他人が主語の文（「父が入院した」など）には当てはめない
+  var WHO_OTHER = /^(父|母|祖父|祖母|夫|妻|兄|姉|弟|妹|息子|娘|子ども|長男|長女|次男|次女|三男|三女|孫|義|友だち|友人|同僚|上司|近所|隣)/;
+  var ST_RULES = [
+    { re: /入院|手術|骨折|寝込|療養|持病|と診断され|体調を崩|けがをし|大けが|病気になっ|病気にかか|高い熱|結核にかか|かぜをこじら|インフルエンザにかか/, k: 'body', d: -12, self: true },
+    { re: /家を失|家が壊|家が流さ|焼け出さ|全壊|半壊|床上まで|浸水し|空襲で家|家が焼け|飢饉|凶作/, k: 'sat', d: -8 },
+    { re: /戦死|召集|出征|兵隊にとられ|戦地へ/, k: 'tie', d: -6 },
+    { re: /が亡くなった/, k: 'tie', d: -7 },
+    { re: /が亡くなった/, k: 'sat', d: -5 },
+    { re: /さんと結婚した|と結婚した|夫婦になった|嫁いだ|婿に入|パートナーと暮らし始め|と一緒に暮らし始め/, k: 'tie', d: 12 },
+    { re: /さんと結婚した|と結婚した|夫婦になった|嫁いだ|婿に入|パートナーと暮らし始め|と一緒に暮らし始め/, k: 'sat', d: 6 },
+    { re: /(長男|長女|次男|次女|三男|三女|四男|四女|男の子|女の子|子ども|孫)が生まれた/, k: 'tie', d: 8 },
+    { re: /(長男|長女|次男|次女|三男|三女|四男|四女|男の子|女の子|子ども|孫)が生まれた/, k: 'sat', d: 5 },
+    { re: /離婚した/, k: 'tie', d: -10 },
+    { re: /離婚した/, k: 'sat', d: -8 },
+    { re: /職を失|失業し|倒産し|解雇され|雇い止め|勤め先がなくな/, k: 'sat', d: -10, self: true },
+    { re: /に入学した|へ進んだ|に進んだ|進学した|資格を取|学び始め|習い始め|稽古に通|夜学に通|通信制で学/, k: 'learn', d: 5, self: true },
+    { re: /引っ越し|転校|移り住|上京し|奉公に出/, k: 'tie', d: -4, self: true },
+    { re: /友だちができ|友だちと再会|昔の友だち|仲間ができ|仲間と/, k: 'tie', d: 4 },
+    { re: /働き始め|勤め先が決ま|昇進し|任され/, k: 'sat', d: 4, self: true }
+  ];
+  function stLin(pts, x) {
+    if (x <= pts[0][0]) return pts[0][1];
+    for (var i = 1; i < pts.length; i++) if (x <= pts[i][0]) { var a = pts[i - 1], b = pts[i]; return a[1] + (b[1] - a[1]) * (x - a[0]) / (b[0] - a[0]); }
+    return pts[pts.length - 1][1];
+  }
+  function statusInit(L) {
+    var r = makeRng(((L.seed >>> 0) ^ 0x2545f491) >>> 0);
+    L.st4 = { r: r, ind: { body: L.ab ? L.ab.body : gauss(r), study: L.ab ? L.ab.study : gauss(r), social: L.ab ? L.ab.social : gauss(r) }, shock: { body: 0, sat: 0, learn: 0, tie: 0 }, v: null };
+  }
+  function feelOf(C, y) {
+    var t = C.nat && C.nat.lifeFeel;
+    if (!t) return null;
+    var ys = Object.keys(t).map(Number).sort(function (a, b) { return a - b; });
+    var yy = y < ys[0] ? ys[0] : y > ys[ys.length - 1] ? ys[ys.length - 1] : y;
+    while (!t[yy] && yy > ys[0]) yy--;
+    return t[yy] ? { y: yy, hard: t[yy].hard } : null;
+  }
+  var OLD_SAT = { bushi: 4, chonin: 2, hyakusho: 0, priest: 3, outcast: -12, ainu: -8, ryukyuShi: 3, ryukyuHyakusho: -2, shizoku: 2, buraku: -10, heimin: 0 };
+  function statusYear(L, rec) {
+    if (!L.st4) statusInit(L);
+    var S = L.st4, C = L.C, y = rec.year, a = rec.age, est = y < 1975, why = [];
+    var prev = S.v;
+    // 1年たつと、去年の出来事の影響は4分の3に薄れる
+    ST_KEYS.forEach(function (k) { S.shock[k] *= 0.75; if (Math.abs(S.shock[k]) < 0.5) S.shock[k] = 0; });
+    (rec.events || []).forEach(function (e) {
+      var hit = {};
+      ST_RULES.forEach(function (ru) {
+        if (hit[ru.k] || !ru.re.test(e.t)) return;
+        if (ru.self && (WHO_OTHER.test(e.t) || /子どもの|息子の|娘の|孫の/.test(e.t))) return;
+        if (ru.k === 'body' && /亡くなった/.test(e.t) && !/(入院|手術|骨折|寝込)/.test(e.t)) return;
+        hit[ru.k] = 1;
+        S.shock[ru.k] += ru.d;
+        why.push({ k: ru.k, d: ru.d, t: e.t.length > 30 ? e.t.slice(0, 29) + '…' : e.t, ev: e.ev || [] });
+      });
+    });
+    var ind = S.ind;
+    // からだ：年齢の目安＋生まれつきの差＋出来事
+    var bodyT = stLin(BODY_AGE, a) + 8 * ind.body;
+    // 暮らしの満足：その年に「暮らしが苦しい」と答えた世帯の割合＋家の暮らしむき＋家族
+    var f = feelOf(C, y), satT = 52;
+    if (f) satT += (0.5 - f.hard) * 40;
+    if (L.old && y < 1975) satT += OLD_SAT[L.status] || 0;
+    else if (typeof L.incPct === 'number') satT += 20 * (L.incPct - 0.5);
+    if (L.stage === 'jobless') satT -= 8;
+    if (L.married) satT += 4;
+    // 学び：学校や学歴の目安＋生まれつきの得意不得意
+    // 子どものうちは年齢とともに伸び、学校を終えたあとは学歴の目安に、働きながら身につけた分を少し足す
+    var eduT = L.edu && LEARN_EDU[L.edu] != null ? LEARN_EDU[L.edu] : 34;
+    var growT = 12 + Math.min(a, 12) * 2.6;
+    var learnT = L.school ? Math.min(20 + a * 3, 80) : a < 13 ? growT : Math.max(eduT, Math.min(growT, 40));
+    if (!L.school && a >= 20 && a < 75) learnT += Math.min(8, (a - 20) * 0.25);
+    if (a >= 75) learnT += 8 - (a - 75) * 0.6;
+    learnT += 6 * ind.study;
+    // つながり：一緒に暮らす人と家族の数
+    var mem = L.members || [];
+    var kids = mem.filter(function (m) { return m.role === '子' && m.alive && !m.gone && m.by <= y; }).length;
+    var parents = mem.filter(function (m) { return (m.role === '父' || m.role === '母') && m.alive; }).length;
+    var tieT = 50 + 5 * ind.social + (L.married ? 12 : 0) + Math.min(kids, 3) * 3;
+    if (a < 18) tieT += parents * 6;
+    if (a >= 70 && !L.married) tieT -= 8;
+    // 目安は一気に変わらず、1年に4割ずつ近づく
+    var tg = { body: bodyT, sat: satT, learn: learnT, tie: tieT };
+    if (!S.base) S.base = tg;
+    else ST_KEYS.forEach(function (k) { S.base[k] += (tg[k] - S.base[k]) * 0.4; });
+    var v = {
+      body: S.base.body + S.shock.body, sat: S.base.sat + S.shock.sat,
+      learn: S.base.learn + S.shock.learn, tie: S.base.tie + S.shock.tie
+    };
+    ST_KEYS.forEach(function (k) { v[k] = Math.round(clamp(v[k], 0, 100)); });
+    // 出来事で説明しきれない動きには、もとになった目安を理由として書く
+    if (prev) {
+      var base = {
+        body: { t: a >= 40 ? '年齢とともに体が変わっていく' : '体が育ち、また前の年の不調から回復していく', ev: [ev(C, est ? 'ipss' : 'lifetable', y, 'からだの数値は年齢ごとの亡くなる確率の形から作った目安', '', { est: true })] },
+        sat: { t: '家の暮らしむきと、世の中の景気', ev: f ? [ev(C, 'income', f.y, '暮らしが「苦しい」と答えた世帯の割合（国民生活基礎調査）' + (f.y !== y ? '。この年の数字がないため' + f.y + '年の値' : ''), pct(f.hard), { est: f.y !== y || est })] : [] },
+        learn: { t: L.school ? '学校で学んでいる' : '仕事や暮らしの中で身につけたこと', ev: [ev(C, 'school', y, '学歴ごとの学びの目安', L.edu || 'まだ学校に通う前', { est: true })] },
+        tie: { t: '一緒に暮らす人や家族の数', ev: [ev(C, 'census', y, '世帯の人数と家族の形', '', { est: true })] }
+      };
+      ST_KEYS.forEach(function (k) {
+        if (v[k] !== prev[k] && !why.some(function (w) { return w.k === k; })) why.push({ k: k, d: v[k] - prev[k], t: base[k].t, ev: base[k].ev });
+      });
+    }
+    S.v = v;
+    rec.st = { body: v.body, sat: v.sat, learn: v.learn, tie: v.tie, est: est, why: why, prev: prev };
+    return rec.st;
+  }
+  // からだの数値で亡くなる確率を少し補正する。幅は都道府県の生命表の差（およそ上下15%）と同じくらいにした。
+  // 全体の平均は生命表に合うよう割り戻してある
+  var BODY_K = 0.018, BODY_NORM = 1.02;
+  function bodyMult(L, age) {
+    if (!L.st4 || !L.st4.v) return 1;
+    var d = L.st4.v.body - stLin(BODY_AGE, age);
+    return clamp(Math.exp(-BODY_K * d) / BODY_NORM, 0.6, 1.8);
+  }
 
   /* ---------- 節目の問いかけ（5・15・30・50・70歳）。答えは人生の進み方に関わらない ---------- */
   var ASK_AGES = [5, 15, 30, 50, 70];
@@ -1252,6 +1382,7 @@
     makeRng: makeRng, nv: nv, val: val, deathProb: deathProb, invNorm: invNorm,
     pickPref: pickPref, newLife: newLife, step: step, resolve: resolve, autoRun: autoRun,
     cohort: cohort, majorTimeline: majorTimeline, familyList: familyList, fill: fill, sceneOk: sceneOk,
-    pickCause: pickCause, deathStory: deathStory, ev: ev, askFor: askFor, answerAsk: answerAsk, ASK_AGES: ASK_AGES
+    pickCause: pickCause, deathStory: deathStory, ev: ev, askFor: askFor, answerAsk: answerAsk, ASK_AGES: ASK_AGES,
+    statusYear: statusYear, bodyMult: bodyMult, ST_KEYS: ST_KEYS, ST_NAMES: ST_NAMES
   };
 });

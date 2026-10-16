@@ -358,6 +358,21 @@ for (const y of Object.keys(names)) if (!names[y].m || !names[y].f) delete names
   }
 }
 
+// 暮らしの意識（「苦しい」「普通」「ゆとりがある」と答えた世帯の割合。1986年から）
+{
+  const j = load('nat-life-feel');
+  if (j) {
+    const K = { '2': 'hard', '3': 'veryHard', '5': 'normal', '6': 'easy' };
+    const t = {};
+    for (const v of j.values) {
+      const k = K[v['@cat01']], x = num(v), nm = j.classes.cat02[v['@cat02']] || '';
+      const y = parseInt(nm, 10);
+      if (k && x != null && y > 1900) (t[y] = t[y] || {})[k] = x / 100;
+    }
+    nat.lifeFeel = t;
+  }
+}
+
 // 年齢層ごとの死因の割合（病気・事故など・自殺）：直近10年の死亡数を合わせて計算する
 {
   const j = load('nat-cause');

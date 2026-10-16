@@ -127,7 +127,7 @@ export function build({ test = false } = {}) {
   const N = stats ? stats.nat : {};
   // 全国の値：取り込んだものがあれば置き換える。寿命の将来（2027年以降）は将来推計がまだ取れないため仮の値のまま
   const natReal = {};
-  for (const k of ['jobs', 'unemp', 'cpi', 'indNat', 'nonreg', 'incomeMean', 'motherAge', 'divorce', 'cause', 'ownHome', 'threeGen', 'nursery', 'parentEdu', 'deathPlace', 'causeDetail']) if (N[k] && Object.keys(N[k]).length) natReal[k] = N[k];
+  for (const k of ['jobs', 'unemp', 'cpi', 'indNat', 'nonreg', 'incomeMean', 'motherAge', 'divorce', 'cause', 'ownHome', 'threeGen', 'nursery', 'parentEdu', 'deathPlace', 'causeDetail', 'lifeFeel']) if (N[k] && Object.keys(N[k]).length) natReal[k] = N[k];
   if (typeof N.incomeSigma === 'number') natReal.incomeSigma = N.incomeSigma;
   // 普及率：取り込んだ品目は置き換える。取り込んだ表が始まる年より前に仮の値がある品目は、その年だけ仮の値を残して一覧に出す
   const goodsOut = goods.map(g => {

@@ -917,11 +917,15 @@
     return c ? { n: CAUSE_MAP[c.name] || c.name, rank: c.name } : { n: 'その他の病気' };
   }
   function finishYear(L, rec) {
+    finishYear0(L, rec);
+    E.statusYear(L, rec);
+  }
+  function finishYear0(L, rec) {
     if (!L.alive) { L.log.push(rec); return; }
     var y = L.year, a = L.age;
     if (a >= 5) L.stats.to5 = true;
     if (a >= 60) L.stats.to60 = true;
-    var q = dp(L, L.sex, a, y);
+    var q = clamp(dp(L, L.sex, a, y) * E.bodyMult(L, a), 0, 1);
     if (a > 0 && L.rnd() < q || a >= 110) {
       var c = causeOf(L);
       var st = E.deathStory(L, { kind: 'ill', cause: c.n });

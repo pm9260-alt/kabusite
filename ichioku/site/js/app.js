@@ -165,6 +165,45 @@
     $('num-alive-n').textContent = '生命表から（' + (L.sex === 'm' ? '男' : '女') + '）';
   }
 
+  /* ---------- 4つの数値（からだ・暮らしの満足・学び・つながり） ---------- */
+  var ST_LABEL = { body: 'からだ', sat: '暮らしの満足', learn: '学び', tie: 'つながり' };
+  function lastSt(r) {
+    if (r && r.st) return r.st;
+    for (var i = L.log.length - 1; i >= 0; i--) if (L.log[i].st && L.log[i].year <= r.year) return L.log[i].st;
+    return null;
+  }
+  function renderSt(r) {
+    var st = lastSt(r);
+    ['body', 'sat', 'learn', 'tie'].forEach(function (k) {
+      $('st-' + k).style.width = st ? st[k] + '%' : '0';
+      $('st-' + k + '-v').textContent = st ? String(st[k]) : '—';
+    });
+    $('st4').setAttribute('aria-label', st ? '4つの数値：' + ['body', 'sat', 'learn', 'tie'].map(function (k) { return ST_LABEL[k] + ' ' + st[k]; }).join('、') + '。押すと今年の理由が出ます' : '4つの数値');
+    $('st-note').textContent = st && st.est ? '1975年より前は推計です。押すと今年の理由が出ます' : '押すと今年の理由が出ます';
+  }
+  function openSt() {
+    if (!L || !cur) return;
+    var st = lastSt(cur);
+    openSheet('4つの数値', function (c) {
+      c.appendChild(el('p', 'note', '0から100の目安です。からだの数値だけが、亡くなる確率を少し上下させます。ほかの3つは画面で見るための数値で、出来事の起こり方は変えません' + (st && st.est ? '。1975年より前は推計です' : '')));
+      if (!st) { c.appendChild(el('p', null, 'この年の数値はまだ決まっていません')); return; }
+      var box = el('div', 'st-why');
+      ['body', 'sat', 'learn', 'tie'].forEach(function (k) {
+        var d = st.prev ? st[k] - st.prev[k] : 0;
+        box.appendChild(el('h3', null, ST_LABEL[k] + '　' + st[k] + (st.prev ? '（去年から' + (d > 0 ? '+' + d : d === 0 ? '変わらず' : d) + '）' : '')));
+        var ws = (st.why || []).filter(function (w) { return w.k === k; });
+        if (!ws.length) box.appendChild(el('p', 'note', st.prev ? '大きく動く出来事はなかった' : '生まれたときの目安'));
+        ws.forEach(function (w) {
+          var b = el('button', 'item', (w.d > 0 ? '+' : '') + w.d + '　' + w.t);
+          b.type = 'button';
+          b.onclick = function () { openEvidence(w.t, w.ev); };
+          box.appendChild(b);
+        });
+      });
+      c.appendChild(box);
+    });
+  }
+
   /* ---------- 家系図（3親等まで。これまでに出てきた人だけ） ---------- */
   var SVGNS = 'http://www.w3.org/2000/svg';
   function svg(tag, attrs, text) {
@@ -399,6 +438,7 @@
     $('next').disabled = !!r.branch;
     $('card-birth-life').hidden = r.age !== 0;
     renderTree(r.year);
+    renderSt(r);
   }
 
   // 節目の問いかけ：一行だけ書き残せる。答えは人生の進み方に関わらない
@@ -696,6 +736,7 @@
     $('next').onclick = function () { if (cur && cur.branch) return; if (!L.alive) showEnd(); else nextYear(); };
     $('family').onclick = openFamily;
     $('log').onclick = openLog;
+    $('st4').onclick = openSt;
     $('end-log').onclick = openLog;
     $('sheet-close').onclick = closeSheet;
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('sheet').hidden) closeSheet(); });

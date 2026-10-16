@@ -465,6 +465,32 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
   rec('C 同じ種と同じ答えで作り直した人生が元と一致するか', bad.length === 0, bad.join('、') || '20件');
 }
 
+/* ---------- E 4つの数値 ---------- */
+{
+  const bad = [];
+  let n = 0;
+  const run = (L, M) => { M.autoRun(L); return L; };
+  for (let i = 0; i < 200; i++) {
+    let L;
+    if (i % 2) { const by = 1975 + i % 26, seed = i * 6151 + 5; L = run(E.newLife(C, P[E.pickPref(C, by, E.makeRng(seed ^ 0x9e3779b9))], { year: by, seed }), E); }
+    else { const oy = 1800 + (i * 13) % 175, os = i * 3571 + 9, ob = O.pickBirth(C, H, oy, E.makeRng(os ^ 0x9e3779b9)); L = run(O.newLife(C, H, P[ob.pref] || null, { year: oy, seed: os, birth: ob }), O); }
+    n++;
+    let prev = null;
+    for (const r of L.log) {
+      const st = r.st;
+      if (!st) { bad.push(L.by + '年生まれ ' + r.age + '歳：数値がない'); break; }
+      for (const k of ['body', 'sat', 'learn', 'tie']) {
+        if (!Number.isInteger(st[k]) || st[k] < 0 || st[k] > 100) bad.push(L.by + '年生まれ ' + r.age + '歳：' + k + ' が0〜100の外（' + st[k] + '）');
+        if (prev && st[k] !== prev[k] && !st.why.some(w => w.k === k)) bad.push(L.by + '年生まれ ' + r.age + '歳：' + k + ' が動いたのに理由がない');
+      }
+      if (st.est !== (r.year < 1975)) bad.push(L.by + '年生まれ ' + r.age + '歳：推計の印がずれている');
+      for (const w of st.why) if (!w.t) bad.push(L.by + '年生まれ ' + r.age + '歳：理由の文が空');
+      prev = st;
+    }
+  }
+  rec('E 4つの数値が0〜100の中で、動いた年には理由があるか（1975年より前は推計の印）', bad.length === 0, bad.slice(0, 8).join('、') || n + '人分');
+}
+
 /* ---------- 結果 ---------- */
 const lines = [];
 lines.push('公開前の検査　' + new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }) + '（日本時間）');
