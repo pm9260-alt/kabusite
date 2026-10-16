@@ -165,6 +165,10 @@
   // 北海道の人口（1873年は12万人、1920年からは国勢調査）
   function popHokkaido(y) { return lin({ 1873: 123668, 1890: 427000, 1900: 985000, 1910: 1610000, 1920: 2359000, 1930: 2812000, 1940: 3229000, 1950: 4296000 }, y); }
 
+  // 海のない県と旧国（浜の村にしない）
+  var INLAND_PREF = ['09', '10', '11', '19', '20', '21', '29'];
+  var INLAND_PROV = ['甲斐', '信濃', '美濃', '飛騨', '上野', '下野', '大和', '近江', '山城', '伊賀', '丹波', '美作'];
+  function inland(L) { return INLAND_PROV.indexOf(L.prov) >= 0 || INLAND_PREF.indexOf(L.pref) >= 0; }
   function drawKind(L) {
     var H = L.H, rnd = L.rnd, y = L.by, st = L.status, p = H.prov[L.prov];
     if (st === 'ainu') return 'kotan';
@@ -174,13 +178,13 @@
       if (st === 'bushi') return city && rnd() < (city.share > 0.3 ? 0.6 : 0.4) ? 'city' : 'town';
       if (st === 'chonin') return city && rnd() < Math.min(0.85, city.share * 1.6) ? 'city' : 'town';
       if (st === 'priest' || st === 'outcast') return rnd() < 0.3 ? 'town' : 'village';
-      return rnd() < 0.1 ? 'fish' : 'village';
+      return !inland(L) && rnd() < 0.1 ? 'fish' : 'village';
     }
     var u = clamp(lin(H.urban, y) * (H.urbanPref[L.pref] || 1), 0.02, 0.95);
     if (rnd() < u) return 'city';
     if (st === 'shizoku' && rnd() < 0.6) return 'town';
     if (rnd() < 0.15) return 'town';
-    return rnd() < 0.1 ? 'fish' : 'village';
+    return !inland(L) && rnd() < 0.1 ? 'fish' : 'village';
   }
   function cityName(L) {
     var p = L.H.prov[L.prov];

@@ -108,7 +108,7 @@ function texts() {
   for (const e of H.events) out.push(['昔の出来事 ' + e.id, [e.title, e.text, e.deadText, e.note, e.src.name].join(' ')]);
   for (const m of H.moves) out.push(['移り住む ' + m.id, m.text + ' ' + m.place]);
   for (const k of Object.keys(H.status)) out.push(['身分 ' + k, H.status[k].name + ' ' + H.status[k].note]);
-  for (const f of ['index.html', 'about.html', 'js/app.js', 'js/engine.js', 'js/history.js']) {
+  for (const f of ['index.html', 'about.html', 'js/app.js', 'js/engine.js', 'js/history.js', 'js/avatar.js']) {
     const p = path.join(SITE, f);
     if (fs.existsSync(p)) out.push([f, stripCode(fs.readFileSync(p, 'utf8'))]);
   }
@@ -326,6 +326,7 @@ for (const by of OLD_YEARS) {
       const L = O.autoRun(O.newLife(C, H, P[b.pref] || null, { year: by, seed, birth: b }));
       old.lives++;
       old.prov[b.prov] = 1; old.pref[b.pref] = 1;
+      if (L.kind === 'fish' && ['09', '10', '11', '19', '20', '21', '29'].includes(L.pref)) old.contra.push('海のない県で浜の村に生まれた');
       if (L.alive) old.err.push(by + '年生まれの人生が最後まで進まなかった');
       for (const r of L.log) {
         old.years++;

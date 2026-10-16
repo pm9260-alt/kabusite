@@ -3,23 +3,21 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>1億分の1（仮）</title>
-<meta name="description" content="日本のどこかの町に、ある年に生まれ、統計の割合どおりに一生を送る人生シミュレーション（試作品）">
+<title>1億分の1</title>
+<meta name="description" content="日本のどこかの町に、ある年に生まれ、統計の割合どおりに一生を送る人生シミュレーション">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 <main id="app">
 
   <section id="screen-top" class="screen" aria-labelledby="top-title">
-    <p class="prov" id="prov-top">試作品です。一部の数字はまだ仮の値で、1975年より前の時代は研究の目安や推計で埋めたところがあります。</p>
-    <h1 id="top-title" class="title">1億分の1<span class="title-note">（仮）</span></h1>
+    <h1 id="top-title" class="title">1億分の1</h1>
     <p class="catch">どこに いつ生まれるかは選べない</p>
     <p class="lead">1800〜2000年のどこかの年に、日本のどこかで生まれます。江戸の城下町かもしれないし、蝦夷地のコタンや琉球の村、戦後の団地かもしれません。生まれる場所や家、進学や仕事の分かれ道は、統計の割合どおりに決まります。</p>
     <div class="born-box">
       <p class="note" id="year-note">生まれる年は1800〜2000年のどの年も同じ確率で選ばれます。1975年より前の時代は統計が少なく、研究の目安や推計で埋めたところがあります</p>
       <button type="button" class="btn-main" id="born" disabled>準備中</button>
     </div>
-    <p class="warn-text">15歳以上向けです。病気や死、つらい出来事が起きることがあります。</p>
     <p class="past" id="past"></p>
     <footer class="foot">
       <a href="about.html">このサイトについて</a>
@@ -29,6 +27,7 @@
 
   <section id="screen-life" class="screen" hidden aria-live="polite">
     <header class="life-head">
+      <canvas id="avatar" class="avatar" width="24" height="32" role="img" aria-label=""></canvas>
       <div class="age"><span id="age">0</span><span class="unit">歳</span></div>
       <div class="when">
         <div id="year-now">1975年</div>
@@ -56,7 +55,10 @@
   </section>
 
   <section id="screen-end" class="screen" hidden aria-labelledby="end-title">
-    <h1 id="end-title" class="end-title"></h1>
+    <div class="end-head">
+      <canvas id="avatar-end" class="avatar" width="24" height="32" role="img" aria-label=""></canvas>
+      <h1 id="end-title" class="end-title"></h1>
+    </div>
     <p id="end-sub" class="lead"></p>
     <div id="hotline-end" class="hotline" hidden></div>
     <div class="block">
@@ -93,6 +95,7 @@
 </main>
 <script src="js/engine.js"></script>
 <script src="js/history.js"></script>
+<script src="js/avatar.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

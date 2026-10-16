@@ -91,6 +91,8 @@ button { font: inherit; cursor: pointer; border-radius: 0; }
 
 /* 人生の画面 */
 .life-head { display: flex; gap: 14px; align-items: center; border-bottom: 1px solid var(--line); padding-bottom: 8px; }
+.avatar { width: 72px; height: 96px; image-rendering: pixelated; image-rendering: crisp-edges; flex: none; background: var(--surface); }
+.end-head { display: flex; gap: 14px; align-items: center; }
 .age { font-size: 40px; font-weight: 700; line-height: 1; min-width: 92px; }
 .age .unit { font-size: 16px; margin-left: 2px; }
 .when { font-size: 16px; font-weight: 700; }

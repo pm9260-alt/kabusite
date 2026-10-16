@@ -56,7 +56,6 @@
     $('born').disabled = false;
     $('born').textContent = '生まれる';
     $('born').onclick = born;
-    $('prov-top').hidden = !C.meta.provisional;
     var past = store('ichioku-lives') || [];
     $('past').textContent = past.length ? 'これまでに ' + past.length + ' 回の人生を送りました（記録はこの端末のブラウザにだけ残ります）' : '';
   }
@@ -101,7 +100,16 @@
     }, BASE_MS / SPEEDS[speedIdx]);
   }
 
+  // 主人公のドット絵（その年の年齢と時代の姿）
+  function drawAvatar(id, year, age) {
+    var A = window.IchiokuAvatar, cv = $(id);
+    if (!A || !cv || !L) return;
+    var v = Object.create(L);
+    v.year = year; v.age = age;
+    cv.setAttribute('aria-label', year + '年、' + age + '歳の' + L.name + 'さん。' + A.draw(cv, v));
+  }
   function render(r) {
+    drawAvatar('avatar', r.year, r.age);
     $('age').textContent = r.age;
     var era = r.eraLabel || eraOf(r.year);
     $('year-now').textContent = r.year + '年' + (era ? '（' + era + '）' : '');
@@ -220,7 +228,6 @@
         if (e.val) d.appendChild(el('p', 'val', e.val));
         var marks = [];
         if (e.est) marks.push('推計');
-        if (e.prov) marks.push('仮の値');
         if (e.verified === false) marks.push('出典を確認中');
         if (marks.length) d.appendChild(el('p', 'marks', marks.join('・')));
         c.appendChild(d);
@@ -311,6 +318,7 @@
     clearTimeout(timer);
     if (!L) return;
     show('end');
+    drawAvatar('avatar-end', L.deathYear, L.deathAge);
     $('end-title').textContent = L.name + 'さんの一生　' + L.by + '年〜' + L.deathYear + '年（' + L.deathAge + '歳）';
     $('end-sub').textContent = L.old ? O.endText(L) : L.home.prefName + L.home.muniName + 'で生まれ、' + (L.place.away ? L.place.prefName : L.place.prefName + L.place.muniName) + 'で亡くなった。';
     renderHotline($('hotline-end'), L.cause === 'sui');
