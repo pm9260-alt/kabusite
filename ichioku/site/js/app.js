@@ -4,7 +4,7 @@
   var E = window.Ichioku, O = window.IchiokuOld, M = E;
   var H = null; // 1975年より前の生まれのための束（data/history.json。必要になったときに取り出す）
   var BASE_MS = 7000;          // 1年あたりの表示時間（1倍のとき）。約80年で約10分
-  var SPEEDS = [1, 2, 4];
+  var SPEEDS = [1, 2, 4, 8, 16];
   var C = null, prefCache = {}, P = null, L = null, cur = null;
   var timer = null, paused = false, speedIdx = 0, sheetPaused = false;
 
@@ -677,6 +677,22 @@
   function bind() {
     $('pause').onclick = function () { paused = !paused; setPauseLabel(); if (paused) clearTimeout(timer); else if (cur && !cur.branch) schedule(); };
     $('speed').onclick = function () { speedIdx = (speedIdx + 1) % SPEEDS.length; $('speed').textContent = '速さ ' + SPEEDS[speedIdx] + '倍'; if (cur && !cur.branch) schedule(); };
+    // 次の分かれ道まで：分かれ道・節目の問いかけ・最期のどれかまで、年を続けて進める（1年ずつ画面に出してから次へ）
+    $('skip').onclick = function () {
+      if (!L || (cur && cur.branch)) return;
+      clearTimeout(timer);
+      var guard = 0;
+      (function go() {
+        if (!L || !L.alive) { if (L) showEnd(); return; }
+        cur = M.step(L);
+        render(cur);
+        saveCurrent();
+        if (cur.branch) { showBranch(cur.branch); return; }
+        if (!L.alive) { setTimeout(showEnd, 400); return; }
+        if (guard++ > 130) return;
+        timer = setTimeout(go, 60);
+      })();
+    };
     $('next').onclick = function () { if (cur && cur.branch) return; if (!L.alive) showEnd(); else nextYear(); };
     $('family').onclick = openFamily;
     $('log').onclick = openLog;
