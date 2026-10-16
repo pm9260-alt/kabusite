@@ -837,6 +837,61 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
   rec('L 一生の浮き沈みの曲線が200人分すべてで描け、点の数・いちばん高い年と低い年の印・0歳の一生・比べる線の途切れ・文字の重なりとはみ出し（幅320・390・768・1366）・コントラストが合っているか', bad.length === 0, [...new Set(bad)].slice(0, 8).join('、') || n + '人分（0歳で亡くなった ' + zero + '人・比べる線が途切れた ' + cmpCut + '件）');
 }
 
+/* ---------- S 物語の分かれ道（作る人の指示 2026-10-17） ---------- */
+{
+  const Sx = require(path.join(SITE, 'js', 'story.js'));
+  const BAN_S = ['効く', '効いて', '効き', '重い', '重く', '重か', '重さ', '読み', 'まず', '見ます', '判定', '一方で', '結論から言うと', '示唆', 'わけです', '極めて', '興味深い', '齟齬', '——', '統計'];
+  const ERAS_S = [['平安〜戦国', 1000, 1599], ['江戸', 1600, 1867], ['明治〜昭和', 1868, 1974], ['平成から', 1975, 2000]];
+  const bad = [], cov = [], picks = {}, arcsSeen = new Set(), echo = {}, advPicks = [];
+  const ADV_SID = ['koi', 'ise', 'kumano', 'ashigaru', 'dream.go', 'imin', 'geino', 'shishi', 'rangaku', 'sumoOld', 'narrow', 'cafe', 'manshu'];
+  const NS = TEST ? 240 : 800;
+  for (const [nm, y0, y1] of ERAS_S) {
+    let adult = 0, withB = 0, nb = 0;
+    for (let i = 0; i < NS; i++) {
+      const by = y0 + (i * 13) % (y1 - y0 + 1), seed = i * 104729 + 11;
+      let L;
+      try {
+        if (by >= 1975) L = E.newLife(C, P[E.pickPref(C, by, E.makeRng(seed ^ 0x9e3779b9))], { year: by, seed });
+        else { const b0 = O.pickBirth(C, H, by, E.makeRng(seed ^ 0x9e3779b9)); L = O.newLife(C, H, P[b0.pref] || null, { year: by, seed, birth: b0 }); }
+        const M = L.old ? O : E; let g = 0, n = 0;
+        while (L.alive && g++ < 130) {
+          let r = M.step(L);
+          while (r && r.branch) {
+            const br = r.branch;
+            if (br.id === 'story') {
+              n++;
+              const t = [br.title, ...br.groups.flatMap(gr => [gr.q, ...gr.options.map(o => o.l)])].join(' ');
+              const hit = BAN_S.filter(w => t.includes(w)); if (hit.length) bad.push('分かれ道「' + br.title + '」に ' + hit.join('・'));
+              if (br.groups[0].options.length < 2 || br.groups[0].options.length > 3) bad.push('分かれ道「' + br.title + '」の答えの数');
+              r = M.resolve(L, null);
+              if (ADV_SID.includes(br.sid)) advPicks.push([L.story.tr.adv, r.storyPick === br.groups[0].options[0].l]);
+              const pk = br.sid + ':' + (r.storyPick || ''); picks[pk] = (picks[pk] || 0) + 1;
+            } else r = M.resolve(L, br.ask ? { text: '' } : null);
+          }
+        }
+        if (L.deathAge >= 20) { adult++; if (n) withB++; nb += n; }
+        if (L.story) { Object.keys(L.story.done).forEach(k => arcsSeen.add(k)); }
+        for (const r of L.log) for (const e of r.events) if (e.story) {
+          const hit = BAN_S.filter(w => e.t.includes(w)); if (hit.length) bad.push('文「' + e.t.slice(0, 20) + '」に ' + hit.join('・'));
+          if (!CATS_OK.includes(e.cat)) bad.push('文の種類 ' + e.cat);
+          if (/思い出|笑って言えた|便りが来た|聞かせた|頭を下げられた|子どもたちに|胸がいっぱい|とんとん拍子/.test(e.t) && r.age >= 30) echo[nm] = (echo[nm] || 0) + 1;
+        }
+      } catch (e) { bad.push(by + '年生まれ：' + e.message); }
+    }
+    cov.push(nm + ' ' + (adult ? Math.round(withB / adult * 100) : 0) + '%・平均' + (adult ? (nb / adult).toFixed(1) : 0) + '回');
+    if (!adult || withB / adult < 0.8) bad.push(nm + '：20歳まで生きた人のうち分かれ道に出会った人が8割に届かない（' + (adult ? Math.round(withB / adult * 100) : 0) + '%）');
+  }
+  rec('S 物語の分かれ道が、どの時代でも20歳まで生きた人の8割以上に出て、文と答えが禁止語・統計の文言を含まず、エラーなく最期まで進むか', bad.length === 0, [...new Set(bad)].slice(0, 6).join('、') || cov.join('、') + '・使われた筋 ' + arcsSeen.size);
+  // 気質で答えが変わるか：挑戦する気質が強い人ほど、踏み出す方（最初の答え）を選ぶ
+  {
+    const g = { hi: [0, 0], lo: [0, 0] };
+    for (const x of advPicks) { const k = x[0] > 0.7 ? 'hi' : x[0] < -0.7 ? 'lo' : null; if (!k) continue; g[k][1]++; if (x[1]) g[k][0]++; }
+    const a1 = g.hi[1] ? g.hi[0] / g.hi[1] : 0, a2 = g.lo[1] ? g.lo[0] / g.lo[1] : 0;
+    rec('S 気質で分かれ道の答えが変わるか（挑戦する気質の強い人ほど踏み出す方を選ぶ）', g.hi[1] >= 30 && g.lo[1] >= 30 && a1 - a2 >= 0.1, '強い人 ' + Math.round(a1 * 100) + '%（' + g.hi[1] + '回）・弱い人 ' + Math.round(a2 * 100) + '%（' + g.lo[1] + '回）');
+  }
+  rec('S あのときの選択があとで返ってくる場面（何十年もあとの出来事）が、どの時代にも出るか', ERAS_S.every(([nm]) => echo[nm] > 0), ERAS_S.map(([nm]) => nm + ' ' + (echo[nm] || 0) + '件').join('、'));
+}
+
 /* ---------- M きょうだいとして生きる・継がない子の道（作る人の指示書 第2版 2026-10-17） ---------- */
 {
   const res = {};

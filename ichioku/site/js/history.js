@@ -304,7 +304,7 @@
       old: true, seed: L.seed0 || L.seed, deathYear: L.deathYear, deathAge: L.deathAge, cause: L.cause,
       prev: { name: L.name, sex: L.sex, by: L.by, heir: !!L.heir, surname: L.surname || null },
       members: mem, status: L.status, ainu: L.ainu, ryukyu: L.ryukyu, home: home, goods: L.goods || {}, incPct: L.incPct, surname: L.surnameOld || L.surname || null,
-      chain: (chain || []).slice()
+      chain: (chain || []).slice(), story: L.story ? { toxic: !!L.story.f.toxic, bigwig: !!L.story.f.bigwig, prosper: L.story.f.prosper || L.story.f.prosperHouse || 0 } : null
     };
   }
   function sibRole(sex, by, myBy) { return by < myBy ? (sex === 'm' ? '兄' : '姉') : (sex === 'm' ? '弟' : '妹'); }
@@ -363,7 +363,7 @@
       status: h.status, ainu: h.ainu, ryukyu: h.ryukyu, goods: {}, inherited: true
     };
     CATS.forEach(function (c) { L.cat[c] = 0; });
-    L.house = { deathYear: h.deathYear, prevName: h.prev.name, prevSex: h.prev.sex, prevBy: h.prev.by, prevAge: h.deathAge, prevHeir: h.prev.heir, chain: h.chain };
+    L.house = { deathYear: h.deathYear, prevName: h.prev.name, prevSex: h.prev.sex, prevBy: h.prev.by, prevAge: h.deathAge, prevHeir: h.prev.heir, chain: h.chain, story: h.gen === 'child' ? (h.story && h.story.prosper ? { prosper: h.story.prosper } : null) : h.story };
     var maxId = 0;
     h.members.forEach(function (m0) {
       maxId = Math.max(maxId, m0.id);
@@ -558,6 +558,25 @@
     return e;
   }
 
+  /* ---------- 物語の分かれ道（js/story.js）とのつなぎ ---------- */
+  var STORY_TO = { tokyo: '13', edo: '13', osaka: '27', kyoto: '26', hokkaido: '01' };
+  var STORY_API = {
+    makeRng: E.makeRng, gauss: function (r) { var u = 1 - r(), v = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); },
+    push: function (L, rec, cat, t, evs) { return push(L, rec, cat, t, evs); },
+    nameFor: function (L, sex, by) { return E.storyName(L, sex, by); },
+    move: function (L, where) {
+      if (where === 'home') { var h = L.home0; if (!h) return; L.prov = h.prov; L.sub = h.sub; L.pref = h.pref; L.kind = h.kind; L.muni = h.muni; L.muniName = h.muniName; L.abroad = null; L.moved = false; return; }
+      var to = STORY_TO[where] || '13';
+      if (L.pref === to) return;
+      L.pref = to; L.kind = to === '01' ? 'village' : 'city'; L.muniName = null; L.muni = null; L.moved = true;
+      if (L.year < 1889) { L.prov = { 13: '武蔵', 27: '摂津', 26: '山城', '01': '蝦夷・松前' }[to]; L.sub = null; }
+    },
+    job: function (L, label, pay, reg, ind) { L.job = 'story'; L.storyPay = pay; L.lastJob = label; },
+    noJob: function (L) { L.job = 'home'; L.storyPay = null; },
+    marryBoost: function (L, k) { if (k >= 1) { L.never = false; L.marryAt = Math.min(L.marryAt || 99, L.age + (k >= 3 ? 1 : 2)); } else L.marryAt = (L.marryAt || L.age) + 5; }
+  };
+  function storyYear(L, rec) { var S = E.storyMod(); if (S && L.alive) S.year(L, rec, STORY_API); }
+
   function step(L) {
     if (!L.alive) return null;
     var y = L.year, a = L.age;
@@ -568,6 +587,7 @@
       familyYear(L, rec);
       historyYear(L, rec);
       lifeYear(L, rec);
+      storyYear(L, rec);
     }
     if (L.alive && E.ASK_AGES.indexOf(a) >= 0) L.queue.push(E.askFor(L));
     if (L.alive && L.queue.length) { rec.branch = L.queue.shift(); return rec; }
@@ -1351,6 +1371,8 @@
     var sexF = L.sex === 'f' ? 0.55 : 1;
     if (L.job === 'farm' || L.job === 'fish') sexF *= 0.75;
     var real = base * ageF * sexF;
+    // 物語で就いた仕事は、1975年の働く人の平均（4500）との比で稼ぎを決める（目安）
+    if (L.job === 'story' && L.storyPay) real = base * (L.storyPay / 4500) * (a < 20 ? 0.7 : a >= 65 ? 0.6 : 1);
     L.earn.real += real;
     L.earn.years++;
     // その年のお金に直す（1871年の新貨条例で1両＝1円。それより前は両で数える）
@@ -1429,6 +1451,7 @@
       else if (br.kind === 'bunke') resolveBunke(L, rec, br, answers);
       else if (br.kind === 'muko') resolveMuko(L, rec, br, answers);
       else if (br.kind === 'yoshi') resolveYoshi(L, rec, br, answers);
+      else if (br.id === 'story') { var SM = E.storyMod(); if (SM) SM.resolve(L, rec, br, answers, STORY_API); }
     }
     if (L.alive && L.queue.length) { rec.branch = L.queue.shift(); return rec; }
     finishYear(L, rec);

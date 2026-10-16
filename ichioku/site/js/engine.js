@@ -142,6 +142,36 @@
     if (!free.length) free = L.C.names[keys[keys.length - 1]][sex].filter(function (n) { return !used[n]; });
     return free.length ? free[Math.floor(L.rnd() * free.length)] : list[0] + '（二）';
   }
+  /* ---------- 物語の分かれ道（js/story.js）とのつなぎ ---------- */
+  function storyMod() {
+    if (typeof self !== 'undefined' && self.IchiokuStory) return self.IchiokuStory;
+    if (typeof require === 'function') { try { return require('./story.js'); } catch (e) { return null; } }
+    return null;
+  }
+  // 物語で使う名前：本体の乱数を使わない（ほかの抽選の順番を変えない）
+  function storyName(L, sex, by) {
+    var keys = Object.keys(L.C.names).map(Number).sort(function (a, b) { return a - b; });
+    var k = keys[0];
+    for (var i = 0; i < keys.length; i++) if (keys[i] <= by) k = keys[i];
+    var list = L.C.names[k][sex], used = {};
+    L.members.forEach(function (m) { used[m.name] = 1; });
+    if (L.name) used[L.name] = 1;
+    var free = list.filter(function (n) { return !used[n]; });
+    return (free.length ? free : list)[Math.floor(L.story.r() * (free.length || list.length))];
+  }
+  function storyMove(L, where) {
+    if (where !== 'home') { L.place = { pref: '13', prefName: '東京都', muni: null, muniName: '', kind: '都市', away: true, muniObj: null }; return; }
+    var m = homeMuni(L);
+    L.place = { pref: L.home.pref, prefName: L.home.prefName, muni: L.home.muni, muniName: L.home.muniName, kind: m ? m.kind : '都市', away: false, muniObj: m };
+  }
+  var STORY_API = {
+    makeRng: makeRng, gauss: gauss, push: function (L, rec, cat, t, evs) { return push(L, rec, cat, t, evs); }, nameFor: storyName, move: storyMove,
+    job: function (L, label, pay, reg, ind) { L.job = { ind: IND[ind] ? ind : (L.job && L.job.ind) || 'service', reg: !!reg, since: L.year, pay: pay, label: label }; L.lastJob = label; L.lastInd = L.job.ind; L.stage = 'work'; },
+    noJob: function (L) { if (L.job) { L.job = null; L.stage = 'jobless'; } },
+    marryBoost: function (L, k) { L.marryMult = (L.marryMult || 1) * k; }
+  };
+  function storyYear(L, rec) { var S = storyMod(); if (S && L.alive) S.year(L, rec, STORY_API); }
+
   function addMember(L, role, sex, by, extra) {
     var m = { id: L.members.reduce(function (x, o) { return Math.max(x, o.id); }, 0) + 1, role: role, sex: sex, by: by, alive: true, dy: null };
     if (extra) for (var k in extra) m[k] = extra[k];
@@ -187,7 +217,7 @@
       prev: { name: L.name, sex: L.sex, by: L.by, surname: L.surname || null },
       members: mem, homeMuni: L.home.muni, placeMuni: place ? place.muni : L.home.muni, moves: moves,
       incPct: L.incPct, adoptU: L.adoptU, parentEdu: L.parentEdu, dadJob: L.dadJob, momJob: L.momJob, ownHome: L.ownHome, threeGen: L.threeGen, income: L.income, goods: L.goods || {},
-      chain: (chain || []).slice()
+      chain: (chain || []).slice(), story: L.story ? { toxic: !!L.story.f.toxic, bigwig: !!L.story.f.bigwig, prosper: L.story.f.prosper || L.story.f.prosperHouse || 0 } : null
     };
   }
   function sibRole(sex, by, myBy) { return by < myBy ? (sex === 'm' ? '兄' : '姉') : (sex === 'm' ? '弟' : '妹'); }
@@ -272,7 +302,7 @@
       inherited: true, surname: h.prev.surname || null
     };
     CATS.forEach(function (c) { L.cat[c] = 0; });
-    L.house = { deathYear: h.deathYear, prevName: h.prev.name, prevSex: h.prev.sex, prevBy: h.prev.by, prevAge: h.deathAge, moves: h.moves, chain: h.chain };
+    L.house = { deathYear: h.deathYear, prevName: h.prev.name, prevSex: h.prev.sex, prevBy: h.prev.by, prevAge: h.deathAge, moves: h.moves, chain: h.chain, story: h.gen === 'child' ? (h.story && h.story.prosper ? { prosper: h.story.prosper } : null) : h.story };
     var maxId = 0;
     h.members.forEach(function (m0) {
       maxId = Math.max(maxId, m0.id);
@@ -500,6 +530,7 @@
     else {
       familyYear(L, rec);
       lifeYear(L, rec);
+      storyYear(L, rec);
     }
     if (L.alive && ASK_AGES.indexOf(a) >= 0) L.queue.push(askFor(L));
     if (L.queue.length) { rec.branch = L.queue.shift(); return rec; }
@@ -914,6 +945,14 @@
       return rec;
     }
     L.branchCount++;
+    if (br.id === 'story') {
+      var SM = storyMod();
+      if (SM) SM.resolve(L, rec, br, natural ? null : answers, STORY_API);
+      rec.branch = null;
+      if (L.queue.length) { rec.branch = L.queue.shift(); return rec; }
+      finishYear(L, rec);
+      return rec;
+    }
     if (br.id === 'middle') {
       var priv = val(P.s.priv, y), passAvg = 0.65;
       var base = clamp(priv / passAvg * (0.3 + 1.4 * L.incPct), 0, 0.95);
@@ -1040,6 +1079,11 @@
   function wageOf(L, y, a) {
     var W = L.C.wage, C = L.C;
     if (!W || !L.job) return null;
+    // 物語で就いた仕事は、その仕事の年収の目安（2025年の物価）を、その年の物価に直して使う
+    if (L.job.pay != null) {
+      var yp = Math.min(y, WAGE_YEAR), nom = L.job.pay * val(C.nat.cpi, yp) / val(C.nat.cpi, WAGE_YEAR);
+      return { nominal: nom, real: L.job.pay, future: y > WAGE_YEAR };
+    }
     var P = W.profile[L.sex], kind = L.job.reg ? 'r' : 'n';
     var band = a < 20 ? 15 : a >= 70 ? 70 : Math.floor(a / 5) * 5;
     function at(e) { var t = P[e]; return t && t[kind] && t[kind][band] != null ? t[kind][band] : null; }
@@ -1175,7 +1219,8 @@
   function die(L, rec, dp) {
     var C = L.C, a = L.age, rnd = L.rnd, y = L.year;
     var cw = a < 15 ? C.nat.cause.child : a < 40 ? C.nat.cause.young : a < 65 ? C.nat.cause.mid : C.nat.cause.old;
-    var cause = pick(rnd, ['ill', 'acc', 'sui'], function (k) { return cw[k]; });
+    var sm = L.story && L.story.sui > 1 ? L.story.sui : 1;
+    var cause = pick(rnd, ['ill', 'acc', 'sui'], function (k) { return k === 'sui' ? cw[k] * sm : cw[k]; });
     var cd = pickCause(C, a, L.sex, y, rnd, cause);
     var st = deathStory(L, { kind: cause, cause: cd });
     L.alive = false; L.deathAge = a; L.deathYear = y; L.cause = cause; L.causeName = cd ? cd.name : null;
@@ -1246,6 +1291,11 @@
     ST_KEYS.forEach(function (k) { S.shock[k] *= 0.75; if (Math.abs(S.shock[k]) < 0.5) S.shock[k] = 0; });
     (rec.events || []).forEach(function (e) {
       var hit = {};
+      if (e.st) {
+        for (var sk in e.st) { S.shock[sk] += e.st[sk]; hit[sk] = 1; why.push({ k: sk, d: e.st[sk], t: e.t.length > 30 ? e.t.slice(0, 29) + '…' : e.t, ev: [] }); }
+        return;
+      }
+      if (e.story) return;
       ST_RULES.forEach(function (ru) {
         if (hit[ru.k] || !ru.re.test(e.t)) return;
         if (ru.self && (WHO_OTHER.test(e.t) || /子どもの|息子の|娘の|孫の/.test(e.t))) return;
@@ -1282,6 +1332,8 @@
     if (a >= 70 && !L.married) tieT -= 8;
     // 今年の重点で、目安を少しだけ動かす
     var tg = { body: bodyT, sat: satT, learn: learnT, tie: tieT };
+    // 物語で続いていく影響（夢をかなえた・地元に戻った など）
+    if (L.story && L.story.base) ST_KEYS.forEach(function (k) { tg[k] += clamp(L.story.base[k] || 0, -15, 15); });
     var fb = L.focus && FOCUS_BONUS[L.focus];
     if (fb) for (var fk in fb) { tg[fk] += fb[fk]; why.push({ k: fk, d: fb[fk], t: '今年の重点「' + FOCUS[L.focus] + '」', ev: [], focus: true }); }
     // 目安は一気に変わらず、1年に4割ずつ近づく
@@ -1358,6 +1410,7 @@
   };
   function autoAnswer(br, focus) {
     if (!br || br.ask) return null;
+    if (br.id === 'story') { var SM = storyMod(); return SM ? SM.autoAnswer(br, focus) : null; }
     if (!focus || !FOCUS_PICK[focus]) return null;
     var t = FOCUS_PICK[focus], a = {};
     (br.groups || []).forEach(function (g) {
@@ -1783,6 +1836,7 @@
     pickPref: pickPref, newLife: newLife, step: step, resolve: resolve, autoRun: autoRun,
     cohort: cohort, majorTimeline: majorTimeline, familyList: familyList, fill: fill, sceneOk: sceneOk,
     pickCause: pickCause, deathStory: deathStory, ev: ev, askFor: askFor, answerAsk: answerAsk, ASK_AGES: ASK_AGES,
+    storyMod: storyMod, storyName: storyName,
     statusYear: statusYear, bodyMult: bodyMult, moneyYear: moneyYear, autoAnswer: autoAnswer, FOCUS: FOCUS, yearKind: yearKind, MAP_KINDS: MAP_KINDS, ST_KEYS: ST_KEYS, ST_NAMES: ST_NAMES
   };
 });

@@ -91,6 +91,8 @@
       </div>
       <button type="button" class="mini-map" id="map-open" aria-label="地図を大きく開く"><svg id="map" class="jmap" role="img" aria-label="日本地図"></svg></button>
     </header>
+    <!-- 分かれ道：出たときに1画面で見えるよう、記録より上に置く -->
+    <div id="branch" class="branch" hidden></div>
     <!-- 人生の記録：原作「80億分の1」の記録の並べ方（新しい順・左に年齢）にならう -->
     <section class="now" aria-label="人生の記録">
       <div class="rec-head"><h2>人生の記録</h2><span>新しい順・押すと印</span></div>
@@ -100,7 +102,6 @@
         <button type="button" class="change" id="change" hidden></button>
       </div>
     </section>
-    <div id="branch" class="branch" hidden></div>
     <div id="hotline" class="hotline" hidden></div>
     <nav class="controls" aria-label="進め方">
       <button type="button" class="btn-sub" id="pause">一時停止</button>
@@ -246,6 +247,7 @@
   </div>
 
 </main>
+<script src="js/story.js"></script>
 <script src="js/engine.js"></script>
 <script src="js/history.js"></script>
 <script src="js/avatar.js"></script>
