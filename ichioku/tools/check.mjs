@@ -744,7 +744,9 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
     for (let i = 1; i <= 47; i++) { const pc = String(i).padStart(2, '0'); if (!MAPJ.prefs[pc] || !MAPJ.center[pc]) bad.push(pc + ' の形がない'); }
     const noPos = Object.values(P).flatMap(p => p.munis.filter(m => !MAPJ.munis[m.code]).map(m => p.name + m.name));
     if (noPos.length) bad.push('地図に位置がない市区町村 ' + noPos.length + '（' + noPos.slice(0, 5).join('、') + '）');
-    const xy = pin => !pin || pin.abroad ? 'abroad' : (pin.muni && MAPJ.munis[pin.muni]) || (pin.pref && MAPJ.center[pin.pref]);
+    const xy = pin => !pin || pin.abroad ? 'abroad' : (pin.muni && MAPJ.munis[pin.muni]) || (pin.prov && MAPJ.prov[pin.prov]) || (pin.pref && MAPJ.center[pin.pref]);
+    const noProv = Object.keys(H.prov).filter(k => k !== '蝦夷・松前' && !(MAPJ.prov || {})[k]);
+    if (noProv.length) bad.push('地図に場所がない旧国（' + noProv.join('、') + '）');
     for (let i = 0; i < 60; i++) {
       let L;
       if (i % 2) { const by = 1975 + (i * 7) % 26, seed = i * 331 + 9; L = E.autoRun(E.newLife(C, P[E.pickPref(C, by, E.makeRng(seed ^ 0x9e3779b9))], { year: by, seed })); }

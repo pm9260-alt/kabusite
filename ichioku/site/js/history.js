@@ -239,7 +239,10 @@
   function pinOf(L) {
     if (L.abroad) return { abroad: true };
     var m = L.muniName && L.P && L.P.munis ? L.P.munis.filter(function (x) { return x.name === L.muniName; })[0] : null;
-    return { pref: L.pref, muni: m ? m.code : null, prov: L.prov || null };
+    // 旧国の目安の場所は、その旧国が今の都道府県に入っているときだけ使う（明治のあとに県外へ移ったときは県の中ほど）
+    var pv = L.H.prov[L.sub || L.prov] ? (L.sub || L.prov) : L.prov;
+    var ok = pv && L.H.prov[pv] && L.H.prov[pv].prefs && L.H.prov[pv].prefs[L.pref];
+    return { pref: L.pref, muni: m ? m.code : null, prov: ok ? pv : null };
   }
   var KIND_WORD = { city: '町なか', town: '町', village: '村', fish: '浜の村', kotan: 'コタン（アイヌの村）' };
   function placeLabel(L) {

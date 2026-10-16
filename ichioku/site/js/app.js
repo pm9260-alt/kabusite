@@ -870,6 +870,7 @@
   function pinXY(pin) {
     if (!MAP || !pin || pin.abroad) return null;
     if (pin.muni && MAP.munis[pin.muni]) return MAP.munis[pin.muni];
+    if (pin.prov && MAP.prov && MAP.prov[pin.prov]) return MAP.prov[pin.prov];
     return pin.pref && MAP.center[pin.pref] ? MAP.center[pin.pref] : null;
   }
   // 住んだ場所を、続けて同じ所にいた年ごとにまとめる
