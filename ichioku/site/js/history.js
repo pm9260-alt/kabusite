@@ -199,6 +199,8 @@
     var p = L.H.prov[L.sub || L.prov];
     if (L.by < 1889 && !(p && p.one)) return null;
     if (L.status === 'ryukyuShi' && L.kind === 'town') return null;
+    // 海沿いかどうかの印が市区町村にまだないため、浜の村には今の市区町村名を添えない
+    if (L.kind === 'fish') return null;
     // 大東島は1900年に人が住み始めた島
     var skip = L.by < 1900 ? ['北大東村', '南大東村'] : [];
     var want = L.kind === 'city' ? ['大都市', '都市'] : L.kind === 'town' ? ['都市', '町村'] : ['町村'];
@@ -454,7 +456,7 @@
     if (y === 1922 && (st === 'buraku' || st === 'outcast') && L.age >= 12) push(L, rec, '時代', '「人の世に熱あれ、人間に光あれ」。差別をなくすための全国水平社ができたと聞いた', [ev(L, LIFE_SRC, 1922, '全国水平社の創立', '')]);
     if (y === 1945 && L.abroad === '満洲') {
       var r = H.manchuria.rate;
-      if (L.rnd() < r) { dieBy(L, rec, 'war', 'ソ連軍が攻めてきて、開拓団は荒野を逃げ惑った。その逃避行の途中で亡くなった', [ev(L, H.manchuria.src, 1945, '開拓団にいた人のうち亡くなった割合', pct(r), { est: true })]); return; }
+      if (L.rnd() < r) { dieBy(L, rec, 'war', E.deathStory(L, { kind: 'war', head: 'ソ連軍が攻めてきて、開拓団は荒野を逃げ惑った。その逃避行の途中で、飢えと寒さのために亡くなった' }).text, [ev(L, H.manchuria.src, 1945, '開拓団にいた人のうち亡くなった割合', pct(r), { est: true })]); return; }
       push(L, rec, '時代', 'ソ連軍が攻めてきて、開拓団は荒野を逃げた。飢えと寒さの中を生きのびた', [ev(L, H.manchuria.src, 1945, '開拓団にいた人のうち亡くなった割合', pct(r), { est: true })]);
       L.repat = true;
     }
@@ -479,7 +481,7 @@
     if (a === 1 && !rec.events.length) push(L, rec, '健康', L.sex === 'm' ? 'つかまり立ちから、よちよちと歩き始めた' : 'よちよちと歩き始めた', [ev(L, LIFE_SRC, y, '子どもの育ち', '', { noYearNote: true })]);
     if (a === 2 && !rec.events.length) push(L, rec, '家庭', '片言で言葉を話し始め、母を呼ぶようになった', [ev(L, LIFE_SRC, y, '子どもの育ち', '', { noYearNote: true })]);
     if (a >= 2 && (!rec.events.length || L.rnd() < 0.4)) { var s = pickScene(L); if (s) push(L, rec, s.cat, fill(L, s.t), [ev(L, LIFE_SRC, y, 'その時代の暮らしの様子', '', { noYearNote: true, est: true })]); }
-    if (L.alive) earnYear(L);
+    if (L.alive) earnYear(L, rec);
   }
 
   /* 学校 */
@@ -800,7 +802,13 @@
       if (!whoOk(e, me)) continue;
       var v2 = rateFor(L, e, me);
       evs[0].val = pct(v2);
-      if (v2 > 0 && L.rnd() < v2) { dieBy(L, rec, e.kind === '戦争' || e.kind === '空襲' || e.kind === '原爆' ? 'war' : 'disaster', e.deadText, evs); return; }
+      if (v2 > 0 && L.rnd() < v2) {
+        var wk = e.kind === '戦争' || e.kind === '空襲' || e.kind === '原爆' ? 'war' : e.kind === '流行病' || e.kind === '飢饉' ? 'ill' : 'disaster';
+        var soldier = e.who && e.who.sex === 'm' && e.kind === '戦争';
+        var dst = E.deathStory(L, { kind: wk === 'ill' ? 'disaster' : wk, head: e.deadText.replace(/。$/, ''), withFamily: wk === 'ill' });
+        if (soldier) dst.text = dst.text.replace(/。([0-9]+歳だった。)$/, '。家族のもとには、戦死を知らせる紙が届いた。$1');
+        dieBy(L, rec, wk, dst.text, evs); return;
+      }
       var show = e.where !== 'all' || (e.who && L.rnd() < 0.35) || (!e.who && L.rnd() < 0.2);
       if (show && !L.used['ev:' + e.id]) { L.used['ev:' + e.id] = 1; push(L, rec, '時代', e.text, evs); }
     }
@@ -869,8 +877,9 @@
 
   /* 稼ぎ（推計）：1975年の働く人の平均的な年収を2025年のお金の価値で約450万円とし、
      ほかの年は1人あたりの国内総生産（Maddison）の比で直す。1975年の年齢・男女の差の目安も掛ける */
-  function earnYear(L) {
+  function earnYear(L, rec) {
     var y = L.year, a = L.age;
+    if (rec) rec.income = null;
     if (!L.job || L.job === 'home' || L.school || a < 12 || a > 75) return;
     if (y >= FUTURE_FROM) return;
     if (L.sex === 'f' && L.married && L.job !== 'farm' && y < 1985 && L.kids) return;
@@ -878,8 +887,12 @@
     var ageF = a < 20 ? 0.45 : a < 30 ? 0.75 : a < 50 ? 1.1 : a < 60 ? 1.15 : a < 65 ? 0.7 : 0.4;
     var sexF = L.sex === 'f' ? 0.55 : 1;
     if (L.job === 'farm' || L.job === 'fish') sexF *= 0.75;
-    L.earn.real += base * ageF * sexF;
+    var real = base * ageF * sexF;
+    L.earn.real += real;
     L.earn.years++;
+    // その年のお金に直す（1871年の新貨条例で1両＝1円。それより前は両で数える）
+    var pr = L.H.price ? E.val(L.H.price, Math.min(y, 2025)) : 1;
+    if (rec) rec.income = { real: real, nominal: real * pr, cur: y < 1871 ? '両' : '円', est: true };
   }
 
   /* 年の終わり・亡くなる */
@@ -887,16 +900,18 @@
     L.alive = false; L.cause = cause; L.deathYear = L.year; L.deathAge = L.age;
     push(L, rec, '健康', text, evs || []);
   }
-  var CAUSE_TEXT = { '肺炎及び気管支炎': '肺炎で亡くなった', '全結核': '結核で亡くなった', '胃腸炎': '下痢や腸の病気（胃腸炎）で亡くなった', '脳血管疾患': '脳卒中で倒れ、亡くなった', '老衰': '老衰で、静かに息を引き取った', 'インフルエンザ': 'インフルエンザで亡くなった', '悪性新生物': 'がんで亡くなった', '心疾患': '心臓の病気で亡くなった', '不慮の事故': '事故で亡くなった' };
+  // 1900〜1970年の死因の順位の名前を、亡くなり方の書き方の名前に直す
+  var CAUSE_MAP = { '肺炎及び気管支炎': '肺炎', '全結核': '結核', '胃腸炎': '胃腸炎', '脳血管疾患': '脳出血', '老衰': '老衰', 'インフルエンザ': 'インフルエンザ', '悪性新生物': 'がん', '心疾患': '心不全', '不慮の事故': 'その他の事故' };
   function causeOf(L) {
     var H = L.H, y = Math.max(1900, Math.min(1970, Math.floor(L.year / 10) * 10)), a = L.age;
+    if (L.year >= 1975) { var cd = E.pickCause(L.C, a, L.sex, L.year, L.rnd, 'ill'); if (cd) return { n: cd.name, cd: cd }; }
     var list = (H.nat.causeRank[y] || H.nat.causeRank[1900] || []).filter(Boolean);
-    if (a < 5) return L.year < 1900 && L.rnd() < 0.3 ? { t: '疱瘡やはしかなどの病にかかり、幼くして亡くなった', n: '子どもの病気' } : { t: L.rnd() < 0.5 ? '肺炎で、幼くして亡くなった' : '下痢や腸の病気で、幼くして亡くなった', n: '子どもの病気' };
-    if (a >= 80 && L.rnd() < 0.45) return { t: CAUSE_TEXT['老衰'], n: '老衰' };
+    if (a < 5) return L.year < 1900 && L.rnd() < 0.3 ? { n: '疱瘡・はしか' } : { n: L.rnd() < 0.5 ? '肺炎' : '胃腸炎' };
+    if (a >= 80 && L.rnd() < 0.45) return { n: '老衰' };
     if (a < 70) list = list.filter(function (c) { return c.name !== '老衰'; });
     if (a < 45) list = list.filter(function (c) { return c.name !== '脳血管疾患'; });
     var c = pick(L.rnd, list, function (x) { return (x.rate || 1) * (a < 45 && x.name === '全結核' ? 3 : 1); });
-    return c ? { t: CAUSE_TEXT[c.name] || c.name + 'で亡くなった', n: c.name } : { t: '病気で亡くなった', n: '病気' };
+    return c ? { n: CAUSE_MAP[c.name] || c.name, rank: c.name } : { n: 'その他の病気' };
   }
   function finishYear(L, rec) {
     if (!L.alive) { L.log.push(rec); return; }
@@ -905,13 +920,19 @@
     if (a >= 60) L.stats.to60 = true;
     var q = dp(L, L.sex, a, y);
     if (a > 0 && L.rnd() < q || a >= 110) {
-      var c = y >= 1975 ? { t: a >= 85 ? CAUSE_TEXT['老衰'] : '病気で亡くなった', n: '病気' } : causeOf(L);
-      dieBy(L, rec, 'ill', c.t, [ev(L, y < 1975 ? 'ipss' : 'lifetable', y, a + '歳の人が1年のうちに亡くなる確率（平均寿命と乳児死亡率から推計）', (q * 100).toFixed(2) + '%', { est: y < 1975 }), ev(L, 'ipss', y < 1900 ? 1900 : Math.min(1970, Math.floor(y / 10) * 10), '死因の順位（' + (y < 1900 ? '1900年より前は1900年の順位を使用' : 'その年代') + '）', c.n, { est: y < 1900 })]);
+      var c = causeOf(L);
+      var st = E.deathStory(L, { kind: 'ill', cause: c.n });
+      if (L.abroad) st.text = st.text.replace(/(自宅|家|病院|診療所)で亡くなった/, '移り住んだ' + L.abroad + 'の地で亡くなった');
+      L.causeName = c.n;
+      dieBy(L, rec, 'ill', st.text, [ev(L, y < 1975 ? 'ipss' : 'lifetable', y, a + '歳の人が1年のうちに亡くなる確率（平均寿命と乳児死亡率から推計）', (q * 100).toFixed(2) + '%', { est: y < 1975 }),
+        c.cd ? ev(L, 'vital', c.cd.years[c.cd.years.length - 1], 'この年齢の死因のうち「' + c.n + '」の割合（' + c.cd.years[0] + '〜' + c.cd.years[c.cd.years.length - 1] + '年の死亡数から）', pct(c.cd.share)) :
+        ev(L, 'ipss', y < 1900 ? 1900 : Math.min(1970, Math.floor(y / 10) * 10), '死因の順位（' + (y < 1900 ? '1900年より前は1900年の順位を使用' : 'その年代') + '）', c.rank || c.n, { est: y < 1900 })].concat(st.evs));
       L.log.push(rec);
       return;
     }
     if (a === 0 && L.rnd() < q) {
-      dieBy(L, rec, 'ill', y < 1900 ? '生まれて1年もたたないうちに、病で亡くなった' : '生まれて1年もたたないうちに亡くなった', [ev(L, 'ipss', near(L.H.mort.q0, y), '0歳で亡くなる確率（乳児死亡率。1899年以前は江戸時代の研究の目安から推計）', (q * 100).toFixed(1) + '%', { est: y < 1900 })]);
+      var c0 = y >= 1975 ? (E.pickCause(L.C, 0, L.sex, y, L.rnd, 'ill') || { name: 'その他の病気' }).name : (L.rnd() < 0.5 ? '肺炎' : '胃腸炎');
+      dieBy(L, rec, 'ill', E.deathStory(L, { kind: 'ill', cause: c0 }).text, [ev(L, 'ipss', near(L.H.mort.q0, y), '0歳で亡くなる確率（乳児死亡率。1899年以前は江戸時代の研究の目安から推計）', (q * 100).toFixed(1) + '%', { est: y < 1900 })]);
       L.log.push(rec);
       return;
     }

@@ -243,6 +243,18 @@ const hs = S.nat.highSchool, univ = S.nat.univ, jc = S.nat.juniorCollege;
 // 1948〜1949年の高校進学率は1950年の値の目安
 hs.m[1948] = 0.42; hs.f[1948] = 0.3;
 
+/* ---------- その年のお金の価値（2025年を1とする物価の水準） ---------- */
+// 1970年からは消費者物価指数、それより前は Clio Infra の物価の上がり幅でさかのぼる。1819年より前は1819年と同じ（推計）
+const price = {};
+{
+  const cpi = C.nat.cpi, c25 = lin(cpi, 2025);
+  for (let y = 2026; y >= 1970; y--) price[y] = lin(cpi, y) / c25;
+  const inf = S.nat.inflation || {};
+  for (let y = 1969; y >= 1800; y--) price[y] = y >= 1819 ? price[y + 1] / (1 + (inf[y + 1] || 0) / 100) : price[1819];
+  for (const y of Object.keys(price)) price[y] = +price[y].toPrecision(5);
+  est.push('1819年より前の物価（1819年と同じとした）と、その年のお金に直した年収');
+}
+
 /* ---------- 書き出し ---------- */
 // 都道府県の名前（試験モードの束は3都道府県だけなので、昔の統計の表の名前から作る）
 const prefNames = Object.fromEntries(Object.entries(S.prefs).map(([c, p]) => [c, c === '01' ? '北海道' : c === '13' ? '東京都' : c === '26' || c === '27' ? p.name + '府' : p.name + '県']));
@@ -255,7 +267,7 @@ const H = {
   prov, prefW, urban, urbanPref, prefNames,
   ainuShare, ryukyuShi, mort,
   nat: { elem, mid, terakoya, higherPrimary, higherOld, hs, univ, jc, marriage, neverMarried, divorce, children, sectors, gdp: S.nat.gdp, causeRank: S.nat.causeRank, e0 },
-  events: eventsOut, moves: OLD_MOVES, manchuria: MANCHURIA_1945,
+  events: eventsOut, moves: OLD_MOVES, manchuria: MANCHURIA_1945, price,
   estimated: est
 };
 if (errors.length) { console.log('束を作れなかった：\n' + errors.join('\n')); process.exit(1); }

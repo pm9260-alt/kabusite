@@ -199,7 +199,7 @@ function vars(block) { const o = {}; block.replace(/(--[a-z0-9-]+)\s*:\s*(#[0-9a
   rec('使わないもの（グラデーション・影・ぼかし・下線・左側だけの色・明朝）がないか', f.length === 0, f.join('、'));
   const light = vars((css.match(/:root\s*\{([\s\S]*?)\}/) || [])[1] || '');
   const dark = vars((css.match(/:root\[data-theme="dark"\]\s*\{([\s\S]*?)\}/) || [])[1] || '');
-  const pairs = [['--text', '--bg'], ['--text', '--surface'], ['--sub', '--bg'], ['--sub', '--surface'], ['--accent', '--bg'], ['--accent', '--surface'], ['--on-accent', '--accent'], ['--world', '--bg'], ['--world', '--surface'], ['--warn', '--bg'], ['--warn', '--surface'], ['--prov-text', '--prov-bg']];
+  const pairs = [['--text', '--bg'], ['--text', '--surface'], ['--sub', '--bg'], ['--sub', '--surface'], ['--accent', '--bg'], ['--accent', '--surface'], ['--on-accent', '--accent'], ['--world', '--bg'], ['--world', '--surface'], ['--warn', '--bg'], ['--warn', '--surface'], ['--prov-text', '--prov-bg'], ['--reborn-text', '--reborn-bg']];
   const low = [];
   for (const [name, set] of [['明るい画面', light], ['暗い画面', dark]]) {
     for (const [fg, bg] of pairs) {
@@ -327,6 +327,7 @@ for (const by of OLD_YEARS) {
       old.lives++;
       old.prov[b.prov] = 1; old.pref[b.pref] = 1;
       if (L.kind === 'fish' && ['09', '10', '11', '19', '20', '21', '29'].includes(L.pref)) old.contra.push('海のない県で浜の村に生まれた');
+      if (L.kind === 'fish' && L.muniName) old.contra.push('浜の村に海沿いか分からない市区町村名を添えた');
       if (L.alive) old.err.push(by + '年生まれの人生が最後まで進まなかった');
       for (const r of L.log) {
         old.years++;

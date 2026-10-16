@@ -22,7 +22,9 @@ export const WIKI_PAGES = ['江戸時代の日本の人口統計', '壬申戸籍
 const OWID = [
   ['owid-life.csv', 'https://ourworldindata.org/grapher/life-expectancy.csv?country=JPN'],
   ['owid-u5.csv', 'https://ourworldindata.org/grapher/child-mortality.csv?country=JPN'],
-  ['owid-gdp.csv', 'https://ourworldindata.org/grapher/gdp-per-capita-maddison-project-database.csv?country=JPN']
+  ['owid-gdp.csv', 'https://ourworldindata.org/grapher/gdp-per-capita-maddison-project-database.csv?country=JPN'],
+  // 物価の上がり幅（Clio Infra、Zwart 2015）。昔の年の年収をその年のお金（両・円）に直すのに使う
+  ['clio-inflation.xlsx', 'https://clio-infra.eu/data/Inflation_Broad.xlsx']
 ];
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));

@@ -111,6 +111,7 @@ export const HISTORY_SOURCES = {
   gakusei: { name: '学制百年史 資料編（学齢児童数および就学児童数・中学校・高等女学校）', org: '文部科学省' },
   terakoya: { name: '寺子屋と識字（1877年の滋賀県の自署率 男89%・女39%）', org: 'Wikipedia「寺子屋」より' },
   owid: { name: '日本の平均寿命（1865年〜）と5歳までに亡くなる割合', org: 'Our World in Data' },
+  clio: { name: '日本の物価の上がり幅（Zwart 2015）', org: 'Clio Infra' },
   maddison: { name: '1人あたりの国内総生産（Maddison Project Database）', org: 'Our World in Data' },
   outcast: { name: '解放令（1871年）の時点の穢多の人数', org: 'Wikipedia「穢多」より' }
 };

@@ -347,6 +347,17 @@ for (const y of Object.keys(names)) if (!names[y].m || !names[y].f) delete names
   }
 }
 
+// 亡くなった場所の割合（病院・診療所・介護施設・老人ホーム・自宅・その他。1951年から）
+{
+  const j = load('nat-death-place');
+  if (j) {
+    const K = { '001100': 'hospital', '001200': 'clinic', '001300': 'care', '001500': 'nursing', '002100': 'home', '002200': 'other' };
+    const t = {};
+    for (const v of j.values) { const k = K[v['@cat01']], x = num(v); if (k && x != null) { const y = yearOf(v['@time']); (t[y] = t[y] || {})[k] = x / 100; } }
+    nat.deathPlace = t;
+  }
+}
+
 // 年齢層ごとの死因の割合（病気・事故など・自殺）：直近10年の死亡数を合わせて計算する
 {
   const j = load('nat-cause');
@@ -363,6 +374,52 @@ for (const y of Object.keys(names)) if (!names[y].m || !names[y].f) delete names
     nat.cause = {};
     for (const [b, o] of Object.entries(t)) nat.cause[b] = { ill: r4((o.all - o.ext) / o.all), acc: r4((o.ext - o.sui) / o.all), sui: r4(o.sui / o.all) };
     nat.causeYears = [...new Set(j.values.map(v => yearOf(v['@time'])))].sort();
+  }
+}
+
+// くわしい死因：年齢（10の区分）ごとに、直近10年の死亡数から割合を出す（亡くなり方の文に使う）
+{
+  const j = load('nat-cause-detail');
+  if (j) {
+    const NAME = {
+      '021002017': 'がん', '02100': 'がん', '02103': '胃がん', '02104': '大腸がん', '02106': '肝臓がん', '02108': 'すい臓がん', '02110': '肺がん', '02112': '乳がん', '02113': '子宮がん', '02115': '前立腺がん', '02119': '白血病',
+      '09202': '急性心筋梗塞', '09207': '心不全', '09301': 'くも膜下出血', '09302': '脳出血', '09303': '脳梗塞', '09400': '大動脈瘤・大動脈解離', '10200': '肺炎', '106012017': '誤嚥性肺炎', '10400': '慢性閉塞性肺疾患',
+      '04100': '糖尿病', '05100': '認知症', '06400': 'アルツハイマー病', '11300': '肝臓の病気', '14200': '腎不全', '01200': '結核', '01300': '敗血症', '18100': '老衰', '18200': '乳幼児突然死症候群', '16000': '生まれたときの病気',
+      '17000': '生まれつきの病気', '22201': '新型コロナウイルス感染症', '101002017': 'インフルエンザ', '10100': 'インフルエンザ',
+      '20101': '交通事故', '201022017': '転倒・転落', '20102': '転倒・転落', '20103': '溺れる事故', '20104': '窒息', '20105': '火事', '20106': '中毒', '20107': 'その他の事故', '20300': '他殺', '20200': '自殺'
+    };
+    // 「がん」は部位別を引いた残り。同じ名前は年代の違う番号を足す
+    const BANDS = [[0, 0], [1, 4], [5, 14], [15, 24], [25, 39], [40, 54], [55, 64], [65, 74], [75, 84], [85, 200]];
+    const bandOf = nm => { const m = /^(\d+)(?:～(\d+))?歳/.exec(nm || ''); if (!m) return null; const lo = +m[1]; return BANDS.findIndex(b => lo >= b[0] && lo <= b[1]); };
+    const t = BANDS.map(() => ({}));
+    for (const v of j.values) {
+      const nm = j.classes.cat01[v['@cat01']] || '';
+      if (/^0歳/.test(nm) === false && !/^\d+(～\d+)?歳|以上/.test(nm)) continue;
+      const lo = /以上/.test(nm) ? parseInt(nm, 10) : null;
+      let b = lo != null ? (lo >= 85 ? 9 : null) : bandOf(nm);
+      if (/^0歳$/.test(nm)) b = 0;
+      const x = num(v); if (b == null || b < 0 || x == null) continue;
+      const code = v['@cat03'];
+      const key = code === '00000' ? '_all' : code === '20000' ? '_ext' : NAME[code];
+      if (!key) continue;
+      t[b][key] = (t[b][key] || 0) + x;
+    }
+    const sites = ['胃がん', '大腸がん', '肝臓がん', 'すい臓がん', '肺がん', '乳がん', '子宮がん', '前立腺がん', '白血病'];
+    nat.causeDetail = { bands: BANDS, years: [...new Set(j.values.map(v => yearOf(v['@time'])))].sort(), dist: t.map(o => {
+      const all = o._all || 0; if (!all) return {};
+      const r = {};
+      const ext = o._ext || 0;
+      if (o['がん'] != null) o['がん'] = Math.max(0, o['がん'] - sites.reduce((a, k) => a + (o[k] || 0), 0));
+      let ill = 0, acc = 0;
+      for (const [k, x] of Object.entries(o)) {
+        if (k[0] === '_') continue;
+        r[k] = r4(x / all);
+        if (['交通事故', '転倒・転落', '溺れる事故', '窒息', '火事', '中毒', 'その他の事故', '他殺', '自殺'].includes(k)) acc += x; else ill += x;
+      }
+      r['その他の病気'] = r4(Math.max(0, all - ext - ill) / all);
+      r['その他の外因'] = r4(Math.max(0, ext - acc) / all);
+      return r;
+    }) };
   }
 }
 

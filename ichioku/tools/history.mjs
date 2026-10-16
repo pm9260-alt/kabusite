@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ipssRows, num } from './ipss-lite.mjs';
+import { readSheets } from './xlsx-lite.mjs';
 import { PROVINCES } from '../data-src/history.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -147,6 +148,15 @@ guard('平均寿命（1865年〜、Our World in Data）と1人あたりの豊か
   out.nat.owidLife = rd('owid-life.csv', 1975);
   out.nat.u5 = Object.fromEntries(Object.entries(rd('owid-u5.csv', 1975)).map(([k, v]) => [k, +(v / 100).toFixed(4)]));
   out.nat.gdp = rd('owid-gdp.csv', 2022);
+});
+
+guard('物価の上がり幅（1819〜2010年、Clio Infra）', () => {
+  const sh = readSheets(fs.readFileSync(path.join(RAW, 'clio-inflation.xlsx')));
+  const long = sh.find(x => /Long/.test(x.name));
+  const o = {};
+  for (const r of long.rows) if (r[1] === 'Japan' && r[3] != null) o[+r[2]] = +(+r[3]).toFixed(2);
+  if (Object.keys(o).length < 100) throw new Error('日本の行が少ない');
+  out.nat.inflation = o;
 });
 
 /* ---------- 都道府県 ---------- */

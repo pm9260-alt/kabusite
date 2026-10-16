@@ -814,8 +814,9 @@
     var real = nominal * val(C.nat.cpi, WAGE_YEAR) / val(C.nat.cpi, yy);
     return { nominal: nominal, real: real, future: y > WAGE_YEAR };
   }
-  function earnYear(L) {
+  function earnYear(L, rec) {
     var w = wageOf(L, L.year, L.age);
+    if (rec) rec.income = w ? { nominal: w.nominal, real: w.real, cur: '円', future: w.future } : null;
     if (!w) return;
     L.earn.real += w.real; L.earn.nominal += w.nominal; L.earn.years++;
     if (!L.job.reg) L.earn.nonregYears++;
@@ -870,7 +871,7 @@
         household(L).forEach(function (m) {
           if (rnd() < r.dead) { m.alive = false; m.dy = y; push(L, rec, '家庭', e.title + 'で、' + relWord(L, m) + 'の' + m.name + 'が亡くなった。', [rateEv('亡くなった人の割合', r.dead)]); }
         });
-        if (rnd() < r.dead) { dieBy(L, rec, 'disaster', y + '年、' + a + '歳のとき、' + e.title + 'で亡くなった。', [rateEv('亡くなった人の割合', r.dead)]); return; }
+        if (rnd() < r.dead) { var dst = deathStory(L, { kind: 'disaster', head: e.title + 'に遭い、亡くなった' }); dieBy(L, rec, 'disaster', dst.text, [rateEv('亡くなった人の割合', r.dead)]); return; }
       }
       // 家を失う・避難して町を離れる
       var moved = false;
@@ -902,7 +903,7 @@
 
   function finishYear(L, rec) {
     var C = L.C, y = L.year, a = L.age, rnd = L.rnd;
-    earnYear(L);
+    earnYear(L, rec);
     if (!L.alive) return advance(L, rec);
     {
       var dp = deathProb(C, L.P, L.sex, a, y);
@@ -929,14 +930,147 @@
     var C = L.C, a = L.age, rnd = L.rnd, y = L.year;
     var cw = a < 15 ? C.nat.cause.child : a < 40 ? C.nat.cause.young : a < 65 ? C.nat.cause.mid : C.nat.cause.old;
     var cause = pick(rnd, ['ill', 'acc', 'sui'], function (k) { return cw[k]; });
-    var t = y + '年、' + a + '歳で' + ({ ill: '病気のため亡くなった。', acc: '事故のため亡くなった。', sui: '自ら命を絶った。' })[cause];
-    L.alive = false; L.deathAge = a; L.deathYear = y; L.cause = cause;
+    var cd = pickCause(C, a, L.sex, y, rnd, cause);
+    var st = deathStory(L, { kind: cause, cause: cd });
+    L.alive = false; L.deathAge = a; L.deathYear = y; L.cause = cause; L.causeName = cd ? cd.name : null;
     rec.dead = true;
     if (cause === 'sui') rec.hotline = true;
-    push(L, rec, '健康', t, [
+    push(L, rec, '健康', st.text, [
       ev(C, 'lifetable', y, a + '歳の人が1年のうちに亡くなる確率（生命表から推計）', (dp * 100).toFixed(2) + '%'),
-      ev(C, cause === 'sui' ? 'suicide' : 'vital', y, '年齢別の死因の割合', pct(cw[cause]))
-    ]);
+      ev(C, cause === 'sui' ? 'suicide' : 'vital', y, '年齢別の死因の割合（病気・事故など・自殺）', pct(cw[cause]))
+    ].concat(cd ? [ev(C, 'vital', cd.years[cd.years.length - 1], 'この年齢の死因のうち「' + cd.name + '」の割合（' + cd.years[0] + '〜' + cd.years[cd.years.length - 1] + '年の死亡数から）', pct(cd.share))] : []).concat(st.evs));
+  }
+
+  /* ---------- 亡くなり方をくわしく書く（昔の人生の進め方でも使う） ---------- */
+  var ACC_NAMES = ['交通事故', '転倒・転落', '溺れる事故', '窒息', '火事', '中毒', 'その他の事故', '他殺', 'その他の外因'];
+  // 年齢・性別・年に合う死因を、人口動態統計の死因の割合から選ぶ。kind を渡すとその種類（ill・acc・sui）の中から選ぶ
+  function pickCause(C, a, sex, y, rnd, kind) {
+    var D = C.nat.causeDetail;
+    if (!D || !D.dist) return null;
+    var bi = 0;
+    for (var i = 0; i < D.bands.length; i++) if (a >= D.bands[i][0] && a <= D.bands[i][1]) bi = i;
+    var d = D.dist[bi] || {};
+    var keys = Object.keys(d).filter(function (k) {
+      if (sex === 'm' && (k === '乳がん' || k === '子宮がん')) return false;
+      if (sex === 'f' && k === '前立腺がん') return false;
+      if (k === '新型コロナウイルス感染症' && y < 2020) return false;
+      var kk = k === '自殺' ? 'sui' : ACC_NAMES.indexOf(k) >= 0 ? 'acc' : 'ill';
+      return !kind || kk === kind;
+    });
+    var name = pick(rnd, keys, function (k) { return d[k]; });
+    if (!name) return null;
+    return { name: name, share: d[name], kind: name === '自殺' ? 'sui' : ACC_NAMES.indexOf(name) >= 0 ? 'acc' : 'ill', years: D.years };
+  }
+  // 病気ごとの経過（統計ではなく、その病気でよく見られる経過の書き方）
+  var COURSE = {
+    'がん': ['がんが見つかったのは、亡くなる前の年だった。治療を続けたが、少しずつ食事がとれなくなっていった', 'がんが体のあちこちに広がっていると告げられてから、半年ほどだった'],
+    '胃がん': ['胃のあたりの痛みと胸やけが続き、検査で胃がんと分かった。手術を受けたが、やがて再発した'],
+    '大腸がん': ['便に血が混じるようになり、大腸がんと分かった。治療を続けたが、病は進んでいった'],
+    '肝臓がん': ['体のだるさと黄だんが出て、肝臓がんと分かった。見つかったときには、すでに進んでいた'],
+    'すい臓がん': ['背中の痛みと体重の減りが続き、すい臓がんと分かった。見つかってから数か月だった'],
+    '肺がん': ['咳と息苦しさが続き、肺がんと分かった。治療を重ねたが、息をするのが少しずつ苦しくなっていった'],
+    '乳がん': ['胸のしこりに気づき、乳がんと分かった。何年も治療を続けたが、病は骨や肺に広がった'],
+    '子宮がん': ['子宮がんと分かり、手術と放射線の治療を受けたが、再び悪くなった'],
+    '前立腺がん': ['前立腺がんと分かり、長く治療を続けたが、病は骨に広がった'],
+    '白血病': ['熱とあざが続き、白血病と分かった。長い入院と治療が続いた'],
+    '急性心筋梗塞': ['胸の強い痛みを訴えて倒れ、そのまま帰らぬ人となった'],
+    '心不全': ['息切れと足のむくみが続き、入院と退院をくり返していた'],
+    'くも膜下出血': ['突然、激しい頭痛を訴えて倒れ、意識が戻らなかった'],
+    '脳出血': ['突然倒れて意識を失い、数日後に息を引き取った'],
+    '脳梗塞': ['ろれつが回らなくなって倒れ、体の片側が動かなくなった。それから寝たきりの日々が続いていた'],
+    '大動脈瘤・大動脈解離': ['胸から背中にかけての激しい痛みに襲われ、急いで運ばれたが助からなかった'],
+    '肺炎': ['かぜをこじらせて高い熱が下がらず、肺炎になった'],
+    '誤嚥性肺炎': ['飲み込む力が弱り、食べ物が気管に入って肺炎を起こした'],
+    '慢性閉塞性肺疾患': ['長年の咳と息切れが少しずつひどくなり、酸素の管を手放せなくなっていた'],
+    '糖尿病': ['長く患っていた糖尿病が悪くなり、体のあちこちが弱っていった'],
+    '認知症': ['物忘れが進み、やがて家族の顔も分からなくなっていった'],
+    'アルツハイマー病': ['アルツハイマー病で物忘れが進み、言葉も少なくなっていった'],
+    '肝臓の病気': ['肝臓の病気が進み、おなかに水がたまるようになっていた'],
+    '腎不全': ['腎臓の働きが落ち、体にむくみが出ていた'],
+    '結核': ['長く咳が続き、熱と寝汗でやせ細っていった'],
+    '敗血症': ['小さな傷から菌が体じゅうに回り、高い熱が出た'],
+    '老衰': ['食が細くなり、眠っている時間が長くなっていった。眠るように息を引き取った'],
+    '乳幼児突然死症候群': ['眠っている間に、突然息をしなくなった'],
+    '生まれたときの病気': ['生まれたときから体が弱く、ずっと手当てを受けていた'],
+    '生まれつきの病気': ['生まれつきの病気があり、手術も受けていた'],
+    '新型コロナウイルス感染症': ['新型コロナウイルスに感染し、高い熱と息苦しさが続いた'],
+    'インフルエンザ': ['インフルエンザにかかり、高い熱が続いた'],
+    'その他の病気': ['病気で床につくようになり、そのまま回復しなかった'],
+    '交通事故': ['道を渡っているときに車にはねられた', '運転中に事故に遭った'],
+    '転倒・転落': ['転んで頭を強く打った', '高い所から落ちた'],
+    '溺れる事故': ['水の事故に遭い、溺れた'],
+    '窒息': ['食べ物をのどに詰まらせた'],
+    '火事': ['家が火事になり、逃げ遅れた'],
+    '中毒': ['有毒なガスを吸い込んだ'],
+    'その他の事故': ['思いがけない事故に遭った'],
+    'その他の外因': ['思いがけない出来事に巻き込まれた'],
+    '他殺': ['事件に巻き込まれ、命を奪われた'],
+    '胃腸炎': ['ひどい下痢と熱が続き、数日のうちに体が弱りきった'],
+    '疱瘡・はしか': ['高い熱と発疹が出て、何日も苦しんだ']
+  };
+  // 亡くなった場所（1951年からは人口動態統計の「死亡の場所」の割合。それより前は家で亡くなる人がほとんど）
+  function placeOfDeath(C, y, rnd, kind) {
+    if (kind === 'acc') return null;
+    var t = C.nat.deathPlace;
+    if (!t || y < 1951) return { w: '家', est: true, y: y };
+    var yy = Math.min(y, Math.max.apply(null, Object.keys(t).map(Number)));
+    var p = t[yy] || {};
+    var k = pick(rnd, ['hospital', 'clinic', 'care', 'nursing', 'home', 'other'], function (x) { return p[x] || 0; });
+    return { w: { hospital: '病院', clinic: '診療所', care: '介護施設', nursing: '老人ホーム', home: '自宅', other: '外出先' }[k], share: p[k], y: yy };
+  }
+  // 最期を見送った家族（生きていて別れていない配偶者・子・孫。いなければ、きょうだい）
+  function mourners(L) {
+    var y = L.year;
+    function ok(m) { return m.alive && !m.gone && m.by <= y; }
+    var list = L.members.filter(function (m) { return ok(m) && (m.role === '配偶者' || m.role === 'パートナー' || m.role === '子'); });
+    if (!list.length && L.age < 30) list = L.members.filter(function (m) { return ok(m) && (m.role === '父' || m.role === '母'); });
+    if (!list.length) list = L.members.filter(function (m) { return ok(m) && m.sib; });
+    var order = { '配偶者': 0, 'パートナー': 0, '父': 1, '母': 2, '子': 3 };
+    list.sort(function (p, q) { return ((order[p.role] != null ? order[p.role] : 4) - (order[q.role] != null ? order[q.role] : 4)) || p.by - q.by; });
+    return list.slice(0, 3);
+  }
+  function whoName(m) {
+    var r = m.role === '配偶者' ? (m.sex === 'm' ? '夫' : '妻') : m.role === '子' ? (m.sex === 'm' ? '息子' : '娘') : m.role;
+    return r + (m.name && !/アイヌ語/.test(m.name) ? 'の' + m.name : '');
+  }
+  // 文を組み立てる。o：{ kind: ill|acc|sui|disaster|war, cause: pickCause の結果か死因の名前, head: 先に置く文 }
+  function deathStory(L, o) {
+    var C = L.C, y = L.year, a = L.age, rnd = L.rnd;
+    var parts = [], evs = [];
+    if (o.head) parts.push(o.head);
+    var name = o.cause && (o.cause.name || o.cause);
+    if (o.kind === 'sui') {
+      // 自ら命を絶った場合は、方法や様子を書かない（報道の指針にそろえる）
+      parts.push('自ら命を絶った');
+    } else if (o.kind === 'ill' || o.kind === 'acc') {
+      var c = COURSE[name] || COURSE[o.kind === 'acc' ? 'その他の事故' : 'その他の病気'];
+      var line = c[Math.floor(rnd() * c.length)];
+      if (name === '転倒・転落') line = a >= 65 ? '家の中で転んで頭を強く打った' : '仕事中に高い所から落ちた';
+      if (name === '溺れる事故' && a >= 65 && y >= 1960) line = '入浴中に意識を失い、湯船で溺れた';
+      if (name === '窒息' && a < 2) line = '寝ている間に息ができなくなった';
+      if (name === '交通事故' && y < 1930) line = '荷車や馬車の事故に巻き込まれた';
+      if (name === '腎不全' && y >= 1970) line = '腎臓の働きが落ち、週に何度も人工透析に通っていた';
+      if (name === '心不全' && y < 1950) line = '息切れと足のむくみが続き、床につく日が増えていった';
+      parts.push(line);
+    }
+    // 場所と看取り
+    var sudden = o.kind === 'acc' || o.kind === 'disaster' || o.kind === 'war' || ['急性心筋梗塞', 'くも膜下出血', '大動脈瘤・大動脈解離', '乳幼児突然死症候群'].indexOf(name) >= 0;
+    if (o.kind === 'ill') {
+      var pl = placeOfDeath(C, y, rnd, o.kind);
+      if (pl) {
+        parts.push(pl.w + 'で亡くなった');
+        if (!pl.est) evs.push(ev(C, 'vital', pl.y, '亡くなった場所の割合（' + pl.w + '）', pct(pl.share)));
+        else evs.push(ev(C, 'vital', 1951, '亡くなった場所の割合（1951年は自宅82.5%。それより前の統計はない）', '', { est: true }));
+      }
+    }
+    if (o.kind !== 'war' && o.kind !== 'disaster' || o.withFamily) {
+      var ms = mourners(L);
+      if (ms.length && (!sudden || rnd() < 0.4)) parts.push(ms.map(whoName).join('、') + 'に看取られた');
+      else if (ms.length) parts.push('家族は最期に間に合わなかった');
+      else parts.push('最期を看取る家族はいなかった');
+    }
+    parts.push(a === 0 ? '生まれて1年もたっていなかった' : a + '歳だった');
+    return { text: y + '年、' + parts.join('。') + '。', evs: evs, name: name };
   }
 
   /* ---------- 場面の抽選 ---------- */
@@ -1060,6 +1194,7 @@
     FUTURE_FROM: FUTURE_FROM, CATS: CATS, TARGET: TARGET,
     makeRng: makeRng, nv: nv, val: val, deathProb: deathProb, invNorm: invNorm,
     pickPref: pickPref, newLife: newLife, step: step, resolve: resolve, autoRun: autoRun,
-    cohort: cohort, majorTimeline: majorTimeline, familyList: familyList, fill: fill, sceneOk: sceneOk
+    cohort: cohort, majorTimeline: majorTimeline, familyList: familyList, fill: fill, sceneOk: sceneOk,
+    pickCause: pickCause, deathStory: deathStory, ev: ev
   };
 });

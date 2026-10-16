@@ -34,6 +34,11 @@
         <div id="place" class="place"></div>
       </div>
     </header>
+    <div class="nums" id="nums" aria-label="いつも更新される数字">
+      <div class="num-box"><span class="k">その年の年収</span><span class="v" id="num-income">—</span><span class="n" id="num-income-n"></span></div>
+      <div class="num-box"><span class="k">ここまでの稼ぎ</span><span class="v" id="num-earn">—</span><span class="n">今のお金の価値</span></div>
+      <div class="num-box"><span class="k">同い年の人で生きている割合</span><span class="v" id="num-alive">—</span><span class="n" id="num-alive-n"></span></div>
+    </div>
     <div class="block">
       <h2 class="h-world">その年の世の中</h2>
       <ul id="world" class="list"></ul>
@@ -43,6 +48,11 @@
       <ul id="events" class="list"></ul>
       <p class="hint">出来事を押すと、もとになった統計が出ます</p>
     </div>
+    <div class="block">
+      <h2 class="h-self">家系図</h2>
+      <div class="tree-wrap" id="tree"></div>
+      <p class="hint">これまでに出てきた3親等までの家族。亡くなった人は灰色で、亡くなった年を添えています</p>
+    </div>
     <div id="branch" class="branch" hidden></div>
     <div id="hotline" class="hotline" hidden></div>
     <nav class="controls" aria-label="進め方">
@@ -51,6 +61,7 @@
       <button type="button" class="btn-sub" id="next">次の年へ</button>
       <button type="button" class="btn-sub" id="family">家族</button>
       <button type="button" class="btn-sub" id="log">これまで</button>
+      <button type="button" class="btn-reborn" id="reborn">生まれ変わる</button>
     </nav>
   </section>
 

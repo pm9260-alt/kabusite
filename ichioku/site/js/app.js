@@ -81,6 +81,148 @@
     });
   }
 
+
+  /* ---------- いつも更新される数字 ---------- */
+  // 千円単位の額を、その年のお金の単位で書く（1871年より前は両。1両＝1円として数える）
+  function money(k, cur) {
+    var v = k * 1000;
+    if (cur === '両') {
+      if (v >= 10) return '約' + Math.round(v) + '両';
+      if (v >= 1) return '約' + (Math.round(v * 2) / 2) + '両';
+      return '約' + Math.max(1, Math.round(v * 4)) + '分';
+    }
+    if (v >= 1e8) return '約' + (v / 1e8).toFixed(1).replace(/\.0$/, '') + '億円';
+    if (v >= 1e5) return '約' + Math.round(v / 1e4).toLocaleString('ja-JP') + '万円';
+    if (v >= 1e4) return '約' + (v / 1e4).toFixed(1).replace(/\.0$/, '') + '万円';
+    return '約' + Math.round(v).toLocaleString('ja-JP') + '円';
+  }
+  // 同じ年・同じ性別に生まれた人のうち、その年齢まで生きている割合（生命表から。災害や戦争は含まない）
+  function survival(age) {
+    var l = 1, v = Object.create(L);
+    for (var a = 0; a < age; a++) {
+      var q = L.old ? O.deathProb(v, L.sex, a, L.by + a) : E.deathProb(C, P, L.sex, a, L.by + a);
+      l *= 1 - q;
+    }
+    return l;
+  }
+  function renderNums(r) {
+    var inc = r.income;
+    if (inc && inc.nominal > 0) {
+      $('num-income').textContent = money(inc.nominal, inc.cur);
+      $('num-income-n').textContent = inc.cur === '両' ? 'その年のお金（両）・推計' : inc.future ? '2025年の水準のまま' : 'その年のお金' + (inc.est ? '・推計' : '');
+    } else { $('num-income').textContent = '収入なし'; $('num-income-n').textContent = r.age < 15 ? '子ども' : '働いていない年'; }
+    $('num-earn').textContent = L.earn && L.earn.real > 0 ? money(L.earn.real) : '0円';
+    var sv = survival(r.age);
+    $('num-alive').textContent = (sv * 100 >= 10 ? Math.round(sv * 100) : (sv * 100).toFixed(1)) + '%';
+    $('num-alive-n').textContent = '生命表から（' + (L.sex === 'm' ? '男' : '女') + '）';
+  }
+
+  /* ---------- 家系図（3親等まで。これまでに出てきた人だけ） ---------- */
+  var SVGNS = 'http://www.w3.org/2000/svg';
+  function svg(tag, attrs, text) {
+    var e = document.createElementNS(SVGNS, tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    if (text != null) e.textContent = text;
+    return e;
+  }
+  function cssVar(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+  function renderTree(year) {
+    var box = $('tree');
+    clear(box);
+    if (!L) return;
+    var ms = L.members.filter(function (m) { return m.by <= year && !m.before; });
+    function rel(m) {
+      if (m.role === '配偶者') return m.sex === 'm' ? '夫' : '妻';
+      if (m.role === '子') return m.sex === 'm' ? '息子' : '娘';
+      return m.role;
+    }
+    function node(m, self) {
+      var dead = self ? false : (!m.alive && m.dy != null && m.dy <= year);
+      var age = self ? year - L.by : (dead ? m.dy - m.by : year - m.by);
+      return { label: self ? '自分' : rel(m), name: (self ? L.name : m.name) || '', sub: dead ? m.dy + '年没・' + age + '歳' : (m && m.gone ? '別れた' : age + '歳'), dead: dead, self: !!self, gone: !!(m && m.gone), by: self ? L.by : m.by, id: self ? 0 : m.id, m: m };
+    }
+    var NW = 88, NH = 46, GX = 8, GY = 26;
+    var rows = [[], [], [], [], []];
+    // 0：祖父母　1：父母　2：自分ときょうだい・配偶者　3：子　4：孫
+    var gpF = ms.filter(function (m) { return m.side === '父方'; }), gpM = ms.filter(function (m) { return m.side === '母方'; });
+    var dad = ms.filter(function (m) { return m.role === '父'; })[0], mom = ms.filter(function (m) { return m.role === '母'; })[0];
+    var sibs = ms.filter(function (m) { return m.sib; }).concat([{ selfMark: true, by: L.by }]).sort(function (a, b) { return a.by - b.by; });
+    var spouses = ms.filter(function (m) { return m.role === '配偶者' || m.role === 'パートナー'; });
+    var kids = ms.filter(function (m) { return m.role === '子'; }).sort(function (a, b) { return a.by - b.by; });
+    var grands = ms.filter(function (m) { return m.role === '孫'; });
+    var r2 = [];
+    sibs.forEach(function (m) { if (m.selfMark) { r2.push(node(null, true)); spouses.forEach(function (sp) { r2.push(node(sp)); }); } else r2.push(node(m)); });
+    var pos = {};
+    // 自分の列を基準に横の位置を決める
+    r2.forEach(function (n, i) { n.x = i * (NW + GX); n.y = 2 * (NH + GY); });
+    var selfN = r2.filter(function (n) { return n.self; })[0];
+    var sibsN = r2.filter(function (n) { return !n.m || n.m.sib || n.self; });
+    var cx = sibsN.length ? (sibsN[0].x + sibsN[sibsN.length - 1].x) / 2 : selfN.x;
+    var r1 = [];
+    if (dad) r1.push(node(dad)); if (mom) r1.push(node(mom));
+    r1.forEach(function (n, i) { n.x = cx - (r1.length * (NW + GX) - GX) / 2 + i * (NW + GX) + NW / 2 - NW / 2; n.y = NH + GY; });
+    var r0 = [];
+    function placeGp(list, under) {
+      var nodes = list.map(function (m) { return node(m); });
+      var w = nodes.length * (NW + GX) - GX;
+      var base = (under ? under.x + NW / 2 : cx) - w / 2;
+      nodes.forEach(function (n, i) { n.x = base + i * (NW + GX); n.y = 0; n.under = under; });
+      return nodes;
+    }
+    var dadN = r1.filter(function (n) { return n.m === dad; })[0], momN = r1.filter(function (n) { return n.m === mom; })[0];
+    var gF = placeGp(gpF, dadN), gM = placeGp(gpM, momN);
+    if (gF.length && gM.length) { var over = gF[gF.length - 1].x + NW + GX - gM[0].x; if (over > 0) gM.forEach(function (n) { n.x += over; }); }
+    r0 = gF.concat(gM);
+    var kidX0 = selfN.x + (spouses.length ? (NW + GX) / 2 : 0);
+    var r3 = kids.map(function (m) { return node(m); });
+    var kw = r3.length * (NW + GX) - GX;
+    r3.forEach(function (n, i) { n.x = kidX0 + NW / 2 - kw / 2 + i * (NW + GX); n.y = 3 * (NH + GY); });
+    var r4 = [];
+    r3.forEach(function (kn) {
+      var gs = grands.filter(function (g) { return g.parentId === kn.m.id; }).map(function (g) { return node(g); });
+      gs.forEach(function (g) { g.parent = kn; r4.push(g); });
+    });
+    var cur = -Infinity;
+    r3.forEach(function (kn) {
+      var gs = r4.filter(function (g) { return g.parent === kn; });
+      var w = gs.length * (NW + GX) - GX, x0 = Math.max(cur, kn.x + NW / 2 - w / 2);
+      gs.forEach(function (g, i) { g.x = x0 + i * (NW + GX); g.y = 4 * (NH + GY); });
+      if (gs.length) cur = x0 + w + GX;
+    });
+    // 人がいない段は詰める
+    var rowsAll = [r0, r1, r2, r3, r4], k2 = 0;
+    rowsAll.forEach(function (row) { if (!row.length) return; row.forEach(function (n) { n.y = k2 * (NH + GY); }); k2++; });
+    var all = r0.concat(r1, r2, r3, r4);
+    var minX = Math.min.apply(null, all.map(function (n) { return n.x; })), maxX = Math.max.apply(null, all.map(function (n) { return n.x + NW; }));
+    var maxY = Math.max.apply(null, all.map(function (n) { return n.y + NH; }));
+    var W = maxX - minX + 4, Hh = maxY + 4;
+    var g = svg('svg', { width: W, height: Hh, viewBox: (minX - 2) + ' -2 ' + W + ' ' + Hh, role: 'img', 'aria-label': '家系図（' + all.length + '人）' });
+    var line = cssVar('--line') || '#999', text = cssVar('--text') || '#111', sub = cssVar('--sub') || '#555', bg = cssVar('--bg') || '#fff', acc = cssVar('--accent') || '#06c', onAcc = cssVar('--on-accent') || '#fff', dead = cssVar('--dead') || '#888';
+    function link(a, b) { if (!a || !b) return; var y1 = a.y + NH, y2 = b.y, mid = (y1 + y2) / 2; g.appendChild(svg('path', { d: 'M' + (a.x + NW / 2) + ' ' + y1 + 'V' + mid + 'H' + (b.x + NW / 2) + 'V' + y2, fill: 'none', stroke: line, 'stroke-width': 1 })); }
+    function pair(a, b, dashed) { if (!a || !b) return; g.appendChild(svg('line', { x1: a.x + NW, y1: a.y + NH / 2, x2: b.x, y2: b.y + NH / 2, stroke: line, 'stroke-width': 1, 'stroke-dasharray': dashed ? '3 3' : '' })); }
+    // 線
+    if (gF.length === 2) pair(gF[0], gF[1]); if (gM.length === 2) pair(gM[0], gM[1]);
+    gF.forEach(function (n) { link(n, dadN); }); gM.forEach(function (n) { link(n, momN); });
+    if (dadN && momN) pair(dadN, momN);
+    var parentAnchor = dadN || momN;
+    r2.forEach(function (n) { if ((n.self || (n.m && n.m.sib)) && parentAnchor) link(parentAnchor, n); });
+    r2.forEach(function (n) { if (n.m && (n.m.role === '配偶者' || n.m.role === 'パートナー')) pair(selfN, n, n.gone); });
+    r3.forEach(function (n) { link(selfN, n); });
+    r4.forEach(function (n) { link(n.parent, n); });
+    // 人
+    all.forEach(function (n) {
+      var fill = n.self ? acc : bg, fg = n.self ? onAcc : n.dead ? dead : text, fg2 = n.self ? onAcc : n.dead ? dead : sub;
+      g.appendChild(svg('rect', { x: n.x, y: n.y, width: NW, height: NH, fill: fill }));
+      g.appendChild(svg('text', { x: n.x + NW / 2, y: n.y + 13, 'text-anchor': 'middle', 'font-size': 10, fill: fg2 }, n.label));
+      var nm = n.name.length > 7 ? n.name.slice(0, 7) + '…' : n.name;
+      g.appendChild(svg('text', { x: n.x + NW / 2, y: n.y + 27, 'text-anchor': 'middle', 'font-size': 12, 'font-weight': 700, fill: fg }, nm || '（名前なし）'));
+      g.appendChild(svg('text', { x: n.x + NW / 2, y: n.y + 40, 'text-anchor': 'middle', 'font-size': 10, fill: fg2 }, n.sub));
+    });
+    box.appendChild(g);
+    // 自分が見える位置へ
+    box.scrollLeft = Math.max(0, selfN.x - minX - box.clientWidth / 2 + NW / 2);
+  }
+
   /* ---------- 人生の画面 ---------- */
   function nextYear() {
     clearTimeout(timer);
@@ -110,6 +252,7 @@
   }
   function render(r) {
     drawAvatar('avatar', r.year, r.age);
+    renderNums(r);
     $('age').textContent = r.age;
     var era = r.eraLabel || eraOf(r.year);
     $('year-now').textContent = r.year + '年' + (era ? '（' + era + '）' : '');
@@ -142,6 +285,7 @@
     $('branch').hidden = !r.branch;
     renderHotline($('hotline'), !!r.hotline);
     $('next').disabled = !!r.branch;
+    renderTree(r.year);
   }
 
   function showBranch(br) {
@@ -211,6 +355,7 @@
     clearTimeout(timer);
     $('sheet-close').focus();
   }
+  function closeSheetQuiet() { $('sheet').hidden = true; sheetPaused = false; }
   function closeSheet() {
     $('sheet').hidden = true;
     sheetPaused = false;
@@ -362,6 +507,7 @@
     $('end-log').onclick = openLog;
     $('sheet-close').onclick = closeSheet;
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('sheet').hidden) closeSheet(); });
+    $('reborn').onclick = function () { clearTimeout(timer); closeSheetQuiet(); L = null; cur = null; born(); };
     $('again').onclick = function () { L = null; cur = null; show('top'); initPast(); };
   }
   function initPast() {
