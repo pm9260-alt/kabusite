@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>このサイトについて｜1億分の1</title>
 <link rel="stylesheet" href="css/style.css">
+<meta name="theme-color" content="#0a58a8">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<script src="js/prefs.js"></script>
 </head>
 <body>
 <main id="app">
@@ -31,12 +36,23 @@
       <h2 class="h-self">着想</h2>
       <p><a href="https://1in8b.life/ja/" rel="noopener">80億分の1（1in8b.life）</a>に着想を得て作りました。運営者の方から制作の許可をいただいています。</p>
     </div>
+    <div class="block">
+      <h2 class="h-self">画面の設定</h2>
+      <div class="settings" id="settings"></div>
+    </div>
     <footer class="foot">
       <a href="index.html">トップへ戻る</a>
+      <nav class="foot-links" aria-label="このサイトの案内">
+        <a href="about.html">このサイトについて</a>
+        <a href="privacy.html">プライバシーポリシー</a>
+        <a href="contact.html">問い合わせ先</a>
+        <a href="changelog.html">更新履歴</a>
+      </nav>
     </footer>
   </section>
 </main>
 <script>
+window.IchiokuPrefs && window.IchiokuPrefs.mount(document.getElementById('settings'));
 (function () {
   var ul = document.getElementById('sources');
   fetch('data/common.json').then(function (r) { return r.json(); }).then(function (c) {

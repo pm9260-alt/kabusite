@@ -901,7 +901,10 @@
   /* 年の終わり・亡くなる */
   function dieBy(L, rec, cause, text, evs) {
     L.alive = false; L.cause = cause; L.deathYear = L.year; L.deathAge = L.age;
-    push(L, rec, '健康', text, evs || []);
+    var e = push(L, rec, '健康', text, evs || []);
+    // 授業用の表示で使う短い一行
+    if (cause === 'war') e.short = L.age + '歳で、戦争のために亡くなった。';
+    else if (cause === 'disaster') e.short = L.age + '歳で、災害に遭って亡くなった。';
   }
   // 1900〜1970年の死因の順位の名前を、亡くなり方の書き方の名前に直す
   var CAUSE_MAP = { '肺炎及び気管支炎': '肺炎', '全結核': '結核', '胃腸炎': '胃腸炎', '脳血管疾患': '脳出血', '老衰': '老衰', 'インフルエンザ': 'インフルエンザ', '悪性新生物': 'がん', '心疾患': '心不全', '不慮の事故': 'その他の事故' };

@@ -6,6 +6,11 @@
 <title>1億分の1</title>
 <meta name="description" content="日本のどこかの町に、ある年に生まれ、統計の割合どおりに一生を送る人生シミュレーション">
 <link rel="stylesheet" href="css/style.css">
+<meta name="theme-color" content="#0a58a8">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<script src="js/prefs.js"></script>
 </head>
 <body>
 <main id="app">
@@ -22,8 +27,14 @@
     <p class="past" id="past"></p>
     <ul class="list" id="past-list"></ul>
     <button type="button" class="btn-sub" id="clear-all" hidden>記録をすべて消す</button>
+    <div class="settings" id="settings" aria-label="画面の設定"></div>
     <footer class="foot">
-      <a href="about.html">このサイトについて</a>
+      <nav class="foot-links" aria-label="このサイトの案内">
+        <a href="about.html">このサイトについて</a>
+        <a href="privacy.html">プライバシーポリシー</a>
+        <a href="contact.html">問い合わせ先</a>
+        <a href="changelog.html">更新履歴</a>
+      </nav>
       <p class="credit"><a href="https://1in8b.life/ja/" rel="noopener">80億分の1（1in8b.life）</a>に着想を得て作りました</p>
     </footer>
   </section>
@@ -170,5 +181,6 @@
 <script src="js/avatar.js"></script>
 <script src="js/card.js"></script>
 <script src="js/app.js"></script>
+<script>window.IchiokuPrefs && window.IchiokuPrefs.mount(document.getElementById('settings'));</script>
 </body>
 </html>

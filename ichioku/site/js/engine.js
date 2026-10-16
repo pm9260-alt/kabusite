@@ -923,7 +923,8 @@
     L.alive = false; L.deathAge = L.age; L.deathYear = L.year; L.cause = cause;
     L.queue = [];
     rec.dead = true;
-    push(L, rec, '健康', text, evs);
+    var e = push(L, rec, '健康', text, evs);
+    if (cause === 'disaster') e.short = L.age + '歳で、災害に遭って亡くなった。';
   }
 
   function finishYear(L, rec) {
@@ -939,7 +940,7 @@
     for (var i = 0; i < need; i++) {
       var s = pickScene(L);
       var mem = [];
-      if (s) push(L, rec, s.cat, fill(L, s.t, mem), [ev(C, s.src, y, s.what || '', s.val || '', { verified: !!s.verified })], { sid: s.id, mem: mem });
+      if (s) push(L, rec, s.cat, fill(L, s.t, mem), [ev(C, s.src, y, s.what || '', s.val || '', { verified: !!s.verified })], s.short ? { sid: s.id, mem: mem, short: s.short } : { sid: s.id, mem: mem });
       if (s && s.hl) rec.hotline = true;
     }
     if (!rec.events.length) L.stats.emptyYears++;
@@ -962,10 +963,13 @@
     L.alive = false; L.deathAge = a; L.deathYear = y; L.cause = cause; L.causeName = cd ? cd.name : null;
     rec.dead = true;
     if (cause === 'sui') rec.hotline = true;
-    push(L, rec, '健康', st.text, [
+    var de = push(L, rec, '健康', st.text, [
       ev(C, 'lifetable', y, a + '歳の人が1年のうちに亡くなる確率（生命表から推計）', (dp * 100).toFixed(2) + '%'),
       ev(C, cause === 'sui' ? 'suicide' : 'vital', y, '年齢別の死因の割合（病気・事故など・自殺）', pct(cw[cause]))
     ].concat(cd ? [ev(C, 'vital', cd.years[cd.years.length - 1], 'この年齢の死因のうち「' + cd.name + '」の割合（' + cd.years[0] + '〜' + cd.years[cd.years.length - 1] + '年の死亡数から）', pct(cd.share))] : []).concat(st.evs));
+    // 授業用の表示で使う短い一行
+    if (cause === 'sui') de.short = a + '歳で、自ら命を絶った。';
+    else if (cause === 'acc') de.short = a + '歳で、' + (cd && cd.name === '他殺' ? '事件に巻き込まれて' : '事故で') + '亡くなった。';
   }
 
 

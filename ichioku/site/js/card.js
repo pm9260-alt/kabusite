@@ -1,10 +1,10 @@
 /* 1億分の1 共有用の画像（誕生カード・最期のカード）
    1200×630 の横長。ゴシック体・1pxの線だけ・グラデーションや影なし・絵文字なし。
-   画面の明るさの設定にかかわらず、いつも明るい色で描く（共有先で読みやすいように）。 */
+   画面の明るさの設定にかかわらず、いつも明るい色で描く（共有先で見やすいように）。 */
 (function (root) {
   'use strict';
   var W = 1200, H = 630;
-  var BG = '#ffffff', TEXT = '#1a1a1a', SUB = '#555555', LINE = '#c9c9c6', ACCENT = '#0a58a8', SURF = '#f3f3f1';
+  var BG = '#ffffff', TEXT = '#1a1a1a', SUB = '#555555', RULE = '#c9c9c6', ACCENT = '#0a58a8', SURF = '#f3f3f1';
   var FONT = '"Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", Meiryo, sans-serif';
 
   function font(ctx, size, bold) { ctx.font = (bold ? '700 ' : '400 ') + size + 'px ' + FONT; }
@@ -35,7 +35,7 @@
   }
   function base(ctx) {
     ctx.fillStyle = BG; ctx.fillRect(0, 0, W, H);
-    ctx.strokeStyle = LINE; ctx.lineWidth = 1; ctx.strokeRect(0.5, 0.5, W - 1, H - 1);
+    ctx.strokeStyle = RULE; ctx.lineWidth = 1; ctx.strokeRect(0.5, 0.5, W - 1, H - 1);
     ctx.textBaseline = 'alphabetic';
   }
   // ドット絵を大きく描く（ぼかさない）
@@ -51,7 +51,7 @@
   }
   function title(ctx) {
     font(ctx, 26, true); ctx.fillStyle = ACCENT; ctx.fillText('1億分の1', 420, 92);
-    ctx.strokeStyle = LINE; ctx.beginPath(); ctx.moveTo(420, 112.5); ctx.lineTo(W - 48, 112.5); ctx.stroke();
+    ctx.strokeStyle = RULE; ctx.beginPath(); ctx.moveTo(420, 112.5); ctx.lineTo(W - 48, 112.5); ctx.stroke();
   }
 
   // 誕生カード：生まれた年（和暦つき）・場所・性別・名前・この年この所で生まれた割合

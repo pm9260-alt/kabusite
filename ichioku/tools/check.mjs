@@ -110,7 +110,7 @@ function texts() {
   for (const e of H.events) out.push(['昔の出来事 ' + e.id, [e.title, e.text, e.deadText, e.note, e.src.name].join(' ')]);
   for (const m of H.moves) out.push(['移り住む ' + m.id, m.text + ' ' + m.place]);
   for (const k of Object.keys(H.status)) out.push(['身分 ' + k, H.status[k].name + ' ' + H.status[k].note]);
-  for (const f of ['index.html', 'about.html', 'js/app.js', 'js/engine.js', 'js/history.js', 'js/avatar.js']) {
+  for (const f of ['index.html', 'about.html', 'privacy.html', 'contact.html', 'changelog.html', 'js/app.js', 'js/engine.js', 'js/history.js', 'js/avatar.js', 'js/card.js', 'js/prefs.js']) {
     const p = path.join(SITE, f);
     if (fs.existsSync(p)) out.push([f, stripCode(fs.readFileSync(p, 'utf8'))]);
   }
@@ -647,6 +647,48 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
   const avg = total / years;
   if (avg * 10 > 50) bad.push('1年あたりの計算が長い（平均 ' + avg.toFixed(2) + 'ミリ秒）');
   rec('I 同じ日に生まれた4人を毎年進めても、1年の計算が50ミリ秒以内か（古いスマホは10倍遅いとみる）', bad.length === 0, bad.join('、') || '平均 ' + avg.toFixed(2) + 'ミリ秒・いちばん長い年 ' + worst.toFixed(1) + 'ミリ秒（' + years + '年分）');
+}
+
+/* ---------- J サイトとしての周りの機能 ---------- */
+{
+  const bad = [];
+  const pages = ['index.html', 'about.html', 'privacy.html', 'contact.html', 'changelog.html'];
+  let man = null;
+  try { man = JSON.parse(fs.readFileSync(path.join(SITE, 'manifest.webmanifest'), 'utf8')); } catch (e) { bad.push('manifest.webmanifest が読めない'); }
+  if (man) {
+    for (const ic of man.icons || []) if (!fs.existsSync(path.join(SITE, ic.src))) bad.push('アイコンがない：' + ic.src);
+    if (!(man.icons || []).some(i => i.sizes === '512x512') || !(man.icons || []).some(i => i.sizes === '192x192')) bad.push('192と512の大きさのアイコンがそろっていない');
+    if (!man.start_url || man.display !== 'standalone') bad.push('ホーム画面から開く設定が足りない');
+  }
+  for (const f of pages) {
+    const p = path.join(SITE, f);
+    if (!fs.existsSync(p)) { bad.push(f + ' がない'); continue; }
+    const h = fs.readFileSync(p, 'utf8');
+    if (!h.includes('rel="manifest"')) bad.push(f + '：manifest を取り込んでいない');
+    if (!h.includes('js/prefs.js')) bad.push(f + '：明るさの設定を取り込んでいない');
+    for (const q of pages) if (q !== 'index.html' && !h.includes('href="' + q + '"') && f !== q) bad.push(f + '：' + q + ' への案内がない');
+  }
+  for (const f of ['index.html', 'about.html']) if (!fs.readFileSync(path.join(SITE, f), 'utf8').includes('id="settings"')) bad.push(f + '：明るさと授業用の表示の切り替えがない');
+  const pr = fs.readFileSync(path.join(SITE, 'js', 'prefs.js'), 'utf8');
+  for (const k of ["'auto'", "'light'", "'dark'", 'ichioku-theme', 'ichioku-class']) if (!pr.includes(k)) bad.push('prefs.js に ' + k + ' がない');
+  rec('J ホーム画面に追加（manifest とアイコン）・明るさの切り替え・ページ（プライバシー・問い合わせ先・更新履歴）がそろっているか', bad.length === 0, bad.slice(0, 8).join('、'));
+
+  // 授業用の表示：自ら命を絶つ・事件・事故・戦争・災害で亡くなった文と、つらい場面に短い一行が付いているか
+  const miss = []; let cnt = 0;
+  for (let i = 0; i < 3000 && cnt < 40; i++) {
+    let L;
+    if (i % 2) { const by = 1975 + i % 26, seed = i * 31337 + 7; L = E.autoRun(E.newLife(C, P[E.pickPref(C, by, E.makeRng(seed ^ 0x9e3779b9))], { year: by, seed })); }
+    else { const oy = 1900 + (i * 7) % 75, os = i * 7907 + 1, ob = O.pickBirth(C, H, oy, E.makeRng(os ^ 0x9e3779b9)); L = O.autoRun(O.newLife(C, H, P[ob.pref] || null, { year: oy, seed: os, birth: ob })); }
+    if (!['sui', 'acc', 'war', 'disaster'].includes(L.cause)) continue;
+    cnt++;
+    const last = L.log[L.log.length - 1], de = last.events.filter(e => e.cat === '健康').pop();
+    if (!de || !de.short) miss.push(L.by + '年生まれ（' + L.cause + '）');
+  }
+  const hlNoShort = C.scenes.filter(s => s.hl && /命を絶|傷つけ|消えてしまいたい/.test(s.t) && !s.short).map(s => s.id);
+  if (hlNoShort.length) miss.push('短い一行のない場面：' + hlNoShort.join('・'));
+  rec('J 授業用の表示：つらい亡くなり方と場面に短い一行が付いているか', miss.length === 0 && cnt > 0, miss.slice(0, 6).join('、') || cnt + '人分の亡くなり方を確かめた');
+  const contact = fs.readFileSync(path.join(SITE, 'contact.html'), 'utf8');
+  rec('問い合わせ先が載っているか', !/決めしだい/.test(contact), '運営者が問い合わせ先を決めたら contact.html に書く', '目標');
 }
 
 /* ---------- 結果 ---------- */

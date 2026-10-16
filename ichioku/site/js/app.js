@@ -15,6 +15,8 @@
     if (text != null) e.textContent = text;
     return e;
   }
+  // 授業用の表示では、つらい出来事を短い一行にする
+  function evText(e) { return e.short && window.IchiokuPrefs && window.IchiokuPrefs.classMode() ? e.short : e.t; }
   function clear(node) { while (node.firstChild) node.removeChild(node.firstChild); }
   function show(name) {
     ['top', 'life', 'end'].forEach(function (s) { $('screen-' + s).hidden = s !== name; });
@@ -587,8 +589,8 @@
       b.type = 'button';
       var key = r.year + ':' + i;
       b.appendChild(el('span', 'tag', (L.marks && L.marks[key] ? '印・' : '') + e.cat));
-      b.appendChild(document.createTextNode(e.t));
-      b.onclick = function () { openEvidence(e.t, e.ev, key); };
+      b.appendChild(document.createTextNode(evText(e)));
+      b.onclick = function () { openEvidence(evText(e), e.ev, key); };
       li.appendChild(b);
       ev.appendChild(li);
     });
@@ -765,13 +767,13 @@
       if (marked.length) {
         var md = el('div', 'logyear marked');
         md.appendChild(el('p', 'ly', '印を付けた出来事'));
-        marked.forEach(function (x) { md.appendChild(el('p', null, x.r.year + '年　' + x.r.age + '歳　' + x.e.t)); });
+        marked.forEach(function (x) { md.appendChild(el('p', null, x.r.year + '年　' + x.r.age + '歳　' + evText(x.e))); });
         c.appendChild(md);
       }
       L.log.concat(cur && L.log.indexOf(cur) < 0 ? [cur] : []).forEach(function (r) {
         var d = el('div', 'logyear');
         d.appendChild(el('p', 'ly', r.year + '年　' + r.age + '歳　' + r.place));
-        r.events.forEach(function (e) { d.appendChild(el('p', null, e.t)); });
+        r.events.forEach(function (e) { d.appendChild(el('p', null, evText(e))); });
         (r.autoPicked || []).forEach(function (t) { d.appendChild(el('p', 'auto-line', 'おまかせで選んだ：' + t)); });
         (L.notes || []).filter(function (n) { return n.year === r.year && n.text; }).forEach(function (n) { d.appendChild(el('p', 'note-line', r.age + '歳の問い「' + n.q + '」　' + n.text)); });
         c.appendChild(d);
@@ -834,9 +836,9 @@
       c.appendChild(el('p', 'note', r.place));
       if (!r.events.length) c.appendChild(el('p', null, 'この年の記録はありません'));
       r.events.forEach(function (e, i) {
-        var b = el('button', 'item', e.t);
+        var b = el('button', 'item', evText(e));
         b.type = 'button';
-        b.onclick = function () { openEvidence(e.t, e.ev, r.year + ':' + i); };
+        b.onclick = function () { openEvidence(evText(e), e.ev, r.year + ':' + i); };
         c.appendChild(b);
       });
       (r.autoPicked || []).forEach(function (t) { c.appendChild(el('p', 'auto-line', 'おまかせで選んだ：' + t)); });
