@@ -218,7 +218,7 @@ function vars(block) { const o = {}; block.replace(/(--[a-z0-9-]+)\s*:\s*(#[0-9a
 
 /* ---------- 4. 人生を自動で回す ---------- */
 const expCache = {};
-const sim = { lives: 0, catAll: {}, catPre: {}, empty: 0, dupe: 0, contra: [], yearOut: [], univ: { s: 0, n: 0, t: 0 }, life: { s: 0, n: 0, t: 0 }, marr: { s: 0, n: 0, t: 0 }, nonreg: { s: 0, n: 0, t: 0 }, muniHit: {} };
+const sim = { lives: 0, catAll: {}, catPre: {}, empty: 0, dupe: 0, contra: [], yearOut: [], univ: { s: 0, n: 0, t: 0 }, life: { s: 0, n: 0, t: 0 }, marr: { s: 0, n: 0, t: 0 }, nonreg: { s: 0, n: 0, t: 0 }, dual: { s: 0, n: 0, t: 0 }, sib: { s: 0, n: 0, t: 0 }, muniHit: {} };
 const sceneById = Object.fromEntries(C.scenes.map(s => [s.id, s]));
 const t0 = Date.now();
 for (const by of YEARS) {
@@ -260,8 +260,19 @@ for (const by of YEARS) {
     if (L.deathAge === undefined || L.deathAge >= 18) { sim.univ.n++; sim.univ.s += L.stats.univ ? 1 : 0; sim.univ.t += E.val(P0.s.univ, by + 18); }
     if (L.deathAge === undefined || L.deathAge >= 50) { sim.marr.n++; sim.marr.s += L.everMarried ? 1 : 0; sim.marr.t += E.val(C.nat.everMarried[L.sex], by); }
     sim.life.n++; sim.life.s += L.deathAge; sim.life.t += expectedLife(P0, L.sex, by);
+    // 母が働いている割合（共働きの割合）と、家の子どもの人数（母の世代の子どもの数の割合を、子どもの側から見た平均）
+    sim.dual.n++; sim.dual.s += L.momJob ? 1 : 0; sim.dual.t += E.val(C.nat.dualIncome, by);
+    if (L.sibK) { const sd = sibAt(C.nat.sibDist, L.members.find(m => m.role === '母').by); const w = sd.map((x, i) => x * (i + 1)); const tw = w.reduce((a, b) => a + b, 0); sim.sib.n++; sim.sib.s += L.sibK; sim.sib.t += w.reduce((a, x, i) => a + x * (i + 1), 0) / tw; }
     for (const [y, nr] of Object.entries(L.stats.nonreg)) if (+y <= 2025) { sim.nonreg.n++; sim.nonreg.s += nr ? 1 : 0; sim.nonreg.t += E.val(C.nat.nonreg, +y) / 100; }
   }
+}
+function sibAt(t, by) {
+  if (Array.isArray(t)) return t;
+  const ks = Object.keys(t).map(Number).sort((a, b) => a - b);
+  if (by <= ks[0]) return t[ks[0]];
+  if (by >= ks[ks.length - 1]) return t[ks[ks.length - 1]];
+  const i = ks.findIndex(k => k >= by), a = ks[i - 1], b = ks[i], w = (by - a) / (b - a);
+  return t[a].map((x, j) => x * (1 - w) + t[b][j] * w);
 }
 function expectedLife(P0, sex, by) {
   const k = P0.code + sex + by;
@@ -306,6 +317,21 @@ cmp('大学進学率が元の統計から±3ポイント以内か', sim.univ, 10
 cmp('平均寿命が元の統計から±3年以内か', sim.life, 1, '歳');
 cmp('婚姻率（50歳までに結婚）が元の統計から±3ポイント以内か', sim.marr, 100, '%');
 cmp('非正規の割合（25〜34歳）が元の統計から±3ポイント以内か', sim.nonreg, 100, '%');
+cmp('母が働いている家の割合が共働きの割合（労働力調査）から±3ポイント以内か', sim.dual, 100, '%');
+{
+  const o = sim.sib, a = o.n ? o.s / o.n : 0, b = o.n ? o.t / o.n : 0;
+  rec('家の子どもの人数の平均が、母の世代の子どもの数の割合（出生動向基本調査）から±0.1人以内か', o.n > 0 && Math.abs(a - b) <= 0.1, '回した結果 ' + a.toFixed(2) + '人／元の統計 ' + b.toFixed(2) + '人');
+}
+// tools/extra.py で取り出した数字：資料との照らし合わせで残った問題がないか、印が全国に付いているか
+{
+  const X = fs.existsSync(path.join(ROOT, 'data-src', 'stats', 'extra.json')) ? JSON.parse(fs.readFileSync(path.join(ROOT, 'data-src', 'stats', 'extra.json'), 'utf8')) : null;
+  rec('報告書などから取り出した数字（extra.json）に、合わなかった名前が残っていないか', !!X && X.problems.length === 0, X ? X.problems.slice(0, 8).join('、') : 'extra.json がない（python3 -I tools/extra.py で作る）');
+  const all = Object.values(P).flatMap(p => p.munis);
+  const sn = all.filter(m => m.snow).length, co = all.filter(m => m.coast).length;
+  rec('雪と海沿いの印が全国の市区町村に付いているか（試験用の12市区町村だけでないか）', sn > 300 && co > 300, '雪 ' + sn + '・海沿い ' + co + ' 市区町村（全 ' + all.length + '）');
+  const noOld = all.filter(m => !(Math.min(...Object.keys(m.share).map(Number)) <= 1975)).length;
+  rec('1975〜1994年生まれの市区町村の割合が全市区町村にあるか', noOld === 0, noOld ? noOld + ' 市区町村で1995年の割合を代用' : '1995年より前は推計の印付き');
+}
 
 /* ---------- 5. 1000〜1974年生まれ ---------- */
 {

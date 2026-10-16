@@ -89,6 +89,17 @@
     return { v: s.vs[k], y: s.ys[k] };
   }
   function val(series, year) { var r = nv(series, year); return r ? r.v : 0; }
+  // きょうだいの人数の割合：配列ならそのまま、生まれ年ごとの表なら前後の世代の間をならす
+  function sibDistFor(t, by) {
+    if (Array.isArray(t)) return t;
+    var ks = Object.keys(t).map(Number).sort(function (a, b) { return a - b; });
+    if (by <= ks[0]) return t[ks[0]];
+    if (by >= ks[ks.length - 1]) return t[ks[ks.length - 1]];
+    for (var i = 1; i < ks.length; i++) if (by <= ks[i]) {
+      var a = ks[i - 1], b = ks[i], w = (by - a) / (b - a);
+      return t[a].map(function (x, j) { return x * (1 - w) + t[b][j] * w; });
+    }
+  }
 
   /* ---------- 根拠（出来事を押すと出る統計） ---------- */
   function ev(C, src, year, what, value, extra) {
@@ -219,7 +230,10 @@
       if (!surviveUntil(L, m, y)) { m.alive = false; m.dy = m.dy || y - 1; m.before = true; }
     });
     // きょうだい
-    var k = pick(rnd, [1, 2, 3, 4], function (n) { return C.nat.sibDist[n - 1]; });
+    // 母の生まれ年に近い世代の「子どもの数の割合」から、子どもの側から見た人数（人数の多い家ほど当たりやすい）で引く
+    var sd = sibDistFor(C.nat.sibDist, momBy);
+    var k = pick(rnd, [1, 2, 3, 4], function (n) { return n * sd[n - 1]; });
+    L.sibK = k;
     var pos = Math.floor(rnd() * k);
     var gaps = [], i;
     for (i = 0; i < k; i++) gaps.push(i === 0 ? 0 : 2 + Math.floor(rnd() * 3));
@@ -400,11 +414,12 @@
     }
     if (a === 6) { L.stage = 'school'; push(L, rec, '学歴と仕事', '地元の公立小学校に入学した。' + (L.place.kind === '町村' ? '家から学校まで、歩いて30分ほどかかる。' : ''), [ev(C, 'school', y, '小学校の在学者', '')]); }
     // 転校（小学校のあいだ）
-    if (a >= 7 && a <= 11 && !L.moved && P.munis.length > 1 && rnd() < C.nat.moveChild) {
+    var mc = typeof C.nat.moveChild === 'number' ? C.nat.moveChild : val(C.nat.moveChild, y);
+    if (a >= 7 && a <= 11 && !L.moved && P.munis.length > 1 && rnd() < mc) {
       var nm = pickMuni(P, y, rnd, L.place.muni);
       L.moved = true;
       L.place.muni = nm.code; L.place.muniName = nm.name; L.place.kind = nm.kind; L.place.muniObj = nm;
-      push(L, rec, '家庭', '父の仕事の都合で' + nm.name + 'へ引っ越し、転校した。', [ev(C, 'migration', y, '県内の市区町村間の移動', '')]);
+      push(L, rec, '家庭', '父の仕事の都合で' + nm.name + 'へ引っ越し、転校した。', [typeof C.nat.moveChild === 'number' ? ev(C, 'migration', y, '県内の市区町村間の移動', '') : ev(C, 'census', nv(C.nat.moveChild, y).y + 3, '10〜14歳のうち、5年のあいだに同じ県の別の市区町村から引っ越してきた子の割合（1年あたりに直した値）', (mc * 100).toFixed(1) + '%')]);
     }
     if (a === 12) L.queue.push(branchMiddle(L));
     if (a === 15) {
@@ -460,7 +475,8 @@
         L.goods[g.id] = y;
         if (a >= 3) {
           var own = a >= 22 || L.place.away;
-          push(L, rec, '時代', own ? g.own : g.home, [ev(C, g.src, nv(g.diff, y).y, g.name + 'を持っている世帯の割合', Math.round(d * 100) + '%')]);
+          var gy = nv(g.diff, y).y;
+          push(L, rec, '時代', own ? g.own : g.home, [ev(C, g.srcFrom && gy < g.srcFrom ? g.srcEarly : g.src, gy, g.name + 'を持っている世帯の割合', Math.round(d * 100) + '%', g.estBefore && gy < g.estBefore ? { est: true } : undefined)]);
         }
       }
     });
@@ -612,7 +628,7 @@
       push(L, rec, '家庭', order + 'の' + c.name + 'が生まれた。', [ev(C, 'fertility', y, '結婚した夫婦の子どもの数（完結出生児数）', '')]);
       if (L.sex === 'f' && L.job && L.kids === 1 && rnd() < val(C.nat.leaveAtBirth, y)) {
         L.job = null; L.stage = 'home';
-        push(L, rec, '学歴と仕事', '出産を機に仕事をやめ、子育てに専念することにした。', [ev(C, 'fertility', y, '第1子の出産を機に仕事をやめた女性の割合', pct(val(C.nat.leaveAtBirth, y)))]);
+        push(L, rec, '学歴と仕事', '出産を機に仕事をやめ、子育てに専念することにした。', [ev(C, 'fertility', nv(C.nat.leaveAtBirth, y).y, '妊娠がわかったときに働いていた女性のうち、第1子の出産で仕事をやめた人の割合（第1子の生まれ年5年ごと）', pct(val(C.nat.leaveAtBirth, y)))]);
       }
     }
   }
@@ -662,7 +678,7 @@
     return {
       id: 'marry', title: '結婚',
       groups: [{ id: 'm', q: '結婚について、どう考えていますか', options: [{ k: 'yes', l: 'したい' }, { k: 'maybe', l: '縁があれば' }, { k: 'no', l: 'しないつもり' }] }],
-      ev: [ev(C, 'census', nv(C.nat.everMarried[L.sex], L.by).y, '同じ年に生まれた人のうち50歳までに結婚する人の割合（推計）', pct(val(C.nat.everMarried[L.sex], L.by)), { est: true })]
+      ev: [ev(C, 'hhproj', nv(C.nat.everMarried[L.sex], L.by).y, '同じ年に生まれた人のうち50歳までに一度は結婚する人の割合（2020年の国勢調査と世帯数の将来推計から）', pct(val(C.nat.everMarried[L.sex], L.by)), { est: true })]
     };
   }
 
@@ -732,7 +748,7 @@
         L.place = { pref: L.home.pref, prefName: L.home.prefName, muni: L.home.muni, muniName: L.home.muniName, kind: homeMuni(L).kind, away: false, muniObj: homeMuni(L) };
         txt = school + 'を卒業して地元に戻り、' + jobText(L, r.k, r.reg, r.jr);
       }
-      e = push(L, rec, '学歴と仕事', txt, r.evs.concat([ev(C, 'migration', nv(P.s.ret, y).y, '県外に出た人が地元へ戻る割合', pct(val(P.s.ret, y)), { est: true })]));
+      e = push(L, rec, '学歴と仕事', txt, r.evs.concat([ev(C, 'ipssmig', nv(P.s.ret, y).y, P.name + 'で生まれて県外に出たことのある人のうち、' + P.name + 'に戻って住んでいる人の割合', pct(val(P.s.ret, y)))]));
     } else if (br.id === 'out') {
       var w = natural ? { family: 0.2, friend: 0.45, none: 0.35 } : ({ family: { family: 0.8, friend: 0.15, none: 0.05 }, friend: { family: 0.05, friend: 0.85, none: 0.1 }, none: { family: 0, friend: 0.1, none: 0.9 } })[answers.o];
       L.out = pick(rnd, ['family', 'friend', 'none'], function (k) { return w[k]; });

@@ -15,6 +15,9 @@ const OUT = path.join(ROOT, 'site', 'data');
 // 取り込んだ統計（tools/transform.mjs が作る）。ないときは data-src の仮の値だけで作る
 const STATS_PATH = path.join(ROOT, 'data-src', 'stats', 'stats.json');
 const stats = fs.existsSync(STATS_PATH) ? JSON.parse(fs.readFileSync(STATS_PATH, 'utf8')) : null;
+// 報告書や Excel から取り出した数字（tools/extra.py が作る）。共働き・結婚・出産退職・引っ越し・将来の寿命・Uターン・雪と海の印・普及率の古い年
+const EXTRA_PATH = path.join(ROOT, 'data-src', 'stats', 'extra.json');
+const extra = fs.existsSync(EXTRA_PATH) ? JSON.parse(fs.readFileSync(EXTRA_PATH, 'utf8')) : null;
 // 試験モードで使う3都道府県
 const TEST_PREFS = ['05', '13', '28'];
 // まだ取り込みで置き換えていない全国の値（national.mjs の記憶にもとづく仮の値）。取り込みで置き換えたら外す
@@ -126,23 +129,59 @@ function alphaTable(e0s, q0s, diff) {
 const mulSeries = (s, m, cap) => Object.fromEntries(Object.entries(s).map(([k, v]) => [k, +Math.min(cap ?? 1, v * m).toFixed(4)]));
 
 // 取り込んだ都道府県の束を、人生の進め方が使う形にする
+// 1995年より前の市区町村の生まれる割合（推計）：市区町村ごとの出生数は1995年からしかないため、
+// 国勢調査の15歳未満人口（今の市区町村の区切りに組み直したもの）の県内での割合の移り変わりで、1995年の割合をさかのぼって伸び縮みさせる。
+// 15歳未満の子は調査の0〜14年前に生まれているため、生まれ年 y の割合は y＋7.5年の調査の割合で見る（調査の年の間は直線でつなぐ）
+function oldShares(sp) {
+  if (!extra || !extra.u14) return null;
+  const first = Math.min(...sp.munis.map(m => m.shareFrom || 9999));
+  if (!(first > 1975) || first === 9999) return null;
+  const T = [1980, 1985, 1990, 1995, 2000, 2005, 2010];
+  const tot = {};
+  for (const t of T) tot[t] = sp.munis.reduce((a, m) => a + ((extra.u14[m.code] || {})[t] || 0), 0);
+  const sh = (m, t) => {
+    const u = extra.u14[m.code];
+    if (!u) return null;
+    const i = Math.max(0, Math.min(T.length - 2, T.findIndex((x, k) => t >= x && t < (T[k + 1] || 1e9))));
+    const a = T[i], b = T[i + 1], w = (t - a) / (b - a);
+    if (u[a] == null || u[b] == null || !tot[a] || !tot[b]) return null;
+    return (u[a] / tot[a]) * (1 - w) + (u[b] / tot[b]) * w;
+  };
+  const out = {};
+  for (let y = 1975; y < first; y++) {
+    const raw = {};
+    let sum = 0;
+    for (const m of sp.munis) {
+      const base = m.share[first] || 0;
+      const now = sh(m, y + 7.5), ref = sh(m, first + 7.5);
+      raw[m.code] = base * (now != null && ref > 0 ? now / ref : 1);
+      sum += raw[m.code];
+    }
+    for (const m of sp.munis) (out[m.code] = out[m.code] || {})[y] = +(raw[m.code] / sum).toPrecision(4);
+  }
+  return out;
+}
 function prefFromStats(sp) {
+  sp = { ...sp, shareOld: oldShares(sp) };
   const proto = prefs.find(p => p.code === sp.code);
   const flags = {};
-  if (proto) for (const m of proto.munis) flags[m.code] = { snow: m.snow, coast: m.coast, car: m.car };
+  if (proto) for (const m of proto.munis) flags[m.code] = { car: m.car, ...(extra ? {} : { snow: m.snow, coast: m.coast }) };
+  if (extra) for (const m of sp.munis) if (extra.munis[m.code]) flags[m.code] = { ...(flags[m.code] || {}), ...extra.munis[m.code] };
+  const ret = extra && extra.prefs[sp.code] && extra.prefs[sp.code].ret;
   return {
     code: sp.code, name: sp.name, region: sp.region, births: sp.births,
     munis: sp.munis.map(m => {
       const f = flags[m.code] || {};
       const o = { code: m.code, name: m.name, kind: m.kind, share: m.share, ind: m.ind, estBefore: Math.max(m.shareFrom || 0, m.realFrom || 0) };
+      if (sp.shareOld && sp.shareOld[m.code]) o.share = { ...sp.shareOld[m.code], ...m.share };
       for (const k of ['snow', 'coast', 'car']) if (f[k]) o[k] = true;
       if (m.indEst) o.indEst = true;
       return o;
     }),
-    s: { ...sp.s, ret: proto ? proto.ret : RET_PROVISIONAL },
+    s: { ...sp.s, ret: ret || (proto ? proto.ret : RET_PROVISIONAL) },
     sEst: sp.est,
     e0diff: sp.e0diff,
-    provisional: ['ret']
+    provisional: ret ? [] : ['ret']
   };
 }
 // 県外に出た人が地元へ戻る割合は、まだ取り込みで置き換えていない（仮の値）
@@ -156,9 +195,32 @@ export function build({ test = false } = {}) {
   const natReal = {};
   for (const k of ['jobs', 'unemp', 'cpi', 'indNat', 'nonreg', 'incomeMean', 'motherAge', 'divorce', 'cause', 'ownHome', 'threeGen', 'nursery', 'parentEdu', 'deathPlace', 'causeDetail', 'lifeFeel', 'takeHome', 'saveRate', 'savingRatio']) if (N[k] && Object.keys(N[k]).length) natReal[k] = N[k];
   if (typeof N.incomeSigma === 'number') natReal.incomeSigma = N.incomeSigma;
+  if (extra) for (const k of ['dualIncome', 'everMarried', 'leaveAtBirth', 'moveChild']) if (extra.nat[k] && Object.keys(extra.nat[k]).length) natReal[k] = extra.nat[k];
+  // きょうだいの人数：妻の生まれ年ごとの子どもの数の割合（出生動向基本調査。人口統計資料集 表4-23）。子どもがいる家の1人・2人・3人・4人以上だけを使う
+  const HIST_PATH = path.join(ROOT, 'data-src', 'stats', 'history.json');
+  const histNat = fs.existsSync(HIST_PATH) ? JSON.parse(fs.readFileSync(HIST_PATH, 'utf8')).nat : null;
+  if (histNat && histNat.children) {
+    const sib = {};
+    for (const [y, c] of Object.entries(histNat.children)) { const d = c.dist.slice(1); const t = d.reduce((a, b) => a + b, 0); sib[y] = d.map(x => +(x / t).toFixed(4)); }
+    if (Object.keys(sib).length >= 5) natReal.sibDist = sib;
+  }
   // 普及率：取り込んだ品目は置き換える。取り込んだ表が始まる年より前に仮の値がある品目は、その年だけ仮の値を残して一覧に出す
   const goodsOut = goods.map(g => {
     const real = stats && stats.goods && stats.goods[g.id];
+    const ex = extra && extra.goods[g.id];
+    // 消費動向調査より前の年：通信利用動向調査の値と、売り出された年を0とした推計（estBefore より前は画面に推計の印）
+    if (ex) {
+      const cons = real && Object.keys(real).length ? real : {};
+      const firstCons = Object.keys(cons).length ? Math.min(...Object.keys(cons).map(Number)) : Infinity;
+      const early = Object.fromEntries(Object.entries(ex.real).filter(([y]) => +y < firstCons));
+      const est = { ...ex.est };
+      if (ex.estFrom && firstCons < Infinity) for (let y = ex.estFrom; y < firstCons; y++) est[y] = +(cons[firstCons] * (y - ex.estFrom) / (firstCons - ex.estFrom)).toFixed(1);
+      const diff = { ...est, ...early, ...cons };
+      const realFrom = Math.min(...Object.keys({ ...early, ...cons }).map(Number));
+      const o = { ...g, src: Object.keys(cons).length ? 'consumer' : ex.src, diff, estBefore: realFrom, note: ex.note };
+      if (Object.keys(early).length && Object.keys(cons).length) { o.srcEarly = ex.src; o.srcFrom = firstCons; }
+      return o;
+    }
     if (!real || !Object.keys(real).length) return g;
     const first = Math.min(...Object.keys(real).map(Number));
     const keep = Object.fromEntries(Object.entries(g.diff).filter(([y]) => +y < first));
@@ -243,6 +305,12 @@ export function build({ test = false } = {}) {
     for (const y of Object.keys(e0s[sex]).map(Number)) if (y <= last) delete e0s[sex][y];
     Object.assign(e0s[sex], N.e0[sex]);
   }
+  // 生命表のあとの年は将来推計人口（死亡中位）。national.mjs の目安の値は使わない
+  if (extra && extra.nat.e0proj) for (const sex of ['m', 'f']) {
+    const last = Math.max(...Object.keys(N.e0 ? N.e0[sex] : {}).map(Number), 0);
+    for (const y of Object.keys(e0s[sex]).map(Number)) if (y > last) delete e0s[sex][y];
+    for (const [y, v] of Object.entries(extra.nat.e0proj[sex])) if (+y > last) e0s[sex][y] = v;
+  }
   const q0s = N.q0 && Object.keys(N.q0).length ? N.q0 : q0;
   SHAPE = makeShape(N.lifeQx);
   const list = stats ? stats.prefs.filter(p => !test || TEST_PREFS.includes(p.code)).map(prefFromStats) : prefs;
@@ -250,15 +318,17 @@ export function build({ test = false } = {}) {
   for (const [k, label] of Object.entries(NAT_PROVISIONAL)) if (!natReal[k]) provisional.push(label);
   for (const k of ['jobs', 'unemp', 'cpi']) if (!natReal[k]) provisional.push('全国の' + { jobs: '有効求人倍率', unemp: '完全失業率', cpi: '消費者物価指数' }[k]);
   if (!N.e0) provisional.push('平均寿命（生命表）');
-  provisional.push('2027年以降の平均寿命（将来推計人口。国立社会保障・人口問題研究所のサイトに通信の許可がない）');
+  if (!(extra && extra.nat.e0proj)) provisional.push('2027年以降の平均寿命（将来推計人口）');
   if (!stats) provisional.push('都道府県・市区町村のすべての値');
   else {
-    provisional.push('県外に出た人が地元へ戻る割合（' + list.length + '都道府県）');
-    provisional.push('雪・海沿いの印（試験用の3都道府県の12市区町村だけ。ほかの市区町村は未設定）');
-    provisional.push('1995年より前に生まれた人の市区町村の割合（1995年の割合で代用。1975〜1994年は文字認識で取り出す予定）');
+    const noRet = list.filter(p => p.provisional.includes('ret')).length;
+    if (noRet) provisional.push('県外に出た人が地元へ戻る割合（' + noRet + '都道府県）');
+    if (!extra) provisional.push('雪・海沿いの印（試験用の3都道府県の12市区町村だけ。ほかの市区町村は未設定）');
+    const noOld = list.filter(p => p.munis.some(m => !(Math.min(...Object.keys(m.share).map(Number)) <= 1975))).length;
+    if (noOld) provisional.push('1995年より前に生まれた人の市区町村の割合（' + noOld + '都道府県で1995年の割合を代用）');
   }
   for (const g of goodsOut) {
-    if (!(stats && stats.goods && stats.goods[g.id])) provisional.push(g.name + 'の普及率（通信利用動向調査。総務省のサイトに通信の許可がない）');
+    if (!(stats && stats.goods && stats.goods[g.id]) && !(extra && extra.goods[g.id])) provisional.push(g.name + 'の普及率（通信利用動向調査。総務省のサイトに通信の許可がない）');
     else if (g.provBefore) provisional.push(g.name + 'の普及率（' + (g.provBefore - 1) + '年以前。取り込んだ表が' + g.provBefore + '年からのため）');
   }
   if (namesOut === names) provisional.push('名前の流行（取り込み前の値）');
