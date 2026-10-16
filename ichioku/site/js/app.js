@@ -288,7 +288,37 @@
     renderTree(r.year);
   }
 
+  // 節目の問いかけ：一行だけ書き残せる。答えは人生の進み方に関わらない
+  function showAsk(br) {
+    var box = $('branch');
+    clear(box);
+    box.appendChild(el('h2', null, br.title));
+    box.appendChild(el('p', 'q', br.q));
+    var inp = document.createElement('input');
+    inp.type = 'text'; inp.maxLength = 40; inp.id = 'ask-input'; inp.className = 'ask-input';
+    inp.setAttribute('aria-label', '一行で書く（40字まで）');
+    inp.placeholder = '一行で（40字まで）';
+    box.appendChild(inp);
+    var row = el('div', 'opts');
+    var skip = el('button', 'btn-sub', '書かずに進む'); skip.type = 'button';
+    var go = el('button', 'btn-main', '書いて進む'); go.type = 'button'; go.id = 'ask-go';
+    function done(text) {
+      cur = M.resolve(L, { text: text });
+      render(cur);
+      if (cur.branch) showBranch(cur.branch); else schedule();
+    }
+    skip.onclick = function () { done(''); };
+    go.onclick = function () { done(inp.value); };
+    inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') done(inp.value); });
+    row.appendChild(skip);
+    box.appendChild(row);
+    box.appendChild(go);
+    box.appendChild(el('p', 'note', '書いた一行は、最期の画面と「一生をふり返る」に残ります（この端末の中だけ）'));
+    box.hidden = false;
+    clearTimeout(timer);
+  }
   function showBranch(br) {
+    if (br.ask) { showAsk(br); return; }
     var box = $('branch');
     clear(box);
     box.appendChild(el('h2', null, '分かれ道：' + br.title));
@@ -405,6 +435,7 @@
         var d = el('div', 'logyear');
         d.appendChild(el('p', 'ly', r.year + '年　' + r.age + '歳　' + r.place));
         r.events.forEach(function (e) { d.appendChild(el('p', null, e.t)); });
+        (L.notes || []).filter(function (n) { return n.year === r.year && n.text; }).forEach(function (n) { d.appendChild(el('p', 'note-line', r.age + '歳の問い「' + n.q + '」　' + n.text)); });
         c.appendChild(d);
       });
     });
@@ -467,6 +498,11 @@
     $('end-title').textContent = L.name + 'さんの一生　' + L.by + '年〜' + L.deathYear + '年（' + L.deathAge + '歳）';
     $('end-sub').textContent = L.old ? O.endText(L) : L.home.prefName + L.home.muniName + 'で生まれ、' + (L.place.away ? L.place.prefName : L.place.prefName + L.place.muniName) + 'で亡くなった。';
     renderHotline($('hotline-end'), L.cause === 'sui');
+    var notes = (L.notes || []).filter(function (n) { return n.text; });
+    $('notes-block').hidden = !notes.length;
+    clear($('notes'));
+    notes.forEach(function (n) { var li = el('li', 'note-item'); li.appendChild(el('span', 'tag', n.age + '歳')); li.appendChild(document.createTextNode(n.q + '　' + n.text)); $('notes').appendChild(li); });
+    $('farewell').value = '';
     var co = L.old ? O.cohort(C, H, P, L, 100) : E.cohort(C, P, L.by, L.home.muni, L.seed, 100);
     if (L.old) renderEarnOld(co); else renderEarn(co);
     var list = $('cohort');

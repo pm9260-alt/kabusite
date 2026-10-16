@@ -82,6 +82,8 @@ rec('相談先の名前と番号を公開前に確かめたか', C.hotline.every
 const BANNED = ['勝ち組', '負け組', '底辺', 'Fラン', '高学歴', '低学歴', 'エリート', '上級国民', '国立+5', '地方国立', 'MARCH', '早慶', '旧帝'];
 // 作る人の決まり：画面のどこにも使わない言葉（文字コードで書いてある）
 const BANNED_OWNER = ['\u52b9\u304f', '\u52b9\u3044\u3066', '\u52b9\u304d', '\u91cd\u3044', '\u91cd\u304f', '\u8aad\u307f'];
+// 本家の要素を取り入れる指示書（2026-10-16）で足した言葉
+BANNED_OWNER.push('\u91cd\u304b\u3063', '\u91cd\u3051\u308c', '見ます', '判定', '一方で', '結論から言うと', '示唆', 'わけです', '極めて', '興味深い', '齟齬', '——');
 const REAL = fs.readFileSync(path.join(ROOT, 'tools', 'realnames.txt'), 'utf8').split(/\r?\n/).map(s => s.trim()).filter(s => s && !s.startsWith('#'));
 // 日本語では使わない簡体字の一部と、文字化けでよく出る字
 // （体・写・机・黄・乱・辞・長・場 などは日本語でも使うので入れない）
@@ -121,7 +123,9 @@ function stripCode(src) { return src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^
   const T = texts();
   const hit = (list) => { const f = []; for (const [where, t] of T) for (const w of list) if (t.includes(w)) f.push(where + '「' + w + '」'); return f; };
   const b1 = hit(BANNED); rec('禁止語（11章）が入っていないか', b1.length === 0, b1.slice(0, 10).join('、'));
-  const b2 = hit(BANNED_OWNER); rec('作る人が使わないと決めた言葉が入っていないか', b2.length === 0, b2.slice(0, 10).join('、'));
+  const b2 = hit(BANNED_OWNER);
+  // 「まず」は副詞のときだけ（「抱え込まずに」のような動詞の形は除く）
+  for (const [where, t] of T) if (/(^|[、。「（\s'"])まず/.test(t)) b2.push(where + '「まず」'); rec('作る人が使わないと決めた言葉が入っていないか', b2.length === 0, b2.slice(0, 10).join('、'));
   // 実名の一覧の言葉を含むだけの別の言葉（「関東大震災」の「東大」など）はよける
   const REAL_OK = ['関東大震災', '東京大空襲'];
   const T0 = T.map(([w, t]) => [w, REAL_OK.reduce((x, k) => x.split(k).join(''), t)]);
@@ -377,6 +381,39 @@ cmpOld('昔の人生：0歳で亡くなる割合が元の数字から±3ポイ�
 cmpOld('昔の人生：小学校に通った割合（1873〜1920年に6歳）が元の統計から±3ポイント以内か', old.elem, '%', 3);
 cmpOld('昔の人生：高校進学率（1950〜1974年に15歳）が元の統計から±3ポイント以内か', old.hs, '%', 3);
 cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3ポイント以内か', old.marr, '%', 3);
+
+/* ---------- 6. 本家から取り入れた仕組み ---------- */
+// A：節目の問いかけ（5・15・30・50・70歳）。その年齢まで生きた人生ではすべて止まり、それより前に亡くなれば出ない
+{
+  const bad = [];
+  const run = (M, L) => {
+    const asked = [];
+    let g = 0;
+    while (L.alive && g++ < 130) {
+      let r = M.step(L);
+      while (r && r.branch) { if (r.branch.ask) { asked.push(r.age); if (!r.branch.q) bad.push('問いの文がない'); } r = M.resolve(L, r.branch.ask ? { text: 'テスト' } : null); }
+    }
+    const want = E.ASK_AGES.filter(x => x <= L.deathAge);
+    if (asked.join(',') !== want.join(',')) bad.push(L.by + '年生まれ（' + L.deathAge + '歳）：' + asked.join(',') + ' / 期待 ' + want.join(','));
+    if ((L.notes || []).filter(n => n.text).length !== want.length) bad.push('書いた一行が残っていない');
+  };
+  for (let i = 0; i < 60; i++) {
+    const by = [1980, 1990, 2000][i % 3];
+    run(E, E.newLife(C, P[E.pickPref(C, by, E.makeRng(i + 1))], { year: by, seed: i * 97 + 3 }));
+    const oy = 1800 + (i * 29) % 175, b = O.pickBirth(C, H, oy, E.makeRng(i + 5));
+    run(O, O.newLife(C, H, P[b.pref] || null, { year: oy, seed: i * 89 + 7, birth: b }));
+  }
+  rec('A 節目の問いかけが5・15・30・50・70歳で止まり、書いた一行が残るか', bad.length === 0, bad.slice(0, 5).join('、') || '120人分');
+  const qs = new Set();
+  for (let i = 0; i < 400; i++) for (const a of E.ASK_AGES) {
+    const by = 1800 + (i * 7) % 201;
+    const fake = { year: by + a, age: a, by, seed: i, members: [], married: i % 2 === 0, ainu: i % 13 === 0, ryukyu: i % 17 === 0, rnd: Math.random };
+    qs.add(E.askFor(fake).q);
+  }
+  const tq = [...qs].join(' ');
+  const bw = BANNED_OWNER.filter(w => tq.includes(w));
+  rec('A 問いの文章が禁止語の検査を通るか', bw.length === 0, bw.join('、') || qs.size + '通りの問い');
+}
 
 /* ---------- 結果 ---------- */
 const lines = [];

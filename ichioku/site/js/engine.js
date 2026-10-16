@@ -307,6 +307,7 @@
       familyYear(L, rec);
       lifeYear(L, rec);
     }
+    if (L.alive && ASK_AGES.indexOf(a) >= 0) L.queue.push(askFor(L));
     if (L.queue.length) { rec.branch = L.queue.shift(); return rec; }
     finishYear(L, rec);
     return rec;
@@ -672,8 +673,15 @@
     var rec = L.rec, br = rec.branch, C = L.C, P = L.P, y = L.year, rnd = L.rnd;
     var natural = !answers;
     answers = answers || {};
-    L.branchCount++;
     var e;
+    if (br.id === 'ask') {
+      answerAsk(L, br, answers);
+      rec.branch = null;
+      if (L.queue.length) { rec.branch = L.queue.shift(); return rec; }
+      finishYear(L, rec);
+      return rec;
+    }
+    L.branchCount++;
     if (br.id === 'middle') {
       var priv = val(P.s.priv, y), passAvg = 0.65;
       var base = clamp(priv / passAvg * (0.3 + 1.4 * L.incPct), 0, 0.95);
@@ -941,6 +949,55 @@
     ].concat(cd ? [ev(C, 'vital', cd.years[cd.years.length - 1], 'この年齢の死因のうち「' + cd.name + '」の割合（' + cd.years[0] + '〜' + cd.years[cd.years.length - 1] + '年の死亡数から）', pct(cd.share))] : []).concat(st.evs));
   }
 
+
+  /* ---------- 節目の問いかけ（5・15・30・50・70歳）。答えは人生の進み方に関わらない ---------- */
+  var ASK_AGES = [5, 15, 30, 50, 70];
+  function askFor(L) {
+    var y = L.year, a = L.age, by = L.by, q = [];
+    var kids = L.members.some(function (m) { return m.role === '子' && m.alive && !m.gone; });
+    var lostParent = L.members.some(function (m) { return (m.role === '父' || m.role === '母') && !m.alive && m.dy && m.dy <= y && !m.before; });
+    var lostSpouse = L.widowed || L.members.some(function (m) { return m.role === '配偶者' && !m.alive && m.dy && m.dy <= y; });
+    var edo = y < 1868, prewar = y >= 1868 && y < 1937, war = y >= 1937 && y <= 1945, post = y > 1945 && y < 1975;
+    if (a === 5) {
+      q.push('この子が大人になるころ、世の中はどう変わっていると思いますか');
+      q.push('この子のいちばん古い記憶は、どんな場面だと思いますか');
+      if (lostParent) q.push('幼くして親を亡くしたこの子に、何を残してあげたいですか');
+      if (war) q.push('空襲や食べ物の足りない日々を知るこの子に、何と声をかけますか');
+      if (edo) q.push('学校のない時代に育つこの子に、あなたなら何を教えますか');
+      if (y >= 1975) q.push('あなたが5歳のころ、何がいちばん楽しみでしたか');
+    } else if (a === 15) {
+      q.push('あなたが15歳だったころ、いちばん悩んでいたことは何ですか');
+      if (edo || prewar) q.push('15歳でもう働き手とされる時代です。あなたなら学ぶことと働くことのどちらを選びますか');
+      if (war) q.push('勉強より工場や畑の仕事が優先された15歳の毎日を、あなたならどう過ごしますか');
+      if (post || y >= 1975) q.push('15歳のこの人に、ひとつだけ助言できるとしたら何を伝えますか');
+      if (L.ainu || L.ryukyu) q.push('自分の言葉や暮らしを変えるよう求められる15歳に、何と言ってあげたいですか');
+    } else if (a === 30) {
+      if (kids) q.push('30歳で子どもを育てているこの人。あなたにとって家族とは何ですか');
+      else if (L.married) q.push('30歳で連れ合いと暮らすこの人。あなたは誰と生きていきたいですか');
+      else q.push('30歳でひとりのこの人。あなたが30歳のころ大事にしていたものは何ですか');
+      if (edo || prewar) q.push('平均寿命が40年ほどの時代の30歳です。残りの時間を何に使いますか');
+      q.push('ここまでの30年で、いちばんの分かれ目はどこだったと思いますか');
+    } else if (a === 50) {
+      q.push('これまでの50年で、いちばん忘れられない年はいつですか');
+      if (lostSpouse) q.push('連れ合いを亡くしたこの人に、どんな言葉をかけたいですか');
+      if (edo || prewar) q.push('50歳は長生きと言われた時代です。あなたは何歳まで生きたいですか');
+      if (y >= 1975) q.push('50歳からやり直せるとしたら、何を始めますか');
+    } else if (a === 70) {
+      q.push('この人が70年で見てきた世の中の変わり方を、若い人にどう伝えますか');
+      q.push('70歳の自分に手紙を書くとしたら、最初の一行は何にしますか');
+      if (by < 1900) q.push('江戸や明治から生きてきたこの人が、いちばん驚いたことは何だったと思いますか');
+      if (by >= 1920 && by <= 1935) q.push('戦争を子どものころに見たこの人は、孫に何を語ると思いますか');
+    }
+    var t = q[((L.seed >>> 0) + a) % q.length]; // 乱数を使わずに選ぶ（人生の進み方を変えないため）
+    return { id: 'ask', kind: 'ask', ask: true, title: a + '歳の節目', q: t + '？', groups: [], ev: [] };
+  }
+  // 問いかけの答え（書かずに進んでもよい。40字まで）
+  function answerAsk(L, br, answers) {
+    var text = answers && typeof answers.text === 'string' ? answers.text.replace(/\s+/g, ' ').trim().slice(0, 40) : '';
+    L.notes = L.notes || [];
+    L.notes.push({ age: L.age, year: L.year, q: br.q, text: text });
+  }
+
   /* ---------- 亡くなり方をくわしく書く（昔の人生の進め方でも使う） ---------- */
   var ACC_NAMES = ['交通事故', '転倒・転落', '溺れる事故', '窒息', '火事', '中毒', 'その他の事故', '他殺', 'その他の外因'];
   // 年齢・性別・年に合う死因を、人口動態統計の死因の割合から選ぶ。kind を渡すとその種類（ill・acc・sui）の中から選ぶ
@@ -1195,6 +1252,6 @@
     makeRng: makeRng, nv: nv, val: val, deathProb: deathProb, invNorm: invNorm,
     pickPref: pickPref, newLife: newLife, step: step, resolve: resolve, autoRun: autoRun,
     cohort: cohort, majorTimeline: majorTimeline, familyList: familyList, fill: fill, sceneOk: sceneOk,
-    pickCause: pickCause, deathStory: deathStory, ev: ev
+    pickCause: pickCause, deathStory: deathStory, ev: ev, askFor: askFor, answerAsk: answerAsk, ASK_AGES: ASK_AGES
   };
 });

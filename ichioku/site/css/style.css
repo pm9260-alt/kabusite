@@ -176,3 +176,9 @@ button { font: inherit; cursor: pointer; border-radius: 0; }
 .tree-wrap text { font-family: inherit; }
 /* 生まれ変わる */
 .btn-reborn { background: var(--reborn-bg); color: var(--reborn-text); border: 1px solid var(--reborn-bg); font-weight: 700; min-height: 40px; padding: 8px 4px; font-size: 14px; }
+
+/* 節目の問いかけ */
+.ask-input { width: 100%; font: inherit; font-size: 16px; padding: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--text); border-radius: 0; }
+.note-item { background: var(--surface); padding: 8px 10px; }
+.note-item .tag { color: var(--sub); font-size: 12px; margin-right: 6px; }
+.note-line { color: var(--sub); }

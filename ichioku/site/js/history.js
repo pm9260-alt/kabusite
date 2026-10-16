@@ -363,6 +363,7 @@
       historyYear(L, rec);
       lifeYear(L, rec);
     }
+    if (L.alive && E.ASK_AGES.indexOf(a) >= 0) L.queue.push(E.askFor(L));
     if (L.alive && L.queue.length) { rec.branch = L.queue.shift(); return rec; }
     finishYear(L, rec);
     return rec;
@@ -945,7 +946,8 @@
     var rec = L.rec, br = rec.branch;
     rec.branch = null;
     if (br) {
-      if (br.kind === 'path') resolvePath(L, rec, br, answers);
+      if (br.kind === 'ask') E.answerAsk(L, br, answers);
+      else if (br.kind === 'path') resolvePath(L, rec, br, answers);
       else if (br.kind === 'out') resolveOut(L, rec, br, answers);
       else if (br.kind === 'marry') resolveMarry(L, rec, br, answers);
     }
