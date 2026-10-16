@@ -426,6 +426,45 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
   rec('B 共有用の画像に影・グラデーション・ぼかしを使っていないか', !forbid);
 }
 
+// C：同じ種と同じ答えで作り直した人生が、出来事・死因・享年まで一致するか（10件ずつ）
+{
+  const bad = [];
+  const answer = (br, rnd) => {
+    if (br.ask) return { text: rnd() < 0.5 ? '' : 'ためし' };
+    const o = {};
+    for (const g of br.groups) o[g.id] = g.options[Math.floor(rnd() * g.options.length)].k;
+    return o;
+  };
+  const play = (mk, answers, rnd) => {
+    const L = mk(); let g = 0, i = 0;
+    const rec = answers ? null : [];
+    while (L.alive && g++ < 130) {
+      let r = mk.M.step(L);
+      while (r && r.branch) {
+        const a = answers ? answers[i++] : answer(r.branch, rnd);
+        if (rec) rec.push(a);
+        r = mk.M.resolve(L, a);
+      }
+    }
+    return { L, rec, sig: L.log.map(r => r.year + ':' + r.events.map(e => e.t).join('|')).join('\n') + '#' + L.cause + '#' + L.deathAge };
+  };
+  for (let i = 0; i < 10; i++) {
+    const by = 1975 + (i * 3) % 26, seed = i * 7919 + 11;
+    const mkE = () => E.newLife(C, P[E.pickPref(C, by, E.makeRng(seed ^ 0x9e3779b9))], { year: by, seed });
+    mkE.M = E;
+    const a = play(mkE, null, E.makeRng(i + 100));
+    const b = play(mkE, a.rec);
+    if (a.sig !== b.sig) bad.push(by + '年（今の本体）');
+    const oy = 1800 + (i * 17) % 175, os = i * 104729 + 3, ob = O.pickBirth(C, H, oy, E.makeRng(os ^ 0x9e3779b9));
+    const mkO = () => O.newLife(C, H, P[ob.pref] || null, { year: oy, seed: os, birth: ob });
+    mkO.M = O;
+    const c = play(mkO, null, E.makeRng(i + 200));
+    const d = play(mkO, c.rec);
+    if (c.sig !== d.sig) bad.push(oy + '年（昔の本体）');
+  }
+  rec('C 同じ種と同じ答えで作り直した人生が元と一致するか', bad.length === 0, bad.join('、') || '20件');
+}
+
 /* ---------- 結果 ---------- */
 const lines = [];
 lines.push('公開前の検査　' + new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }) + '（日本時間）');

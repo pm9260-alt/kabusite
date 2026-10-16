@@ -56,21 +56,44 @@
     $('born').disabled = false;
     $('born').textContent = '生まれる';
     $('born').onclick = born;
-    var past = store('ichioku-lives') || [];
-    $('past').textContent = past.length ? 'これまでに ' + past.length + ' 回の人生を送りました（記録はこの端末のブラウザにだけ残ります）' : '';
+    initPast();
   }
 
-  // 生まれる年は1800〜2000年のどの年も同じ確率（作る人の判断）
-  function born() {
-    var r = C.meta.birthRange, seed = randomSeed();
-    var year = r[0] + Math.floor(E.makeRng(seed ^ 0x51ed270b)() * (r[1] - r[0] + 1));
-    $('born').disabled = true;
+  /* ---------- 人生を作る・作り直す ---------- */
+  // 記録するのは「種の数・分かれ道で選んだ答え・印」だけ。開き直すときは同じ種で人生を作り直す
+  var G = null; // { v, seed, year, answers: [], marks: [], shown: 表示している年 }
+  function yearOfSeed(seed) { var r = C.meta.birthRange; return r[0] + Math.floor(E.makeRng(seed ^ 0x51ed270b)() * (r[1] - r[0] + 1)); }
+  function makeLife(seed) {
+    var year = yearOfSeed(seed);
     var ready = year >= 1975 ? Promise.resolve({ pref: E.pickPref(C, year, E.makeRng(seed ^ 0x9e3779b9)) }) :
       getHistory().then(function (h) { return O.pickBirth(C, h, year, E.makeRng(seed ^ 0x9e3779b9)); });
-    ready.then(function (b) { return getPref(b.pref).then(function (p) { return { b: b, p: p }; }); }).then(function (x) {
+    return ready.then(function (b) { return getPref(b.pref).then(function (p) { return { b: b, p: p }; }); }).then(function (x) {
       P = x.p;
       if (year >= 1975) { M = E; L = E.newLife(C, P, { year: year, seed: seed }); }
       else { M = O; L = O.newLife(C, H, P, { year: year, seed: seed, birth: x.b }); }
+      L.marks = {};
+      return L;
+    });
+  }
+  // 記録した答えをたどって、shown の年まで進める。答えが尽きたところの分かれ道はそのまま返す
+  function replayTo(g, untilYear) {
+    var i = 0, r = null;
+    while (L.alive) {
+      r = M.step(L);
+      while (r && r.branch && i < g.answers.length) r = M.resolve(L, g.answers[i++]);
+      if (r && r.branch) break;
+      if (untilYear != null && r && r.year >= untilYear) break;
+      if (untilYear == null && !L.alive) break;
+    }
+    return r;
+  }
+  function saveCurrent() { if (G && L && L.alive) { G.shown = cur ? cur.year : L.by; store('ichioku-current', G); } }
+  // 生まれる年は1800〜2000年のどの年も同じ確率（作る人の判断）
+  function born() {
+    var seed = randomSeed();
+    $('born').disabled = true;
+    G = { v: 1, seed: seed, year: yearOfSeed(seed), answers: [], marks: [] };
+    makeLife(seed).then(function () {
       paused = false; setPauseLabel();
       show('life');
       $('born').disabled = false;
@@ -80,7 +103,32 @@
       alert('データを取り出せませんでした。通信の状態を確かめて、もう一度押してください。');
     });
   }
-
+  // 続きから
+  function resume() {
+    var g = store('ichioku-current');
+    if (!g || !g.seed) return;
+    G = g; G.marks = G.marks || [];
+    makeLife(g.seed).then(function () {
+      (G.marks || []).forEach(function (k) { L.marks[k] = 1; });
+      cur = replayTo(G, G.shown);
+      paused = true; setPauseLabel();
+      show('life');
+      render(cur);
+      if (cur.branch) showBranch(cur.branch);
+    });
+  }
+  // これまでの人生をもう一度見る（最期の画面を開き直す）
+  function reopen(rec) {
+    G = { v: 1, seed: rec.seed, year: rec.year, answers: rec.answers || [], marks: rec.marks || [], done: true, farewell: rec.farewell || '' };
+    makeLife(rec.seed).then(function () {
+      (G.marks || []).forEach(function (k) { L.marks[k] = 1; });
+      var g2 = { answers: G.answers }, i = 0, r;
+      while (L.alive) { r = M.step(L); while (r && r.branch) r = M.resolve(L, i < g2.answers.length ? g2.answers[i++] : null); }
+      cur = r;
+      showEnd(true);
+    });
+  }
+  function recordAnswer(a) { if (G && !G.done) { G.answers.push(a); saveCurrent(); } }
 
   /* ---------- いつも更新される数字 ---------- */
   // 千円単位の額を、その年のお金の単位で書く（1871年より前は両。1両＝1円として数える）
@@ -224,6 +272,13 @@
   }
 
 
+  function updateLife(fn) {
+    var lives = store('ichioku-lives') || [];
+    for (var i = 0; i < lives.length; i++) if (lives[i] && lives[i].seed === (L && L.seed)) { fn(lives[i]); break; }
+    store('ichioku-lives', lives);
+  }
+  function saveLifeMarks() { updateLife(function (x) { x.marks = Object.keys(L.marks || {}); }); }
+
   /* ---------- 共有用の画像 ---------- */
   function shareLabel(v) {
     var pctx = v * 100, p = pctx >= 1 ? pctx.toFixed(1) : pctx >= 0.01 ? pctx.toFixed(3) : pctx.toFixed(4);
@@ -285,6 +340,7 @@
     if (!L.alive) { showEnd(); return; }
     cur = M.step(L);
     render(cur);
+    saveCurrent();
     if (cur.branch) showBranch(cur.branch);
     else schedule();
   }
@@ -327,13 +383,14 @@
     });
     var ev = $('events');
     clear(ev);
-    r.events.forEach(function (e) {
+    r.events.forEach(function (e, i) {
       var li = el('li');
       var b = el('button', 'item');
       b.type = 'button';
-      b.appendChild(el('span', 'tag', e.cat));
+      var key = r.year + ':' + i;
+      b.appendChild(el('span', 'tag', (L.marks && L.marks[key] ? '印・' : '') + e.cat));
       b.appendChild(document.createTextNode(e.t));
-      b.onclick = function () { openEvidence(e.t, e.ev); };
+      b.onclick = function () { openEvidence(e.t, e.ev, key); };
       li.appendChild(b);
       ev.appendChild(li);
     });
@@ -359,6 +416,7 @@
     var skip = el('button', 'btn-sub', '書かずに進む'); skip.type = 'button';
     var go = el('button', 'btn-main', '書いて進む'); go.type = 'button'; go.id = 'ask-go';
     function done(text) {
+      recordAnswer({ text: text });
       cur = M.resolve(L, { text: text });
       render(cur);
       if (cur.branch) showBranch(cur.branch); else schedule();
@@ -404,6 +462,7 @@
     evb.onclick = function () { openEvidence(br.title, br.ev); };
     box.appendChild(evb);
     done.onclick = function () {
+      recordAnswer(answers);
       cur = M.resolve(L, answers);
       render(cur);
       if (cur.branch) showBranch(cur.branch);
@@ -447,9 +506,20 @@
     sheetPaused = false;
     if (L && L.alive && cur && !cur.branch && !$('screen-life').hidden) schedule();
   }
-  function openEvidence(title, evs) {
+  function openEvidence(title, evs, key) {
     openSheet('もとになった統計', function (c) {
       c.appendChild(el('p', null, title));
+      if (key && L) {
+        var mb = el('button', 'btn-sub', L.marks[key] ? '印を外す' : '印を付ける');
+        mb.type = 'button';
+        mb.onclick = function () {
+          if (L.marks[key]) delete L.marks[key]; else L.marks[key] = 1;
+          if (G) { G.marks = Object.keys(L.marks); if (G.done) saveLifeMarks(); else saveCurrent(); }
+          mb.textContent = L.marks[key] ? '印を外す' : '印を付ける';
+          if (cur && !$('screen-life').hidden) render(cur);
+        };
+        c.appendChild(mb);
+      }
       if (!evs || !evs.length) { c.appendChild(el('p', 'note', 'この出来事に結びついた統計はありません')); return; }
       evs.forEach(function (e) {
         var d = el('div', 'evi');
@@ -487,6 +557,15 @@
   function openLog() {
     if (!L) return;
     openSheet('これまでの出来事', function (c) {
+      var recs = L.log.concat(cur && L.log.indexOf(cur) < 0 ? [cur] : []);
+      var marked = [];
+      recs.forEach(function (r) { r.events.forEach(function (e, i) { if (L.marks && L.marks[r.year + ':' + i]) marked.push({ r: r, e: e }); }); });
+      if (marked.length) {
+        var md = el('div', 'logyear marked');
+        md.appendChild(el('p', 'ly', '印を付けた出来事'));
+        marked.forEach(function (x) { md.appendChild(el('p', null, x.r.year + '年　' + x.r.age + '歳　' + x.e.t)); });
+        c.appendChild(md);
+      }
       L.log.concat(cur && L.log.indexOf(cur) < 0 ? [cur] : []).forEach(function (r) {
         var d = el('div', 'logyear');
         d.appendChild(el('p', 'ly', r.year + '年　' + r.age + '歳　' + r.place));
@@ -546,7 +625,7 @@
       ]);
     };
   }
-  function showEnd() {
+  function showEnd(again) {
     clearTimeout(timer);
     if (!L) return;
     show('end');
@@ -558,7 +637,7 @@
     $('notes-block').hidden = !notes.length;
     clear($('notes'));
     notes.forEach(function (n) { var li = el('li', 'note-item'); li.appendChild(el('span', 'tag', n.age + '歳')); li.appendChild(document.createTextNode(n.q + '　' + n.text)); $('notes').appendChild(li); });
-    $('farewell').value = '';
+
     var co = L.old ? O.cohort(C, H, P, L, 100) : E.cohort(C, P, L.by, L.home.muni, L.seed, 100);
     if (L.old) renderEarnOld(co); else renderEarn(co);
     var list = $('cohort');
@@ -584,9 +663,14 @@
       li.appendChild(el('span', null, 'この先の世の中は誰にも分からない'));
       era.appendChild(li);
     }
-    var lives = store('ichioku-lives') || [];
-    lives.unshift({ by: L.by, place: L.old ? L.home.label : L.home.prefName + L.home.muniName, age: L.deathAge });
-    store('ichioku-lives', lives.slice(0, 50));
+    if (!again) {
+      try { localStorage.removeItem('ichioku-current'); } catch (e) { /* 保存できない環境 */ }
+      var lives = (store('ichioku-lives') || []).filter(function (x) { return x && x.seed; });
+      lives.unshift({ v: 1, seed: L.seed, year: L.by, answers: G ? G.answers : [], marks: L.marks ? Object.keys(L.marks) : [], name: L.name, place: L.old ? L.home.label : L.home.prefName + L.home.muniName, age: L.deathAge, dy: L.deathYear, farewell: '' });
+      store('ichioku-lives', lives.slice(0, 10));
+      if (G) G.done = true;
+    }
+    $('farewell').value = (G && G.farewell) || '';
   }
 
   /* ---------- 操作 ---------- */
@@ -603,11 +687,32 @@
     $('card-birth').onclick = function () { openCard('birth'); };
     $('card-end').onclick = function () { openCard('end'); };
     $('reborn').onclick = function () { clearTimeout(timer); closeSheetQuiet(); L = null; cur = null; born(); };
+    $('resume').onclick = resume;
+    $('clear-all').onclick = function () {
+      if (!window.confirm('これまでの人生と途中の記録をすべて消します。よろしいですか？')) return;
+      try { localStorage.removeItem('ichioku-lives'); localStorage.removeItem('ichioku-current'); } catch (e) { /* 保存できない環境 */ }
+      initPast();
+    };
+    $('farewell').addEventListener('change', function () { var v = $('farewell').value.slice(0, 40); if (G) G.farewell = v; updateLife(function (x) { x.farewell = v; }); });
     $('again').onclick = function () { L = null; cur = null; show('top'); initPast(); };
   }
   function initPast() {
-    var past = store('ichioku-lives') || [];
-    $('past').textContent = past.length ? 'これまでに ' + past.length + ' 回の人生を送りました（記録はこの端末のブラウザにだけ残ります）' : '';
+    var past = (store('ichioku-lives') || []).filter(function (x) { return x && x.seed; });
+    $('past').textContent = past.length ? 'これまでの人生（最大10件。記録はこの端末のブラウザにだけ残ります）' : '';
+    var list = $('past-list');
+    clear(list);
+    past.forEach(function (x) {
+      var li = el('li');
+      var b = el('button', 'item', x.year + '年〜' + x.dy + '年　' + x.age + '歳　' + x.name + '（' + x.place + '）');
+      b.type = 'button';
+      b.onclick = function () { reopen(x); };
+      li.appendChild(b);
+      list.appendChild(li);
+    });
+    var curRec = store('ichioku-current');
+    $('resume').hidden = !(curRec && curRec.seed);
+    if (curRec && curRec.seed) $('resume').textContent = '続きから（' + curRec.year + '年生まれ・' + (curRec.shown - curRec.year) + '歳から）';
+    $('clear-all').hidden = !(past.length || (curRec && curRec.seed));
   }
 
   bind();
