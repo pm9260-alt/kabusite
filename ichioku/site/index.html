@@ -65,6 +65,14 @@
       <div class="tree-wrap" id="tree"></div>
       <p class="hint">これまでに出てきた3親等までの家族。亡くなった人は灰色で、亡くなった年を添えています</p>
     </div>
+    <div class="block">
+      <div class="comp-head">
+        <h2 class="h-self">同じ日に日本で生まれた4人</h2>
+        <button type="button" class="btn-sub" id="comp-toggle" aria-expanded="true" aria-controls="comps">閉じる</button>
+      </div>
+      <ul id="comps" class="comps"></ul>
+      <p class="hint" id="comps-hint">同じ統計で、日本のどこかに生まれた4人の今。生まれる県は、その年の出生数の割合で決まりました</p>
+    </div>
     <div id="branch" class="branch" hidden></div>
     <div id="hotline" class="hotline" hidden></div>
     <div class="focus-box" id="focus-box">
@@ -126,6 +134,11 @@
       <h2 class="h-self" id="cohort-title">同じ町・同じ年に生まれた100人のその後</h2>
       <ul id="cohort" class="cohort"></ul>
       <p class="note">同じ町・同じ年の生まれで、統計の割合どおりに100回の人生を回した結果です</p>
+    </div>
+    <div class="block">
+      <h2 class="h-self">同じ日に日本で生まれた4人のその後</h2>
+      <ul id="comps-end" class="comps"></ul>
+      <p class="note">町の中の差は上の100人で、日本全体の差はこの4人で見られるようにしています</p>
     </div>
     <div class="block">
       <h2 class="h-world">生きた時代の主な出来事</h2>

@@ -72,7 +72,7 @@
       if (year >= 1975) { M = E; L = E.newLife(C, P, { year: year, seed: seed }); }
       else { M = O; L = O.newLife(C, H, P, { year: year, seed: seed, birth: x.b }); }
       L.marks = {};
-      return L;
+      return makeComps(seed, year).then(function () { return L; });
     });
   }
   // 記録した答えをたどって、shown の年まで進める。答えが尽きたところの分かれ道はそのまま返す
@@ -96,6 +96,63 @@
     }
     return nr;
   }
+  /* ---------- 同じ日に日本で生まれた4人（同じ統計で並べて進める。答えはすべて統計どおり） ---------- */
+  var comps = [];
+  function compSeed(seed, i) { return ((Math.imul(seed >>> 0, 2654435761) + Math.imul(i + 1, 0x9e3779b9)) >>> 0) || (i + 1); }
+  function makeComps(seed, year) {
+    comps = [];
+    var jobs = [0, 1, 2, 3].map(function (i) {
+      var s = compSeed(seed, i);
+      var ready = year >= 1975 ? Promise.resolve({ pref: E.pickPref(C, year, E.makeRng(s ^ 0x9e3779b9)) }) :
+        getHistory().then(function (h) { return O.pickBirth(C, h, year, E.makeRng(s ^ 0x9e3779b9)); });
+      return ready.then(function (b) {
+        return getPref(b.pref).then(function (p) {
+          var c = year >= 1975 ? E.newLife(C, p, { year: year, seed: s }) : O.newLife(C, H, p, { year: year, seed: s, birth: b });
+          c.M = year >= 1975 ? E : O;
+          return c;
+        });
+      });
+    });
+    return Promise.all(jobs).then(function (list) { comps = list; return list; }).catch(function () { comps = []; return []; });
+  }
+  // year の年の終わりまで進める（その年がまだ途中でも、4人は1年分まとめて進む）
+  function stepComps(year) {
+    comps.forEach(function (c) {
+      var guard = 0;
+      while (c.alive && c.year <= year && guard++ < 130) {
+        var r = c.M.step(c);
+        while (r && r.branch) r = c.M.resolve(c, null);
+      }
+    });
+  }
+  function compState(c) {
+    if (!c.alive) return c.deathAge + '歳で亡くなった（' + c.deathYear + '年）';
+    var a = c.year - c.by - 1, parts = [];
+    if (a < 6) parts.push('幼い子ども');
+    else if (c.school) parts.push('学校に通っている');
+    else if (c.job && c.job !== 'home' && c.stage !== 'retired') parts.push(c.lastJob || '働いている');
+    else if (c.stage === 'retired') parts.push('仕事を退いた');
+    else parts.push('家で暮らしている');
+    if (c.married) parts.push('結婚している');
+    var k = c.members.filter(function (m) { return m.role === '子' && m.by < c.year; }).length;
+    if (k) parts.push('子ども' + k + '人');
+    return parts.join('・');
+  }
+  function renderComps(listId, showAge) {
+    var ul = $(listId);
+    if (!ul) return;
+    clear(ul);
+    comps.forEach(function (c) {
+      var last = c.log[c.log.length - 1];
+      var li = el('li', c.alive ? '' : 'gone');
+      var age = c.alive ? (c.year - c.by - 1) + '歳' : c.deathAge + '歳';
+      li.appendChild(el('span', 'ca', showAge ? age : (c.sex === 'm' ? '男' : '女')));
+      li.appendChild(el('span', 'cp', (c.name || '') + '　' + (last ? last.place : '')));
+      li.appendChild(el('span', 'cs', compState(c)));
+      ul.appendChild(li);
+    });
+  }
+
   function replayTo(g, untilYear) {
     var i = 0, r = null;
     while (L.alive) {
@@ -542,6 +599,8 @@
     renderTree(r.year);
     renderSt(r);
     renderFocus();
+    stepComps(r.year);
+    renderComps('comps', true);
   }
 
   // 節目の問いかけ：一行だけ書き残せる。答えは人生の進み方に関わらない
@@ -852,6 +911,9 @@
     renderHotline($('hotline-end'), L.cause === 'sui');
     renderLifeMap();
     renderCurve();
+    stepComps(9999);
+    renderComps('comps-end', false);
+    $('comps-end').parentNode.hidden = !comps.length;
     var notes = (L.notes || []).filter(function (n) { return n.text; });
     $('notes-block').hidden = !notes.length;
     clear($('notes'));
@@ -917,6 +979,14 @@
     $('family').onclick = openFamily;
     $('log').onclick = openLog;
     $('st4').onclick = openSt;
+    var compOpen = store('ichioku-comps-open');
+    function setComp(open) {
+      $('comps').hidden = !open; $('comps-hint').hidden = !open;
+      $('comp-toggle').textContent = open ? '閉じる' : '開く';
+      $('comp-toggle').setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+    setComp(compOpen !== false);
+    $('comp-toggle').onclick = function () { var o = $('comps').hidden; setComp(o); store('ichioku-comps-open', o); };
     Array.prototype.forEach.call(document.querySelectorAll('.focus-opts .btn-sub'), function (b) {
       b.onclick = function () { var f = b.getAttribute('data-f'); setFocus(L && L.focus === f ? null : f); };
     });

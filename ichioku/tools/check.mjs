@@ -621,6 +621,34 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
   rec('H 人生地図の色が背景から見分けられるか（コントラスト比3以上）', low.length === 0, low.join('、'));
 }
 
+/* ---------- I 同じ日に生まれた4人 ---------- */
+{
+  const bad = []; let worst = 0, total = 0, years = 0;
+  const compSeed = (seed, i) => ((Math.imul(seed >>> 0, 2654435761) + Math.imul(i + 1, 0x9e3779b9)) >>> 0) || (i + 1);
+  for (const by of [1800, 1900, 1945, 1975, 2000]) {
+    for (let k = 0; k < 6; k++) {
+      const seed = by * 7 + k * 104729 + 1;
+      const cs = [0, 1, 2, 3].map(i => {
+        const s = compSeed(seed, i);
+        if (by >= 1975) { const c = E.newLife(C, P[E.pickPref(C, by, E.makeRng(s ^ 0x9e3779b9))], { year: by, seed: s }); c.M = E; return c; }
+        const b = O.pickBirth(C, H, by, E.makeRng(s ^ 0x9e3779b9)); const c = O.newLife(C, H, P[b.pref] || null, { year: by, seed: s, birth: b }); c.M = O; return c;
+      });
+      if (new Set(cs.map(c => c.seed)).size !== 4 || cs.some(c => c.seed === seed)) bad.push(by + '年：4人の種が重なった');
+      for (let y = by; y <= by + 111 && cs.some(c => c.alive); y++) {
+        const t0 = process.hrtime.bigint();
+        for (const c of cs) { let g = 0; while (c.alive && c.year <= y && g++ < 130) { let r = c.M.step(c); while (r && r.branch) r = c.M.resolve(c, null); } }
+        const ms = Number(process.hrtime.bigint() - t0) / 1e6;
+        total += ms; years++; if (ms > worst) worst = ms;
+      }
+      if (cs.some(c => c.alive)) bad.push(by + '年：4人のうち最期まで進まなかった人がいる');
+    }
+  }
+  // 古いスマホはこのパソコンの数倍遅いとみて、平均の10倍でも50ミリ秒に収まるかで確かめる
+  const avg = total / years;
+  if (avg * 10 > 50) bad.push('1年あたりの計算が長い（平均 ' + avg.toFixed(2) + 'ミリ秒）');
+  rec('I 同じ日に生まれた4人を毎年進めても、1年の計算が50ミリ秒以内か（古いスマホは10倍遅いとみる）', bad.length === 0, bad.join('、') || '平均 ' + avg.toFixed(2) + 'ミリ秒・いちばん長い年 ' + worst.toFixed(1) + 'ミリ秒（' + years + '年分）');
+}
+
 /* ---------- 結果 ---------- */
 const lines = [];
 lines.push('公開前の検査　' + new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }) + '（日本時間）');

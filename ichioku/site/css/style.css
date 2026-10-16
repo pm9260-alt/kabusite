@@ -236,3 +236,11 @@ button { font: inherit; cursor: pointer; border-radius: 0; }
 .legend span { display: inline-flex; align-items: center; gap: 4px; }
 .legend i { display: inline-block; width: 12px; height: 12px; border: 1px solid var(--line); }
 .curve svg { width: 100%; height: auto; display: block; }
+/* 同じ日に生まれた4人 */
+.comp-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.comps { display: flex; flex-direction: column; gap: 4px; }
+.comps li { display: grid; grid-template-columns: 3.4em 1fr; gap: 2px 8px; padding: 6px 8px; background: var(--surface); font-size: 14px; }
+.comps .ca { font-weight: 700; }
+.comps .cp { color: var(--sub); font-size: 12px; }
+.comps .cs { grid-column: 2; }
+.comps li.gone .ca, .comps li.gone .cs { color: var(--sub); }
