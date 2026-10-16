@@ -143,7 +143,7 @@
     return free.length ? free[Math.floor(L.rnd() * free.length)] : list[0] + '（二）';
   }
   function addMember(L, role, sex, by, extra) {
-    var m = { id: L.members.length + 1, role: role, sex: sex, by: by, alive: true, dy: null };
+    var m = { id: L.members.reduce(function (x, o) { return Math.max(x, o.id); }, 0) + 1, role: role, sex: sex, by: by, alive: true, dy: null };
     if (extra) for (var k in extra) m[k] = extra[k];
     m.name = nameFor(L, sex, by);
     L.members.push(m);
@@ -171,7 +171,99 @@
     return pick(rnd, list, function (m) { return val(m.share, year); });
   }
 
+  /* ---------- きょうだいとして生きる（1975年以降の生まれ。history.js と同じ考え方） ---------- */
+  var FAMILY_ROLES = ['父', '母', '祖父', '祖母'];
+  function houseOf(L, chain) {
+    // 家が住んでいた場所：本人が18歳になるまでは本人の場所、そのあとは生まれた場所
+    var place = L.age < 18 && !L.place.away ? L.place : null;
+    var moves = [];
+    var prevMuni = L.home.muni;
+    L.log.forEach(function (r) { if (r.age < 18 && r.pin && r.pin.muni && r.pin.muni !== prevMuni) { moves.push({ year: r.year, muni: r.pin.muni }); prevMuni = r.pin.muni; } });
+    var mem = L.members.filter(function (m) { return m.sib || FAMILY_ROLES.indexOf(m.role) >= 0; }).map(function (m) {
+      var o = {}; for (var k in m) if (k !== 'fixDy') o[k] = m[k]; return o;
+    });
+    return {
+      old: false, seed: L.seed0 || L.seed, deathYear: L.deathYear, deathAge: L.deathAge, cause: L.cause,
+      prev: { name: L.name, sex: L.sex, by: L.by, surname: L.surname || null },
+      members: mem, homeMuni: L.home.muni, placeMuni: place ? place.muni : L.home.muni, moves: moves,
+      incPct: L.incPct, adoptU: L.adoptU, parentEdu: L.parentEdu, dadJob: L.dadJob, momJob: L.momJob, ownHome: L.ownHome, threeGen: L.threeGen, income: L.income, goods: L.goods || {},
+      chain: (chain || []).slice()
+    };
+  }
+  function sibRole(sex, by, myBy) { return by < myBy ? (sex === 'm' ? '兄' : '姉') : (sex === 'm' ? '弟' : '妹'); }
+  function heirCandidates(L) {
+    var dy = L.deathYear, momAlive = L.mom && L.mom.alive;
+    return L.members.filter(function (m) { return m.sib && !m.gone && ((m.by > dy && momAlive) || (m.alive && m.by <= dy)); }).map(function (m) {
+      return { id: m.id, role: m.role, name: m.by > dy ? null : m.name, sex: m.sex, by: m.by, age: m.by > dy ? null : dy - m.by, later: m.by > dy ? m.by - dy : 0 };
+    });
+  }
+  function muniOf(P, code) { return P.munis.filter(function (m) { return m.code === code; })[0] || null; }
+  function inheritLife(C, P, opts) {
+    var h = opts.house, me = h.members.filter(function (m) { return m.id === opts.memberId; })[0];
+    if (!me) throw new Error('引き継ぐきょうだいがいない');
+    var seed = (opts.seed >>> 0) || 1, rnd = makeRng(seed);
+    // 生まれた場所：そのきょうだいが生まれた年に家が住んでいた所
+    var hm = h.homeMuni;
+    h.moves.forEach(function (mv) { if (mv.year <= me.by) hm = mv.muni; });
+    if (me.by > h.deathYear) hm = h.placeMuni;
+    var muni = muniOf(P, hm) || muniOf(P, h.homeMuni) || P.munis[0];
+    var L = {
+      C: C, P: P, rnd: rnd, seed: seed, seed0: h.seed, by: me.by, year: me.by, age: 0, sex: me.sex,
+      home: { pref: P.code, prefName: P.name, muni: muni.code, muniName: muni.name },
+      place: { pref: P.code, prefName: P.name, muni: muni.code, muniName: muni.name, kind: muni.kind, away: false, muniObj: muni },
+      members: [], used: {}, cat: {}, catTotal: 0, alive: true, stage: 'child',
+      ab: { study: gauss(rnd), body: gauss(rnd), social: gauss(rnd) },
+      edu: null, school: null, job: null, married: false, everMarried: false, kids: 0,
+      goods: {}, queue: [], log: [], branchCount: 0,
+      stats: { univ: false, emptyYears: 0, dupes: 0, nonreg: {}, atHome30: null, events: 0 },
+      earn: { real: 0, nominal: 0, years: 0, nonregYears: 0, futureYears: 0 },
+      inherited: true, surname: h.prev.surname || null
+    };
+    CATS.forEach(function (c) { L.cat[c] = 0; });
+    L.house = { deathYear: h.deathYear, prevName: h.prev.name, prevSex: h.prev.sex, prevBy: h.prev.by, prevAge: h.deathAge, moves: h.moves, chain: h.chain };
+    var maxId = 0;
+    h.members.forEach(function (m0) {
+      maxId = Math.max(maxId, m0.id);
+      if (m0.id === me.id) return;
+      var m = {}; for (var k in m0) m[k] = m0[k];
+      m.fixDy = m.dy != null && !m.alive && m.dy <= h.deathYear ? m.dy : null;
+      if (m.sib) m.role = sibRole(m.sex, m.by, me.by);
+      if (!m.gone) { m.alive = !(m.fixDy != null && m.fixDy < me.by); m.before = !m.alive; if (m.alive) m.dy = null; else m.dy = m.fixDy; }
+      L.members.push(m);
+    });
+    var pv = { id: maxId + 1, role: sibRole(h.prev.sex, h.prev.by, me.by), sex: h.prev.sex, by: h.prev.by, name: h.prev.name, sib: true, alive: true, dy: null, fixDy: h.deathYear, prevLife: true };
+    if (pv.fixDy < me.by) { pv.alive = false; pv.before = true; pv.dy = pv.fixDy; }
+    L.members.push(pv);
+    L.dad = L.members.filter(function (m) { return m.role === '父'; })[0];
+    L.mom = L.members.filter(function (m) { return m.role === '母'; })[0];
+    L.name = me.name || nameFor(L, L.sex, L.by);
+    L.fAge = L.by - L.dad.by; L.mAge = L.by - L.mom.by;
+    L.sibs = L.members.filter(function (m) { return m.sib && !m.gone; }).length;
+    L.incPct = h.incPct; L.adoptU = h.adoptU; L.parentEdu = h.parentEdu; L.dadJob = h.dadJob; L.momJob = h.momJob;
+    L.ownHome = h.ownHome; L.threeGen = h.threeGen; L.income = h.income;
+    L.ab.study += (L.parentEdu.dad === '大学' || L.parentEdu.mom === '大学') ? 0.25 : 0;
+    for (var g in h.goods) if (h.goods[g] <= L.by) L.goods[g] = h.goods[g];
+    C.goods.forEach(function (gg) { if (!L.goods[gg.id] && val(gg.diff, L.by) / 100 >= L.adoptU) L.goods[gg.id] = L.by; });
+    L.protectUntil = h.deathYear;
+    L.sm = drawMinority(L);
+    L.out = null;
+    return L;
+  }
+  function fixedYear(L, m) { return L.house && L.year <= L.house.deathYear && m.fixDy !== undefined; }
+  // 生まれた年に、前の人生で亡くなった家族（ふだんは0歳の年に家族の死を抽選しないため、記録どおりにここで出す）
+  function fixedDeathsAtBirth(L, rec) {
+    var y = L.year;
+    L.members.forEach(function (m) {
+      if (!m.alive || m.gone || m.by >= y || !fixedYear(L, m) || m.fixDy !== y) return;
+      m.alive = false; m.dy = y;
+      var e = push(L, rec, '家庭', relWord(L, m) + 'の' + m.name + 'が' + (y - m.by) + '歳で亡くなった。', [ev(L.C, 'vital', y, '前の人生で起きた家族の死', '', { noYearNote: true })]);
+      if (m.prevLife) e.short = relWord(L, m) + 'の' + m.name + 'が亡くなった。';
+    });
+  }
+  function protectedYear(L) { return L.protectUntil != null && L.year <= L.protectUntil; }
+
   function newLife(C, P, opts) {
+    if (opts.house) return inheritLife(C, P, opts);
     var year = opts.year, seed = (opts.seed >>> 0) || 1;
     var rnd = makeRng(seed);
     var muni = opts.muniCode ? P.munis.filter(function (m) { return m.code === opts.muniCode; })[0] : pickMuni(P, year, rnd);
@@ -327,7 +419,7 @@
     var y = L.year, a = L.age;
     var rec = { year: y, age: a, place: placeLabel(L), pin: { pref: L.place.pref, muni: L.place.muni || null }, world: worldLine(L, y, a), events: [], branch: null, future: y >= FUTURE_FROM };
     L.rec = rec;
-    if (a === 0) birthEvent(L, rec);
+    if (a === 0) { birthEvent(L, rec); if (L.house && L.house.deathYear >= y) fixedDeathsAtBirth(L, rec); }
     else {
       familyYear(L, rec);
       lifeYear(L, rec);
@@ -350,11 +442,15 @@
   function birthEvent(L, rec) {
     var C = L.C, P = L.P, y = L.year;
     var share = val(L.place.muniObj.share, y);
-    var sibs = L.members.filter(function (m) { return m.sib && m.by < y; });
+    var sibs = L.members.filter(function (m) { return m.sib && m.by < y && m.alive; });
     var s = L.place.prefName + L.place.muniName + 'で、' + (L.sex === 'm' ? '男の子' : '女の子') + 'として生まれた。名前は' + L.name + '。';
     s += '父は' + L.fAge + '歳で' + IND[L.dadJob].job + '、母は' + L.mAge + '歳で' + (L.momJob ? IND[L.momJob].job + 'をしている' : '家で家事をしている') + '。';
     if (sibs.length) s += sibs.map(function (m) { return m.role + 'の' + m.name; }).join('、') + 'がいる。';
-    else s += 'はじめての子どもだった。';
+    else if (!L.members.some(function (m) { return m.sib && m.by < y; })) s += 'はじめての子どもだった。';
+    if (L.house && L.by > L.house.deathYear) {
+      var pm = L.members.filter(function (m) { return m.prevLife; })[0];
+      if (pm) s += relWord(L, pm) + 'の' + pm.name + 'が亡くなって' + (L.by - L.house.deathYear) + '年後に生まれた。';
+    }
     s += L.ownHome ? '家は持ち家。' : '家は借家。';
     if (L.threeGen) s += '父方の祖父母と一緒に暮らしている。';
     var evs = [
@@ -381,9 +477,21 @@
         if (!L.mom.alive) { m.gone = true; m.alive = false; return; } // 母が亡くなっていれば生まれない
         var who = m.role === '孫' ? '孫の' + m.name + 'が生まれた。' : relWord(L, m) + 'の' + m.name + 'が生まれた。';
         push(L, rec, '家庭', who, [ev(C, 'vital', y, '出生数', '')]);
+        if (fixedYear(L, m) && m.fixDy === y) {
+          m.alive = false; m.dy = y;
+          var fe0 = push(L, rec, '家庭', relWord(L, m) + 'の' + m.name + 'が、生まれて1年もたたずに亡くなった。', [ev(C, 'vital', y, '前の人生で起きた家族の死', '', { noYearNote: true })]);
+          fe0.short = relWord(L, m) + 'の' + m.name + 'が亡くなった。';
+        }
         return;
       }
       if (!m.alive || m.by >= y) return;
+      if (fixedYear(L, m)) {
+        if (m.fixDy !== y) return;
+        m.alive = false; m.dy = y;
+        var fe = push(L, rec, '家庭', relWord(L, m) + 'の' + m.name + 'が' + (y - m.by) + '歳で亡くなった。', [ev(C, 'vital', y, '前の人生で起きた家族の死', '', { noYearNote: true })]);
+        if (m.prevLife) fe.short = relWord(L, m) + 'の' + m.name + 'が亡くなった。';
+        return;
+      }
       if (rnd() < deathProb(C, L.P, m.sex, y - m.by, y)) {
         m.alive = false; m.dy = y;
         if (m.role === '配偶者') { L.married = false; L.widowed = true; }
@@ -415,7 +523,17 @@
     if (a === 6) { L.stage = 'school'; push(L, rec, '学歴と仕事', '地元の公立小学校に入学した。' + (L.place.kind === '町村' ? '家から学校まで、歩いて30分ほどかかる。' : ''), [ev(C, 'school', y, '小学校の在学者', '')]); }
     // 転校（小学校のあいだ）
     var mc = typeof C.nat.moveChild === 'number' ? C.nat.moveChild : val(C.nat.moveChild, y);
-    if (a >= 7 && a <= 11 && !L.moved && P.munis.length > 1 && rnd() < mc) {
+    // 引き継いだ人生で前の人が亡くなるまでは、家の引っ越しを前の人生と同じ年に同じ町へ
+    if (L.house && L.house.moves && y <= L.house.deathYear) {
+      L.house.moves.forEach(function (mv) {
+        if (mv.year !== y || mv.muni === L.place.muni) return;
+        var nm0 = muniOf(P, mv.muni);
+        if (!nm0 || L.place.away) return;
+        L.moved = true; L.place.muni = nm0.code; L.place.muniName = nm0.name; L.place.kind = nm0.kind; L.place.muniObj = nm0;
+        push(L, rec, '家庭', '家族で' + nm0.name + 'へ引っ越した。', [ev(C, 'census', y, '前の人生で起きた家の引っ越し', '', { noYearNote: true })]);
+      });
+    }
+    if (a >= 7 && a <= 11 && !L.moved && !protectedYear(L) && P.munis.length > 1 && rnd() < mc) {
       var nm = pickMuni(P, y, rnd, L.place.muni);
       L.moved = true;
       L.place.muni = nm.code; L.place.muniName = nm.name; L.place.kind = nm.kind; L.place.muniObj = nm;
@@ -910,6 +1028,7 @@
       // 亡くなる（本人・同じ家の家族）
       if (r.dead != null) {
         household(L).forEach(function (m) {
+          if (fixedYear(L, m)) return;
           if (rnd() < r.dead) { m.alive = false; m.dy = y; push(L, rec, '家庭', e.title + 'で、' + relWord(L, m) + 'の' + m.name + 'が亡くなった。', [rateEv('亡くなった人の割合', r.dead)]); }
         });
         if (rnd() < r.dead) { var dst = deathStory(L, { kind: 'disaster', head: e.title + 'に遭い、亡くなった' }); dieBy(L, rec, 'disaster', dst.text, [rateEv('亡くなった人の割合', r.dead)]); return; }
@@ -922,7 +1041,7 @@
         moved = rnd() < 0.3;
       }
       if (!moved && r.evac != null && rnd() < r.evac) moved = true;
-      if (moved && L.P.munis.length > 1) {
+      if (moved && L.P.munis.length > 1 && !protectedYear(L)) {
         var hit = ar.codes || [];
         var nm = pickMuni(L.P, y, rnd, L.place.muni);
         for (var k = 0; k < 5 && hit.indexOf(nm.code) >= 0; k++) nm = pickMuni(L.P, y, rnd, L.place.muni);
@@ -936,6 +1055,7 @@
     });
   }
   function dieBy(L, rec, cause, text, evs) {
+    if (protectedYear(L)) return;
     L.alive = false; L.deathAge = L.age; L.deathYear = L.year; L.cause = cause;
     L.queue = [];
     rec.dead = true;
@@ -950,6 +1070,7 @@
     {
       var dp = clamp(deathProb(C, L.P, L.sex, a, y) * bodyMult(L, a), 0, 1);
       if (a >= MAX_AGE) dp = 1;
+      if (protectedYear(L)) dp = 0;
       if (rnd() < dp) { die(L, rec, dp); return advance(L, rec); }
     }
     var need = rec.events.length === 0 ? 1 : (rec.events.length === 1 && rnd() < (a < 80 ? 0.35 : 0.08) ? 1 : 0);
@@ -1564,6 +1685,7 @@
 
   return {
     FUTURE_FROM: FUTURE_FROM, CATS: CATS, TARGET: TARGET,
+    houseOf: houseOf, heirCandidates: heirCandidates,
     makeRng: makeRng, nv: nv, val: val, deathProb: deathProb, invNorm: invNorm,
     pickPref: pickPref, newLife: newLife, step: step, resolve: resolve, autoRun: autoRun,
     cohort: cohort, majorTimeline: majorTimeline, familyList: familyList, fill: fill, sceneOk: sceneOk,
