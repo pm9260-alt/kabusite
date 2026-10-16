@@ -223,6 +223,61 @@
     box.scrollLeft = Math.max(0, selfN.x - minX - box.clientWidth / 2 + NW / 2);
   }
 
+
+  /* ---------- 共有用の画像 ---------- */
+  function shareLabel(v) {
+    var pctx = v * 100, p = pctx >= 1 ? pctx.toFixed(1) : pctx >= 0.01 ? pctx.toFixed(3) : pctx.toFixed(4);
+    var n = Math.round(1 / v);
+    var nTxt = n >= 10000 ? (n / 10000 >= 10 ? Math.round(n / 10000) : (n / 10000).toFixed(1)) + '万' : n.toLocaleString('ja-JP');
+    return p + '%（約' + nTxt + '人に1人）';
+  }
+  function birthInfo() {
+    if (L.old) {
+      var b = O.birthShare(L);
+      return { place: L.home.label, share: b.share, what: b.where + 'で生まれた割合' + (L.by < 1873 ? '（旧国の人口から推計）' : '') };
+    }
+    var tot = 0, mine = 0;
+    C.prefs.forEach(function (p) { var v = E.val(p.births, L.by); tot += v; if (p.code === L.home.pref) mine = v; });
+    var mu = P.munis.filter(function (m) { return m.code === L.home.muni; })[0];
+    var ms = mu ? E.val(mu.share, L.by) : 1;
+    return { place: L.home.prefName + L.home.muniName, share: (mine / tot) * ms, what: L.home.prefName + L.home.muniName + 'で生まれた割合' };
+  }
+  function eduLabel() {
+    var e = L.edu || (L.old ? null : null);
+    var M2 = { '寺子屋': '寺子屋で字を習った', '藩校': '藩校で学んだ', '村学校': '村学校で学んだ', '小学校': '小学校を出た', '中学': '中学校を出た', '高等小学校': '高等小学校を出た', '旧制中学': '旧制中学を出た', '高等女学校': '高等女学校を出た', '旧制の上の学校': '旧制の上の学校を出た', '高校': '高校を出た', '短大': '短大を出た', '短大・専門': '短大・専門学校を出た', '大学': '大学を出た' };
+    return e ? (M2[e] || e) : (L.deathAge < 6 ? '学校に通う年まで生きられなかった' : '学校には通わなかった');
+  }
+  function familyLabel() {
+    var ms = L.members, sp = ms.filter(function (m) { return m.role === '配偶者' || m.role === 'パートナー'; }).length;
+    var k = ms.filter(function (m) { return m.role === '子'; }).length, g = ms.filter(function (m) { return m.role === '孫'; }).length;
+    if (L.deathAge < 15) return 'きょうだい ' + ms.filter(function (m) { return m.sib && !m.before; }).length + '人';
+    return (sp ? (L.everMarried ? '結婚した' : 'パートナーと暮らした') : '結婚はしなかった') + (k ? '・子ども ' + k + '人' : '') + (g ? '・孫 ' + g + '人' : '');
+  }
+  function openCard(kind) {
+    if (!L || !window.IchiokuCard) return;
+    var K = window.IchiokuCard;
+    openSheet(kind === 'birth' ? '誕生カード' : '最期のカード', function (c) {
+      var cv = document.createElement('canvas');
+      cv.className = 'card-preview'; cv.setAttribute('role', 'img');
+      if (kind === 'birth') {
+        var bi = birthInfo();
+        K.birth(cv, { L: L, era: eraOf(L.by), place: bi.place, name: L.name, shareWhat: bi.what, shareText: shareLabel(bi.share) });
+        cv.setAttribute('aria-label', L.by + '年に' + bi.place + 'で生まれた' + L.name + 'さんの誕生カード');
+      } else {
+        var notes = (L.notes || []).filter(function (n) { return n.text; });
+        var from = L.old ? L.home.label : L.home.prefName + L.home.muniName;
+        var to = L.old ? O.placeLabel(L) : (L.place.away ? L.place.prefName : L.place.prefName + L.place.muniName);
+        K.end(cv, { L: L, name: L.name, from: from, to: to, summary: ['学び：' + eduLabel(), '仕事：' + (L.lastJob || '働きに出ることはなかった'), '家族：' + familyLabel()], note: notes.length ? notes[notes.length - 1].text : '' });
+        cv.setAttribute('aria-label', L.name + 'さんの最期のカード');
+      }
+      c.appendChild(cv);
+      var b = el('button', 'btn-main', navigator.share ? '共有する' : '画像を保存する');
+      b.type = 'button';
+      b.onclick = function () { K.share(cv, 'ichioku-' + kind + '-' + L.by + '.png', '1億分の1'); };
+      c.appendChild(b);
+    });
+  }
+
   /* ---------- 人生の画面 ---------- */
   function nextYear() {
     clearTimeout(timer);
@@ -285,6 +340,7 @@
     $('branch').hidden = !r.branch;
     renderHotline($('hotline'), !!r.hotline);
     $('next').disabled = !!r.branch;
+    $('card-birth-life').hidden = r.age !== 0;
     renderTree(r.year);
   }
 
@@ -543,6 +599,9 @@
     $('end-log').onclick = openLog;
     $('sheet-close').onclick = closeSheet;
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('sheet').hidden) closeSheet(); });
+    $('card-birth-life').onclick = function () { openCard('birth'); };
+    $('card-birth').onclick = function () { openCard('birth'); };
+    $('card-end').onclick = function () { openCard('end'); };
     $('reborn').onclick = function () { clearTimeout(timer); closeSheetQuiet(); L = null; cur = null; born(); };
     $('again').onclick = function () { L = null; cur = null; show('top'); initPast(); };
   }

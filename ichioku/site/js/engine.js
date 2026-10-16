@@ -416,7 +416,7 @@
     }
     // 女性の再就職
     if (L.stage === 'home' && L.youngestBy && y - L.youngestBy >= 6 && a < 60 && rnd() < 0.14) {
-      L.job = { ind: pickInd(rnd, (L.place.muniObj || {}).ind || C.nat.indNat), reg: false, since: y };
+      L.job = { ind: pickInd(rnd, (L.place.muniObj || {}).ind || C.nat.indNat), reg: false, since: y }; L.lastJob = IND[L.job.ind].job;
       L.stage = 'work';
       push(L, rec, '学歴と仕事', '子どもが小学校に上がり、近くの職場でパートとして働き始めた。', [ev(C, 'labor', y, '女性の年齢別の働く人の割合', '')]);
     }
@@ -523,7 +523,7 @@
     var againF = L.lostJob ? 1.6 : 1;
     var pNon = clamp(base * 1.1 * eduF * sexF * jrF * againF, 0.02, 0.85);
     var reg = rnd() >= pNon;
-    L.job = { ind: k, reg: reg, since: y };
+    L.job = { ind: k, reg: reg, since: y }; L.lastJob = IND[k].job + (reg ? '' : '（非正規）');
     L.stage = 'work';
     var evs = [
       ev(C, 'jobs', nv(C.nat.jobs, y).y, P.name + 'のこの年の有効求人倍率', jrPref.toFixed(2) + '倍', { est: true }),

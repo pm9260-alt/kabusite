@@ -616,6 +616,7 @@
       var k = st === 'bushi' ? (sx === 'm' ? 'samurai' : null) : st === 'hyakusho' ? (L.kind === 'fish' && sx === 'm' ? 'fish' : 'farm') : st === 'chonin' ? (sx === 'm' ? (rnd() < 0.5 ? 'shop' : 'craft') : 'maid') :
         st === 'priest' ? 'temple' : st === 'outcast' ? 'leather' : st === 'ainu' ? 'ainu' : st === 'ryukyuShi' ? (sx === 'm' ? 'ryuOff' : 'farm') : 'farm';
       L.job = k || 'home';
+      if (k) L.lastJob = JOB[k];
       if (k) push(L, rec, '学歴と仕事', JOB[k] + 'で一人前に働き始めた', [ev(L, 'jinshin', 1873, '明治6年の職業別人口（農79%・工4%・商7%・雑業9%・雇人2%）', '', { est: true })]);
       return;
     }
@@ -630,6 +631,7 @@
     else k2 = tiltEdu >= 3 && rnd() < 0.35 ? 'teacher' : tiltEdu > 1 ? 'clerk' : sx === 'f' ? (y < 1950 ? 'maid' : 'office') : 'store';
     L.job = k2;
     var evs = [ev(L, 'ipss', near(L.H.nat.sectors, y), '働く人の産業の割合（農林漁業・工業・商業やサービス）', L.H.nat.sectors[near(L.H.nat.sectors, y)].map(function (v) { return pct(v); }).join('・'), { est: y < 1920 })];
+    L.lastJob = JOB[k2];
     var txt = {
       farm: '家の田畑の仕事を手伝い、働き手の一人になった', fish: '父の舟に乗り、漁師として働き始めた', silk: '製糸工場の女工になった。寄宿舎に入り、朝から晩まで繭から糸を繰った', build: '大工の親方に弟子入りした', factory: '工場で働き始めた',
       teacher: '学校の先生になった', clerk: '会社勤めを始めた', maid: 'よその家に住み込みで女中奉公に出た', office: '会社の事務員として働き始めた', store: '商店に住み込みで働き始めた'
@@ -1000,8 +1002,18 @@
     return L.home.label + 'で生まれ、' + placeLabel(L) + 'で亡くなった。';
   }
 
+  // 共有用の画像に出す「この年この所で生まれた割合」
+  function birthShare(L) {
+    var H = L.H, y = L.by;
+    if (y < 1873) {
+      var tot = 0;
+      topProvs(H).forEach(function (n) { if (H.prov[n].w) tot += lin(H.prov[n].w, y); });
+      return { share: lin(H.prov[L.prov].w, y) / tot, where: H.prov[L.prov].kuni };
+    }
+    return { share: lin(prefSeries(H, L.pref), y), where: H.prefNames[L.pref] };
+  }
   return {
     eraLabel: eraLabel, pickBirth: pickBirth, newLife: newLife, step: step, resolve: resolve, autoRun: autoRun,
-    cohort: cohort, majorTimeline: majorTimeline, familyList: familyList, endText: endText, placeLabel: placeLabel, deathProb: dp
+    cohort: cohort, majorTimeline: majorTimeline, familyList: familyList, endText: endText, placeLabel: placeLabel, deathProb: dp, birthShare: birthShare
   };
 });

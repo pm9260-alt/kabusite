@@ -415,6 +415,17 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
   rec('A 問いの文章が禁止語の検査を通るか', bw.length === 0, bw.join('、') || qs.size + '通りの問い');
 }
 
+// B：共有用の画像の文字と背景のコントラスト比
+{
+  const src = fs.readFileSync(path.join(SITE, 'js', 'card.js'), 'utf8');
+  const col = k => (src.match(new RegExp(k + " = '(#[0-9a-f]{6})'")) || [])[1];
+  const pairs = [['TEXT', 'BG'], ['SUB', 'BG'], ['ACCENT', 'BG'], ['TEXT', 'SURF'], ['SUB', 'SURF']];
+  const low = pairs.filter(([f, b]) => !col(f) || !col(b) || ratio(col(f), col(b)) < 4.5).map(([f, b]) => f + '/' + b + (col(f) && col(b) ? ' = ' + ratio(col(f), col(b)).toFixed(2) : ' 色が見つからない'));
+  rec('B 共有用の画像の文字と背景のコントラスト比が4.5以上か', low.length === 0, low.join('、'));
+  const forbid = /shadow|Gradient|filter\s*=|blur/i.test(src.replace(/\/\*[\s\S]*?\*\//g, ''));
+  rec('B 共有用の画像に影・グラデーション・ぼかしを使っていないか', !forbid);
+}
+
 /* ---------- 結果 ---------- */
 const lines = [];
 lines.push('公開前の検査　' + new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }) + '（日本時間）');
