@@ -18,7 +18,7 @@ export const IPSS_TABLES = [
 ];
 const IPSS = t => `https://www.ipss.go.jp/syoushika/tohkei/Data/Popular2025/${t}.files/sheet001.htm`;
 const WIKI = t => `https://ja.wikipedia.org/w/index.php?title=${encodeURIComponent(t)}&action=raw`;
-export const WIKI_PAGES = ['江戸時代の日本の人口統計', '壬申戸籍'];
+export const WIKI_PAGES = ['江戸時代の日本の人口統計', '壬申戸籍', '近代以前の日本の人口統計', '元号一覧 (日本)'];
 const OWID = [
   ['owid-life.csv', 'https://ourworldindata.org/grapher/life-expectancy.csv?country=JPN'],
   ['owid-u5.csv', 'https://ourworldindata.org/grapher/child-mortality.csv?country=JPN'],

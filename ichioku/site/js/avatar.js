@@ -78,6 +78,11 @@
     var s;
     if (k.ainu && y < 1900) s = m ? (a >= 16 ? 'ainuM' : 'long') : 'ainuF';
     else if (k.ryukyu && y < 1890) s = m ? (a >= 13 ? 'katakashira' : 'okappa') : (a >= 13 ? 'kanpu' : 'okappa');
+    else if (y < 1600) {
+      // 1600年より前：大人の男は烏帽子、女は長い髪を後ろに垂らした（垂髪）
+      if (m) s = k.st === 'priest' && a >= 13 ? 'shaved' : a >= 15 ? 'eboshi' : 'okappa';
+      else s = a >= 13 ? 'long' : 'okappa';
+    }
     else if (m) {
       if (k.st === 'priest' && a >= 13) s = 'shaved';
       else if (y < 1872 || (y < 1885 && k.kind === 'village' && a >= 30)) s = a >= 15 ? 'chonmage' : a >= 6 ? 'kids-tuft' : 'shaved';
@@ -107,6 +112,8 @@
       case 'chonmage':
         r(9, t + 1, 6, 2, CROWN); r(8, t + 1, 1, 4, c); r(15, t + 1, 1, 4, c);
         r(10, t, 4, 1, c); r(11, t - 1, 2, 1, c); r(13, t - 1, 1, 1, c); break;
+      case 'eboshi':
+        r(8, t + 1, 1, 3, c); r(15, t + 1, 1, 3, c); r(8, t, 8, 1, '#1a1a1a'); r(9, t - 4, 6, 4, '#1a1a1a'); r(10, t - 5, 4, 1, '#1a1a1a'); break;
       case 'kids-tuft':
         r(8, t + 1, 8, 2, CROWN); r(11, t, 2, 2, c); r(8, t + 3, 1, 2, c); r(15, t + 3, 1, 2, c); break;
       case 'shaved':
@@ -162,6 +169,9 @@
       if (!m) { o.skirt = '#6a5a4a'; }
       return o;
     }
+    if (k.ainu && y < 1200) return { type: 'attush', base: '#7a5a3a', sub: '#4a3a2a', pattern: '#c8b090', legs: SKIN, feet: '#6a4a2a', desc: 'skin' };
+    if (k.st === 'kuge' && a >= 13) return m ? { type: 'robe', base: pickC(['#2a3a6a', '#4a2a4a', '#2a4a4a'], s), sub: '#e8e0d0', feet: '#1a1a1a', desc: 'noushi' } :
+      { type: 'kimono', long: true, base: pickC(['#a8344a', '#6a3a8a', '#3a6a5a'], s), sub: '#e8c060', obi: '#c87a3a', feet: SKIN, desc: 'uchiki' };
     if (k.ainu && y < 1930) return { type: 'attush', base: '#9a7a52', sub: '#24305a', pattern: '#e8e0d0', legs: SKIN, feet: '#6a4a2a' };
     if (k.ryukyu && y < 1930) return { type: 'ryukyu', base: m ? '#c8b070' : pickC(['#d8c070', '#7aa0c8', '#c88a70'], s), sub: '#3a4a7a', legs: SKIN, feet: SKIN_D, hat: m && k.job === 'farm' && a >= 16 ? 'kasa' : null };
     if (k.drafted) return { type: 'military', base: '#7a7040', sub: '#5a5430', legs: '#6a6438', feet: SHOE, hat: 'army' };
@@ -186,7 +196,7 @@
     // 仕事
     var farm = k.job === 'farm' || (k.st === 'hyakusho' && y < 1873 && a >= 10) || k.job === 'ainu';
     var fish = k.job === 'fish';
-    if (y < 1873 && m && k.st === 'bushi' && a >= 15) return { type: 'hakama', base: pickC(['#2a3a5a', '#3a2a2a', '#2a3a2a'], s), sub: '#e8e0d0', hakama: pickC(['#5a5a6a', '#4a3a2a', '#6a6a5a'], s, 3), kami: y < 1868, sword: true, feet: '#d8d0c0' };
+    if (y < 1873 && m && k.st === 'bushi' && a >= 15) return { type: 'hakama', base: pickC(['#2a3a5a', '#3a2a2a', '#2a3a2a'], s), sub: '#e8e0d0', hakama: pickC(['#5a5a6a', '#4a3a2a', '#6a6a5a'], s, 3), kami: y < 1868 && y >= 1600, sword: true, feet: '#d8d0c0', desc: y < 1600 ? 'hitatare' : null };
     if (k.st === 'priest' && a >= 15 && m) return { type: 'robe', base: '#1e1e22', sub: '#8a5a2a', feet: GETA };
     if (fish && a >= 12) return { type: 'noragi', base: '#2a4a7a', sub: '#e8e0d0', pants: '#2a3a5a', legs: SKIN, feet: SKIN_D, hat: y < 1960 ? 'hachimaki' : null };
     if (farm && a >= 12 && y < 1975) return { type: 'noragi', base: pickC(['#2e4a7a', '#4a4a3a', '#3a4a6a'], s), sub: '#e8e0d0', pants: m ? '#2a3450' : null, legs: SKIN, feet: '#a08050', hat: m ? 'kasa' : 'tenugui', apronless: true };
@@ -294,13 +304,13 @@
   /* ---------- 画面を音声で伝えるときの説明 ---------- */
   var DESC = {
     chonmage: 'ちょんまげを結い', nihongami: '日本髪を結い', sokuhatsu: '束髪に結い', kanpu: '髪を頭の上でまとめてかんざしを挿し', katakashira: '髪を頭の上で結い',
-    bouzu: '坊主頭で', bald: '頭がはげ上がり', okappa: 'おかっぱ頭で', perm: 'パーマをかけ', long: '長い髪で', bob: '短めの髪で', ainuM: '長い髪とひげをたくわえ', ainuF: '長い髪に鉢巻きをし', longish: '髪を長めに伸ばし', short: '短い髪で', chigo: '髪を結い上げ', bun: '髪を後ろでまとめ', 'kids-tuft': '頭のてっぺんに髪を少し残し', shaved: '頭をそり上げ'
+    eboshi: '烏帽子をかぶり', bouzu: '坊主頭で', bald: '頭がはげ上がり', okappa: 'おかっぱ頭で', perm: 'パーマをかけ', long: '長い髪で', bob: '短めの髪で', ainuM: '長い髪とひげをたくわえ', ainuF: '長い髪に鉢巻きをし', longish: '髪を長めに伸ばし', short: '短い髪で', chigo: '髪を結い上げ', bun: '髪を後ろでまとめ', 'kids-tuft': '頭のてっぺんに髪を少し残し', shaved: '頭をそり上げ'
   };
-  var CDESC = { kimono: '着物を着た', hakama: '袴をはいた', noragi: '野良着の', western: '洋服の', suit: '背広の', gakuran: '学生服の', sailor: 'セーラー服の', military: '軍服の', monpe: 'もんぺをはいた', attush: 'アイヌの着物（アットゥシ）を着た', ryukyu: '琉球の着物を着た', robe: '僧衣の' };
+  var CDESC = { kimono: '着物を着た', hakama: '袴をはいた', noragi: '野良着の', western: '洋服の', suit: '背広の', gakuran: '学生服の', sailor: 'セーラー服の', military: '軍服の', monpe: 'もんぺをはいた', attush: 'アイヌの着物（アットゥシ）を着た', ryukyu: '琉球の着物を着た', robe: '僧衣の', noushi: '直衣（貴族のふだん着）を着た', uchiki: '何枚も重ねた着物（袿）を着た', skin: '毛皮や木の皮の衣を着た', hitatare: '直垂に袴をはいた' };
   function describe(k, c, h) {
     var who = k.a <= 1 ? '赤ちゃん' : k.a <= 11 ? (k.sex === 'm' ? '男の子' : '女の子') : k.a <= 17 ? (k.sex === 'm' ? '少年' : '少女') : k.a >= 65 ? (k.sex === 'm' ? 'おじいさん' : 'おばあさん') : (k.sex === 'm' ? '男の人' : '女の人');
     if (!c) return '布にくるまれた' + who;
-    return (h && DESC[h.style] ? DESC[h.style] + '、' : '') + (CDESC[c.type] || '') + who;
+    return (h && DESC[h.style] ? DESC[h.style] + '、' : '') + (CDESC[c.desc || c.type] || '') + who;
   }
 
   root.IchiokuAvatar = { draw: draw, lookOf: lookOf };

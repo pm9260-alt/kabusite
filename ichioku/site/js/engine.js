@@ -981,7 +981,7 @@
   // 年齢ごとのからだの目安（生命表で亡くなる確率が上がっていく形に合わせた目安。推計）
   var BODY_AGE = [[0, 66], [3, 78], [15, 84], [25, 84], [40, 79], [55, 72], [65, 66], [75, 57], [85, 45], [95, 30], [110, 15]];
   // 学校や学歴ごとの学びの目安（推計）
-  var LEARN_EDU = { '寺子屋': 50, '藩校': 58, '村学校': 48, '小学校': 48, '中学': 55, '中学校': 55, '高校': 62, '旧制の上の学校': 74, '短大・専門': 68, '大学': 75, '大学院': 82 };
+  var LEARN_EDU = { '家学': 62, '寺での手習い': 46, '寺子屋': 50, '藩校': 58, '村学校': 48, '小学校': 48, '中学': 55, '中学校': 55, '高校': 62, '旧制の上の学校': 74, '短大・専門': 68, '大学': 75, '大学院': 82 };
   // 出来事の文から数値を動かす決まり。others が true の決まりは、家族や他人が主語の文（「父が入院した」など）には当てはめない
   var WHO_OTHER = /^(父|母|祖父|祖母|夫|妻|兄|姉|弟|妹|息子|娘|子ども|長男|長女|次男|次女|三男|三女|孫|義|友だち|友人|同僚|上司|近所|隣)/;
   var ST_RULES = [
@@ -1019,7 +1019,7 @@
     while (!t[yy] && yy > ys[0]) yy--;
     return t[yy] ? { y: yy, hard: t[yy].hard } : null;
   }
-  var OLD_SAT = { bushi: 4, chonin: 2, hyakusho: 0, priest: 3, outcast: -12, ainu: -8, ryukyuShi: 3, ryukyuHyakusho: -2, shizoku: 2, buraku: -10, heimin: 0 };
+  var OLD_SAT = { kuge: 6, genin: -10, satsumon: -2, gusuku: -2, bushi: 4, chonin: 2, hyakusho: 0, priest: 3, outcast: -12, ainu: -8, ryukyuShi: 3, ryukyuHyakusho: -2, shizoku: 2, buraku: -10, heimin: 0 };
   function statusYear(L, rec) {
     if (!L.st4) statusInit(L);
     var S = L.st4, C = L.C, y = rec.year, a = rec.age, est = y < 1975, why = [];
@@ -1155,7 +1155,7 @@
      貯金は家計調査（貯蓄・負債編）の「貯蓄現在高 ÷ 年間収入」を、年齢と暮らしむきの段（5段）ごとに目安にして近づけていく。
      病気・失業・災害・離婚などの出来事で減る。乱数は別のもの（種から作る）を使うので、ほかの抽選の順番は変わらない。 */
   var SAV_AGES = [25, 35, 45, 55, 65, 75];
-  var OLD_Q = { bushi: 3, chonin: 3, hyakusho: 2, priest: 3, outcast: 1, ainu: 1, ryukyuShi: 3, ryukyuHyakusho: 2, shizoku: 3, buraku: 1, heimin: 2 };
+  var OLD_Q = { kuge: 4, genin: 1, satsumon: 1, gusuku: 2, bushi: 3, chonin: 3, hyakusho: 2, priest: 3, outcast: 1, ainu: 1, ryukyuShi: 3, ryukyuHyakusho: 2, shizoku: 3, buraku: 1, heimin: 2 };
   var MONEY_RULES = [
     { re: /職を失|失業し|倒産し|解雇され|雇い止め|勤め先がなくな/, f: 0.2, t: '仕事を失い、貯金を取り崩した' },
     { re: /家を失|家が壊|家が流さ|焼け出さ|全壊|半壊|床上まで|浸水し|空襲で家|家が焼け/, f: 0.3, t: '災害で家や家財を失い、建て直しに貯金を使った' },
@@ -1283,7 +1283,8 @@
     } else if (a === 70) {
       q.push('この人が70年で見てきた世の中の変わり方を、若い人にどう伝えますか');
       q.push('70歳の自分に手紙を書くとしたら、最初の一行は何にしますか');
-      if (by < 1900) q.push('江戸や明治から生きてきたこの人が、いちばん驚いたことは何だったと思いますか');
+      if (by >= 1790 && by < 1900) q.push('江戸や明治から生きてきたこの人が、いちばん驚いたことは何だったと思いますか');
+      if (by < 1600) q.push('戦や飢饉の続く世を70年生きたこの人に、何と声をかけますか');
       if (by >= 1920 && by <= 1935) q.push('戦争を子どものころに見たこの人は、孫に何を語ると思いますか');
     }
     var t = q[((L.seed >>> 0) + a) % q.length]; // 乱数を使わずに選ぶ（人生の進み方を変えないため）

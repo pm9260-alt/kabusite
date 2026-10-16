@@ -1,9 +1,10 @@
-// 1800〜1974年生まれのための束を作る：data-src/stats/history.json と data-src/history*.mjs → site/data/history.json
+// 1000〜1974年生まれのための束を作る：data-src/stats/history.json と data-src/history*.mjs → site/data/history.json
 // 使い方：node tools/build-history.mjs（tools/build.mjs のあとに動かす。1975年の都道府県の出生数を common.json から使う）
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { PROVINCES, STATUS, OUTCAST_SHARE, HISTORY_SOURCES } from '../data-src/history.mjs';
+import { PROVINCES, STATUS, OUTCAST_SHARE, HISTORY_SOURCES, MED_CITIES, CITY_FROM } from '../data-src/history.mjs';
+import { MED_STATUS, MED_STATUS_PROV, EZO_W, AINU_SHARE_EARLY, RYUKYU_W, RYUKYU_SHI_EARLY, MED_E0, MED_Q0, MED_U5, MED_NATPOP, MED_TIMELINE, MED_CONTEXT, MED_SCENES, MED_NAMES, MED_EVENTS } from '../data-src/history-medieval.mjs';
 import { OLD_EVENTS, OLD_MOVES, MANCHURIA_1945 } from '../data-src/history-events.mjs';
 import { OLD_TIMELINE, ERA_CONTEXT, ERAS } from '../data-src/history-timeline.mjs';
 import { OLD_SCENES, OLD_NAMES } from '../data-src/history-scenes.mjs';
@@ -34,14 +35,15 @@ const pad = c => String(c).padStart(2, '0');
 // 平均寿命：1800〜1864年は宗門改帳などの村の研究（出生時の平均余命 30〜40年台。乳児死亡率200‰を仮定したものが多い）から 男35.8・女37.0年とした（推計）
 // 1895年（1891-98年の改作生命表）以降は人口統計資料集。1975年は今の本体の値につなぐ
 const BETA = C.mort.beta, BG = C.mort.bg;
-const e0 = { m: { 1800: 35.8, 1864: 35.8 }, f: { 1800: 37.0, 1864: 37.0 } };
+const e0 = { m: { ...MED_E0.m, 1800: 35.8, 1864: 35.8 }, f: { ...MED_E0.f, 1800: 37.0, 1864: 37.0 } };
+est.push('1799年以前の平均寿命（中世は人骨の研究、平安と江戸の前半はそこからつないだ目安）');
 for (const sx of ['m', 'f']) for (const [y, v] of Object.entries(S.nat.e0[sx])) if (+y < 1975) e0[sx][y] = v;
 est.push('1800〜1864年の平均寿命（村の研究の値の中ほど）と、1865〜1894年のつなぎ');
 // 0歳で亡くなる確率：江戸時代は200‰（研究でよく仮定される値。村の推計は140〜300‰台）、1900年から人口統計資料集
-const q0 = { 1800: 0.2, 1872: 0.2 };
+const q0 = { ...MED_Q0, 1800: 0.2, 1872: 0.2 };
 for (const [y, v] of Object.entries(S.nat.q0)) q0[y] = v;
 // 5歳までに亡くなる割合：江戸の村は推計で33%（江戸の町の人骨の研究では36%）、1920年からは Our World in Data
-const u5 = { 1800: 0.33, 1872: 0.33 };
+const u5 = { ...MED_U5, 1800: 0.33, 1872: 0.33 };
 for (const [y, v] of Object.entries(S.nat.u5)) if (+y >= 1920 && +y <= 1975 && +y % 5 === 0) u5[y] = v;
 est.push('1919年以前の5歳までに亡くなる割合');
 function e0Calc(alpha, q00, qc) {
@@ -64,7 +66,7 @@ function solve(target, q00, qc) {
   return Math.exp((lo + hi) / 2);
 }
 const mort = { beta: BETA, bg: BG, q0: {}, qc: {}, alpha: { m: {}, f: {} }, cityMul: 1.4, prefMul: {} };
-for (let y = 1800; y <= 1975; y += 5) {
+for (let y = 1000; y <= 1975; y += 5) {
   const qq = lin(q0, y), uu = lin(u5, y);
   const qc = 1 - Math.pow((1 - uu) / (1 - qq), 1 / 4);
   mort.q0[y] = r4(qq); mort.qc[y] = r4(qc);
@@ -89,7 +91,7 @@ for (const [c, p] of Object.entries(S.prefs)) {
 
 /* ---------- 生まれる場所 ---------- */
 const provByName = Object.fromEntries(S.provinces.map(p => [p.name, p]));
-const SURVEY_YEARS = [1798, 1804, 1822, 1828, 1834, 1840, 1846];
+const SURVEY_YEARS = [1721, 1750, 1756, 1786, 1792, 1798, 1804, 1822, 1828, 1834, 1840, 1846];
 const sum1846 = S.provinces.filter(p => !PROVINCES.find(q => q.name === p.name)?.parent && p.pop[1846]).reduce((a, p) => a + p.pop[1846], 0);
 const sum1873 = S.provinces.filter(p => !PROVINCES.find(q => q.name === p.name)?.parent && p.pop[1846]).reduce((a, p) => a + p.pop[1873], 0);
 const prov = {};
@@ -99,7 +101,8 @@ for (const def of PROVINCES) {
   const o = { kuni: (def.kuni || def.name) + (def.kuni === '蝦夷地' ? '' : '国'), region: def.region };
   if (def.parent) o.parent = def.parent;
   if (def.subs) o.subs = def.subs;
-  if (def.city) o.city = def.city;
+  if (def.city) o.city = CITY_FROM[def.city.name] ? { ...def.city, from: CITY_FROM[def.city.name] } : def.city;
+  if (MED_CITIES[def.name]) o.medCity = MED_CITIES[def.name];
   if (def.one) o.one = true;
   if (def.prefs) o.prefs = Object.fromEntries(Object.entries(def.prefs).map(([k, v]) => [pad(k), v]));
   o.pop1873 = sp.pop[1873];
@@ -109,6 +112,10 @@ for (const def of PROVINCES) {
     const w = {};
     for (const y of SURVEY_YEARS) if (sp.pop[y]) w[y] = Math.round(sp.pop[y] * r);
     w[1873] = sp.pop[1873];
+    // 1000〜1600年は鬼頭宏の旧国別の推定人口（1000年は900年と1150年の間を直線でつないだ値）
+    const mp = S.medProv && S.medProv[def.name];
+    if (mp) { w[1000] = Math.round(mp[900] + (mp[1150] - mp[900]) * 0.4); w[1150] = mp[1150]; w[1600] = mp[1600]; }
+    else errors.push('中世の旧国の人口がない：' + def.name);
     o.w = w;
   }
   // 身分の割合（1873年の族籍。平民は職業で百姓と町人に分ける）
@@ -132,13 +139,16 @@ for (const def of PROVINCES) {
 const ezoW = {};
 for (const y of [1804, 1822, 1839, 1854, 1873]) ezoW[y] = Math.round(lin(S.ezo.wajin, y) + lin(S.ezo.ainu, y));
 ezoW[1798] = 28711 + S.ezo.ainu[1804];
+Object.assign(ezoW, EZO_W);
+est.push('1797年以前の北海道と沖縄の人口（記録がないため目安）');
 prov['蝦夷・松前'].w = ezoW;
 prov['蝦夷・松前'].status = { ...prov['渡島']?.status || { bushi: 0.06, priest: 0.01, hyakusho: 0.6, chonin: 0.33, outcast: 0 } };
 const ainuShare = {};
+Object.assign(ainuShare, AINU_SHARE_EARLY);
 for (const y of keysOf(S.ezo.ainu)) ainuShare[y] = r4(S.ezo.ainu[y] / (S.ezo.ainu[y] + lin(S.ezo.wajin, y)));
 const ryukyuPop = { ...S.ryukyu.pop, 1873: provByName['琉球']?.pop[1873] || 166789 };
-prov['琉球'] = { kuni: '琉球王国', region: '琉球', prefs: { 47: 1 }, w: Object.fromEntries(Object.entries(ryukyuPop).filter(([y]) => +y >= 1772)), pop1873: ryukyuPop[1873], one: true };
-const ryukyuShi = {};
+prov['琉球'] = { kuni: '琉球王国', region: '琉球', prefs: { 47: 1 }, w: { ...RYUKYU_W, ...Object.fromEntries(Object.entries(ryukyuPop).filter(([y]) => +y >= 1772)) }, pop1873: ryukyuPop[1873], one: true };
+const ryukyuShi = { ...RYUKYU_SHI_EARLY };
 for (const y of keysOf(S.ryukyu.shi)) ryukyuShi[y] = r4(S.ryukyu.shi[y] / S.ryukyu.pop[y]);
 
 // 1873年以降の都道府県の重み：1873年は旧国の人口を県に分けたもの、1900・1920・1940・1960年は出生数、1975年は今の本体の出生数
@@ -167,15 +177,16 @@ function provPop(name, y) {
   if (o.w) return lin(o.w, y);
   return o.pop1873;
 }
-const natPopAt = y => lin({ 1800: 30600000, 1846: 32297200, ...S.nat.pop, 1920: 55963000, 1940: 71933000, 1950: 84115000, 1960: 94302000, 1970: 104665000 }, y);
+const natPopAt = y => lin({ ...MED_NATPOP, 1800: 30600000, 1846: 32297200, ...S.nat.pop, 1920: 55963000, 1940: 71933000, 1950: 84115000, 1960: 94302000, 1970: 104665000 }, y);
 
 /* ---------- 出来事の割合 ---------- */
 const eventsOut = [];
-for (const e of OLD_EVENTS) {
+for (const e of [...MED_EVENTS, ...OLD_EVENTS]) {
   const ys = Array.isArray(e.y) ? e.y : [e.y, e.y];
   const o = { id: e.id, y: ys, m: e.m || null, title: e.title, kind: e.kind, where: e.where, who: e.who || null, text: e.text, deadText: e.deadText, src: e.src, note: e.note || '', est: !!e.est, cityWeight: e.cityWeight || 1, rates: {} };
   if (e.city) o.city = e.city;
   if (e.prefs) o.prefs = e.prefs;
+  if (e.notProvs) o.notProvs = e.notProvs;
   for (let y = ys[0]; y <= ys[1]; y++) {
     const share = e.share ? (e.share[y] || 0) : 1 / (ys[1] - ys[0] + 1);
     const r = {};
@@ -201,6 +212,8 @@ for (const e of OLD_EVENTS) {
         else if (e.where === 'prov') r[k] = r4(d * share / provPop(k, y));
         else r[pad(k)] = r4(d * share / prefPop(pad(k), y));
       }
+    } else if (e.rateProv) {
+      for (const [k, v] of Object.entries(e.rateProv)) r[k] = typeof v === 'number' ? v : (v[y] || 0);
     } else if (e.rate != null) {
       r.all = typeof e.rate === 'number' ? e.rate : (e.rate[y] || 0);
     }
@@ -265,11 +278,30 @@ const price = {}, priceSrc = {};
 // 都道府県の名前（試験モードの束は3都道府県だけなので、昔の統計の表の名前から作る）
 const prefNames = Object.fromEntries(Object.entries(S.prefs).map(([c, p]) => [c, c === '01' ? '北海道' : c === '13' ? '東京都' : c === '26' || c === '27' ? p.name + '府' : p.name + '県']));
 for (const p of C.prefs) prefNames[p.code] = p.name;
+// 江戸時代の場面の始まりの年を、その風習が広まった頃に合わせる（もとの表は1800年からとしていた）
+const SCENE_FROM = [
+  ['寺子屋', 1700], ['藩校', 1700], ['参勤交代', 1635], ['歌舞伎', 1680], ['町火消し', 1720], ['七五三', 1700], ['お伊勢参り', 1650], ['丁稚', 1650],
+  ['漁場', 1700], ['王府に納める', 1609], ['村学校', 1800], ['科（試験）', 1760], ['村の外れ', 1600], ['皮なめし', 1600], ['ひどい言葉', 1000],
+  ['檀家', 1640], ['村の子どもたちに字', 1700], ['年貢を納める季節', 1600], ['若者組', 1600], ['機織りや糸繰り', 1000], ['子守り', 1000], ['疱瘡', 1000],
+  ['田植えや稲刈り', 1000], ['網を引く', 1000], ['女中奉公', 1650], ['前髪を落とし', 1600], ['神楽や屋台', 1600], ['半鐘', 1650], ['禄（給料）', 1650],
+  ['盆と暮れの勘定', 1650], ['雑煮', 1400], ['お手玉', 1600], ['質に入れた', 1600], ['隠居', 1300], ['三線', 1600], ['シーミー', 1700], ['エイサー', 1600],
+  ['イオマンテ', 1200], ['ユカラ', 1200], ['アットゥシ', 1200]
+];
+const scenesAll = OLD_SCENES.map(s0 => {
+  const s = { ...s0 };
+  const hit = SCENE_FROM.find(([k]) => s.t.includes(k));
+  if (s.y && s.y[0] === 1800) s.y = [hit ? hit[1] : (s.y[1] <= 1879 ? 1650 : 1000), s.y[1]];
+  else if (!s.y && hit) s.y = [hit[1], 2100];
+  return s;
+}).concat(MED_SCENES);
+const erasAll = [...(S.medEras || []), ...ERAS];
+if (!S.medEras) errors.push('元号の一覧（990〜1788年）がない');
 const H = {
   generated: new Date().toISOString().slice(0, 10),
-  range: [1800, 1974],
+  range: [1000, 1974],
+  medStatus: MED_STATUS, medStatusProv: MED_STATUS_PROV,
   sources: HISTORY_SOURCES, status: STATUS,
-  eras: ERAS, eraContext: ERA_CONTEXT, timeline: OLD_TIMELINE, scenes: OLD_SCENES, names: OLD_NAMES,
+  eras: erasAll, eraContext: [...MED_CONTEXT, ...ERA_CONTEXT], timeline: [...MED_TIMELINE, ...OLD_TIMELINE], scenes: scenesAll, names: { ...OLD_NAMES, ...MED_NAMES },
   prov, prefW, urban, urbanPref, prefNames,
   ainuShare, ryukyuShi, mort,
   nat: { elem, mid, terakoya, higherPrimary, higherOld, hs, univ, jc, marriage, neverMarried, divorce, children, sectors, gdp: S.nat.gdp, causeRank: S.nat.causeRank, e0 },

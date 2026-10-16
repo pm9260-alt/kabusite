@@ -16,9 +16,10 @@ const args = process.argv.slice(2);
 const TEST = args.includes('--test');
 const N = +(args[args.indexOf('--n') + 1] || 0) || (TEST ? 2000 : 10000);
 const YEARS = TEST ? [1975, 1990, 2000] : Array.from({ length: 26 }, (_, i) => 1975 + i);
-// 1800〜1974年生まれ（昔の人生の進め方）。本番は5年おき、試験モードは5つの年
-const OLD_YEARS = TEST ? [1800, 1850, 1900, 1940, 1970] : Array.from({ length: 35 }, (_, i) => 1800 + i * 5);
-const OLD_N = TEST ? 200 : 600;
+// 1000〜1974年生まれ（昔の人生の進め方）。本番は5年おき、試験モードは9つの年。1799年以前は1年あたり400人（時間を抑えるため）
+const OLD_YEARS = TEST ? [1000, 1300, 1550, 1700, 1800, 1850, 1900, 1940, 1970] : Array.from({ length: 195 }, (_, i) => 1000 + i * 5);
+const OLD_N0 = TEST ? 200 : 600;
+const oldN = by => (by < 1800 && !TEST ? 400 : OLD_N0);
 const LAST_YEAR = 2026;
 
 const results = [];
@@ -103,7 +104,7 @@ function texts() {
     for (const a of e.areas || []) out.push(['出来事 ' + e.id, a.text]);
     for (const a of e.all || []) out.push(['出来事 ' + e.id, a.text]);
   }
-  // 1800〜1974年生まれの文（2026-10-16 に検査の対象から漏れていたため追加）
+  // 1000〜1974年生まれの文（2026-10-16 に検査の対象から漏れていたため追加）
   for (const s of H.scenes) out.push(['昔の場面', s.t]);
   for (const r of H.timeline) out.push(['昔の年表 ' + r.y, r.t]);
   for (const c of H.eraContext) out.push(['時代のようす', c.t]);
@@ -127,7 +128,7 @@ function stripCode(src) { return src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^
   // 「まず」は副詞のときだけ（「抱え込まずに」のような動詞の形は除く）
   for (const [where, t] of T) if (/(^|[、。「（\s'"])まず/.test(t)) b2.push(where + '「まず」'); rec('作る人が使わないと決めた言葉が入っていないか', b2.length === 0, b2.slice(0, 10).join('、'));
   // 実名の一覧の言葉を含むだけの別の言葉（「関東大震災」の「東大」など）はよける
-  const REAL_OK = ['関東大震災', '東京大空襲'];
+  const REAL_OK = ['関東大震災', '東京大空襲', '東大寺', '安倍氏'];
   const T0 = T.map(([w, t]) => [w, REAL_OK.reduce((x, k) => x.split(k).join(''), t)]);
   const b3 = ((list) => { const f = []; for (const [where, t] of T0) for (const w of list) if (t.includes(w)) f.push(where + '「' + w + '」'); return f; })(REAL); rec('実名の一覧に当たる名前が入っていないか', b3.length === 0, b3.slice(0, 10).join('、'));
   const chars = [];
@@ -306,7 +307,7 @@ cmp('平均寿命が元の統計から±3年以内か', sim.life, 1, '歳');
 cmp('婚姻率（50歳までに結婚）が元の統計から±3ポイント以内か', sim.marr, 100, '%');
 cmp('非正規の割合（25〜34歳）が元の統計から±3ポイント以内か', sim.nonreg, 100, '%');
 
-/* ---------- 5. 1800〜1974年生まれ ---------- */
+/* ---------- 5. 1000〜1974年生まれ ---------- */
 {
   const noSrc = H.events.filter(e => !e.src || !e.src.name);
   rec('昔の出来事の全件に根拠があるか', noSrc.length === 0, noSrc.map(e => e.id).join('、'));
@@ -316,14 +317,17 @@ cmp('非正規の割合（25〜34歳）が元の統計から±3ポイント以�
   rec('昔の場面の書き方が正しいか', badScene.length === 0, badScene.slice(0, 5).map(s => (s.t || '').slice(0, 15)).join('、'));
   const tlY = new Set(H.timeline.map(r => r.y));
   const ctxMiss = [];
-  for (let y = 1800; y <= 1974; y++) if (!tlY.has(y) && !H.eraContext.some(c => y >= c.from && y <= c.to)) ctxMiss.push(y);
-  rec('1800〜1974年の「その年の世の中」が空の年がないか', ctxMiss.length === 0, ctxMiss.join('、'));
+  for (let y = 1000; y <= 1974; y++) if (!tlY.has(y) && !H.eraContext.some(c => y >= c.from && y <= c.to && !c.provs)) ctxMiss.push(y);
+  for (const pv of ['蝦夷・松前', '琉球']) for (let y = 1000; y <= 1608; y++) if (!H.eraContext.some(c => y >= c.from && y <= c.to && c.provs && c.provs.includes(pv))) ctxMiss.push(pv + y);
+  rec('1000〜1974年の「その年の世の中」が空の年がないか', ctxMiss.length === 0, ctxMiss.join('、'));
 }
 const old = { lives: 0, err: [], badText: [], contra: [], jp: [], empty: 0, years: 0, q0: { s: 0, n: 0, t: 0 }, elem: { s: 0, n: 0, t: 0 }, hs: { s: 0, n: 0, t: 0 }, marr: { s: 0, n: 0, t: 0 }, prov: {}, pref: {} };
 const t1 = Date.now();
 const JP_SCENES = new Set(H.scenes.filter(s => s.jp).map(s => s.t));
+const med = { e0: { s: 0, n: 0, t: 0 }, bad: [], world: [] };
+const MAIN_TL = new Set(H.timeline.filter(r => !r.provs && !r.prefs).map(r => r.t));
 for (const by of OLD_YEARS) {
-  for (let i = 0; i < OLD_N; i++) {
+  for (let i = 0; i < oldN(by); i++) {
     const seed = (by * 100003 + i * 7 + 1) >>> 0;
     try {
       const b = O.pickBirth(C, H, by, E.makeRng(seed ^ 0x9e3779b9));
@@ -348,6 +352,20 @@ for (const by of OLD_YEARS) {
       for (const k of L.members.filter(m => m.role === '子')) { const d = k.by - by; if (d < 14 || d > 62) old.contra.push('自分と子の年齢差 ' + d); }
       // 統計との比較
       old.q0.n++; old.q0.s += L.deathAge === 0 ? 1 : 0; old.q0.t += O.deathProb(L, L.sex, 0, by);
+      // 1000〜1599年生まれ：身分と場所の組み合わせ、北海道と沖縄に本州の出来事が出ないか、平均寿命
+      if (by < 1600) {
+        const st = L.status;
+        if (st === 'satsumon' && !(by < 1200 && b.prov === '蝦夷・松前')) med.bad.push('擦文文化の人が' + by + '年・' + b.prov + 'に');
+        if (st === 'gusuku' && !(by < 1429 && b.pref === '47')) med.bad.push('グスク時代の人が' + by + '年・' + b.pref + 'に');
+        if (st === 'kuge' && b.prov !== '山城') med.bad.push('貴族が' + b.prov + 'に');
+        for (const r of L.log) {
+          if (/江戸/.test(r.place) && r.year < 1603) med.bad.push(r.year + '年に江戸の町');
+          if (((b.prov === '蝦夷・松前' && r.year < 1600) || (b.prov === '琉球' && r.year < 1609)) && r.world.items.some(it => MAIN_TL.has(it.t))) med.world.push(b.prov + ' ' + r.year);
+          if (r.income && r.income.cur !== (r.year < 1600 ? '貫文' : '両')) med.bad.push(r.year + '年のお金の単位 ' + r.income.cur);
+        }
+        med.e0.n++; med.e0.s += L.deathAge;
+        let l = 1, e = 0; for (let a = 0; a < 110; a++) { const q = O.deathProb(L, L.sex, a, by + a); e += l * q * a; l *= 1 - q; } med.e0.t += e + l * 110;
+      }
       if (by + 6 >= 1873 && by + 6 <= 1920 && L.deathAge >= 7) { old.elem.n++; old.elem.s += L.stats.school ? 1 : 0; old.elem.t += lerp(H.nat.elem[L.sex], by + 6); }
       if (by + 15 >= 1950 && by + 15 <= 1974 && L.deathAge >= 16 && !L.stats.abroad) { old.hs.n++; old.hs.s += L.stats.mid ? 1 : 0; old.hs.t += lerp(H.nat.hs[L.sex], by + 15); }
       if (L.deathAge >= 50 && by >= 1870) { old.marr.n++; old.marr.s += L.everMarried ? 1 : 0; old.marr.t += 1 - lerp(H.nat.neverMarried[L.sex], by + 45); }
@@ -360,14 +378,14 @@ const forcedOld = [];
 for (const n of Object.keys(H.prov).filter(n => !H.prov[n].parent)) {
   if (old.prov[n]) continue;
   const p = H.prov[n], src = p.subs ? H.prov[p.subs[0]] : p, pref = Object.keys(src.prefs)[0];
-  try { const L = O.autoRun(O.newLife(C, H, P[pref], { year: 1820, seed: 12345, birth: { prov: n, sub: p.subs ? p.subs[0] : null, pref } })); if (L.alive) forcedOld.push(n); } catch (e) { forcedOld.push(n + '（' + e.message + '）'); }
+  for (const fy of [1020, 1500, 1820]) try { const L = O.autoRun(O.newLife(C, H, P[pref], { year: fy, seed: 12345 + fy, birth: { prov: n, sub: p.subs ? p.subs[0] : null, pref } })); if (L.alive) forcedOld.push(n + fy); } catch (e) { forcedOld.push(n + fy + '（' + e.message + '）'); }
 }
 for (const c of Object.keys(P)) {
   if (old.pref[c]) continue;
   try { const b = { prov: null, sub: null, pref: c }; const cand = Object.keys(H.prov).find(n => !H.prov[n].subs && H.prov[n].prefs && H.prov[n].prefs[c]); b.prov = H.prov[cand].parent || cand; b.sub = H.prov[cand].parent ? cand : null; const L = O.autoRun(O.newLife(C, H, P[c], { year: 1930, seed: 54321, birth: b })); if (L.alive) forcedOld.push(c); } catch (e) { forcedOld.push(c + '（' + e.message + '）'); }
 }
 const oldSecs = ((Date.now() - t1) / 1000).toFixed(0);
-rec('1800〜1974年生まれの人生が止まらずに最後まで動くか', old.err.length === 0 && forcedOld.length === 0, old.err.slice(0, 5).concat(forcedOld.slice(0, 5)).join('、') || old.lives + '人分（' + oldSecs + '秒）。抽選で選ばれなかった旧国・都道府県も1人ずつ回した');
+rec('1000〜1974年生まれの人生が止まらずに最後まで動くか', old.err.length === 0 && forcedOld.length === 0, old.err.slice(0, 5).concat(forcedOld.slice(0, 5)).join('、') || old.lives + '人分（' + oldSecs + '秒）。抽選で選ばれなかった旧国・都道府県も1人ずつ回した');
 rec('昔の人生の文に、名前の置き換え漏れや表示できない値がないか', old.badText.length === 0, [...new Set(old.badText)].slice(0, 5).join('、'));
 rec('アイヌと琉球の人に本土の風習の場面が出ていないか', old.jp.length === 0, [...new Set(old.jp)].slice(0, 5).join('、'));
 rec('昔の人生の家族の年齢に矛盾がないか', old.contra.length === 0, [...new Set(old.contra)].slice(0, 5).join('、'));
@@ -381,6 +399,17 @@ cmpOld('昔の人生：0歳で亡くなる割合が元の数字から±3ポイ�
 cmpOld('昔の人生：小学校に通った割合（1873〜1920年に6歳）が元の統計から±3ポイント以内か', old.elem, '%', 3);
 cmpOld('昔の人生：高校進学率（1950〜1974年に15歳）が元の統計から±3ポイント以内か', old.hs, '%', 3);
 cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3ポイント以内か', old.marr, '%', 3);
+
+/* ---------- 1000〜1599年生まれ ---------- */
+{
+  rec('1000〜1599年生まれ：身分と生まれた場所・時代が合っているか（擦文文化・グスク時代・貴族・江戸の町・お金の単位）', med.bad.length === 0, [...new Set(med.bad)].slice(0, 8).join('、') || med.e0.n + '人分');
+  rec('1600年より前の北海道と沖縄の人に、本州の年表が出ていないか', med.world.length === 0, [...new Set(med.world)].slice(0, 8).join('、'));
+  const d = med.e0.n ? med.e0.s / med.e0.n - med.e0.t / med.e0.n : 99;
+  rec('1000〜1599年生まれの平均寿命が、目安の寿命の表から±3年以内か（飢饉や戦の分だけ短くなる）', Math.abs(d) <= 3, '回した結果 ' + (med.e0.s / med.e0.n).toFixed(1) + '歳／寿命の表 ' + (med.e0.t / med.e0.n).toFixed(1) + '歳（差 ' + d.toFixed(1) + '）');
+  const want = [[1000, '長保2年'], [1185, '文治元年'], [1306, '徳治元年'], [1467, '応仁元年'], [1600, '慶長5年'], [1688, '元禄元年'], [1868, '明治元年']];
+  const eraBad = want.filter(([y, t]) => { const b = O.pickBirth(C, H, y, E.makeRng(7)); const L = O.newLife(C, H, P[b.pref] || null, { year: y, seed: 7, birth: b }); return O.step(L).eraLabel !== t; }).map(([y, t]) => y + '年は' + t);
+  rec('元号が年表と合っているか（1000・1185・1306・1467・1600・1688・1868年）', eraBad.length === 0, eraBad.join('、'));
+}
 
 /* ---------- 6. 本家から取り入れた仕組み ---------- */
 // A：節目の問いかけ（5・15・30・50・70歳）。その年齢まで生きた人生ではすべて止まり、それより前に亡くなれば出ない
@@ -400,13 +429,13 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
   for (let i = 0; i < 60; i++) {
     const by = [1980, 1990, 2000][i % 3];
     run(E, E.newLife(C, P[E.pickPref(C, by, E.makeRng(i + 1))], { year: by, seed: i * 97 + 3 }));
-    const oy = 1800 + (i * 29) % 175, b = O.pickBirth(C, H, oy, E.makeRng(i + 5));
+    const oy = 1000 + (i * 83) % 975, b = O.pickBirth(C, H, oy, E.makeRng(i + 5));
     run(O, O.newLife(C, H, P[b.pref] || null, { year: oy, seed: i * 89 + 7, birth: b }));
   }
   rec('A 節目の問いかけが5・15・30・50・70歳で止まり、書いた一行が残るか', bad.length === 0, bad.slice(0, 5).join('、') || '120人分');
   const qs = new Set();
   for (let i = 0; i < 400; i++) for (const a of E.ASK_AGES) {
-    const by = 1800 + (i * 7) % 201;
+    const by = 1000 + (i * 7) % 1001;
     const fake = { year: by + a, age: a, by, seed: i, members: [], married: i % 2 === 0, ainu: i % 13 === 0, ryukyu: i % 17 === 0, rnd: Math.random };
     qs.add(E.askFor(fake).q);
   }
@@ -455,7 +484,7 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
     const a = play(mkE, null, E.makeRng(i + 100));
     const b = play(mkE, a.rec);
     if (a.sig !== b.sig) bad.push(by + '年（今の本体）');
-    const oy = 1800 + (i * 17) % 175, os = i * 104729 + 3, ob = O.pickBirth(C, H, oy, E.makeRng(os ^ 0x9e3779b9));
+    const oy = 1000 + (i * 97) % 975, os = i * 104729 + 3, ob = O.pickBirth(C, H, oy, E.makeRng(os ^ 0x9e3779b9));
     const mkO = () => O.newLife(C, H, P[ob.pref] || null, { year: oy, seed: os, birth: ob });
     mkO.M = O;
     const c = play(mkO, null, E.makeRng(i + 200));
@@ -473,7 +502,7 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
   for (let i = 0; i < 200; i++) {
     let L;
     if (i % 2) { const by = 1975 + i % 26, seed = i * 6151 + 5; L = run(E.newLife(C, P[E.pickPref(C, by, E.makeRng(seed ^ 0x9e3779b9))], { year: by, seed }), E); }
-    else { const oy = 1800 + (i * 13) % 175, os = i * 3571 + 9, ob = O.pickBirth(C, H, oy, E.makeRng(os ^ 0x9e3779b9)); L = run(O.newLife(C, H, P[ob.pref] || null, { year: oy, seed: os, birth: ob }), O); }
+    else { const oy = 1000 + (i * 89) % 975, os = i * 3571 + 9, ob = O.pickBirth(C, H, oy, E.makeRng(os ^ 0x9e3779b9)); L = run(O.newLife(C, H, P[ob.pref] || null, { year: oy, seed: os, birth: ob }), O); }
     n++;
     let prev = null;
     for (const r of L.log) {
@@ -494,7 +523,7 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
 /* ---------- F お金の見える化 ---------- */
 {
   const bad = []; let n = 0, shown = 0;
-  for (const by of [1800, 1830, 1860, 1900, 1930, 1950, 1975, 2000]) {
+  for (const by of [1000, 1300, 1550, 1700, 1800, 1830, 1860, 1900, 1930, 1950, 1975, 2000]) {
     for (let i = 0; i < 12; i++) {
       const seed = by * 13 + i * 7919 + 3;
       let L;
@@ -506,7 +535,7 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
         if (!m) { bad.push(tag + '：お金の記録がない'); break; }
         if (r.income && r.income.nominal > 0) {
           shown++;
-          if (r.income.cur !== (r.year < 1871 ? '両' : '円')) bad.push(tag + '：単位が時代に合わない（' + r.income.cur + '）');
+          if (r.income.cur !== (r.year < 1600 ? '貫文' : r.year < 1871 ? '両' : '円')) bad.push(tag + '：単位が時代に合わない（' + r.income.cur + '）');
           if ((m.koku != null) !== (r.year < 1871)) bad.push(tag + '：米に直した目安の有無が時代に合わない');
           if (r.year >= 1871 && m.take == null) bad.push(tag + '：手取りがない');
           if (!m.priceEv || !m.priceEv.name || !m.priceEv.org) bad.push(tag + '：物価の根拠がない');
@@ -521,7 +550,7 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
       }
     }
   }
-  rec('F 金額の単位が時代に合い（1870年までは両と石、1871年からは円と手取り）、どの金額にも出典が付くか', bad.length === 0 && shown > 0, bad.slice(0, 8).join('、') || n + '人分・' + shown + '年分の年収');
+  rec('F 金額の単位が時代に合い（1599年までは貫文と石、1870年までは両と石、1871年からは円と手取り）、どの金額にも出典が付くか', bad.length === 0 && shown > 0, bad.slice(0, 8).join('、') || n + '人分・' + shown + '年分の年収');
 }
 
 /* ---------- G 今年の重点とおまかせ ---------- */
@@ -546,7 +575,7 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
     const f1 = FOCI[i % 6], f2 = FOCI[(i + 2) % 6];
     let mk, M;
     if (i % 2) { const by = 1975 + (i * 5) % 26, seed = i * 4241 + 1; mk = () => E.newLife(C, P[E.pickPref(C, by, E.makeRng(seed ^ 0x9e3779b9))], { year: by, seed }); M = E; }
-    else { const oy = 1800 + (i * 29) % 175, os = i * 1013 + 7, ob = O.pickBirth(C, H, oy, E.makeRng(os ^ 0x9e3779b9)); mk = () => O.newLife(C, H, P[ob.pref] || null, { year: oy, seed: os, birth: ob }); M = O; }
+    else { const oy = 1000 + (i * 83) % 975, os = i * 1013 + 7, ob = O.pickBirth(C, H, oy, E.makeRng(os ^ 0x9e3779b9)); mk = () => O.newLife(C, H, P[ob.pref] || null, { year: oy, seed: os, birth: ob }); M = O; }
     const fo = y => (y % 40 < 20 ? f1 : f2);
     const a = play(mk, M, fo), b = play(mk, M, fo);
     n++;
@@ -586,7 +615,7 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
   for (let i = 0; i < 80; i++) {
     let L;
     if (i % 2) { const by = 1975 + (i * 7) % 26, seed = i * 2207 + 5; L = E.autoRun(E.newLife(C, P[E.pickPref(C, by, E.makeRng(seed ^ 0x9e3779b9))], { year: by, seed })); }
-    else { const oy = 1800 + (i * 23) % 175, os = i * 977 + 3, ob = O.pickBirth(C, H, oy, E.makeRng(os ^ 0x9e3779b9)); L = O.autoRun(O.newLife(C, H, P[ob.pref] || null, { year: oy, seed: os, birth: ob })); }
+    else { const oy = 1000 + (i * 79) % 975, os = i * 977 + 3, ob = O.pickBirth(C, H, oy, E.makeRng(os ^ 0x9e3779b9)); L = O.autoRun(O.newLife(C, H, P[ob.pref] || null, { year: oy, seed: os, birth: ob })); }
     n++;
     if (L.deathAge === 0) zero++;
     L.log.forEach((r, j) => { const k = E.yearKind(r, L, j === L.log.length - 1); if (!(k >= 0 && k <= 7)) bad.push('種類の番号がおかしい ' + k); kinds.add(k); });
@@ -625,7 +654,7 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
 {
   const bad = []; let worst = 0, total = 0, years = 0;
   const compSeed = (seed, i) => ((Math.imul(seed >>> 0, 2654435761) + Math.imul(i + 1, 0x9e3779b9)) >>> 0) || (i + 1);
-  for (const by of [1800, 1900, 1945, 1975, 2000]) {
+  for (const by of [1000, 1500, 1800, 1900, 1945, 1975, 2000]) {
     for (let k = 0; k < 6; k++) {
       const seed = by * 7 + k * 104729 + 1;
       const cs = [0, 1, 2, 3].map(i => {
@@ -694,7 +723,7 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
 /* ---------- 結果 ---------- */
 const lines = [];
 lines.push('公開前の検査　' + new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }) + '（日本時間）');
-lines.push((TEST ? '試験モード' : '本番') + '：生まれ年 ' + YEARS.length + '年分 × ' + N + '人 = ' + sim.lives + '人分の人生（' + secs + '秒）。1800〜1974年生まれは ' + OLD_YEARS.length + '年分 × ' + OLD_N + '人 = ' + old.lives + '人分（' + oldSecs + '秒）');
+lines.push((TEST ? '試験モード' : '本番') + '：生まれ年 ' + YEARS.length + '年分 × ' + N + '人 = ' + sim.lives + '人分の人生（' + secs + '秒）。1000〜1974年生まれは ' + OLD_YEARS.length + '年分（1799年以前は' + oldN(1000) + '人、1800年からは' + OLD_N0 + '人ずつ）で計 ' + old.lives + '人分（' + oldSecs + '秒）');
 lines.push('');
 for (const r of results) lines.push((r.ok ? '合格　' : (r.kind === '目標' ? '未達　' : '不合格')) + '　' + r.name + (r.detail ? '　…　' + r.detail : ''));
 const fails = results.filter(r => !r.ok && r.kind !== '目標');

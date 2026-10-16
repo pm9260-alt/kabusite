@@ -1,3 +1,4 @@
+import { MED_SOURCES } from './history-medieval.mjs';
 // 1800〜1974年生まれのための決まりごと（旧国と今の都道府県の対応・身分・大きな町）
 // 数字の出どころは HISTORY_SOURCES に書く。確かめきれない部分は est: true にして画面に「推計」の印を出す。
 
@@ -94,8 +95,21 @@ export const STATUS = {
   outcast: { name: '被差別身分', note: 'えた・ひにんとされ、住む場所や仕事、つき合いを厳しく制限された人々の家' },
   ainu: { name: 'アイヌ', note: '蝦夷地に古くから暮らすアイヌの人々' },
   ryukyuShi: { name: '琉球の士', note: '琉球王国の士（さむれー）の家' },
-  ryukyuHyakusho: { name: '琉球の百姓', note: '琉球王国の村に住む百姓の家' }
+  ryukyuHyakusho: { name: '琉球の百姓', note: '琉球王国の村に住む百姓の家' },
+  // 1000〜1599年だけに出る身分（1600年からは江戸時代の身分に入れる）
+  kuge: { name: '貴族', note: '朝廷に仕える公家（貴族）の家' },
+  genin: { name: '下人', note: '主人の家に仕え、譲られたり売り買いされたりすることもあった下人・所従の家' },
+  satsumon: { name: '擦文文化の人々', note: '1199年までの北海道で擦文文化を営んだ人々（アイヌの人々の祖先にあたる）' },
+  gusuku: { name: 'グスク時代の島の人々', note: '琉球王国ができる（1429年）より前の沖縄の島々の人々' }
 };
+// 中世の大きな町（その年に町としてあったものだけ）。江戸・大坂などは from の年から
+export const MED_CITIES = {
+  相模: { name: '鎌倉', from: 1185, to: 1333, share: 0.2 },
+  筑前: { name: '博多', from: 1000, share: 0.1 },
+  和泉: { name: '堺', from: 1400, to: 1615, share: 0.25 },
+  大和: { name: '奈良', from: 1000, share: 0.1 }
+};
+export const CITY_FROM = { 江戸: 1603, 大坂: 1583, 名古屋: 1610, 金沢: 1583, 仙台: 1601 };
 export const OUTCAST_SHARE = 0.009;
 
 // 1846年の幕府の調査は武士などを数えていないため、旧国ごとに「1873年の本籍人口 ÷ 1846年の調査人口」で補う（推計）
@@ -113,5 +127,6 @@ export const HISTORY_SOURCES = {
   owid: { name: '日本の平均寿命（1865年〜）と5歳までに亡くなる割合', org: 'Our World in Data' },
   clio: { name: '日本の物価の上がり幅（Zwart 2015）', org: 'Clio Infra' },
   maddison: { name: '1人あたりの国内総生産（Maddison Project Database）', org: 'Our World in Data' },
-  outcast: { name: '解放令（1871年）の時点の穢多の人数', org: 'Wikipedia「穢多」より' }
+  outcast: { name: '解放令（1871年）の時点の穢多の人数', org: 'Wikipedia「穢多」より' },
+  ...MED_SOURCES
 };

@@ -137,17 +137,18 @@ guard('全国の人口（1872〜1920年）', () => {
   out.nat.pop = p;
 });
 guard('平均寿命（1865年〜、Our World in Data）と1人あたりの豊かさ（Maddison）', () => {
-  const rd = (f, maxY) => {
+  const rd = (f, maxY, minY = 1800) => {
     const o = {};
     for (const l of fs.readFileSync(path.join(RAW, f), 'utf8').split('\n')) {
       const c = l.split(',');
-      if (c[0] === 'Japan' && +c[2] >= 1800 && +c[2] <= maxY) o[+c[2]] = +(+c[3]).toFixed(2);
+      if (c[0] === 'Japan' && +c[2] >= minY && +c[2] <= maxY) o[+c[2]] = +(+c[3]).toFixed(2);
     }
     return o;
   };
   out.nat.owidLife = rd('owid-life.csv', 1975);
   out.nat.u5 = Object.fromEntries(Object.entries(rd('owid-u5.csv', 1975)).map(([k, v]) => [k, +(v / 100).toFixed(4)]));
-  out.nat.gdp = rd('owid-gdp.csv', 2022);
+  // 1人あたりの豊かさは1000年から（Maddison の日本の値は1000・1150・1280・1450・1600・1700年…）
+  out.nat.gdp = rd('owid-gdp.csv', 2022, 1000);
 });
 
 guard('物価の上がり幅（1819〜2010年、Clio Infra）', () => {
@@ -237,6 +238,44 @@ function wikiRows(file, from, to) {
   }
   return res;
 }
+guard('旧国別の推定人口（900・1150・1600年、鬼頭宏）', () => {
+  const t = fs.readFileSync(path.join(RAW, 'wiki-近代以前の日本の人口統計.txt'), 'utf8');
+  const i = t.indexOf('900年<br>推定人口');
+  if (i < 0) throw new Error('表が見つからない');
+  const blk = t.slice(i, t.indexOf('|}', i));
+  const o = {};
+  for (const r of blk.split('\n|-')) {
+    const m = r.match(/\|align=left\|(?:&nbsp;)*\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/);
+    if (!m) continue;
+    const name = m[2] || m[1];
+    const cells = r.split('||').slice(-3).map(c => c.replace(/''|<[^>]+>|\{\{0\}\}.*/g, '').replace(/,/g, '').trim());
+    if (cells.every(c => /^\d+$/.test(c))) o[name] = { 900: +cells[0], 1150: +cells[1], 1600: +cells[2] };
+  }
+  if (Object.keys(o).length < 60) throw new Error('旧国の数が少ない ' + Object.keys(o).length);
+  out.medProv = o;
+});
+
+guard('元号（990〜1788年。南北朝の時代は北朝の元号）', () => {
+  const lines = fs.readFileSync(path.join(RAW, 'wiki-元号一覧 (日本).txt'), 'utf8').split('\n');
+  const eras = [];
+  let sec = '';
+  lines.forEach((l, i) => {
+    if (l.startsWith('===')) sec = l;
+    const m = l.match(/^!(?:rowspan="\d+"\|)?(?:style="[^"]*"\|)?\[\[([^\]|]+)(?:\|([^\]]+))?\]\]\s*$/);
+    if (!m) return;
+    const nx = lines[i + 1] || '';
+    const y = nx.match(/（(\d{3,4})年/);
+    if (!y || sec.includes('南朝')) return;
+    // 年表では、改元した年をその年の和暦の年（前の元号のN年）で数える。月日を西暦に直すと翌年になる改元（12月の改元など）を前の年に戻す
+    let yy = +y[1];
+    const pv = nx.match(/\|\|(?:rowspan="\d+"\|)?(?:style="[^"]*"\|)?(?:[^|]*：)?([^\d|：]+?)(\d+)年/);
+    if (pv) { const prev = eras.find(e => e[1] === pv[1].trim()); if (prev && prev[0] + +pv[2] - 1 !== yy && Math.abs(prev[0] + +pv[2] - 1 - yy) === 1) yy = prev[0] + +pv[2] - 1; }
+    if (yy >= 990 && yy < 1789) eras.push([yy, (m[2] || m[1]).split(' ')[0]]);
+  });
+  if (eras.length < 150) throw new Error('元号の数が少ない ' + eras.length);
+  out.medEras = eras;
+});
+
 guard('旧国別の人口（1721〜1873年）', () => {
   const rows = wikiRows('wiki-江戸時代の日本の人口統計.txt', '江戸時代の全国国別人口', '===地域別推定人口の変遷===');
   const YEARS = [1721, 1750, 1756, 1786, 1792, 1798, 1804, 1822, 1828, 1834, 1840, 1846, 1872, 1873];

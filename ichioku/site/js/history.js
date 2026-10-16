@@ -1,4 +1,4 @@
-/* 1億分の1 昔の人生の進め方（1800〜1974年生まれ）
+/* 1億分の1 昔の人生の進め方（1000〜1974年生まれ）
    ブラウザでも Node でも同じものを使う。乱数や数表の道具は engine.js（Ichioku）のものを使う。
    1975年以降の年の世の中・死亡の確率・物の普及は、今の本体と同じ数字を使う。 */
 (function (root, factory) {
@@ -84,7 +84,8 @@
     var N = L.H.names, list;
     var ryu = L.pref === '47' && by < 1912;
     if (ryu) list = st === 'ryukyuShi' ? (sex === 'm' ? N.ryukyuShiM : N.ryukyuShiF) : (sex === 'm' ? N.ryukyuM : N.ryukyuF);
-    else if (st === 'ainu' && by < 1876) return 'アイヌ語の名前';
+    else if ((st === 'ainu' || st === 'satsumon') && by < 1876) return 'アイヌ語の名前';
+    else if (by < 1600) list = st === 'kuge' ? (sex === 'm' ? N.mKuge : N.fKuge) : sex === 'm' ? (by < 1185 ? N.mHeian : N.mMed) : N.fMed;
     else if (by >= 1912) {
       var ks = Object.keys(L.C.names).map(Number).sort(function (a, b) { return a - b; });
       var k = ks[0];
@@ -147,17 +148,33 @@
     return s;
   }
 
+  // 中世の身分の割合（時代ごとの全国の目安に、都に近い国の上乗せを掛ける）
+  function medStatusW(H, prov, y) {
+    var per = null;
+    H.medStatus.forEach(function (m) { if (y >= m.from && y <= m.to) per = m; });
+    if (!per) return null;
+    var w = {}, add = H.medStatusProv[prov] || {};
+    Object.keys(per.w).forEach(function (k) { w[k] = per.w[k] * (add[k] || 1); });
+    // 貴族（公家）は都のある山城国にだけ住んでいた
+    if (prov !== '山城') w.kuge = 0;
+    return w;
+  }
   function drawStatus(L) {
     var H = L.H, y = L.by, rnd = L.rnd, p = H.prov[L.prov];
     if (L.prov === '蝦夷・松前' || (L.pref === '01' && y < 1900)) {
-      var share = y < 1873 ? lin(H.ainuShare, Math.max(1804, y)) : clamp(17000 / popHokkaido(y), 0.005, 0.15);
-      if (rnd() < share) return 'ainu';
+      var share = y < 1873 ? lin(H.ainuShare, y) : clamp(17000 / popHokkaido(y), 0.005, 0.15);
+      if (rnd() < share) return y < 1200 ? 'satsumon' : 'ainu';
     }
+    if (L.pref === '47' && y < 1429) return 'gusuku';
     if (L.pref === '47' && y < 1912) return rnd() < lin(H.ryukyuShi, Math.min(1852, y)) ? 'ryukyuShi' : 'ryukyuHyakusho';
+    if (y < 1600) {
+      var mw = medStatusW(H, L.prov, y);
+      if (mw) return pick(rnd, Object.keys(mw), function (k) { return mw[k]; });
+    }
     var st = (p && p.status) || { bushi: 0.06, priest: 0.01, hyakusho: 0.8, chonin: 0.12, outcast: 0.009 };
     var w = { bushi: st.bushi, priest: st.priest, hyakusho: st.hyakusho, chonin: st.chonin, outcast: st.outcast };
     // 江戸には武士が多く住んでいた（1873年の数は東京から武士が去ったあとのため、江戸時代は多めにする目安）
-    if (L.prov === '武蔵' && y < 1868) w.bushi = 0.2;
+    if (L.prov === '武蔵' && y < 1868 && y >= 1603) w.bushi = 0.2;
     var s = pick(rnd, Object.keys(w), function (k) { return w[k]; });
     if (y >= 1872) s = s === 'bushi' ? 'shizoku' : s === 'outcast' ? 'buraku' : s === 'priest' ? 'priest' : 'heimin';
     return s;
@@ -169,11 +186,21 @@
   var INLAND_PREF = ['09', '10', '11', '19', '20', '21', '29'];
   var INLAND_PROV = ['甲斐', '信濃', '美濃', '飛騨', '上野', '下野', '大和', '近江', '山城', '伊賀', '丹波', '美作'];
   function inland(L) { return INLAND_PROV.indexOf(L.prov) >= 0 || INLAND_PREF.indexOf(L.pref) >= 0; }
+  // その年に大きな町としてあったもの（江戸は1603年から、鎌倉は1185〜1333年など）
+  function cityOf(p, y) {
+    if (!p) return null;
+    if (p.medCity && y >= p.medCity.from && (!p.medCity.to || y <= p.medCity.to)) return p.medCity;
+    if (p.city && (!p.city.from || y >= p.city.from)) return p.city;
+    return null;
+  }
   function drawKind(L) {
     var H = L.H, rnd = L.rnd, y = L.by, st = L.status, p = H.prov[L.prov];
-    if (st === 'ainu') return 'kotan';
+    if (st === 'ainu' || st === 'satsumon') return 'kotan';
+    if (st === 'gusuku') return rnd() < 0.15 ? 'fish' : 'village';
+    if (st === 'kuge') return cityOf(p, y) ? 'city' : 'town';
+    if (st === 'genin') return 'village';
     if (y < 1873) {
-      var city = p && p.city;
+      var city = cityOf(p, y);
       if (st === 'ryukyuShi') return 'town';
       if (st === 'bushi') return city && rnd() < (city.share > 0.3 ? 0.6 : 0.4) ? 'city' : 'town';
       if (st === 'chonin') return city && rnd() < Math.min(0.85, city.share * 1.6) ? 'city' : 'town';
@@ -188,7 +215,7 @@
   }
   function cityName(L) {
     var p = L.H.prov[L.prov];
-    var c = p && p.city;
+    var c = cityOf(p, L.year);
     if (!c) return null;
     if (c.after1868 && L.year >= 1868) return c.after1868;
     return c.name;
@@ -216,12 +243,16 @@
     var cn = cityName(L);
     var muni = L.muniName ? '（今の' + L.muniName + 'のあたり）' : '';
     if (L.status === 'ryukyuShi' && L.kind === 'town') return (y < 1879 ? '琉球王国' : '沖縄県') + ' 首里';
+    if (L.pref === '47' && y < 1429) return '沖縄の島の' + (L.kind === 'fish' ? '浜の村' : '村') + '（グスク時代）' + muni;
     if (L.pref === '47' && y < 1879) return '琉球王国の村' + muni;
+    if (y < 1200 && L.prov === '蝦夷・松前') return '北の島（今の北海道）の川沿いの村';
+    if (y < 1600 && L.prov === '蝦夷・松前') return '夷島（今の北海道）の' + (L.kind === 'kotan' ? kw : '和人の館のある浜');
     if (L.pref === '47' && y < 1889) return '沖縄県の' + kw + muni;
     if (y < 1869 && L.prov === '蝦夷・松前') return '蝦夷地の' + (L.kind === 'kotan' ? kw : L.kind === 'town' || L.kind === 'city' ? '松前の町' : '和人の村');
     if (y < 1873) {
       if (L.kind === 'city' && cn) return p.kuni + ' ' + cn;
-      if (L.kind === 'town' && (L.status === 'bushi')) return p.kuni + 'の城下町' + muni;
+      if (L.kind === 'town' && L.status === 'bushi' && y >= 1580) return p.kuni + 'の城下町' + muni;
+      if (L.kind === 'town' && L.status === 'bushi' && y < 1580) return p.kuni + 'の武士の館のある里' + muni;
       return p.kuni + 'の' + kw + muni;
     }
     if (y < 1889 && L.pref === '01') return '北海道の' + (L.kind === 'city' ? '函館や札幌の町' : kw) + muni;
@@ -268,7 +299,7 @@
     L.kind = drawKind(L);
     var mu = pickMuni(L);
     if (mu) { L.muni = mu.code; L.muniName = mu.name; }
-    L.ainu = L.status === 'ainu';
+    L.ainu = L.status === 'ainu' || L.status === 'satsumon';
     L.ryukyu = L.pref === '47';
     familyAtBirth(L);
     L.marryAt = marryAge(H, L.sex, year + 20, rnd);
@@ -316,6 +347,8 @@
   }
 
   /* ---------- 1年分 ---------- */
+  // 北海道（1599年まで）と沖縄（1608年まで）は、本州の朝廷や幕府の出来事が届かない土地として扱う
+  function apart(L, y) { return (L.prov === '蝦夷・松前' && y < 1600) || (L.prov === '琉球' && y < 1609); }
   function worldLine(L, y, a) {
     var C = L.C, H = L.H, items = [];
     if (y >= FUTURE_FROM) return { future: true, items: [{ t: 'この先の世の中は誰にも分からない。ここからは人口と寿命の将来推計だけを使って進む', type: '未来', ev: [ev(L, 'ipss', y, '将来推計人口・将来の寿命', '推計')] }] };
@@ -333,11 +366,17 @@
         if (r.y !== y || items.length >= 3) return;
         if (r.provs && !(y < 1873 && (r.provs.indexOf(pv[0]) >= 0 || r.provs.indexOf(pv[1]) >= 0)) && !(r.prefs && r.prefs.indexOf(L.pref) >= 0)) return;
         if (!r.provs && r.prefs && r.prefs.indexOf(L.pref) < 0) return;
+        if (!r.provs && apart(L, y)) return;
         items.push({ t: r.t, type: r.type, ev: [ev(L, LIFE_SRC, y, '年表（' + r.type + '）', '', { noYearNote: true })] });
       });
     }
     if (!items.length) {
-      var ctxs = H.eraContext.filter(function (c) { return y >= c.from && y <= c.to; });
+      var ctxs = H.eraContext.filter(function (c) {
+        if (y < c.from || y > c.to) return false;
+        if (c.provs && c.provs.indexOf(L.prov) < 0) return false;
+        if (c.notFor && c.notFor.indexOf(L.prov) >= 0) return false;
+        return true;
+      });
       var ctx = ctxs.length ? ctxs[(y * 7 + 3) % ctxs.length] : null;
       items.push({ t: ctx ? ctx.t : 'この年は大きな出来事の記録が少ない', type: '時代', ev: [ev(L, LIFE_SRC, y, 'その時代のようす', '', { noYearNote: true })] });
     }
@@ -369,11 +408,19 @@
     return rec;
   }
 
-  var ST_WORD = { bushi: '武士の家', hyakusho: '百姓の家', chonin: '町人の家', priest: '寺や神社の家', outcast: '被差別身分とされた家', ainu: 'アイヌの家', ryukyuShi: '琉球の士（さむれー）の家', ryukyuHyakusho: '琉球の百姓の家', shizoku: '士族の家', buraku: '被差別部落の家', heimin: '平民の家' };
+  var ST_WORD = { kuge: '貴族（公家）の家', genin: '主人に仕える下人の家', satsumon: '擦文文化の人々の家', gusuku: '島の村の家', bushi: '武士の家', hyakusho: '百姓の家', chonin: '町人の家', priest: '寺や神社の家', outcast: '被差別身分とされた家', ainu: 'アイヌの家', ryukyuShi: '琉球の士（さむれー）の家', ryukyuHyakusho: '琉球の百姓の家', shizoku: '士族の家', buraku: '被差別部落の家', heimin: '平民の家' };
+  // 時代で呼び方が変わる身分
+  function stWord(L) {
+    var y = L.year, st = L.status;
+    if (y < 1600 && st === 'outcast') return '河原者や非人とされた家';
+    if (y < 1600 && st === 'chonin') return '職人や商人の家';
+    if (y < 1185 && st === 'hyakusho') return '田を耕す農民の家';
+    return ST_WORD[st];
+  }
   function birthEvent(L, rec) {
     var H = L.H, y = L.year, st = L.status;
     var sibs = L.members.filter(function (m) { return m.sib && m.by < y; });
-    var s = rec.place + 'で、' + ST_WORD[st] + 'に' + (L.sex === 'm' ? '男の子' : '女の子') + 'として生まれた。' + (/アイヌ語/.test(L.name) ? '名前はアイヌ語で付けられた。' : '名前は' + L.name + '。');
+    var s = rec.place + 'で、' + stWord(L) + 'に' + (L.sex === 'm' ? '男の子' : '女の子') + 'として生まれた。' + (st === 'satsumon' ? '名前は土地の言葉で付けられた。' : /アイヌ語/.test(L.name) ? '名前はアイヌ語で付けられた。' : '名前は' + L.name + '。');
     s += '父は' + L.fAge + '歳、母は' + L.mAge + '歳。';
     var alive = sibs.filter(function (m) { return !m.before; }), dead = sibs.filter(function (m) { return m.before; });
     if (alive.length) s += alive.map(who).join('、') + 'がいる。';
@@ -382,18 +429,26 @@
     var evs = [];
     if (y < 1873) {
       var p = H.prov[L.prov];
-      evs.push(ev(L, L.prov === '琉球' ? 'ryukyu' : L.prov === '蝦夷・松前' ? 'ezo' : 'edoPop', near(p.w, y), p.kuni + 'の人口（武士などを数えていない幕府の調査を、1873年の人口との比で補った）', Math.round(lin(p.w, y)).toLocaleString('ja-JP') + '人', { est: true }));
+      var early = y < (L.prov === '琉球' ? 1772 : L.prov === '蝦夷・松前' ? 1798 : 1721);
+      var psrc = L.prov === '琉球' ? (early ? 'medRyukyu' : 'ryukyu') : L.prov === '蝦夷・松前' ? (early ? 'medEzo' : 'ezo') : early ? 'kito' : 'edoPop';
+      evs.push(ev(L, psrc, near(p.w, y), p.kuni + 'の人口' + (early ? (L.prov === '琉球' || L.prov === '蝦夷・松前' ? '（記録がないため置いた目安）' : '（鬼頭宏の900・1150・1600年の推計の間を直線でつないだ値）') : '（武士などを数えていない幕府の調査を、1873年の人口との比で補った）'), Math.round(lin(p.w, y)).toLocaleString('ja-JP') + '人', { est: true }));
     } else {
       evs.push(ev(L, 'ipss', near(H.prefW, y), H.prefNames[L.pref] + 'で生まれた子の割合（全国の出生数のうち。1873年は旧国の人口から）', pct(lin(prefSeries(H, L.pref), y)), { est: y < 1900 }));
     }
     var stShare = statusShare(L);
-    if (stShare != null) evs.push(ev(L, st === 'ainu' ? 'ezo' : L.ryukyu ? 'ryukyu' : st === 'outcast' || st === 'buraku' ? 'outcast' : 'jinshin', 1873, ST_WORD[st] + 'に生まれる割合（' + (H.prov[L.prov] ? H.prov[L.prov].kuni : '') + '）', pct(stShare), { est: true }));
+    if (stShare != null) evs.push(y < 1600 && !L.ryukyu && st !== 'ainu' && st !== 'satsumon' ? ev(L, 'medStatus', y, stWord(L) + 'に生まれる割合の目安（' + (H.prov[L.prov] ? H.prov[L.prov].kuni : '') + '）', pct(stShare), { est: true }) :
+      ev(L, st === 'ainu' || st === 'satsumon' ? (y < 1804 ? 'medEzo' : 'ezo') : L.ryukyu ? (y < 1706 ? 'medRyukyu' : 'ryukyu') : st === 'outcast' || st === 'buraku' ? 'outcast' : 'jinshin', y < 1873 ? Math.max(y, 1000) : 1873, stWord(L) + 'に生まれる割合（' + (H.prov[L.prov] ? H.prov[L.prov].kuni : '') + '）', pct(stShare), { est: true }));
     evs.push(ev(L, 'ipss', near(H.nat.children, L.mom.by), '母の生まれ年の「妻が産んだ子どもの数」（1890年より前の生まれは1890年代の値）', '平均' + childDist(H, L.mom.by).mean + '人', { est: L.mom.by < 1890 }));
     push(L, rec, '家庭', s, evs);
   }
   function statusShare(L) {
     var H = L.H, p = H.prov[L.prov], st = L.status;
-    if (st === 'ainu') return L.by < 1873 ? lin(H.ainuShare, Math.max(1804, L.by)) : 17000 / popHokkaido(L.by);
+    if (st === 'gusuku') return 1;
+    if (st === 'ainu' || st === 'satsumon') return L.by < 1873 ? lin(H.ainuShare, L.by) : 17000 / popHokkaido(L.by);
+    if (L.by < 1600 && !L.ryukyu) {
+      var mw = medStatusW(H, L.prov, L.by);
+      if (mw) { var tot = 0; Object.keys(mw).forEach(function (k) { tot += mw[k]; }); return mw[st] != null ? mw[st] / tot : null; }
+    }
     if (st === 'ryukyuShi') return lin(H.ryukyuShi, Math.min(1852, L.by));
     if (st === 'ryukyuHyakusho') return 1 - lin(H.ryukyuShi, Math.min(1852, L.by));
     if (!p || !p.status) return null;
@@ -453,6 +508,7 @@
       push(L, rec, '時代', '戸籍に入れられ、「' + nm + '」という和風の名前を名乗るように言われた', [ev(L, LIFE_SRC, 1876, '開拓使がアイヌの人々に和風の名前を付けた', '')]);
       L.name = nm + '（アイヌ語の名前もある）';
     }
+    if (y === 1429 && st === 'gusuku') { L.status = 'ryukyuHyakusho'; push(L, rec, '時代', '尚巴志が三つの国をまとめ、琉球王国ができた。村は首里の王府に治められることになった', [ev(L, 'medRyukyu', 1429, '琉球王国の成立', '')]); }
     if (y === 1879 && L.ryukyu) push(L, rec, '時代', '琉球王国がなくなり、沖縄県になった（琉球処分）。首里城には日本の兵が入った', [ev(L, LIFE_SRC, 1879, '琉球処分', '')]);
     if (y === 1922 && (st === 'buraku' || st === 'outcast') && L.age >= 12) push(L, rec, '時代', '「人の世に熱あれ、人間に光あれ」。差別をなくすための全国水平社ができたと聞いた', [ev(L, LIFE_SRC, 1922, '全国水平社の創立', '')]);
     if (y === 1945 && L.abroad === '満洲') {
@@ -500,21 +556,29 @@
     // 江戸時代（6歳が1872年まで）
     if (a === 7 && y <= 1873 && !L.school) {
       var t = H.nat.terakoya, p = t[sx][L.kind] != null ? t[sx][L.kind] : t[sx].village;
+      // 寺子屋が広がるのは18世紀から。それより前は寺で手習いをする子は少なかった（目安）
+      var eraF = y < 1600 ? 0.12 : y < 1700 ? 0.4 : y < 1750 ? 0.7 : 1;
+      p *= eraF;
       var region = (H.prov[L.prov] || {}).region;
       if (t.high.indexOf(region) >= 0 || t.high.indexOf(L.prov) >= 0) p *= 1.3;
       if (t.low.indexOf(L.prov) >= 0) p *= 0.5;
-      if (st === 'bushi') p = sx === 'm' ? 1 : 0.7;
+      if (st === 'bushi') p = y < 1700 ? (sx === 'm' ? 0.8 : 0.4) : (sx === 'm' ? 1 : 0.7);
+      if (st === 'kuge') p = sx === 'm' ? 1 : 0.9;
+      if (st === 'genin' || st === 'satsumon' || st === 'gusuku') p = st === 'genin' ? 0.02 : 0;
       if (st === 'chonin') p = Math.max(p, sx === 'm' ? 0.75 : 0.45);
       if (st === 'outcast') p *= 0.3;
       if (st === 'ainu' || st === 'ryukyuHyakusho') p = 0.02;
-      if (st === 'ryukyuShi') p = sx === 'm' ? 0.9 : 0.1;
+      if (st === 'ryukyuShi') p = (sx === 'm' ? 0.9 : 0.1) * (y < 1700 ? 0.6 : 1);
       p = clamp(p, 0, 1);
-      var e1 = ev(L, 'terakoya', 1877, '寺子屋などで字を習った子の割合の目安（' + KIND_WORD[L.kind] + '・' + (sx === 'm' ? '男' : '女') + '）', pct(p), { est: true });
+      var e1 = ev(L, 'terakoya', 1877, (y < 1700 ? '寺や家で字を習った子の割合の目安（寺子屋が広がる前のため少なめにした）' : '寺子屋などで字を習った子の割合の目安') + '（' + KIND_WORD[L.kind] + '・' + (sx === 'm' ? '男' : '女') + '）', pct(p), { est: true });
       if (rnd() < p) {
-        L.school = st === 'bushi' && sx === 'm' ? '藩校' : st === 'ryukyuShi' ? '村学校' : '寺子屋';
-        L.stats.school = true; L.schoolEnd = a + 3 + Math.floor(rnd() * 3);
-        push(L, rec, '学歴と仕事', L.school === '藩校' ? '家で字を習い、やがて藩の学校（藩校）に通い始めた' : L.school === '村学校' ? '村学校に通い、字を習い始めた' : '寺子屋に通い始めた。師匠の家で手習いをして、いろはから覚えた', [e1]);
-      } else push(L, rec, '学歴と仕事', '字を習いに通うことはなく、家の手伝いをして過ごした', [e1]);
+        L.school = st === 'kuge' ? '家学' : st === 'bushi' && sx === 'm' && y >= 1700 ? '藩校' : st === 'ryukyuShi' && y >= 1800 ? '村学校' : y < 1700 ? '寺での手習い' : '寺子屋';
+        L.stats.school = true; L.schoolEnd = a + (L.school === '家学' ? 6 : 3) + Math.floor(rnd() * 3);
+        push(L, rec, '学歴と仕事', {
+          '藩校': '家で字を習い、やがて藩の学校（藩校）に通い始めた', '村学校': '村学校に通い、字を習い始めた', '家学': '家で漢籍の素読や和歌、書を学び始めた',
+          '寺での手習い': '近くの寺に通い、僧から字の書き方を習い始めた', '寺子屋': '寺子屋に通い始めた。師匠の家で手習いをして、いろはから覚えた'
+        }[L.school], [e1]);
+      } else push(L, rec, '学歴と仕事', st === 'satsumon' || st === 'gusuku' || (st === 'ainu' && y < 1700) ? '文字を使う暮らしではなかった。家の仕事を手伝いながら、暮らしの知恵を身につけていった' : '字を習いに通うことはなく、家の手伝いをして過ごした', [e1]);
       return;
     }
     // 明治の小学校（6歳）
@@ -547,7 +611,7 @@
     if (L.school === '小学校' && a === 12 && y >= 1947) { L.school = '中学校'; L.schoolEnd = 15; L.edu = '中学'; push(L, rec, '学歴と仕事', '中学校に入学した', [ev(L, 'school', y, '義務教育', '全員')]); return; }
     if (L.school === '中学校' && a === 15) { L.queue.push(branchPath(L, 'hs')); return; }
     if (L.school === '高校' && a === 18) { L.queue.push(branchPath(L, 'univ')); return; }
-    if (L.school && a === L.schoolEnd && ['寺子屋', '藩校', '村学校'].indexOf(L.school) >= 0) { L.edu = L.school; L.school = null; return; }
+    if (L.school && a === L.schoolEnd && ['寺子屋', '藩校', '村学校', '家学', '寺での手習い'].indexOf(L.school) >= 0) { L.edu = L.school; L.school = null; return; }
     if (L.school && a >= L.schoolEnd && ['高等小学校', '旧制中学', '高等女学校', '旧制の上の学校', '大学', '短大'].indexOf(L.school) >= 0) {
       if ((L.school === '旧制中学' || L.school === '高等女学校') && !L.higherDone) {
         L.higherDone = true;
@@ -606,18 +670,21 @@
   /* 仕事 */
   var JOB = {
     farm: '家の田畑の仕事', fish: '漁の仕事', samurai: '藩のお勤め', shop: '商いの仕事', craft: '職人の仕事', temple: '寺や神社の務め', leather: '皮革や草履作りの仕事',
-    ainu: '漁や狩りと、和人の漁場での仕事', ryuOff: '王府の役人の見習い', factory: '工場勤め', build: '大工や土木の仕事', silk: '製糸工場の女工', clerk: '会社や役所の勤め', teacher: '学校の先生', maid: '女中奉公', store: '商店の店員', office: '事務員'
+    ainu: '漁や狩りと、和人の漁場での仕事', ryuOff: '王府の役人の見習い',
+    court: '朝廷の役所の務め', genin: '主人の家の田畑や雑用の仕事', hunt: '漁や狩りと、毛皮や干し魚の取り引き', bushiMed: '主君に仕える武士の務め', kawara: '河原での皮作りや井戸掘り、清めの仕事', factory: '工場勤め', build: '大工や土木の仕事', silk: '製糸工場の女工', clerk: '会社や役所の勤め', teacher: '学校の先生', maid: '女中奉公', store: '商店の店員', office: '事務員'
   };
   function workYear(L, rec) {
     var y = L.year, a = L.age, rnd = L.rnd, st = L.status, sx = L.sex;
     if (L.job || L.school || a < 11) return;
     if (y < 1873 || st === 'ainu' && y < 1900) {
       if (a < 13) return;
-      var k = st === 'bushi' ? (sx === 'm' ? 'samurai' : null) : st === 'hyakusho' ? (L.kind === 'fish' && sx === 'm' ? 'fish' : 'farm') : st === 'chonin' ? (sx === 'm' ? (rnd() < 0.5 ? 'shop' : 'craft') : 'maid') :
+      var k = st === 'kuge' ? (sx === 'm' ? 'court' : null) : st === 'genin' ? 'genin' : st === 'satsumon' || (st === 'ainu' && y < 1700) ? 'hunt' :
+        st === 'gusuku' ? (L.kind === 'fish' && sx === 'm' ? 'fish' : 'farm') : st === 'outcast' && y < 1600 ? 'kawara' :
+        st === 'bushi' ? (sx === 'm' ? (y < 1600 ? 'bushiMed' : 'samurai') : null) : st === 'hyakusho' ? (L.kind === 'fish' && sx === 'm' ? 'fish' : 'farm') : st === 'chonin' ? (sx === 'm' ? (rnd() < 0.5 ? 'shop' : 'craft') : 'maid') :
         st === 'priest' ? 'temple' : st === 'outcast' ? 'leather' : st === 'ainu' ? 'ainu' : st === 'ryukyuShi' ? (sx === 'm' ? 'ryuOff' : 'farm') : 'farm';
       L.job = k || 'home';
       if (k) L.lastJob = JOB[k];
-      if (k) push(L, rec, '学歴と仕事', JOB[k] + 'で一人前に働き始めた', [ev(L, 'jinshin', 1873, '明治6年の職業別人口（農79%・工4%・商7%・雑業9%・雇人2%）', '', { est: true })]);
+      if (k) push(L, rec, '学歴と仕事', JOB[k] + 'で一人前に働き始めた', [y < 1600 ? ev(L, 'medStatus', y, '中世の身分と暮らしの目安', '', { est: true }) : ev(L, 'jinshin', 1873, '明治6年の職業別人口（農79%・工4%・商7%・雑業9%・雇人2%）', '', { est: true })]);
       return;
     }
     if (a < 12) return;
@@ -753,6 +820,8 @@
 
   /* 災害・流行病・戦争で亡くなる */
   function inArea(L, e) {
+    if (e.notProvs && (e.notProvs.indexOf(L.prov) >= 0 || e.notProvs.indexOf(L.sub) >= 0)) return false;
+    if (e.where === 'all' && apart(L, L.year)) return false;
     if (L.abroad && e.where !== 'all') return false;
     if (L.abroad && (L.abroad === 'ハワイ' || L.abroad === 'ブラジル')) return false;
     if (e.where === 'all') return !e.prefs || e.prefs.indexOf(L.pref) >= 0;
@@ -842,6 +911,8 @@
     }
     if (s.k && s.k.indexOf(L.kind) < 0) return false;
     if (s.jp && (L.ainu || L.ryukyu)) return false;
+    // 河原者・非人やえた・ひにんとされた人は、村の祭りに加わることを許されなかった
+    if (!s.st && /祭り/.test(s.t) && (L.status === 'outcast' || (L.status === 'buraku' && y < 1946))) return false;
     if (s.wk && s.wk.indexOf(L.job) < 0) return false;
     if (s.edu && s.edu.indexOf(L.edu) < 0) return false;
     if (s.sex && s.sex !== L.sex) return false;
@@ -895,7 +966,8 @@
     L.earn.years++;
     // その年のお金に直す（1871年の新貨条例で1両＝1円。それより前は両で数える）
     var pr = L.H.price ? E.val(L.H.price, Math.min(y, 2025)) : 1;
-    if (rec) rec.income = { real: real, nominal: real * pr, cur: y < 1871 ? '両' : '円', est: true };
+    // 1600年より前は銭（貫文）で数える。米1石がおよそ1貫文、江戸時代の1両とほぼ同じ値打ちとみた（推計）
+    if (rec) rec.income = { real: real, nominal: real * pr, cur: y < 1600 ? '貫文' : y < 1871 ? '両' : '円', est: true };
   }
 
   /* 年の終わり・亡くなる */
@@ -987,7 +1059,7 @@
     }
     r.earns.sort(function (p, q) { return p - q; });
     r.earnMedian = (r.earns[Math.floor((n - 1) / 2)] + r.earns[Math.ceil((n - 1) / 2)]) / 2;
-    r.items = [['5歳まで生きた人', r.to5], [L0.by < 1873 ? '寺子屋や学校で字を習った人' : '学校に通った人', r.school], ['60歳まで生きた人', r.to60]];
+    r.items = [['5歳まで生きた人', r.to5], [L0.by < 1700 ? '寺や家で字を習った人' : L0.by < 1873 ? '寺子屋や学校で字を習った人' : '学校に通った人', r.school], ['60歳まで生きた人', r.to60]];
     return r;
   }
   function majorTimeline(C, H, L) {

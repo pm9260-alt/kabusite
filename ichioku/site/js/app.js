@@ -168,7 +168,7 @@
     return r;
   }
   function saveCurrent() { if (G && L && L.alive) { G.shown = cur ? cur.year : L.by; store('ichioku-current', G); } }
-  // 生まれる年は1800〜2000年のどの年も同じ確率（作る人の判断）
+  // 生まれる年は1000〜2000年のどの年も同じ確率（作る人の判断 2026-10-16）
   function born() {
     var seed = randomSeed();
     $('born').disabled = true;
@@ -211,9 +211,15 @@
   function recordAnswer(a) { if (G && !G.done) { G.answers.push(a); saveCurrent(); } }
 
   /* ---------- いつも更新される数字 ---------- */
-  // 千円単位の額を、その年のお金の単位で書く（1871年より前は両。1両＝1円として数える）
+  // 千円単位の額を、その年のお金の単位で書く（1600年より前は貫文、1871年より前は両。1両＝1円として数える）
   function money(k, cur) {
     var v = k * 1000;
+    // 1600年より前は銭で数える（1貫文＝1000文）
+    if (cur === '貫文') {
+      if (v >= 10) return '約' + Math.round(v) + '貫文';
+      if (v >= 1) return '約' + (Math.round(v * 10) / 10) + '貫文';
+      return '約' + Math.max(10, Math.round(v * 100) * 10) + '文';
+    }
     if (cur === '両') {
       if (v >= 10) return '約' + Math.round(v) + '両';
       if (v >= 1) return '約' + (Math.round(v * 2) / 2) + '両';
@@ -238,6 +244,7 @@
     for (var i = L.log.length - 1; i >= 0; i--) if (L.log[i].money && L.log[i].year <= r.year) return L.log[i].money;
     return null;
   }
+  function curOf(y) { return y < 1600 ? '貫文' : y < 1871 ? '両' : '円'; }
   function koku(k) { var v = k * 1000; return v >= 10 ? '約' + Math.round(v) + '石' : '約' + (Math.round(v * 10) / 10) + '石'; }
   // その年の締めくくり（分かれ道のあと）の前は、去年の値を出す
   function settled(r) {
@@ -262,7 +269,7 @@
     else { $('num-income').textContent = '収入なし'; $('num-income-n').textContent = r.age < 15 ? '子ども' : '働いていない年'; }
     if (m && m.sav != null) {
       $('num-sav').textContent = money(m.sav);
-      $('num-sav-n').textContent = '今の物価' + (m.perNow > 1.5 ? '・その年のお金で' + money(m.savNominal, r.year < 1871 ? '両' : '円') : '') + (r.year < 2007 ? '・推計' : '');
+      $('num-sav-n').textContent = '今の物価' + (m.perNow > 1.5 ? '・その年のお金で' + money(m.savNominal, curOf(r.year)) : '') + (r.year < 2007 ? '・推計' : '');
     } else { $('num-sav').textContent = '—'; $('num-sav-n').textContent = '18歳までは家の家計'; }
     $('num-earn').textContent = L.earn && L.earn.real > 0 ? money(L.earn.real) : '0円';
     var sv = survival(r0.age);
@@ -285,7 +292,7 @@
         if (r.money && r.money.real) row('今の物価に直すと', money(r.money.real));
         if (r.money && r.money.takeReal != null) row('手取りを今の物価に直すと', money(r.money.takeReal));
       } else row('その年の年収', '収入なし');
-      if (m && m.sav != null) { row('貯金（今の物価）', money(m.sav)); row('貯金（その年のお金）', money(m.savNominal, r.year < 1871 ? '両' : '円')); }
+      if (m && m.sav != null) { row('貯金（今の物価）', money(m.sav)); row('貯金（その年のお金）', money(m.savNominal, curOf(r.year))); }
       if (m && m.why && m.why.length) {
         c.appendChild(el('h3', null, 'この年の貯金の動き'));
         m.why.forEach(function (w) {
@@ -478,7 +485,7 @@
   }
   function eduLabel() {
     var e = L.edu || (L.old ? null : null);
-    var M2 = { '寺子屋': '寺子屋で字を習った', '藩校': '藩校で学んだ', '村学校': '村学校で学んだ', '小学校': '小学校を出た', '中学': '中学校を出た', '高等小学校': '高等小学校を出た', '旧制中学': '旧制中学を出た', '高等女学校': '高等女学校を出た', '旧制の上の学校': '旧制の上の学校を出た', '高校': '高校を出た', '短大': '短大を出た', '短大・専門': '短大・専門学校を出た', '大学': '大学を出た' };
+    var M2 = { '家学': '家で漢籍や和歌を学んだ', '寺での手習い': '寺で字を習った', '寺子屋': '寺子屋で字を習った', '藩校': '藩校で学んだ', '村学校': '村学校で学んだ', '小学校': '小学校を出た', '中学': '中学校を出た', '高等小学校': '高等小学校を出た', '旧制中学': '旧制中学を出た', '高等女学校': '高等女学校を出た', '旧制の上の学校': '旧制の上の学校を出た', '高校': '高校を出た', '短大': '短大を出た', '短大・専門': '短大・専門学校を出た', '大学': '大学を出た' };
     return e ? (M2[e] || e) : (L.deathAge < 6 ? '学校に通う年まで生きられなかった' : '学校には通わなかった');
   }
   function familyLabel() {

@@ -269,7 +269,7 @@ export function build({ test = false } = {}) {
       provisionalItems: provisional,
       note: provisional.length ? 'この束にはまだ仮の値が含まれます（' + provisional.length + '項目）。統計の取り込みが終わるまで公開できません。' : '',
       built: new Date().toISOString(),
-      birthRange: [1800, 2000],
+      birthRange: [1000, 2000],
       futureFrom: 2027,
       mode: test ? 'test' : 'full',
       stats: stats ? { generated: stats.generated, tables: stats.tables.map(t => ({ name: t.name, table: t.table, updated: t.updated, fetched: t.fetched })), missing: stats.missing } : null
