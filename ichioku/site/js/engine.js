@@ -935,6 +935,7 @@
     return advance(L, rec);
   }
   function advance(L, rec) {
+    moneyYear(L, rec);
     statusYear(L, rec);
     L.log.push(rec);
     L.rec = null;
@@ -1078,6 +1079,103 @@
     if (!L.st4 || !L.st4.v) return 1;
     var d = L.st4.v.body - stLin(BODY_AGE, age);
     return clamp(Math.exp(-BODY_K * d) / BODY_NORM, 0.6, 1.8);
+  }
+
+  /* ---------- お金の見える化（手取り・今の物価・米に直した目安・貯金） ----------
+     金額は千円単位。real は2025年の物価、nominal はその年のお金。
+     貯金は家計調査（貯蓄・負債編）の「貯蓄現在高 ÷ 年間収入」を、年齢と暮らしむきの段（5段）ごとに目安にして近づけていく。
+     病気・失業・災害・離婚などの出来事で減る。乱数は別のもの（種から作る）を使うので、ほかの抽選の順番は変わらない。 */
+  var SAV_AGES = [25, 35, 45, 55, 65, 75];
+  var OLD_Q = { bushi: 3, chonin: 3, hyakusho: 2, priest: 3, outcast: 1, ainu: 1, ryukyuShi: 3, ryukyuHyakusho: 2, shizoku: 3, buraku: 1, heimin: 2 };
+  var MONEY_RULES = [
+    { re: /職を失|失業し|倒産し|解雇され|雇い止め|勤め先がなくな/, f: 0.2, t: '仕事を失い、貯金を取り崩した' },
+    { re: /家を失|家が壊|家が流さ|焼け出さ|全壊|半壊|床上まで|浸水し|空襲で家|家が焼け/, f: 0.3, t: '災害で家や家財を失い、建て直しに貯金を使った' },
+    { re: /入院|手術|療養|大けが/, f: 0.08, t: '病気やけがの治療に貯金を使った' },
+    { re: /離婚した/, f: 0.25, t: '離婚で家計が分かれ、貯金が減った' },
+    { re: /さんと結婚した|と結婚した|夫婦になった/, f: 0.05, t: '結婚の支度に貯金を使った' },
+    { re: /飢饉|凶作/, f: 0.3, t: '不作の年をしのぐため、蓄えを取り崩した' }
+  ];
+  function priceOf(L, y) {
+    // 2025年を1とした物価。昔の人生は history.json の物価のつながり、1975年からは消費者物価指数
+    var C = L.C;
+    if (L.H && L.H.price && y < 1970) return { p: val(L.H.price, y), src: (L.H.priceSrc || {})[y] || 'clio' };
+    return { p: val(C.nat.cpi, Math.min(y, 2025)) / val(C.nat.cpi, 2025), src: 'cpi' };
+  }
+  function priceEv(L, y, pr) {
+    var C = L.C;
+    var what = { cpi: '消費者物価指数（総合）で2025年の物価に直した', cpiLong: '消費者物価指数の長期時系列（持家の帰属家賃を除く総合）で2025年の物価に直した', boj: '日本銀行の戦前基準企業物価指数と消費者物価指数をつないで2025年の物価に直した（推計）', clio: '物価の上がり幅の研究（Clio Infra）と日本銀行・消費者物価指数をつないで2025年の物価に直した（推計）' }[pr.src];
+    var srcKey = pr.src === 'cpiLong' ? 'cpi' : pr.src;
+    return ev(C, srcKey, y, what, 'その年の1' + (y < 1871 ? '両' : '円') + '＝今の約' + Math.round(1 / pr.p).toLocaleString('ja-JP') + '円', { est: pr.src !== 'cpi' && pr.src !== 'cpiLong' });
+  }
+  function takeRate(C, y) {
+    var t = C.nat.takeHome;
+    if (!t) return null;
+    var ks = Object.keys(t).map(Number).sort(function (a, b) { return a - b; });
+    var yy = y < ks[0] ? ks[0] : y > ks[ks.length - 1] ? ks[ks.length - 1] : y;
+    return { r: t[yy], y: yy, est: yy !== y };
+  }
+  function savTable(C, y) {
+    var t = C.nat.savingRatio;
+    if (!t) return null;
+    var ks = Object.keys(t).map(Number).sort(function (a, b) { return a - b; });
+    var yy = y < ks[0] ? ks[0] : y > ks[ks.length - 1] ? ks[ks.length - 1] : y;
+    return { t: t[yy], y: yy };
+  }
+  function moneyYear(L, rec) {
+    var C = L.C, y = rec.year, a = rec.age;
+    if (!L.money) {
+      var r = makeRng(((L.seed >>> 0) ^ 0x6a09e667) >>> 0);
+      var q = typeof L.incPct === 'number' ? Math.min(5, 1 + Math.floor(L.incPct * 5)) : (OLD_Q[L.status] || 2);
+      if (typeof L.incPct !== 'number') q = clamp(q + (r() < 0.25 ? 1 : r() < 0.33 ? -1 : 0), 1, 5);
+      L.money = { r: r, q: q, sav: 0, incSum: 0, incN: 0, focus: null };
+    }
+    var M = L.money, inc = rec.income, pr = priceOf(L, y), why = [];
+    var out = { est: y < 1975 || !!(inc && inc.est), why: why, priceSrc: pr.src, perNow: 1 / pr.p };
+    if (inc && inc.real > 0) {
+      M.incSum += inc.real; M.incN++;
+      var tr = y >= 1871 ? takeRate(C, y) : null;
+      out.take = tr ? inc.nominal * tr.r : null;
+      out.takeReal = tr ? inc.real * tr.r : null;
+      out.takeRate = tr;
+      out.real = inc.real;
+      // 米に直した目安：1830年ごろの米1石＝およそ1両とし、物価の動きに合わせて米の値段を動かす（推計）
+      if (y < 1871 && L.H && L.H.price) out.koku = inc.nominal / (pr.p / val(L.H.price, 1830));
+    }
+    // 貯金：18歳から（それより前は家の家計）
+    var st = savTable(C, y);
+    if (a >= 18 && st) {
+      var ai = 0;
+      for (var i = 0; i < SAV_AGES.length; i++) if (Math.abs(SAV_AGES[i] - a) < Math.abs(SAV_AGES[ai] - a)) ai = i;
+      var row = st.t[SAV_AGES[ai]], ref = st.t[45];
+      // この人の稼ぎの水準（これまでの平均の年収）を、表の同じ段の年間収入と比べて目安を伸び縮みさせる
+      var avg = M.incN ? M.incSum / M.incN : 0;
+      var scale = clamp(avg / (ref.inc[M.q - 1] * 10), 0, 2.5);
+      if (L.married) scale *= 1.3;
+      var target = row.sav[M.q - 1] * 10 * scale * (M.focus === 'save' ? 1.15 : 1);
+      if (a < 25) target *= (a - 17) / 8;
+      var before = M.sav;
+      M.sav += (target - M.sav) * 0.25;
+      var hit = false;
+      (rec.events || []).forEach(function (e) {
+        MONEY_RULES.forEach(function (ru) {
+          if (hit || !ru.re.test(e.t)) return;
+          if (/^(父|母|祖父|祖母|兄|姉|弟|妹|息子|娘|子ども|孫|友|同僚|近所)/.test(e.t) && ru.f !== 0.3) return;
+          hit = true;
+          var loss = M.sav * ru.f;
+          M.sav -= loss;
+          why.push({ t: ru.t, d: -loss, ev: e.ev || [] });
+        });
+      });
+      if (M.sav < 0) M.sav = 0;
+      out.sav = M.sav;
+      out.savNominal = M.sav * pr.p;
+      out.savEv = ev(C, 'kakeichosa', st.y, '世帯主が' + (SAV_AGES[ai] === 25 ? '29歳以下' : SAV_AGES[ai] === 75 ? '70歳以上' : (SAV_AGES[ai] - 5) + '〜' + (SAV_AGES[ai] + 4) + '歳') + 'の二人以上の世帯で、貯蓄の多さが下から' + M.q + '番目の段の平均の貯蓄（年間収入 ' + row.inc[M.q - 1] + '万円）' + (st.y !== y ? '。この年の数字がないため' + st.y + '年の値で、この人の稼ぎに合わせて伸び縮みさせた目安' : '。この人の稼ぎに合わせて伸び縮みさせた目安'), row.sav[M.q - 1].toLocaleString('ja-JP') + '万円', { est: true });
+      if (Math.abs(M.sav - before) >= 1 && !why.length) why.push({ t: M.sav > before ? '稼ぎの一部を貯めた' : '暮らしのために少しずつ取り崩した', d: M.sav - before, ev: [out.savEv] });
+    }
+    out.priceEv = priceEv(L, y, pr);
+    if (out.takeRate) out.takeEv = ev(C, 'kakeichosa', out.takeRate.y, '勤め人の世帯の収入のうち、税金と社会保険料を引いた手取り（可処分所得）の割合' + (out.takeRate.est ? '。この年の数字がないため' + out.takeRate.y + '年の値' : ''), pct(out.takeRate.r), { est: out.takeRate.est });
+    rec.money = out;
+    return out;
   }
 
   /* ---------- 節目の問いかけ（5・15・30・50・70歳）。答えは人生の進み方に関わらない ---------- */
@@ -1383,6 +1481,6 @@
     pickPref: pickPref, newLife: newLife, step: step, resolve: resolve, autoRun: autoRun,
     cohort: cohort, majorTimeline: majorTimeline, familyList: familyList, fill: fill, sceneOk: sceneOk,
     pickCause: pickCause, deathStory: deathStory, ev: ev, askFor: askFor, answerAsk: answerAsk, ASK_AGES: ASK_AGES,
-    statusYear: statusYear, bodyMult: bodyMult, ST_KEYS: ST_KEYS, ST_NAMES: ST_NAMES
+    statusYear: statusYear, bodyMult: bodyMult, moneyYear: moneyYear, ST_KEYS: ST_KEYS, ST_NAMES: ST_NAMES
   };
 });

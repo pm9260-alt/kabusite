@@ -918,6 +918,7 @@
   }
   function finishYear(L, rec) {
     finishYear0(L, rec);
+    E.moneyYear(L, rec);
     E.statusYear(L, rec);
   }
   function finishYear0(L, rec) {

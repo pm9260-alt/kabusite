@@ -244,13 +244,19 @@ const hs = S.nat.highSchool, univ = S.nat.univ, jc = S.nat.juniorCollege;
 hs.m[1948] = 0.42; hs.f[1948] = 0.3;
 
 /* ---------- その年のお金の価値（2025年を1とする物価の水準） ---------- */
-// 1970年からは消費者物価指数、それより前は Clio Infra の物価の上がり幅でさかのぼる。1819年より前は1819年と同じ（推計）
-const price = {};
+// 1970年からは消費者物価指数（総合）、1947〜1969年は消費者物価指数の長期時系列（持家の帰属家賃を除く総合）、
+// 1900〜1946年は日本銀行の戦前基準企業物価指数、1819〜1899年は Clio Infra の物価の上がり幅でさかのぼる。1819年より前は1819年と同じ（推計）
+const price = {}, priceSrc = {};
 {
   const cpi = C.nat.cpi, c25 = lin(cpi, 2025);
-  for (let y = 2026; y >= 1970; y--) price[y] = lin(cpi, y) / c25;
-  const inf = S.nat.inflation || {};
-  for (let y = 1969; y >= 1800; y--) price[y] = y >= 1819 ? price[y + 1] / (1 + (inf[y + 1] || 0) / 100) : price[1819];
+  for (let y = 2026; y >= 1970; y--) { price[y] = lin(cpi, y) / c25; priceSrc[y] = 'cpi'; }
+  const cl = S.nat.cpiLong || {}, bj = S.nat.bojPrewar || {}, inf = S.nat.inflation || {};
+  for (let y = 1969; y >= 1800; y--) {
+    if (y >= 1947 && cl[y] && cl[1970]) { price[y] = price[1970] * cl[y] / cl[1970]; priceSrc[y] = 'cpiLong'; }
+    else if (y >= 1901 && bj[y] && bj[y + 1] && price[y + 1]) { price[y] = price[y + 1] * bj[y] / bj[y + 1]; priceSrc[y] = 'boj'; }
+    else if (y >= 1819) { price[y] = price[y + 1] / (1 + (inf[y + 1] || 0) / 100); priceSrc[y] = 'clio'; }
+    else { price[y] = price[1819]; priceSrc[y] = 'clio'; }
+  }
   for (const y of Object.keys(price)) price[y] = +price[y].toPrecision(5);
   est.push('1819年より前の物価（1819年と同じとした）と、その年のお金に直した年収');
 }
@@ -267,7 +273,7 @@ const H = {
   prov, prefW, urban, urbanPref, prefNames,
   ainuShare, ryukyuShi, mort,
   nat: { elem, mid, terakoya, higherPrimary, higherOld, hs, univ, jc, marriage, neverMarried, divorce, children, sectors, gdp: S.nat.gdp, causeRank: S.nat.causeRank, e0 },
-  events: eventsOut, moves: OLD_MOVES, manchuria: MANCHURIA_1945, price,
+  events: eventsOut, moves: OLD_MOVES, manchuria: MANCHURIA_1945, price, priceSrc,
   estimated: est
 };
 if (errors.length) { console.log('束を作れなかった：\n' + errors.join('\n')); process.exit(1); }

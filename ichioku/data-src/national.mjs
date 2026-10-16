@@ -28,6 +28,10 @@ export const sources = {
   law: { name: '法令の施行日', org: 'e-Gov法令検索' },
   names: { name: '生まれ年別の名前調査', org: '明治安田生命' },
   mhlw: { name: '厚生労働省の公表資料', org: '厚生労働省' },
+  // 以下の3つはお金の見える化（手取り・貯金・昔の物価）の根拠として追加（作る人の指示書「本家の良いところ」F 2026-10-16 で名前が挙がった統計）
+  kakeichosa: { name: '家計調査（家計収支編・貯蓄・負債編）', org: '総務省', extra: true, approved: '2026-10-16' },
+  boj: { name: '戦前基準企業物価指数（1934〜1936年平均＝1）', org: '日本銀行', extra: true, approved: '2026-10-16' },
+  clio: { name: '日本の物価の上がり幅（Zwart 2015）', org: 'Clio Infra', extra: true, approved: '2026-10-16' },
   // 以下の3つは仕様書8章の一覧にない統計。健康や学校の場面の根拠として追加（作る人の了承済み 2026-10-15）
   kanja: { name: '患者調査', org: '厚生労働省', extra: true, approved: '2026-10-15' },
   kansen: { name: '感染症発生動向調査', org: '厚生労働省', extra: true, approved: '2026-10-15' },

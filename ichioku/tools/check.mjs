@@ -491,6 +491,39 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
   rec('E 4つの数値が0〜100の中で、動いた年には理由があるか（1975年より前は推計の印）', bad.length === 0, bad.slice(0, 8).join('、') || n + '人分');
 }
 
+/* ---------- F お金の見える化 ---------- */
+{
+  const bad = []; let n = 0, shown = 0;
+  for (const by of [1800, 1830, 1860, 1900, 1930, 1950, 1975, 2000]) {
+    for (let i = 0; i < 12; i++) {
+      const seed = by * 13 + i * 7919 + 3;
+      let L;
+      if (by >= 1975) L = E.autoRun(E.newLife(C, P[E.pickPref(C, by, E.makeRng(seed ^ 0x9e3779b9))], { year: by, seed }));
+      else { const ob = O.pickBirth(C, H, by, E.makeRng(seed ^ 0x9e3779b9)); L = O.autoRun(O.newLife(C, H, P[ob.pref] || null, { year: by, seed, birth: ob })); }
+      n++;
+      for (const r of L.log) {
+        const m = r.money, tag = by + '年生まれ ' + r.year + '年';
+        if (!m) { bad.push(tag + '：お金の記録がない'); break; }
+        if (r.income && r.income.nominal > 0) {
+          shown++;
+          if (r.income.cur !== (r.year < 1871 ? '両' : '円')) bad.push(tag + '：単位が時代に合わない（' + r.income.cur + '）');
+          if ((m.koku != null) !== (r.year < 1871)) bad.push(tag + '：米に直した目安の有無が時代に合わない');
+          if (r.year >= 1871 && m.take == null) bad.push(tag + '：手取りがない');
+          if (!m.priceEv || !m.priceEv.name || !m.priceEv.org) bad.push(tag + '：物価の根拠がない');
+          if (m.take != null && (!m.takeEv || !m.takeEv.name)) bad.push(tag + '：手取りの根拠がない');
+          if (!(m.real > 0) || !isFinite(m.real)) bad.push(tag + '：今の物価に直した額がおかしい');
+        }
+        if (m.sav != null) {
+          if (!(m.sav >= 0) || !isFinite(m.sav) || !isFinite(m.savNominal)) bad.push(tag + '：貯金の額がおかしい（' + m.sav + '）');
+          if (!m.savEv || !m.savEv.name) bad.push(tag + '：貯金の根拠がない');
+        }
+        if (r.age < 18 && m.sav != null) bad.push(tag + '：18歳より前に貯金がある');
+      }
+    }
+  }
+  rec('F 金額の単位が時代に合い（1870年までは両と石、1871年からは円と手取り）、どの金額にも出典が付くか', bad.length === 0 && shown > 0, bad.slice(0, 8).join('、') || n + '人分・' + shown + '年分の年収');
+}
+
 /* ---------- 結果 ---------- */
 const lines = [];
 lines.push('公開前の検査　' + new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }) + '（日本時間）');

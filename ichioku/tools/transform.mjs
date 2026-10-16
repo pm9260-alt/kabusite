@@ -373,6 +373,52 @@ for (const y of Object.keys(names)) if (!names[y].m || !names[y].f) delete names
   }
 }
 
+// 手取りの割合（勤労者世帯の 可処分所得 ÷ 実収入）と平均貯蓄率。1985年から（家計調査）
+{
+  const j = load('nat-kakei-takehome');
+  if (j) {
+    const t = {};
+    for (const v of j.values) {
+      const x = num(v), y = yearOf(v['@time']);
+      if (x == null) continue;
+      // 2000年からは「二人以上の世帯（04）」、それより前は「農林漁家世帯を除く（02）」を使う
+      if ((y >= 2000) !== (v['@cat02'] === '04')) continue;
+      const k = { '019': 'inc', '233': 'disp', '252': 'save' }[v['@cat01']];
+      if (k) (t[y] = t[y] || {})[k] = x;
+    }
+    nat.takeHome = {}; nat.saveRate = {};
+    for (const [y, o] of Object.entries(t)) {
+      if (o.inc && o.disp) nat.takeHome[y] = +(o.disp / o.inc).toFixed(4);
+      if (o.save != null) nat.saveRate[y] = +(o.save / 100).toFixed(4);
+    }
+  }
+}
+
+// 貯蓄現在高 ÷ 年間収入（二人以上の世帯。貯蓄現在高五分位・世帯主の年齢別）。2007年から（家計調査 貯蓄・負債編）
+{
+  const j = load('nat-kakei-saving');
+  if (j) {
+    const AGE = { '430': 25, '303': 35, '304': 45, '305': 55, '306': 65, '570': 75 };
+    const raw = {};
+    for (const v of j.values) {
+      const x = num(v), y = yearOf(v['@time']), a = AGE[v['@cat04']], q = +v['@cat03'];
+      if (x == null || !a || q < 1 || q > 5) continue;
+      const o = ((raw[y] = raw[y] || {})[a] = raw[y][a] || {});
+      (o[q] = o[q] || {})[v['@cat01'] === '011' ? 'inc' : 'sav'] = x;
+    }
+    nat.savingRatio = {};
+    for (const [y, ages] of Object.entries(raw)) {
+      const r = {};
+      for (const [a, qs] of Object.entries(ages)) {
+        const arr = [];
+        for (let q = 1; q <= 5; q++) arr.push(qs[q] && qs[q].inc ? +(qs[q].sav / qs[q].inc).toFixed(3) : null);
+        if (arr.every(v => v != null)) r[a] = { ratio: arr, inc: [1, 2, 3, 4, 5].map(q => qs[q].inc), sav: [1, 2, 3, 4, 5].map(q => qs[q].sav) };
+      }
+      if (Object.keys(r).length === 6) nat.savingRatio[y] = r;
+    }
+  }
+}
+
 // 年齢層ごとの死因の割合（病気・事故など・自殺）：直近10年の死亡数を合わせて計算する
 {
   const j = load('nat-cause');

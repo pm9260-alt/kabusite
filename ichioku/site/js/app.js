@@ -153,16 +153,76 @@
     }
     return l;
   }
-  function renderNums(r) {
-    var inc = r.income;
+  function lastMoney(r) {
+    if (r && r.money) return r.money;
+    for (var i = L.log.length - 1; i >= 0; i--) if (L.log[i].money && L.log[i].year <= r.year) return L.log[i].money;
+    return null;
+  }
+  function koku(k) { var v = k * 1000; return v >= 10 ? '約' + Math.round(v) + '石' : '約' + (Math.round(v * 10) / 10) + '石'; }
+  // その年の締めくくり（分かれ道のあと）の前は、去年の値を出す
+  function settled(r) {
+    if (r.income !== undefined) return { r: r, last: false };
+    for (var i = L.log.length - 1; i >= 0; i--) if (L.log[i].year < r.year) return { r: L.log[i], last: true };
+    return { r: r, last: false };
+  }
+  function renderNums(r0) {
+    var sd = settled(r0), r = sd.r;
+    var inc = r.income, m = lastMoney(r);
+    $('num-income-box').querySelector('.k').textContent = sd.last ? '去年の年収' : 'その年の年収';
     if (inc && inc.nominal > 0) {
       $('num-income').textContent = money(inc.nominal, inc.cur);
-      $('num-income-n').textContent = inc.cur === '両' ? 'その年のお金（両）・推計' : inc.future ? '2025年の水準のまま' : 'その年のお金' + (inc.est ? '・推計' : '');
-    } else { $('num-income').textContent = '収入なし'; $('num-income-n').textContent = r.age < 15 ? '子ども' : '働いていない年'; }
+      var sub = [];
+      if (r.money && r.money.koku != null) sub.push('米に直すと' + koku(r.money.koku));
+      if (r.money && r.money.take != null) sub.push('手取り' + money(r.money.take));
+      if (r.money && r.money.real && r.money.perNow > 1.05) sub.push('今の物価で' + money(r.money.real));
+      if (inc.future) sub.push('2025年の水準のまま');
+      if (inc.est || r.year < 1975) sub.push('推計');
+      $('num-income-n').textContent = sub.join('・') || 'その年のお金';
+    } else if (r.income === undefined) { $('num-income').textContent = '—'; $('num-income-n').textContent = 'この年の終わりに決まる'; }
+    else { $('num-income').textContent = '収入なし'; $('num-income-n').textContent = r.age < 15 ? '子ども' : '働いていない年'; }
+    if (m && m.sav != null) {
+      $('num-sav').textContent = money(m.sav);
+      $('num-sav-n').textContent = '今の物価' + (m.perNow > 1.5 ? '・その年のお金で' + money(m.savNominal, r.year < 1871 ? '両' : '円') : '') + (r.year < 2007 ? '・推計' : '');
+    } else { $('num-sav').textContent = '—'; $('num-sav-n').textContent = '18歳までは家の家計'; }
     $('num-earn').textContent = L.earn && L.earn.real > 0 ? money(L.earn.real) : '0円';
-    var sv = survival(r.age);
+    var sv = survival(r0.age);
     $('num-alive').textContent = (sv * 100 >= 10 ? Math.round(sv * 100) : (sv * 100).toFixed(1)) + '%';
     $('num-alive-n').textContent = '生命表から（' + (L.sex === 'm' ? '男' : '女') + '）';
+  }
+  // お金のくわしい内訳と、もとになった統計
+  function openMoney() {
+    if (!L || !cur) return;
+    var sd = settled(cur), r = sd.r, m = r.money || null, inc = r.income;
+    openSheet('お金', function (c) {
+      function row(k, v) { var d = el('div', 'money-row'); d.appendChild(el('span', null, k)); d.appendChild(el('span', 'mv', v)); c.appendChild(d); }
+      function evBtn(label, evs) { var b = el('button', 'ev-link', label); b.type = 'button'; b.onclick = function () { openEvidence(label, evs); }; c.appendChild(b); }
+      if (sd.last) c.appendChild(el('p', 'note', cur.year + '年の分は、この年の終わりに決まります。ここでは去年の値を出しています'));
+      c.appendChild(el('p', 'note', r.year + '年・' + r.age + '歳。金額はその年のお金と、2025年の物価に直した目安の両方で出します' + (r.year < 1975 ? '。1975年より前は推計です' : '')));
+      if (inc && inc.nominal > 0) {
+        row('その年の年収', money(inc.nominal, inc.cur));
+        if (r.money && r.money.koku != null) row('米に直すと', koku(r.money.koku));
+        if (r.money && r.money.take != null) row('手取り（税金と社会保険料を引いた額）', money(r.money.take));
+        if (r.money && r.money.real) row('今の物価に直すと', money(r.money.real));
+        if (r.money && r.money.takeReal != null) row('手取りを今の物価に直すと', money(r.money.takeReal));
+      } else row('その年の年収', '収入なし');
+      if (m && m.sav != null) { row('貯金（今の物価）', money(m.sav)); row('貯金（その年のお金）', money(m.savNominal, r.year < 1871 ? '両' : '円')); }
+      if (m && m.why && m.why.length) {
+        c.appendChild(el('h3', null, 'この年の貯金の動き'));
+        m.why.forEach(function (w) {
+          var b = el('button', 'item', (w.d >= 0 ? '+' : '-') + money(Math.abs(w.d)) + '　' + w.t);
+          b.type = 'button';
+          b.onclick = function () { openEvidence(w.t, w.ev); };
+          c.appendChild(b);
+        });
+      }
+      c.appendChild(el('h3', null, 'もとになった統計'));
+      var evw = el('div', 'ev-list'); c.appendChild(evw);
+      c = evw;
+      if (r.money && r.money.priceEv) evBtn('今の物価に直す方法', [r.money.priceEv]);
+      if (r.money && r.money.takeEv) evBtn('手取りの割合', [r.money.takeEv]);
+      if (m && m.savEv) evBtn('貯金の目安', [m.savEv]);
+      if (r.money && r.money.koku != null) evBtn('米に直す方法', [{ name: '米の値段の目安', org: '', what: '1830年ごろの米1石（約150kg）をおよそ1両とし、物価の動きに合わせて米の値段を動かした', val: '', est: true }]);
+    });
   }
 
   /* ---------- 4つの数値（からだ・暮らしの満足・学び・つながり） ---------- */
@@ -737,6 +797,8 @@
     $('family').onclick = openFamily;
     $('log').onclick = openLog;
     $('st4').onclick = openSt;
+    $('num-income-box').onclick = openMoney;
+    $('num-sav-box').onclick = openMoney;
     $('end-log').onclick = openLog;
     $('sheet-close').onclick = closeSheet;
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('sheet').hidden) closeSheet(); });

@@ -159,6 +159,29 @@ guard('物価の上がり幅（1819〜2010年、Clio Infra）', () => {
   out.nat.inflation = o;
 });
 
+guard('消費者物価指数の長期時系列（1946年8月〜、全国）', () => {
+  const t = fs.readFileSync(path.join(RAW, 'cpi-1946.csv'), 'utf8');
+  const by = {};
+  for (const l of t.split(/\r?\n/)) {
+    const p = l.split(',');
+    if (/^\d{6}$/.test(p[0]) && p[1] && !isNaN(+p[1])) (by[+p[0].slice(0, 4)] = by[+p[0].slice(0, 4)] || []).push(+p[1]);
+  }
+  const o = {};
+  for (const [y, v] of Object.entries(by)) if (+y <= 1975 && v.length >= 5) o[y] = +(v.reduce((a, b) => a + b, 0) / v.length).toFixed(3);
+  if (!o[1950] || !o[1970]) throw new Error('1950年か1970年の値がない');
+  out.nat.cpiLong = o;
+});
+
+guard('日本銀行の戦前基準企業物価指数（1900年〜）', () => {
+  const j = JSON.parse(fs.readFileSync(path.join(RAW, 'boj-prewar.json'), 'utf8'));
+  const v = j.RESULTSET[0].VALUES, by = {};
+  v.SURVEY_DATES.forEach((d, i) => { const x = v.VALUES[i]; if (x != null) (by[Math.floor(d / 100)] = by[Math.floor(d / 100)] || []).push(+x); });
+  const o = {};
+  for (const [y, a] of Object.entries(by)) if (a.length >= 3) o[y] = +(a.reduce((p, q) => p + q, 0) / a.length).toPrecision(5);
+  if (!o[1934] || !o[1947]) throw new Error('1934年か1947年の値がない');
+  out.nat.bojPrewar = o;
+});
+
 /* ---------- 都道府県 ---------- */
 guard('都道府県の人口（1920年〜）', () => {
   const rows = T('T12-02');

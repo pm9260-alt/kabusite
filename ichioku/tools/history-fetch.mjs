@@ -24,7 +24,11 @@ const OWID = [
   ['owid-u5.csv', 'https://ourworldindata.org/grapher/child-mortality.csv?country=JPN'],
   ['owid-gdp.csv', 'https://ourworldindata.org/grapher/gdp-per-capita-maddison-project-database.csv?country=JPN'],
   // 物価の上がり幅（Clio Infra、Zwart 2015）。昔の年の年収をその年のお金（両・円）に直すのに使う
-  ['clio-inflation.xlsx', 'https://clio-infra.eu/data/Inflation_Broad.xlsx']
+  ['clio-inflation.xlsx', 'https://clio-infra.eu/data/Inflation_Broad.xlsx'],
+  // 消費者物価指数の長期時系列（持家の帰属家賃を除く総合・全国・月次。1946年8月から）。e-Stat の公開ファイル
+  ['cpi-1946.csv', 'https://www.e-stat.go.jp/stat-search/file-download?statInfId=000032103843&fileKind=1', b => new TextDecoder('shift_jis').decode(b)],
+  // 日本銀行の戦前基準の企業物価指数（月次。1900年10月から）。1946年より前の物価に使う
+  ['boj-prewar.json', 'https://www.stat-search.boj.or.jp/api/v1/getDataCode?format=json&lang=jp&db=PR01&code=PRCG_28Z0000000&startDate=190001&endDate=197012']
 ];
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
