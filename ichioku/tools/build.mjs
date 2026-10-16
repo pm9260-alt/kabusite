@@ -308,11 +308,20 @@ export function build({ test = false } = {}) {
     for (const y of Object.keys(e0s[sex]).map(Number)) if (y <= last) delete e0s[sex][y];
     Object.assign(e0s[sex], N.e0[sex]);
   }
-  // 生命表のあとの年は将来推計人口（死亡中位）。national.mjs の目安の値は使わない
+  // 完全生命表（5年おき）のあとの年は、簡易生命表の年齢ごとの死亡率から平均寿命を計算する（公表値と0.01年以内で合う）。
+  // その先は将来推計人口（死亡中位）の伸び幅を、簡易生命表の最新の年の値に足す（推計の出発点と実際の値の段差をなくすため）
   if (extra && extra.nat.e0proj) for (const sex of ['m', 'f']) {
-    const last = Math.max(...Object.keys(N.e0 ? N.e0[sex] : {}).map(Number), 0);
+    let last = Math.max(...Object.keys(N.e0 ? N.e0[sex] : {}).map(Number), 0);
     for (const y of Object.keys(e0s[sex]).map(Number)) if (y > last) delete e0s[sex][y];
-    for (const [y, v] of Object.entries(extra.nat.e0proj[sex])) if (+y > last) e0s[sex][y] = v;
+    for (const [y, t] of Object.entries(N.lifeQx || {})) {
+      if (+y <= last || !t[sex]) continue;
+      const q = t[sex]; let l = 1, e = 0;
+      for (let a = 0; a < q.length; a++) { const n = l * (1 - q[a]); e += a === 0 ? 0.15 * l + 0.85 * n : (l + n) / 2; l = n; }
+      e0s[sex][y] = +(e + l * 1.6).toFixed(2);
+    }
+    last = Math.max(...Object.keys(e0s[sex]).map(Number));
+    const P = extra.nat.e0proj[sex], base = e0s[sex][last] - P[last];
+    for (const [y, v] of Object.entries(P)) if (+y > last) e0s[sex][y] = +(v + base).toFixed(2);
   }
   const q0s = N.q0 && Object.keys(N.q0).length ? N.q0 : q0;
   SHAPE = makeShape(N.lifeQx);
