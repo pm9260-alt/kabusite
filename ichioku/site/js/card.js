@@ -1,4 +1,4 @@
-/* 1億分の1 共有用の画像（誕生カード・最期のカード）
+/* 1000分の1 共有用の画像（誕生カード・最期のカード）
    1200×630 の横長。ゴシック体・1pxの線だけ・グラデーションや影なし・絵文字なし。
    画面の明るさの設定にかかわらず、いつも明るい色で描く（共有先で見やすいように）。 */
 (function (root) {
@@ -50,7 +50,7 @@
     ctx.drawImage(c, 64, 99, 288, 384);
   }
   function title(ctx) {
-    font(ctx, 26, true); ctx.fillStyle = ACCENT; ctx.fillText('1億分の1', 420, 92);
+    font(ctx, 26, true); ctx.fillStyle = ACCENT; ctx.fillText('1000分の1', 420, 92);
     ctx.strokeStyle = RULE; ctx.beginPath(); ctx.moveTo(420, 112.5); ctx.lineTo(W - 48, 112.5); ctx.stroke();
     // 原作の表記（共有された画像だけを見た人にも分かるように）
     fit(ctx, '原作「80億分の1」（1in8b.life）の作者の許可を得て制作', 420, 606, W - 420 - 48, 16, false, SUB, 12);

@@ -1,4 +1,4 @@
-/* 1億分の1 人生の進め方（本体）
+/* 1000分の1 人生の進め方（本体）
    ブラウザでも Node でも同じものを使う。画面は app.js、検査は tools/check.mjs が呼ぶ。 */
 (function (root, factory) {
   if (typeof module === 'object' && module.exports) module.exports = factory();
@@ -1660,6 +1660,16 @@
     return L;
   }
   // 同じ町・同じ年に生まれた100人のその後（最期の画面）
+  // 年齢ごとの暮らしの満足の平均（一生の浮き沈みの曲線の「比べる線」）。その年齢で生きている人だけで平均し、10人を下回る年齢は null
+  function satAdd(r, L) {
+    r.satSum = r.satSum || []; r.satN = r.satN || [];
+    L.log.forEach(function (rec) { if (rec.st && rec.st.sat != null) { r.satSum[rec.age] = (r.satSum[rec.age] || 0) + rec.st.sat; r.satN[rec.age] = (r.satN[rec.age] || 0) + 1; } });
+  }
+  function satDone(r) {
+    r.satAvg = [];
+    for (var a = 0; a < (r.satN || []).length; a++) r.satAvg.push(r.satN[a] >= 10 ? r.satSum[a] / r.satN[a] : null);
+    delete r.satSum;
+  }
   function cohort(C, P, year, muniCode, seed, n) {
     n = n || 100;
     var r = { n: n, stayed: 0, univ: 0, to80: 0, married: 0 }, earns = [];
@@ -1670,9 +1680,11 @@
       if (L.deathAge >= 80) r.to80++;
       if (L.everMarried) r.married++;
       earns.push(L.earn ? L.earn.real : 0);
+      satAdd(r, L);
     }
     earns.sort(function (p, q) { return p - q; });
     r.earnMedian = (earns[Math.floor((n - 1) / 2)] + earns[Math.ceil((n - 1) / 2)]) / 2;
+    satDone(r);
     return r;
   }
   function majorTimeline(C, by, until, prefCode) {
@@ -1688,7 +1700,7 @@
 
   return {
     FUTURE_FROM: FUTURE_FROM, CATS: CATS, TARGET: TARGET,
-    houseOf: houseOf, heirCandidates: heirCandidates,
+    houseOf: houseOf, heirCandidates: heirCandidates, satAdd: satAdd, satDone: satDone,
     makeRng: makeRng, nv: nv, val: val, deathProb: deathProb, invNorm: invNorm,
     pickPref: pickPref, newLife: newLife, step: step, resolve: resolve, autoRun: autoRun,
     cohort: cohort, majorTimeline: majorTimeline, familyList: familyList, fill: fill, sceneOk: sceneOk,

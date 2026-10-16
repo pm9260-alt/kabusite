@@ -1,4 +1,4 @@
-/* 1億分の1 昔の人生の進め方（1000〜1974年生まれ）
+/* 1000分の1 昔の人生の進め方（1000〜1974年生まれ）
    ブラウザでも Node でも同じものを使う。乱数や数表の道具は engine.js（Ichioku）のものを使う。
    1975年以降の年の世の中・死亡の確率・物の普及は、今の本体と同じ数字を使う。 */
 (function (root, factory) {
@@ -1201,7 +1201,9 @@
       if (L.stats.school) r.school++;
       if (L.stats.to60) r.to60++;
       r.earns.push(L.earn.real);
+      E.satAdd(r, L);
     }
+    E.satDone(r);
     r.earns.sort(function (p, q) { return p - q; });
     r.earnMedian = (r.earns[Math.floor((n - 1) / 2)] + r.earns[Math.ceil((n - 1) / 2)]) / 2;
     r.items = [['5歳まで生きた人', r.to5], [L0.by < 1700 ? '寺や家で字を習った人' : L0.by < 1873 ? '寺子屋や学校で字を習った人' : '学校に通った人', r.school], ['60歳まで生きた人', r.to60]];

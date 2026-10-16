@@ -1,4 +1,4 @@
-/* 1億分の1 画面の動き */
+/* 1000分の1 画面の動き */
 (function () {
   'use strict';
   var E = window.Ichioku, O = window.IchiokuOld, M = E;
@@ -572,7 +572,7 @@
       c.appendChild(cv);
       var b = el('button', 'btn-main', navigator.share ? '共有する' : '画像を保存する');
       b.type = 'button';
-      b.onclick = function () { K.share(cv, 'ichioku-' + kind + '-' + L.by + '.png', '1億分の1'); };
+      b.onclick = function () { K.share(cv, 'ichioku-' + kind + '-' + L.by + '.png', '1000分の1'); };
       c.appendChild(b);
     });
   }
@@ -889,13 +889,30 @@
     if (extra) for (var k in extra) e[k] = extra[k];
     return e;
   }
+  // 生涯の稼ぎを、その時代のお金（貫文・両・円）で足し上げる。一生のうちに単位が変わった人は単位ごとに並べる
+  function eraEarnText() {
+    var sum = {}, order = [];
+    L.log.forEach(function (r) {
+      var inc = r.income;
+      if (!inc || !(inc.nominal > 0)) return;
+      if (sum[inc.cur] == null) { sum[inc.cur] = 0; order.push(inc.cur); }
+      sum[inc.cur] += inc.nominal;
+    });
+    if (!order.length) return '';
+    return order.map(function (cu) { return money(sum[cu], cu); }).join('と');
+  }
+  function renderEarnTop(g, label) {
+    var era = eraEarnText();
+    $('earn-era').textContent = era ? 'その時代のお金で ' + era : label;
+    $('earn-num').textContent = era ? '今のお金の価値に直すと ' + yen(g.real) : '';
+  }
   function renderEarn(co) {
     var g = L.earn || { real: 0, years: 0 };
     if (!C.wage) { $('earn-num').textContent = '賃金の統計を取り込むと表示されます'; $('earn-sub').textContent = ''; $('earn-ev').hidden = true; return; }
     $('earn-ev').hidden = false;
-    $('earn-num').textContent = g.years ? yen(g.real) : '働いて賃金を得た年はなかった';
+    renderEarnTop(g, '働いて賃金を得た年はなかった');
     var sub = [];
-    if (g.years) sub.push('働いた年 ' + g.years + '年' + (g.nonregYears ? '（うち非正規 ' + g.nonregYears + '年）' : '') + '。2025年のお金の価値に直した額です');
+    if (g.years) sub.push('働いた年 ' + g.years + '年' + (g.nonregYears ? '（うち非正規 ' + g.nonregYears + '年）' : '') + '。その年の額面の合計と、2025年のお金の価値に直した額です');
     if (g.futureYears) sub.push('2026年以降の' + g.futureYears + '年分は、2025年の賃金の水準のままで数えています');
     sub.push('同じ町・同じ年に生まれた100人の真ん中の人は ' + yen(co.earnMedian));
     $('earn-sub').textContent = sub.join('。');
@@ -912,9 +929,9 @@
   function renderEarnOld(co) {
     var g = L.earn;
     $('earn-ev').hidden = false;
-    $('earn-num').textContent = g.years ? yen(g.real) : '働いて稼いだ年はなかった';
+    renderEarnTop(g, '働いて稼いだ年はなかった');
     var sub = [];
-    if (g.years) sub.push('働いた年 ' + g.years + '年。2025年のお金の価値に直した推計です（昔の年は1人あたりの国の豊かさの比で直しました）');
+    if (g.years) sub.push('働いた年 ' + g.years + '年。どちらも推計です（1599年までは貫文、1870年までは両、1871年からは円で数え、今のお金の価値には1人あたりの国の豊かさの比で直しました）');
     sub.push('同じ所・同じ年に生まれた100人の真ん中の人は ' + yen(co.earnMedian));
     $('earn-sub').textContent = sub.join('。');
     $('earn-ev').onclick = function () {
@@ -1082,6 +1099,35 @@
     $('curve-note').textContent = (L.deathAge === 0 ? who + '1歳の誕生日を迎えられなかった子はおよそ' + p1(1 - survival(1)) : who + L.deathAge + '歳まで生きた人はおよそ' + p1(sv)) + '。生命表から計算しました' + (L.by < 1975 ? '（1975年より前の生まれは、平均寿命と乳児死亡率から作った推計の生命表です）' : '');
   }
 
+  /* ---------- 一生の浮き沈み（js/curve.js で描く） ---------- */
+  var endCohort = null;
+  function lifeCurveData() {
+    var pts = L.log.filter(function (r) { return r.st && r.st.sat != null; }).map(function (r) { var me = mainEvent(r); return { age: r.age, year: r.year, sat: r.st.sat, label: r.age === 0 ? '生まれた' : me ? me.t.replace(/。$/, '') : '' }; });
+    var marks = [], firstOf = function (k) { for (var i = 0; i < L.log.length; i++) if (E.yearKind(L.log[i], L, false) === k) return L.log[i].age; return null; };
+    var ma = firstOf(3), ch = firstOf(4);
+    if (ma != null) marks.push({ age: ma, kind: 'marry' });
+    if (ch != null) marks.push({ age: ch, kind: 'child' });
+    return { pts: pts, compare: endCohort ? endCohort.satAvg : null, marks: marks };
+  }
+  function renderLifeCurve() {
+    var box = $('life-curve');
+    if (!box || !window.IchiokuCurve || !L) return;
+    var d = lifeCurveData();
+    if (!d.pts.length) { clear(box); return; }
+    window.IchiokuCurve.render(box, d, function (age) {
+      var r = L.log.filter(function (x) { return x.age === age; })[0];
+      if (r) openYear(r, true);
+    }, function (age) {
+      var p = d.pts.filter(function (x) { return x.age === age; })[0];
+      var lb = p.label.length > 14 ? p.label.slice(0, 14) + '…' : p.label;
+      return age + '歳（' + p.year + '年）　暮らしの満足 ' + p.sat + (lb ? '　' + lb : '');
+    });
+    var hasCmp = !!(d.compare && d.compare[0] != null) && d.pts.length > 1;
+    $('lg-avg').hidden = !hasCmp; $('curve-cmp-note').hidden = !hasCmp;
+    $('curve-legend').hidden = d.pts.length < 2;
+  }
+  var curveRT = null;
+  window.addEventListener('resize', function () { clearTimeout(curveRT); curveRT = setTimeout(function () { if (!$('screen-end').hidden) renderLifeCurve(); }, 150); });
   function showEnd(again) {
     clearTimeout(timer);
     if (!L) return;
@@ -1099,6 +1145,8 @@
 
     renderHouse();
     var co = L.old ? O.cohort(C, H, P, L, 100) : E.cohort(C, P, L.by, L.home.muni, L.seed, 100);
+    endCohort = co;
+    renderLifeCurve();
     if (L.old) renderEarnOld(co); else renderEarn(co);
     var list = $('cohort');
     clear(list);

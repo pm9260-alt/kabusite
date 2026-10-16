@@ -777,6 +777,65 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
   rec('K 画面を絞り（地図・その年の1文だけ）、全市区町村が地図に置け、原作の表記があり、ドット絵がくっきり描けるか', bad.length === 0, bad.slice(0, 8).join('、'));
 }
 
+/* ---------- L 一生の浮き沈みの曲線（作る人の指示書 2026-10-17） ---------- */
+{
+  require(path.join(SITE, 'js', 'curve.js'));
+  const CV = global.self.IchiokuCurve;
+  const bad = [], WIDTHS = [[320, 200], [390, 200], [768, 240], [1366, 240]];
+  let n = 0, zero = 0, cmpCut = 0;
+  const ptsOf = L => L.log.filter(r => r.st && r.st.sat != null).map(r => ({ age: r.age, year: r.year, sat: r.st.sat, label: r.age === 0 ? '生まれた' : (r.events[0] ? r.events[0].t.replace(/。$/, '') : '') }));
+  for (let i = 0; i < 200; i++) {
+    let L, co = null;
+    const by = 1000 + (i * 101) % 1001, seed = i * 7121 + 17;
+    if (by >= 1975) { const p0 = P[E.pickPref(C, by, E.makeRng(seed ^ 0x9e3779b9))]; L = E.autoRun(E.newLife(C, p0, { year: by, seed })); if (i < 12) co = E.cohort(C, p0, by, L.home.muni, seed, 100); }
+    else { const b0 = O.pickBirth(C, H, by, E.makeRng(seed ^ 0x9e3779b9)); L = O.autoRun(O.newLife(C, H, P[b0.pref] || null, { year: by, seed, birth: b0 })); if (i < 12) co = O.cohort(C, H, P[b0.pref] || null, L, 100); }
+    const pts = ptsOf(L);
+    n++;
+    if (pts.length !== L.log.length) { bad.push(by + '年生まれ：暮らしの満足がない年がある（' + pts.length + '/' + L.log.length + '）'); continue; }
+    for (const [vw, hh] of WIDTHS) {
+      const W = Math.min(480, vw) - 32;
+      let m;
+      try { m = CV.layout({ width: W, height: hh, pts, compare: co ? co.satAvg : null, marks: [] }); } catch (e) { bad.push(by + '年生まれ：曲線が描けない（' + e.message + '）'); break; }
+      if (L.deathAge === 0) { if (!m.single || m.note !== '1年に満たない一生でした') bad.push(by + '年生まれ：0歳で亡くなったのに曲線を描いた'); else zero++; break; }
+      if (m.curve.length !== pts.length) bad.push(by + '年生まれ：点の数が生きた年数と違う');
+      const hiAge = pts.reduce((a, p) => p.sat > a.sat ? p : a, pts[0]).age, loAge = pts.reduce((a, p) => p.sat < a.sat ? p : a, pts[0]).age;
+      const mh = m.marks.find(k => k.kind === 'high'), ml = m.marks.find(k => k.kind === 'low');
+      if (pts.length > 5 && (!mh || mh.age !== hiAge)) bad.push(by + '年生まれ：いちばん高い年の印の位置が違う');
+      if (!ml || ml.age !== loAge) bad.push(by + '年生まれ：いちばん低い年の印の位置が違う');
+      const bx = m.boxes || [];
+      for (let a = 0; a < bx.length; a++) {
+        const b1 = bx[a];
+        if (b1.x < 0 || b1.x + b1.w > m.W + 0.5) bad.push(by + '年生まれ・幅' + vw + '：文字がはみ出す');
+        for (let c2 = a + 1; c2 < bx.length; c2++) { const b2 = bx[c2]; if (b1.x < b2.x + b2.w && b2.x < b1.x + b1.w && b1.y < b2.y + b2.h && b2.y < b1.y + b1.h) bad.push(by + '年生まれ・幅' + vw + '：文字が重なる'); }
+      }
+      if (co) {
+        const firstNull = co.satAvg.findIndex(v => v == null);
+        const cutAt = firstNull < 0 ? co.satAvg.length : firstNull;
+        if (m.compare.length > Math.min(cutAt, L.deathAge + 1)) bad.push(by + '年生まれ：比べる線が10人未満の年齢まで描かれた');
+        if (firstNull >= 0) cmpCut++;
+        for (let a = 0; a < co.satAvg.length; a++) if (co.satAvg[a] != null && !(co.satN[a] >= 10)) bad.push(by + '年生まれ：10人未満の平均がある');
+      }
+    }
+  }
+  // コントラスト（明るい画面・暗い画面）：文字は4.5以上、線と印は3以上
+  const cssT = fs.readFileSync(path.join(SITE, 'css', 'style.css'), 'utf8');
+  const blocks = [cssT.slice(cssT.indexOf(':root {'), cssT.indexOf('}', cssT.indexOf(':root {'))), cssT.slice(cssT.indexOf(':root[data-theme="dark"]'), cssT.indexOf('}', cssT.indexOf(':root[data-theme="dark"]')))];
+  const lum = h => { const n = parseInt(h.slice(1), 16); return [n >> 16 & 255, n >> 8 & 255, n & 255].map(v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }).reduce((s, v, k) => s + v * [0.2126, 0.7152, 0.0722][k], 0); };
+  const cr = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+  ['明るい', '暗い'].forEach((nm, k) => {
+    const tok = n2 => (blocks[k].match(new RegExp('--' + n2 + ':\\s*(#[0-9a-fA-F]{6})')) || [])[1];
+    const bg = tok('bg'), area = tok('area');
+    for (const [t, need] of [['text', 4.5], ['sub', 4.5], ['bar', 3], ['beni', 3]]) {
+      for (const [bn, bv] of [['背景', bg], ['塗り', area]]) {
+        const v = tok(t);
+        if (!v || !bv) { bad.push(nm + '画面：色 --' + t + ' か背景がない'); continue; }
+        if (cr(v, bv) < need) bad.push(nm + '画面：--' + t + ' と' + bn + 'のコントラスト ' + cr(v, bv).toFixed(2));
+      }
+    }
+  });
+  rec('L 一生の浮き沈みの曲線が200人分すべてで描け、点の数・いちばん高い年と低い年の印・0歳の一生・比べる線の途切れ・文字の重なりとはみ出し（幅320・390・768・1366）・コントラストが合っているか', bad.length === 0, [...new Set(bad)].slice(0, 8).join('、') || n + '人分（0歳で亡くなった ' + zero + '人・比べる線が途切れた ' + cmpCut + '件）');
+}
+
 /* ---------- J サイトとしての周りの機能 ---------- */
 {
   const bad = [];

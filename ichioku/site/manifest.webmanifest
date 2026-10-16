@@ -1,6 +1,6 @@
 {
-  "name": "1億分の1",
-  "short_name": "1億分の1",
+  "name": "1000分の1",
+  "short_name": "1000分の1",
   "description": "日本のどこかの町に、ある年に生まれ、統計の割合どおりに一生を送る人生シミュレーション",
   "lang": "ja",
   "start_url": "./index.html",

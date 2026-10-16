@@ -1,4 +1,4 @@
-/* 1億分の1 画面の見た目
+/* 1000分の1 画面の見た目
    決まり（13章）：ゴシック体だけ。グラデーション・影・ぼかし・下線・左側だけの色・飾りの英語見出し・絵文字は使わない。
    境界は1pxの線。強調色の意味は画面全体で同じにする。
    --accent：押せるもの（ボタン・リンク・出来事）　--world：その年の世の中　--warn：注意と相談先 */
@@ -19,6 +19,13 @@
   --dead: #8a8a86;
   --map-land: #ebe6dc;
   --map-line: #b5ab99;
+  --beni: #a3132f;
+  --on-beni: #ffffff;
+  --bar: #2c6a66;
+  --bar2: #679591;
+  --track: #e6ebe9;
+  --area: #e9efed;
+  --rule: #dfe3e1;
   --m1: #2f6db5;
   --m2: #8a6d00;
   --m3: #b03a6f;
@@ -46,6 +53,13 @@
     --dead: #8e8e8e;
   --map-land: #2b2a27;
   --map-line: #5c574d;
+  --beni: #ff8a99;
+  --on-beni: #2a0008;
+  --bar: #7cc4bd;
+  --bar2: #3f726d;
+  --track: #2a302e;
+  --area: #1d2624;
+  --rule: #2e3331;
     --m1: #7fb2f0;
     --m2: #d9b84a;
     --m3: #f08ab8;
@@ -73,6 +87,13 @@
   --dead: #8e8e8e;
   --map-land: #2b2a27;
   --map-line: #5c574d;
+  --beni: #ff8a99;
+  --on-beni: #2a0008;
+  --bar: #7cc4bd;
+  --bar2: #3f726d;
+  --track: #2a302e;
+  --area: #1d2624;
+  --rule: #2e3331;
   --m1: #7fb2f0;
   --m2: #d9b84a;
   --m3: #f08ab8;
@@ -289,3 +310,112 @@ button { font: inherit; cursor: pointer; border-radius: 0; }
 .kyodai-btn { text-align: left; padding: 10px 12px; }
 .house-lives li { padding: 4px 0; border-top: 1px solid var(--line); font-size: 14px; }
 .pre-h { margin-top: 12px; color: var(--sub); }
+
+/* ---------- トップ（2026-10-17 作り直し） ----------
+   主役は題字。右の欄は「どの年に生まれるか」を1年1マスの千年の盤と時代の割合で見せる。
+   --beni：誕生と題字の「1」と盤で選ばれた1マス　--bar：割合の棒　どちらも押せるものには使わない（押せるものは --accent） */
+#app:has(> #screen-top:not([hidden])) { max-width: 1180px; padding-left: 16px; padding-right: 16px; }
+.top { gap: 0; }
+.top-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 40px; }
+.top-main { display: flex; flex-direction: column; gap: 22px; min-width: 0; }
+
+.top-title { display: flex; flex-direction: column; margin-top: 18px; font-weight: 800; font-size: min(30vw, 132px); line-height: 0.98; letter-spacing: -0.035em; font-feature-settings: "palt"; color: var(--text); }
+.tt-l1, .tt-l2 { display: block; white-space: nowrap; }
+.tt-one { color: var(--beni); margin-left: 0.04em; }
+.top-catch { font-size: 19px; font-weight: 800; letter-spacing: 0.04em; margin-top: -4px; }
+.top-lead { font-size: 15.5px; line-height: 1.9; max-width: 34em; }
+
+.top-count { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 20px; padding-top: 14px; border-top: 1px solid var(--rule); }
+.tc-item { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.tc-num { font-size: 46px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.tc-birth .tc-num { color: var(--beni); }
+.tc-track { display: block; height: 2px; background: var(--track); position: relative; overflow: hidden; }
+.tc-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--sub); }
+.tc-birth .tc-fill { background: var(--beni); }
+.tc-k { font-size: 12.5px; line-height: 1.5; color: var(--sub); font-weight: 600; }
+.tc-note { grid-column: 1 / -1; font-size: 12px; line-height: 1.7; color: var(--sub); }
+
+.top-born { position: sticky; bottom: 0; z-index: 5; margin: 0 -16px; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: var(--bg); border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; }
+.btn-born { background: var(--beni); border-color: var(--beni); color: var(--on-beni); font-size: 19px; font-weight: 800; letter-spacing: 0.2em; padding: 15px 12px; }
+.btn-born:not(:disabled):hover { filter: brightness(0.92); }
+.btn-born:focus-visible { outline: 2px solid var(--text); outline-offset: 3px; }
+.top-born #resume { width: 100%; }
+.tb-note { font-size: 12px; color: var(--sub); text-align: center; }
+
+.top-past { display: flex; flex-direction: column; gap: 8px; }
+.top-past:has(#past:empty):has(#clear-all[hidden]) { display: none; }
+.past-list { gap: 0; border-top: 1px solid var(--rule); }
+.past-list .item { background: none; border: 0; border-bottom: 1px solid var(--rule); padding: 10px 0; font-size: 14px; color: var(--text); }
+.past-list .item:hover { color: var(--accent); }
+.top-past #clear-all { align-self: flex-start; }
+
+.top-side { display: flex; flex-direction: column; gap: 12px; min-width: 0; padding-top: 22px; border-top: 1px solid var(--line); }
+.ts-title { font-size: 21px; font-weight: 800; letter-spacing: 0.02em; }
+.ts-sub { font-size: 14px; line-height: 1.75; }
+.ts-src { font-size: 11.5px; line-height: 1.7; color: var(--sub); }
+
+.era-share { display: flex; flex-direction: column; border-top: 1px solid var(--rule); margin-top: 4px; }
+.era-share li { display: grid; grid-template-columns: 9.6em minmax(0, 1fr) 3.4em; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--rule); }
+.es-head { display: flex; flex-direction: column; line-height: 1.3; }
+.es-name { font-size: 14px; font-weight: 700; }
+.es-years { font-size: 11px; color: var(--sub); font-variant-numeric: tabular-nums; }
+.es-bar { display: block; height: 8px; background: var(--track); position: relative; }
+.es-fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--bar); }
+.es-fill.tone-b { background: var(--bar2); }
+/* 千年の盤 */
+.board { width: 100%; min-height: 120px; }
+.board svg { display: block; touch-action: manipulation; }
+.bd-cell.tone-a { fill: var(--bar); }
+.bd-cell.tone-b { fill: var(--bar2); }
+.bd-cell { cursor: pointer; }
+.bd-cell.on { fill: var(--beni); stroke: var(--text); stroke-width: 1.5; paint-order: stroke; }
+.board .bd-label { fill: var(--sub); font-family: inherit; font-size: 10.5px; font-variant-numeric: tabular-nums; }
+.bd-enter .bd-cell { animation: bd-in .5s ease-out both; }
+@keyframes bd-in { from { opacity: 0; } to { opacity: 1; } }
+.board-cap { display: flex; flex-wrap: wrap; gap: 2px 14px; min-height: 1.6em; font-size: 14px; color: var(--text); font-variant-numeric: tabular-nums; }
+.board-cap .bc-y { font-weight: 800; color: var(--beni); }
+.board-cap .bc-e { font-weight: 700; }
+.board-cap .bc-p { color: var(--sub); font-weight: 600; }
+.es-pct { text-align: right; font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.top-foot { margin-top: 48px; padding-top: 20px; gap: 16px; }
+.top-foot .settings { gap: 6px; }
+.top-foot .settings .note { max-width: 40em; }
+.nw { display: inline-block; }
+.top-catch, .top-lead, .ts-sub, .tc-note, .ts-src, .tb-note, .top-foot .note { word-break: auto-phrase; }
+
+@media (min-width: 960px) {
+  .top-grid { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 72px; align-items: start; }
+  .top-main { gap: 26px; }
+  .top-title { font-size: 168px; margin-top: 40px; }
+  .top-catch { font-size: 22px; }
+  .top-lead { font-size: 16px; }
+  .top-born { position: static; margin: 0; padding: 0; border-top: 0; background: none; max-width: 360px; }
+  .tb-note { text-align: left; }
+  .top-foot .settings { display: grid; grid-template-columns: max-content max-content; align-items: center; gap: 8px 16px; }
+  .top-foot .settings .set-k { margin: 0; }
+  .top-foot .settings .note { grid-column: 1 / -1; }
+  .top-side { margin-top: 40px; padding: 26px 28px 22px; border: 1px solid var(--line); }
+}
+@media (max-width: 360px) {
+  .tc-num { font-size: 38px; }
+  .top-catch { font-size: 16.5px; letter-spacing: 0.01em; }
+  .era-share li { grid-template-columns: 8.4em minmax(0, 1fr) 3.2em; gap: 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bd-enter .bd-cell { animation: none; }
+}
+
+/* 最期の画面：一生の浮き沈み・生涯賃金・ほかの記録（2026-10-17） */
+.life-curve { width: 100%; min-height: 200px; }
+.life-curve svg { touch-action: pan-y; }
+.curve-legend { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 12px; color: var(--sub); margin: 6px 0 2px; }
+.curve-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.curve-legend .lg-me::before { content: ""; display: inline-block; width: 18px; height: 2px; background: var(--text); }
+.curve-legend .lg-avg::before { content: ""; display: inline-block; width: 18px; height: 1px; background: var(--sub); }
+.earn-now { font-size: 15px; margin: 2px 0 0; }
+.more { margin-top: 18px; border-top: 1px solid var(--line); }
+.more > summary { cursor: pointer; padding: 12px 0; font-weight: 700; color: var(--accent); list-style: none; }
+.more > summary::-webkit-details-marker { display: none; }
+.more > summary::before { content: "＋ "; }
+.more[open] > summary::before { content: "－ "; }
