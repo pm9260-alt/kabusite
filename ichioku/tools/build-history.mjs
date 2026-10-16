@@ -71,9 +71,9 @@ for (let y = 1000; y <= 1975; y += 5) {
   const qc = 1 - Math.pow((1 - uu) / (1 - qq), 1 / 4);
   mort.q0[y] = r4(qq); mort.qc[y] = r4(qc);
   for (const sx of ['m', 'f']) {
-    const target = y === 1975 ? null : lin(e0[sx], y);
-    // 1975年は今の本体の係数につなぐ
-    mort.alpha[sx][y] = target == null ? r4(lin(C.mort.alpha[sx], 1975)) : r4(solve(target, qq, qc));
+    // 1975年からは今の本体の死亡率を使うため、ここでは1974年までの平均寿命の値で係数を解く
+    // （今の本体の係数は生命表の形に掛ける倍率で、この式の係数とは意味が違う。そのまま使うと1970〜1974年の死亡率が跳ね上がる）
+    mort.alpha[sx][y] = r4(solve(lin(e0[sx], Math.min(y, 1974)), qq, qc));
   }
 }
 // 都道府県の差：乳児死亡率の全国との比（1900・1920・1940・1960年）
