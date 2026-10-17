@@ -333,6 +333,8 @@
       var src = document.querySelector('#board svg');
       var cells = [];
       if (src) { var cp = src.cloneNode(true); cp.removeAttribute('id'); lb.appendChild(cp); cells = Array.prototype.slice.call(cp.querySelectorAll('.bd-cell')); }
+      // 前の人生やトップで付いた印（選んだ年・生まれた年の色）を消してから始める
+      cells.forEach(function (c) { c.classList.remove('on', 'got', 'hit', 'sel'); });
       var target = cells.filter(function (c) { return +c.getAttribute('data-y') === L.by; })[0];
       box.hidden = false;
       $('lt-k').textContent = '生まれる年を決めています'; $('lt-v').textContent = ''; $('lt-p').textContent = '';
@@ -1266,9 +1268,10 @@
       if (r.pin && r.pin.abroad) { if (last && !last.abroad) abroad++; last = { abroad: true }; return; }
       var xy = pinXY(r.pin);
       if (!xy) return;
-      var ll = lonLat(xy, r.pin);
-      if (last && !last.abroad && (last.ll[0] !== ll[0] || last.ll[1] !== ll[1])) { km += kmBetween(last.ll, ll); moves++; }
-      last = { ll: ll };
+      var ll = lonLat(xy, r.pin), key = [r.pin.pref || '', r.pin.muni || '', r.pin.prov || ''].join('|');
+      // 呼び名だけが変わった（旧国から県へ など）ときは、場所のコードが同じなので移ったと数えない
+      if (last && !last.abroad && last.key !== key && (last.ll[0] !== ll[0] || last.ll[1] !== ll[1])) { km += kmBetween(last.ll, ll); moves++; }
+      last = { ll: ll, key: key };
     });
     return { km: Math.round(km), moves: moves, abroad: abroad };
   }
@@ -1276,6 +1279,8 @@
     function put() {
       var d = lifeDistance(L.log);
       $('dist-num').textContent = d.moves ? '約' + d.km.toLocaleString('ja-JP') + 'km' : '生まれた土地から一度も移り住まなかった';
+      // 答えが数字でないときは、文字を一回り小さくする（v8の直し 7）
+      $('dist-num').classList.toggle('num-text', !d.moves);
       $('dist-sub').textContent = d.moves ? '引っ越し ' + d.moves + '回' : '';
     }
     if (MAP) put(); else getMap().then(function () { if (MAP) put(); });
@@ -1339,7 +1344,7 @@
     var R = window.IchiokuRecord;
     if (!R) return;
     var houseW = L.old ? O.houseWord(L) : (L.dadJobD ? '父が' + L.dadJobD.n + 'の家' : null);
-    var r = R.build(L, { birthPlace: String(birthPlace()).replace(/（今の(.*?)）/, '（$1）'), deathPlace: String(deathPlace()).replace(/（今の(.*?)）/, '（$1）'), house: houseW, code: L.old ? L.pref : (L.home.pref || '') });
+    var r = R.build(L, { birthPlace: String(birthPlace()).replace(/（今の(.*?)）/, '（$1）'), deathPlace: String(deathPlace()).replace(/（今の(.*?)）/, '（$1）'), house: houseW, houseShort: L.old ? (L.parentJob ? L.parentJob.n + 'の家' : (O.houseWord(L) || '').replace(/（.*?）/, '')) : (L.dadJobD ? '父が' + L.dadJobD.n + 'の家' : null), code: L.old ? L.pref : (L.home.pref || '') });
     $('rc-no').textContent = r.no;
     $('rc-line').textContent = r.line;
     $('rc-sum').textContent = r.summary.map(pol).join('');

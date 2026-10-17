@@ -184,7 +184,7 @@
   }
   var STORY_API = {
     surv5: function (L) { var l = 1; for (var a = 0; a < 5; a++) l *= 1 - deathProb(L.C, L.P, L.sex, a, L.by + a); return l; },
-    makeRng: makeRng, gauss: gauss, push: function (L, rec, cat, t, evs) { return push(L, rec, cat, t, evs); }, nameFor: storyName, move: storyMove,
+    makeRng: makeRng, gauss: gauss, eraWords: function (t, y) { return eraWords(t, y); }, push: function (L, rec, cat, t, evs) { return push(L, rec, cat, t, evs); }, nameFor: storyName, move: storyMove,
     job: function (L, label, pay, reg, ind) { L.job = { ind: IND[ind] ? ind : (L.job && L.job.ind) || 'service', reg: !!reg, since: L.year, pay: pay, label: label }; L.lastJob = label; L.lastInd = L.job.ind; L.stage = 'work'; },
     noJob: function (L) { if (L.job) { L.job = null; L.stage = 'jobless'; } },
     marryBoost: function (L, k) { L.marryMult = (L.marryMult || 1) * k; }
@@ -558,7 +558,22 @@
     return rec;
   }
 
+  // 時代で呼び方が変わる役職（庄屋は江戸の呼び方。それより前は名主、明治5年からは戸長、明治22年からは村長）
+  function eraWords(t, y) {
+    if (!t || t.indexOf('庄屋') < 0) return t;
+    if (y < 1600) return t.replace(/庄屋/g, '名主');
+    if (y >= 1889) return t.replace(/庄屋/g, '村長');
+    if (y >= 1872) return t.replace(/庄屋/g, '戸長');
+    return t;
+  }
+  // 家を離れている年（出家・旅・奉公・出征）に家族が亡くなったときは、知らせが届いた形で書く
+  function awayWords(L, cat, t) {
+    if (!L.mode || cat !== '家庭' || !t || /知らせ|便り|手紙/.test(t)) return t;
+    return t.replace(/(が|、)([^。]*?)亡くなった。/, function (m0, a, b) { return a + b + '亡くなったと、知らせが届いた。'; });
+  }
   function push(L, rec, cat, text, evs, extra) {
+    text = eraWords(text, rec && rec.year != null ? rec.year : L.year);
+    text = awayWords(L, cat, text);
     var e = { cat: cat, t: text, ev: evs || [] };
     if (extra) for (var k in extra) e[k] = extra[k];
     rec.events.push(e);
@@ -571,7 +586,7 @@
   function parentJobs(L) {
     var J = jobsMod();
     if (!J) return;
-    var c = { y: L.by, kind: ({ '大都市': 'city', '都市': 'town', '町村': 'village' })[L.place.kind] || 'town', pref: L.place.pref };
+    var c = { y: L.by, kind: ({ '大都市': 'city', '都市': 'town', '町村': 'village' })[L.place.kind] || 'town', pref: L.place.pref, rich: L.incPct };
     L.dadJobD = J.selfJob(L.dadJob, Object.assign({ sex: 'm' }, c), L.seed ^ 0x51ed27, null, false);
     L.momJobD = L.momJob ? J.selfJob(L.momJob, Object.assign({ sex: 'f' }, c), L.seed ^ 0x2f7a3c, null, false) : null;
   }
@@ -579,7 +594,7 @@
   function selfJobE(L, k, reg) {
     var J = jobsMod();
     if (!J) return;
-    var c = { y: L.year, kind: ({ '大都市': 'city', '都市': 'town', '町村': 'village' })[L.place.kind] || 'town', pref: L.place.pref, sex: L.sex };
+    var c = { y: L.year, kind: ({ '大都市': 'city', '都市': 'town', '町村': 'village' })[L.place.kind] || 'town', pref: L.place.pref, sex: L.sex, rich: L.incPct, univ: L.edu === '大学' || L.school === 'univ' };
     var sj = J.selfJob(k, c, L.seed ^ 0x3c6ef372, null, false);
     if (sj) { L.selfJob = sj; L.lastJob = sj.n + (reg ? '' : '（非正規）'); }
   }
@@ -883,6 +898,7 @@
 
   function childYear(L, rec) {
     var C = L.C, y = L.year, rnd = L.rnd;
+    if (L.mode) return; // 家を離れている年は子が生まれない
     var sp = L.members.filter(function (m) { return m.role === '配偶者' && m.alive && !m.gone; })[0];
     if (!sp) return;
     var wifeAge = L.sex === 'f' ? L.age : y - sp.by;
@@ -1905,7 +1921,7 @@
     pickPref: pickPref, newLife: newLife, step: step, resolve: resolve, autoRun: autoRun,
     cohort: cohort, majorTimeline: majorTimeline, familyList: familyList, fill: fill, sceneOk: sceneOk,
     pickCause: pickCause, deathStory: deathStory, ev: ev, askFor: askFor, answerAsk: answerAsk, ASK_AGES: ASK_AGES,
-    storyMod: storyMod, jobsMod: jobsMod, storyName: storyName, namesMod: namesMod, withPool: withPool,
+    storyMod: storyMod, jobsMod: jobsMod, eraWords: eraWords, awayWords: awayWords, WAR_BAN: /綿菓子|金魚すくい|夜店|縁日|旅人|花火大会|海水浴|行楽|物見遊山/, storyName: storyName, namesMod: namesMod, withPool: withPool,
     statusYear: statusYear, bodyMult: bodyMult, moneyYear: moneyYear, autoAnswer: autoAnswer, FOCUS: FOCUS, yearKind: yearKind, MAP_KINDS: MAP_KINDS, ST_KEYS: ST_KEYS, ST_NAMES: ST_NAMES
   };
 });

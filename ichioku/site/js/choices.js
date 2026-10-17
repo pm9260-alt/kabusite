@@ -99,7 +99,7 @@
     ['first', '自分から声をかける', { tie: 3 }], ['ignore', '知らんぷりをする', { sat: -1, tie: -2 }]]);
   c('k.misemono.3', 'small', L3, A1, w({ kind: ['city', 'town'] }), '両国の盛り場に見世物小屋が来ている。{sibOlder}がこっそり行こうと誘う。', [
     ['go', 'ついて行く', { sat: 4, tie: 2 }, '見世物小屋で見た大きな蛇の話を、冬じゅう{sibYounger}に聞かせた。'], ['home', '家で母を手伝う', { tie: 1, learn: 1 }]]);
-  c('k.hanko.3', 'small', L3, A1, w({ status: ['bushi'] }), '藩校の素読で、師に指名された。一か所、まちがえそうな字がある。', [
+  c('k.hanko.3', 'small', L3, A1, w({ status: ['bushi'], sex: 'm' }), '藩校の素読で、師に指名された。一か所、まちがえそうな字がある。', [
     ['say', '分からないと正直に言う', { learn: 3, sat: -1 }], ['guess', 'あてずっぽうで続ける', { sat: 1 }]]);
   c('k.kusa.3', 'small', L3, A1, w({ kind: VIL }), '村の子どもたちで、牛馬の草を刈りに山へ入る。年下の{sibYounger}がついて来たがっている。', [
     ['bring', '連れて行く', { tie: 3, body: -1 }], ['leave', '家に置いていく', { body: 1 }]]);

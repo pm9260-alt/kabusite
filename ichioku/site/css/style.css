@@ -632,3 +632,4 @@ button { border-radius: 8px; }
 .me-row { display: flex; gap: 10px; margin: 10px 0 6px; flex-wrap: wrap; }
 .me-l { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--sub); flex: 1; min-width: 130px; }
 .me-l select { font: inherit; font-size: 16px; padding: 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--text); min-height: 44px; }
+.earn-num.num-text { font-size: 20px; line-height: 1.5; }

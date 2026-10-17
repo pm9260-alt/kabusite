@@ -927,13 +927,14 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
     }
     const rr = Rc.build(L, { birthPlace: 'どこか', deathPlace: 'どこか' });
     if (!rr.cause) noCause.push(L.by + '年生まれ');
-    const picked = (L.choices || []).filter(c => c.l);
-    if (picked.length && !picked.some(c => rr.line.includes(String(c.l).replace(/[「」『』]/g, '').replace(/。$/, '')))) noPick.push(rr.line.slice(0, 24));
+    // v8の直し5で、ひとことは人生を決めた大きな選択から作る（小さな選択・親の選択・節目と、5歳までの人生は除く）
+    const picked = (L.choices || []).filter(c => c.l && Rc.rankOf(c) > 0);
+    if (L.deathAge >= 5 && picked.length && !picked.some(c => rr.line.includes(String(c.l).replace(/[「」『』]/g, '').replace(/。$/, '')))) noPick.push(rr.line.slice(0, 24));
   }
   rec('第2弾2 家族の人数と、情景に描く人数が一致するか（' + scLives + '人の各年）', sceneBad.length === 0, sceneBad.slice(0, 4).join('、'));
   rec('第2弾3 5歳以上まで生きた人生で、名前の入った出来事が生きた年数の3割以上あるか', nameLow.length === 0, nameLow.slice(0, 5).join('、') || named + '人を確かめた');
   rec('第2弾4 ' + NP + '件の人生の死亡の記録すべてに死因が出るか', noCause.length === 0, noCause.slice(0, 4).join('、'));
-  rec('第2弾5 選択が1回以上ある人生で、ひとことの1行に選んだ分かれ道の結果が入っているか', noPick.length === 0, noPick.slice(0, 4).join('、'));
+  rec('第2弾5 大きな選択が1回以上ある人生（5歳以上）で、ひとことの1行に選んだ分かれ道の結果が入っているか', noPick.length === 0, noPick.slice(0, 4).join('、'));
   // 6 コントラスト比（文字4.5以上、線と印3以上）を明るい画面と暗い画面で
   const css = fs.readFileSync(path.join(SITE, 'css', 'style.css'), 'utf8');
   const blockOf = (start, end) => { const i0 = css.indexOf(start), i1 = css.indexOf(end, i0 + 1); return css.slice(i0, i1); };
@@ -1030,6 +1031,57 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
   }
   rec('第4弾1 20歳以上まで生きた人生の8割以上で、家族以外の名前のある人が2回以上出てくるか', adult > 0 && adultOk / adult >= 0.8, adult + '人のうち ' + Math.round(adultOk / adult * 100) + '%');
   rec('第4弾2 お金の選択の結果が、その年の貯金の数字に入っているか', adj > 0 && missing.length === 0, missing.slice(0, 4).join('、') || adj + '件（お金の分かれ道 ' + choices + '回：' + Object.entries(kinds).map(([k, v]) => k + ' ' + v).join('・') + '）');
+}
+
+/* ---------- v8 の直し（ichioku1000-v8-fix-spec1：1・4・5・10・11・12） ---------- */
+{
+  const Rc = require(path.join(SITE, 'js', 'record.js')), NM = require(path.join(SITE, 'js', 'names.js')), J = require(path.join(SITE, 'js', 'jobs.js'));
+  const NP = TEST ? 200 : 500;
+  const modeBad = [], shoya = [], oldName = [], badLine = [], moved = [], elite = [], gender = [];
+  const MODERN = new Set(['1912', '1926', '1946', '1971', '1991', '2011'].flatMap(k => (NM.P['m' + k] || []).concat(NM.P['f' + k] || [])));
+  const OLDN = new Set(['mHeian', 'mMed', 'fMed', 'mKuge', 'fKuge', 'm', 'mBushi', 'f', 'mMeiji', 'fMeiji'].flatMap(k => NM.P[k] || []).concat(Object.values(H.names || {}).flat()));
+  const runOne = (by, seed) => {
+    let L;
+    if (by >= 1975) L = E.newLife(C, P[E.pickPref(C, by, E.makeRng(seed ^ 0x9e3779b9))], { year: by, seed });
+    else { const b0 = O.pickBirth(C, H, by, E.makeRng(seed ^ 0x9e3779b9)); L = O.newLife(C, H, P[b0.pref] || null, { year: by, seed, birth: b0 }); }
+    const M = L.old ? O : E; let g = 0; const qs = [];
+    while (L.alive && g++ < 130) { let r = M.step(L); while (r && r.branch) { qs.push((r.branch.groups || []).map(x => x.q).join('')); r = M.resolve(L, r.branch.ask || r.branch.id === 'ask' ? { text: '' } : E.autoAnswer(r.branch, null)); } }
+    return { L, qs };
+  };
+  for (let i = 0; i < NP; i++) {
+    const by = 1000 + Math.floor((i * 2.003 + 0.6) % 1001), seed = i * 2654435 + 3;
+    const { L, qs } = runOne(by, seed);
+    // 1 家を離れている年に、家の出来事（妻・夫・子の誕生）を出さない
+    for (const r of L.log) if (r.mode) for (const e of r.events) if (e.cat === '家庭' && /妻の|夫の|子が生まれた|人目の子/.test(e.t) && !/知らせ|便り|手紙/.test(e.t)) modeBad.push(L.by + '年生まれ ' + r.year + '年（' + r.mode + '）：' + e.t.slice(0, 18));
+    // 4 1600年より前に「庄屋」が出ない。配偶者の名前が生まれ年の一覧から
+    if (L.by < 1560) { const all = L.log.flatMap(r => r.events.map(e => e.t)).concat(qs); for (const t of all) if (/庄屋/.test(t) && !/^\d/.test(t)) { shoya.push(L.by + '年生まれ：' + t.slice(0, 20)); break; } }
+    for (const m of L.members || []) if ((m.role === '配偶者') && m.by < 1868 && m.name && MODERN.has(m.name) && !OLDN.has(m.name)) oldName.push(m.by + '年生まれの配偶者「' + m.name + '」');
+    // 5 ひとことに、小さな選択・親の選択・節目の答えを使わない
+    const rr = Rc.build(L, { birthPlace: 'どこか', deathPlace: 'どこか' });
+    const big = new Set((L.choices || []).filter(c => Rc.rankOf(c) > 0).map(c => c.l));
+    for (const c of L.choices || []) if (c.l && Rc.rankOf(c) === 0 && !big.has(c.l) && rr.line.includes('「' + String(c.l).replace(/[「」『』]/g, '') + '」')) { badLine.push(rr.line.slice(0, 30)); break; }
+    // 11 下位40%の家に生まれた人が、地主・豪商の仕事にならない
+    if (L.incPct < 0.4 && L.selfJob && J.ELITE.test(L.selfJob.n)) elite.push(L.by + '年生まれ（' + L.sex + '）：' + L.selfJob.n);
+    if (L.sex === 'f' && L.selfJob && J.ELITE.test(L.selfJob.n)) elite.push(L.by + '年生まれの女性：' + L.selfJob.n);
+    // 12 女性の人生に、藩校・寄り合いに出る・若者組・兵役の選択が出ない
+    if (L.sex === 'f') for (const q of qs) if (/藩校|寄り合いに出て|若者組|兵役/.test(q)) { gender.push(L.by + '年生まれ：' + q.slice(0, 20)); break; }
+  }
+  // 10 1850〜1871年生まれで一度も引っ越していない人生：「移り住んだ」が出ず、移動距離0
+  let still = 0;
+  for (let i = 0; still < (TEST ? 40 : 100) && i < 3000; i++) {
+    const { L } = runOne(1850 + i % 22, i * 7 + 1);
+    const keys = new Set(L.log.map(r => JSON.stringify([r.pin && r.pin.pref, r.pin && r.pin.muni, r.pin && r.pin.prov])));
+    if (L.moved || L.abroad || L.movedHokkaido || keys.size > 1) continue;
+    still++;
+    const rr = Rc.build(L, { birthPlace: L.home.label, deathPlace: O.placeLabel(L) });
+    if (rr.summary.some(t => /移り住/.test(t)) || rr.places.length !== 1) moved.push(L.by + '年生まれ：' + rr.places.join('、'));
+  }
+  rec('v8直し1 家を離れている年（出家・旅・奉公・出征）に、妻・夫・子の誕生などの家の出来事が出ないか', modeBad.length === 0, modeBad.slice(0, 4).join('、'));
+  rec('v8直し4 1600年より前の人生に「庄屋」が出ず、昔の配偶者の名前が今の時代の一覧から引かれていないか', shoya.length === 0 && oldName.length === 0, shoya.slice(0, 3).concat(oldName.slice(0, 3)).join('、'));
+  rec('v8直し5 一生のひとことに、小さな選択・親の選択・節目の答えを使っていないか', badLine.length === 0, badLine.slice(0, 4).join('、'));
+  rec('v8直し10 一度も引っ越していない1850〜1871年生まれ（' + still + '人）で、「移り住んだ」が出ず、暮らした土地が1つか', still > 0 && moved.length === 0, moved.slice(0, 3).join('、'));
+  rec('v8直し11 下位40%の暮らし向きの家に生まれた人と女性が、地主・豪商などの仕事にならないか', elite.length === 0, elite.slice(0, 4).join('、'));
+  rec('v8直し12 女性の人生に、藩校・寄り合いに出る・若者組・兵役の選択が出ないか', gender.length === 0, gender.slice(0, 4).join('、'));
 }
 
 /* ---------- S 物語の分かれ道（作る人の指示 2026-10-17） ---------- */

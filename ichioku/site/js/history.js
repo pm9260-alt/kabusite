@@ -80,7 +80,7 @@
   }
 
   /* ---------- 名前 ---------- */
-  function nameFor(L, sex, by, st) {
+  function nameFor(L, sex, by, st, rnd) {
     var N = L.H.names, list, NP = E.namesMod() ? E.namesMod().P : {};
     // 時代・身分の名前の候補を、js/names.js の候補で増やす
     function more(k) { var a = (N[k] || []).slice(); (NP[k] || []).forEach(function (n) { if (a.indexOf(n) < 0) a.push(n); }); return a; }
@@ -100,7 +100,7 @@
     if (L.name) used[L.name] = 1;
     var free = list.filter(function (n) { return !used[n]; });
     if (!free.length) free = list;
-    return free[Math.floor(L.rnd() * free.length)];
+    return free[Math.floor((rnd || L.rnd)() * free.length)];
   }
   function addMember(L, role, sex, by, extra) {
     var m = { id: L.members.reduce(function (x, o) { return Math.max(x, o.id); }, 0) + 1, role: role, sex: sex, by: by, alive: true, dy: null };
@@ -251,6 +251,8 @@
   var KIND_WORD = { city: '町なか', town: '町', village: '村', fish: '浜の村', kotan: 'コタン（アイヌの村）' };
   function placeLabel(L) {
     if (L.abroad) return L.abroadPlace;
+    // 出家している間は、入った寺のある土地
+    if (L.mode === 'shukke' && L.templeName && L.H.prov[L.prov]) return L.H.prov[L.prov].kuni + 'の' + L.templeName;
     var y = L.year, p = L.H.prov[L.prov], pn = L.H.prefNames[L.pref];
     var kw = KIND_WORD[L.kind];
     var cn = cityName(L);
@@ -315,14 +317,14 @@
   // 親（家）のくわしい仕事（js/jobs.js）。別の乱数で選ぶ
   function pickParentJob(L, seed) {
     var J = E.jobsMod && E.jobsMod();
-    return J ? J.parentJob({ y: L.by, status: L.status, kind: L.kind, pref: L.pref, sex: 'm' }, seed) : null;
+    return J ? J.parentJob({ y: L.by, status: L.status, kind: L.kind, pref: L.pref, sex: 'm', rich: L.incPct }, seed) : null;
   }
   // 自分のくわしい仕事。家の仕事を継ぐ跡取り（と婿）は親と同じ仕事
   function pickSelfJob(L, k) {
     var J = E.jobsMod && E.jobsMod();
     if (!J) return null;
     var inherit = (L.heir || L.muko || (L.sex === 'm' && !L.moved && ((L.seed >>> 0) % 7 + L.year % 3) % 2 === 0)) && !L.moved;
-    return J.selfJob(k, { y: L.year, status: L.status, kind: L.kind, pref: L.pref, sex: L.sex }, L.seed, L.parentJob, inherit);
+    return J.selfJob(k, { y: L.year, status: L.status, kind: L.kind, pref: L.pref, sex: L.sex, rich: L.incPct, univ: /大学|旧制の上の学校/.test(L.edu || L.school || '') }, L.seed, L.parentJob, inherit);
   }
   function sibRole(sex, by, myBy) { return by < myBy ? (sex === 'm' ? '兄' : '姉') : (sex === 'm' ? '弟' : '妹'); }
   // きょうだいの候補：亡くなった年に生きているきょうだいと、これから生まれる弟や妹
@@ -572,6 +574,8 @@
   }
 
   function push(L, rec, cat, text, evs, extra) {
+    text = E.eraWords(text, rec && rec.year != null ? rec.year : L.year);
+    text = E.awayWords(L, cat, text);
     var e = { cat: cat, t: text, ev: evs || [] };
     if (extra) for (var k in extra) e[k] = extra[k];
     rec.events.push(e);
@@ -583,9 +587,10 @@
   var STORY_TO = { tokyo: '13', edo: '13', osaka: '27', kyoto: '26', hokkaido: '01' };
   var STORY_API = {
     surv5: function (L) { var l = 1, v = Object.create(L); for (var a = 0; a < 5; a++) l *= 1 - dp(L, L.sex, a, L.by + a); return l; },
-    makeRng: E.makeRng, gauss: function (r) { var u = 1 - r(), v = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); },
+    makeRng: E.makeRng, eraWords: function (t, y) { return E.eraWords(t, y); }, gauss: function (r) { var u = 1 - r(), v = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); },
     push: function (L, rec, cat, t, evs) { return push(L, rec, cat, t, evs); },
-    nameFor: function (L, sex, by) { return E.storyName(L, sex, by); },
+    // まわりの人・縁談の相手の名前も、その人の生まれ年と身分の一覧から引く（物語の乱数で）
+    nameFor: function (L, sex, by) { return nameFor(L, sex, by, L.status, L.story ? L.story.r : L.rnd2); },
     move: function (L, where) {
       if (where === 'home') { L.mode = null; var h = L.home0; if (!h) return; L.prov = h.prov; L.sub = h.sub; L.pref = h.pref; L.kind = h.kind; L.muni = h.muni; L.muniName = h.muniName; L.abroad = null; L.moved = false; return; }
       if (where && where.prov) {
@@ -726,6 +731,8 @@
     // 1948年からの戦後の形（長男と墓・親との同居）。history の人生では場所の種類を今の区分に合わせる
     if (y >= 1948 && !protectedYear(L) && !L.abroad) { var pk = L.place; L.place = { away: false, kind: L.kind === 'city' ? '大都市' : L.kind === 'town' ? '都市' : '町村' }; E.postwarYear(L, rec); L.place = pk; }
     // 自分の子の誕生
+    // 家を離れている年（出家・旅・奉公・出征）は子が生まれない。出家したら、その先の子の予定はなくす
+    if (L.mode && L.kidPlan && L.kidPlan.length && L.kidPlan[0] === y) { if (L.mode === 'shukke') L.kidPlan = []; else L.kidPlan[0] = y + 1; }
     if (L.married && L.kidPlan && L.kidPlan.length && L.kidPlan[0] === y) {
       L.kidPlan.shift();
       var mother = L.sex === 'f' ? L : L.spouse;
@@ -1041,8 +1048,8 @@
       }
     }
     var SMs = E.storyMod(), su = SMs && L.story && a >= L.marryAt && a < 55 ? SMs.suitor(L, 'marry') : null;
-    if (su) { (L.suitors = L.suitors || []).push(su); su.name = E.storyName(L, L.sex === 'm' ? 'f' : 'm', su.by); }
-    if (a >= L.marryAt && a < 55) L.queue.push({ title: '縁談', kind: 'marry', suitor: su, groups: [{ id: 'marry', q: su ? SMs.suitorText(L, su, su.name) : '縁談が持ち込まれた。受ける？', options: [{ k: 'yes', l: '受ける' }, { k: 'no', l: '断る' }] }],
+    if (su) { (L.suitors = L.suitors || []).push(su); su.name = nameFor(L, L.sex === 'm' ? 'f' : 'm', su.by, su.st || L.status, L.story ? L.story.r : L.rnd2); }
+    if (a >= L.marryAt && a < 55) L.queue.push({ title: '縁談', kind: 'marry', suitor: su, groups: [{ id: 'marry', q: su ? E.eraWords(SMs.suitorText(L, su, su.name), L.year) : '縁談が持ち込まれた。受ける？', options: [{ k: 'yes', l: '受ける' }, { k: 'no', l: '断る' }] }],
       ev: [ev(L, 'ipss', near(H.nat.marriage[L.sex], y), '平均初婚年齢（' + (L.sex === 'm' ? '夫' : '妻') + '。1898年以前は村の研究の目安）', lin(H.nat.marriage[L.sex], y).toFixed(1) + '歳', { est: y < 1899 }), ev(L, 'ipss', near(H.nat.neverMarried[L.sex], y), '50歳まで一度も結婚しない人の割合', pct(lin(H.nat.neverMarried[L.sex], y)))] });
   }
   function resolveMarry(L, rec, br, answers) {
@@ -1376,6 +1383,10 @@
     if (s.k && s.k.indexOf(L.kind) < 0) return false;
     // 家を出ている間（旅の一座・奉公・出征など）は、生まれた土地の種類に結びついた場面を出さない
     if (s.k && L.mode) return false;
+    // 家を離れている間は、配偶者や子・家族の出てくる家の場面も出さない
+    if (L.mode && /\{(spouse|child|kid|mom|dad)\}|妻|夫|子ども|わが子|家族|家の者/.test(s.t)) return false;
+    // 戦時中（1938〜1945年）に出せない場面（縁日の夜店・旅人を泊める など）
+    if (y >= 1938 && y <= 1945 && E.WAR_BAN.test(s.t)) return false;
     // 寄り合いに出るのは、家の主かその跡取りの男性
     if (s.head && !(L.sex === 'm' && (L.heir || L.toshu || (L.dad && !L.dad.alive)))) return false;
     if (s.jp && (L.ainu || L.ryukyu)) return false;

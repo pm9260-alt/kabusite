@@ -52,6 +52,8 @@
       ask: function (id, title, q, opts, data, resArc) {
         // 1年に出す物語の分かれ道は1つまで。すでに出した年は、この場面を翌年に回す
         if (s.asked === L.year) { if (s.cur) s.at.push({ y: L.year + 1, id: s.cur, d: d || {} }); return; }
+        var ew = function (t) { return api.eraWords ? api.eraWords(t, L.year) : t; };
+        q = ew(q); opts.forEach(function (o) { o.l = ew(o.l); });
         var br = { id: 'story', kind: 'story', big: true, sid: id, ra: resArc || id.split('.')[0], title: title, groups: [{ id: 's', q: q, options: opts.map(function (o) { return { k: o.k, l: o.l, f: o.f || [], h: o.h || HINTS[id + ':' + o.k] || '結果しだい' }; }) }], ev: [], w: {}, d: data || {} };
         opts.forEach(function (o) { br.w[o.k] = typeof o.w === 'number' ? o.w : 1; });
         L.queue.push(br);
@@ -1213,7 +1215,13 @@
     ]);
     return true;
   }, res: {
-    go: function (c) { c.job('出家した身', 800, false, 'temple'); c.mode('shukke'); c.say('髪を下ろし、山あいの寺に入った。朝夕の勤行の鐘の音が、少しずつ心を静めてくれた。', { sat: 4, tie: -6, learn: 4 }, '家庭'); },
+    go: function (c) {
+      var L = c.L, tn = ['西光寺', '円通寺', '長福寺', '光明寺', '宝泉寺', '常楽寺', '大林寺', '龍泉寺', '正覚寺', '浄福寺'][Math.floor(c.r() * 10)];
+      var sp = spouseOf(L), kids = (L.members || []).some(function (m) { return m.role === '子' && m.alive && !m.gone && c.y - m.by < 18; });
+      c.job('僧（' + tn + '）', 800, false, 'temple'); c.mode('shukke');
+      L.selfJob = { cat: 'temple', n: '僧（' + tn + '）', d: '寺で経を読み、修行と勤行に励む' }; L.lastJob = L.selfJob.n; L.templeName = tn;
+      if (c.api.move && L.old) c.api.move(L, { prov: L.prov });
+      if (sp || kids) c.say(c.p(0.5) ? (L.sex === 'm' ? '妻' : '夫') + (kids ? 'と子' : '') + 'を' + (L.sex === 'm' ? '妻の実家に' : '夫の家に') + '預け、' + tn + 'に入ることにした。' : (L.sex === 'm' ? '妻' : '夫') + (kids ? 'と子' : '') + 'は' + tn + 'の近くの村に住まわせ、ときおり様子を聞くことにした。', { tie: -3 }, '人間関係'); c.say('髪を下ろし、山あいの寺に入った。朝夕の勤行の鐘の音が、少しずつ心を静めてくれた。', { sat: 4, tie: -6, learn: 4 }, '家庭'); },
     no: function (c) { c.say('家族の顔を思い浮かべ、俗世にとどまった。', { tie: 2 }); }
   } });
 
@@ -1625,7 +1633,7 @@
   arc({ id: 'matsuri', start: function (c) {
     var L = c.L;
     if (c.s.done.matsuri || !c.O || c.a < 16 || c.a > 26 || !c.p(0.04 + 0.03 * Math.max(0, c.tr('soc')))) return false;
-    c.ask('matsuri', '祭り', '村の若者組で、秋祭りの' + (L.sex === 'm' ? '神輿の先頭' : '踊りの手本') + 'を任せたいと言われた。', [
+    c.ask('matsuri', '祭り', (L.sex === 'm' ? '村の若者組で、秋祭りの神輿の先頭' : '村の娘組で、秋祭りの踊りの手本') + 'を任せたいと言われた。', [
       { k: 'yes', l: '引き受ける', w: 0.8 + Math.max(0, c.tr('soc')), f: ['family', 'body'] },
       { k: 'no', l: '断る', w: 0.8 + Math.max(0, -c.tr('soc')), f: ['study', 'save'] }
     ]);
@@ -1723,7 +1731,8 @@
     if (w.sex && w.sex !== L.sex) return false;
     if (w.status && w.status.indexOf(c.st) < 0) return false;
     if (w.kind && w.kind.indexOf(c.kind) < 0) return false;
-    if (L.mode && (w.kind || w.status) && !(w.mode && w.mode.indexOf(L.mode) >= 0)) return false;
+    // 家を離れている年（出家・旅・奉公・出征）は、その状態のための選択だけ出す（家の中の選択は出さない）
+    if (L.mode && !(w.mode && w.mode.indexOf(L.mode) >= 0)) return false;
     if (w.poor && !c.poor()) return false;
     if (w.heirOnly && !(L.heir || (!L.old && L.sex === 'm'))) return false;
     if (w.unmarried && L.married) return false;
@@ -1738,6 +1747,7 @@
     return true;
   }
   function makeChoiceBranch(c, title, text, options, data) {
+    if (c.api && c.api.eraWords) { text = c.api.eraWords(text, c.y); options.forEach(function (p) { p.l = c.api.eraWords(p.l, c.y); }); }
     var br = { id: 'story', kind: 'story', sid: 'choice', ra: '__choice', title: title, groups: [{ id: 's', q: text, options: options.map(function (p) { return { k: p.k, l: p.l, f: focusOf(p.fx || {}), h: p.h || CHint(p.fx || {}) }; }) }], w: {}, d: data };
     options.forEach(function (p, i) { br.w[p.k] = 1 + (i === 0 ? 0.3 : -0.3) * (c.s.tr.adv || 0) + (p.fx && p.fx.tie > 0 ? 0.3 * (c.s.tr.warm || 0) : 0); });
     c.L.queue.push(br);
@@ -1968,6 +1978,8 @@
     for (var i = 0; i < A.length; i++) {
       var o = A[i];
       if (!o.start || s.done[o.id]) continue;
+      // 家を離れている年は、新しい筋（家族・家の場面）を始めない
+      if (L.mode && !o.modeOk) continue;
       if (o.start(c)) { s.done[o.id] = y; s.last = y; break; }
     }
     if (s.asked !== y) choiceYear(c, people(c));
@@ -1997,7 +2009,7 @@
   }
   // 選んだ分かれ道を覚えておく（死亡の記録の「ひとこと」に使う。第2弾の7）
   function noteChoice(L, br, label, big) {
-    (L.choices = L.choices || []).push({ age: L.age, y: L.year, title: br.title || '', q: (br.groups[0] || {}).q || '', l: label, big: !!big, kind: (br.d && br.d.kind) || (big ? 'big' : 'small') });
+    (L.choices = L.choices || []).push({ age: L.age, y: L.year, title: br.title || '', q: (br.groups[0] || {}).q || '', l: label, big: !!big, sid: br.sid, kind: (br.d && br.d.kind) || (big ? 'big' : 'small') });
   }
   // おまかせ：今年の重点に合う答え（なければ null で、気質のまま）
   function autoAnswer(br, focus) {
@@ -2104,7 +2116,8 @@
     if (pal && !pal.gone && y >= pal.next) {
       pal.next = y + 3 + Math.floor(c.r() * 5);
       if (a >= 62 && c.p(0.18)) { pal.gone = y; c.say('幼なじみの' + pal.n + 'が亡くなった。幼いころからの付き合いだった。', { tie: -4, sat: -4 }, '人間関係'); return; }
-      var pool = a <= 14 ? PAL_EV.child.concat(c.y < 1900 && !pal.away ? PAL_EV.childOld : c.y >= 1950 && !pal.away ? PAL_EV.childNew : []) : a <= 30 ? PAL_EV.young : a <= 60 ? PAL_EV.mid : PAL_EV.old;
+      var pool0 = a <= 14 ? PAL_EV.child.concat(c.y < 1900 && !pal.away ? PAL_EV.childOld : c.y >= 1950 && !pal.away ? PAL_EV.childNew : []) : a <= 30 ? PAL_EV.young : a <= 60 ? PAL_EV.mid : PAL_EV.old;
+      var pool = L.mode ? pool0.filter(function (x) { return !/自分の子/.test(x); }) : pool0;
       var t = pool[Math.floor(c.r() * pool.length)];
       if (/奉公に出る|引っ越して/.test(t)) pal.away = y;
       c.say(t.replace('{n}', pal.n).replace('{t}', ptr(pal.tr)[3]), { tie: 2 }, '人間関係');
@@ -2366,6 +2379,7 @@
     function add(list, m, w) { list.forEach(function (t) { cands.push({ t: t, m: m, w: w }); }); }
     ms.forEach(function (m) {
       var ma = y - m.by;
+      if (L.mode) return; // 家を離れている年は、家族との場面を出さない
       if ((m.role === '父' || m.role === '母') && a <= 20) { add(FAM.parentKid, m, 1); if (newEra) add(FAM.parentKidNew, m, 1); }
       else if ((m.role === '祖父' || m.role === '祖母') && a <= 15 && m.live) add(FAM.gp, m, 1);
       else if (m.sib && Math.abs(m.by - L.by) < 15 && (a <= 30 || newEra)) { add(FAM.sib, m, 1); if (newEra) add(FAM.sibNew, m, 1); }

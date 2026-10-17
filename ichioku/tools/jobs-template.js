@@ -9,9 +9,15 @@
   function mix(h) { h = h >>> 0; h ^= h >>> 16; h = Math.imul(h, 0x85ebca6b) >>> 0; h ^= h >>> 13; h = Math.imul(h, 0xc2b2ae35) >>> 0; h ^= h >>> 16; return h >>> 0; }
   function rng(seed) { var s = mix(seed) || 1; return function () { s ^= s << 13; s >>>= 0; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; }; }
   // 合う度合い（0なら選ばない）。土地の種類が違えば少なめ、都道府県が違えば、4つ以上の県で見られる仕事だけごく少なめに残す（それより限られた土地の名物は出さない）
+  // 大きな地主・豪商・村役人など、暮らし向きが上の家だけの仕事（v8の直し 11）
+  var PRO = /医師|薬剤師|獣医|弁護士|教員|教授|研究者|建築士|税理士|会計士|裁判官|検事|技術者|技師/;
+  var ELITE = /地主|豪商|豪農|大庄屋|庄屋|名主|割元|両替商|網元|蔵元|大名|家老|問屋の主|大店の主|御用商人|豪族|荘官|地頭/;
   function fits(row, c) {
     if (c.y < row[3] || c.y > row[4]) return 0;
     if (row[7] && c.sex && row[7] !== c.sex) return 0;
+    if (ELITE.test(row[1]) && (c.self && c.sex === 'f' || c.rich == null || c.rich < 0.6)) return 0;
+    // 大学（明治からは旧制の上の学校）を出ていない人は、医師・弁護士・教員などの仕事にならない
+    if (c.self && c.univ === false && c.y >= 1872 && PRO.test(row[1])) return 0;
     var m = 1;
     if (row[5] && c.kind && row[5].indexOf(c.kind) < 0) { if (c.kind === 'kotan' || row[5].length === 1 && (row[5][0] === 'fish' || row[5][0] === 'kotan')) return 0; m *= 0.4; }
     if (row[6] && c.pref && row[6].indexOf(String(c.pref)) < 0) { if (row[6].length < 4) return 0; m *= 0.15; }
@@ -103,12 +109,13 @@
     if (NARROW[k]) c = Object.assign({}, c, NARROW[k]);
     var cats = selfCats(k, c);
     if (!cats) return null;
-    if (parent && cats[parent.cat] && inherit) return { cat: parent.cat, n: parent.n, d: parent.d, same: true };
+    c = Object.assign({ self: true }, c);
+    if (parent && cats[parent.cat] && inherit && !(ELITE.test(parent.n) && (c.sex === 'f' || c.rich == null || c.rich < 0.6))) return { cat: parent.cat, n: parent.n, d: parent.d, same: true };
     return pick(cats, c, rng((seed ^ 0x6c8e9cf5 ^ (c.y * 2654435761)) >>> 0));
   }
   // 説明を1文にする（「〜する仕事」「〜の店」は「だ」で、動詞で終わる説明はそのまま）
   function descSentence(d) { d = String(d || '').replace(/。$/, ''); return d + (/[るすうくぐつぬぶむ]$/.test(d) ? '。' : 'だ。'); }
-  var API = { pick: pick, parentJob: parentJob, selfJob: selfJob, catsForHouse: catsForHouse, descSentence: descSentence, rows: ROWS };
+  var API = { ELITE: ELITE, pick: pick, parentJob: parentJob, selfJob: selfJob, catsForHouse: catsForHouse, descSentence: descSentence, rows: ROWS };
   if (typeof module !== 'undefined' && module.exports) module.exports = API;
   root.IchiokuJobs = API;
 })(typeof self !== 'undefined' ? self : this);

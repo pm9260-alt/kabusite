@@ -17,18 +17,36 @@
   }
   function clean(t) { return String(t || '').replace(/[「」『』]/g, '').replace(/。$/, ''); }
   // 一生をひとことで（選んだ分かれ道の結果を入れる）
-  function oneLine(L) {
-    var a = L.deathAge, job = jobOf(L), ch = (L.choices || []).filter(function (c) { return c.l; });
-    var bigs = ch.filter(function (c) { return c.big && c.kind !== 'parent'; });
-    var pickC = bigs.filter(function (c) { return c.age >= 12 && c.age <= 45; }).slice(-1)[0] || bigs.slice(-1)[0] || ch.filter(function (c) { return c.kind !== 'parent'; }).slice(-1)[0] || ch.slice(-1)[0];
+  // 一生をひとことで（v8の直し 5）：人生を決めた選択から作る。
+  // 優先：暮らしの状態が変わった選択（出家・奉公・一座・出征・移民など）→ 結婚・家を継ぐ・勘当 → 進路 → ほかの大きな決断。
+  // 小さな選択・親の選択・節目の問いかけからは作らない。5歳までに亡くなった人生は、家と土地から作る
+  var P1 = /^(gyoretsu|sumoOld|yukaku|rangaku|shishi|kojo|cafe|manshu|geino|shukke|ashigaru|tozoku|shokunin|imin|toxic|dream|abroad|outwork|shukko)$/;
+  var P1K = /^(hoko|out|bunke)$/;
+  var P2 = /^(miai|koi|love5|shoya|kandou|reunion|marry|muko|yoshi|partner|kotsugi|houtou)$/;
+  var P3 = /^(path|hs|univ|school|juken|job|doctor|reality)$/;
+  function rankOf(c) {
+    var k = c.sid || c.kind || '';
+    if (!c.big || !c.l || c.kind === 'parent' || c.kind === 'small' || c.kind === 'ask') return 0;
+    if (P1.test(k) || P1K.test(c.kind || '')) return 4;
+    if (P2.test(k) || P2.test(c.kind || '')) return 3;
+    if (P3.test(k) || P3.test(c.kind || '')) return 2;
+    return 1;
+  }
+  function oneLine(L, o) {
+    o = o || {};
+    var a = L.deathAge, job = jobOf(L);
+    if (a < 5) {
+      var pl = String(o.birthPlace || '').replace(/（.*?）/g, '');
+      return (pl ? pl + 'の' : '') + (o.houseShort ? o.houseShort + 'に' : '家に') + '生まれ、' + (a === 0 ? '1年に満たない時を生きた一生' : a + '年を生きた一生');
+    }
+    var best = null, br = 0;
+    (L.choices || []).forEach(function (c) { var r = rankOf(c); if (r > br || (r === br && r > 0)) { best = c; br = r; } });
     var head = '';
-    var about = pickC && pickC.title && !/^(小さな選択|親の選択|節目|大きな決断)$/.test(pickC.title) ? clean(pickC.title).replace(/[？?]$/, '') : '';
-    if (pickC) head = pickC.kind === 'parent' ? (pickC.age === 0 ? '生まれてすぐ、親が「' + clean(pickC.l) + '」と決め、' : pickC.age + '歳のとき、親が「' + clean(pickC.l) + '」と決め、') : pickC.age + '歳' + (about ? 'の分かれ道（' + about + '）で' : 'で') + '「' + clean(pickC.l) + '」を選び、';
-    var tail;
-    if (a < 5) tail = (a === 0 ? '1年に満たない' : a + '年の') + '短い一生';
-    else if (job) tail = job + 'として生きた' + a + '年の一生';
-    else if (L.everMarried) tail = '家族とともに生きた' + a + '年の一生';
-    else tail = a + '年の一生';
+    if (best) {
+      var about = best.title && !/^(小さな選択|親の選択|節目|大きな決断)$/.test(best.title) ? clean(best.title).replace(/[？?]$/, '') : '';
+      head = best.age + '歳' + (about ? 'の分かれ道（' + about + '）で' : 'で') + '「' + clean(best.l) + '」を選び、';
+    }
+    var tail = job ? job + 'として生きた' + a + '年の一生' : L.everMarried ? '家族とともに生きた' + a + '年の一生' : a + '年の一生';
     return head + tail;
   }
   // 一生の要約（3〜6文）
@@ -52,7 +70,7 @@
     }
     var gk = ms.filter(function (m) { return m.role === '孫' && !m.gone && m.by <= L.deathYear; }).length;
     if (gk) s.push('孫' + gk + '人に恵まれた。');
-    if (o.deathPlace && o.deathPlace !== o.birthPlace) s.push(o.deathPlace + 'に移り住んだ。');
+    if (o.deathPlace && movedOf(L)) s.push(o.deathPlace + 'に移り住んだ。');
     s.push(a + '歳のとき、' + (L.cause === 'sui' ? '自ら命を絶った。' : causeText(L) + 'で亡くなった。'));
     return s;
   }
@@ -83,21 +101,39 @@
     if (d < -5) return '最後の10年は、それまでより苦しい日々だった。';
     return '暮らしの満足は、生涯を通じておだやかなままだった。';
   }
+  // 暮らした土地（v8の直し 10）：場所のコード（都道府県・市区町村・旧国）で比べ、呼び名が変わっただけなら1つにまとめる
+  function pinKey(r) { var p = r.pin || {}; return p.abroad ? 'abroad:' + (r.place || '') : [p.pref || '', p.muni || '', p.prov || ''].join('|'); }
+  function short(t) { return String(t || '').replace(/（今の(.*?)）/, '').replace(/（.*?）/g, ''); }
   function places(L) {
-    var seen = [], out = [];
-    (L.log || []).forEach(function (r) { var p = String(r.place || '').replace(/（今の(.*?)）/, '').replace(/（.*?）/g, ''); if (p && seen.indexOf(p) < 0) { seen.push(p); out.push(p); } });
-    return out;
+    var groups = [], idx = {};
+    (L.log || []).forEach(function (r) {
+      var k = pinKey(r), lb = short(r.place);
+      if (!lb) return;
+      if (idx[k] == null) { idx[k] = groups.length; groups.push({ k: k, first: lb, later: null }); }
+      else { var g = groups[idx[k]]; if (lb !== g.first && !g.later) g.later = lb; }
+    });
+    return groups.map(function (g) {
+      if (!g.later) return g.first;
+      var pf = (g.later.match(/^(.+?[都道府県])/) || [])[1];
+      return g.first + '（のちの' + (pf || g.later) + '）';
+    });
+  }
+  // 生まれた土地から移り住んだか（呼び名ではなく場所のコードで比べる）
+  function movedOf(L) {
+    var ks = {};
+    (L.log || []).forEach(function (r) { ks[pinKey(r)] = 1; });
+    return Object.keys(ks).length > 1;
   }
   function build(L, o) {
     o = o || {};
     var b = bestYear(L), pl = places(L);
     return {
       no: 'No. ' + (o.code || '') + '-' + L.by + '-' + L.deathAge,
-      cause: causeText(L), line: oneLine(L), summary: summary(L, o), seeOff: seeOff(L), reflect: reflect(L),
+      cause: causeText(L), line: oneLine(L, o), summary: summary(L, o), seeOff: seeOff(L), reflect: reflect(L),
       best: b ? { age: b.age, year: b.year, sat: b.st.sat } : null, places: pl, job: jobOf(L), edu: L.edu || null
     };
   }
-  var API = { build: build, causeText: causeText, oneLine: oneLine };
+  var API = { build: build, causeText: causeText, oneLine: oneLine, rankOf: rankOf, places: places, movedOf: movedOf };
   if (typeof module !== 'undefined' && module.exports) module.exports = API;
   root.IchiokuRecord = API;
 })(typeof self !== 'undefined' ? self : this);
