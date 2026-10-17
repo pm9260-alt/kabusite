@@ -64,7 +64,8 @@
       p: function (x) { return s.r() < x; },
       tr: function (k) { return s.tr[k]; },
       tal: function (k) { return s.tal[k]; },
-      name: function (sex) { return api.nameFor(L, sex, L.by + Math.round((s.r() - 0.5) * 2)); },
+      // アイヌ語の名前は書き表さない（村の人として呼ぶ）
+      name: function (sex) { var n = api.nameFor(L, sex, L.by + Math.round((s.r() - 0.5) * 2)); return /アイヌ語/.test(n || '') ? (sex === 'm' ? '村の若者' : '村の娘') : n; },
       marryPending: function () { return L.queue.some(function (b) { return b.kind === 'marry' || b.id === 'marry' || b.id === 'partner' || b.kind === 'muko'; }); },
       tokyoBorn: function () { return String((L.home || {}).pref) === '13'; },
       away: function () { return L.old ? !!L.moved : !!(L.place && L.place.away); },
@@ -1552,8 +1553,8 @@
   arc({ id: 'isan', start: function (c) {
     var L = c.L, sibs = (L.members || []).filter(function (m) { return m.sib && m.alive && !m.gone; });
     if (c.s.done.isan || !L.dad || L.dad.alive || L.dad.dy !== c.y && L.dad.dy !== c.y - 1 || !sibs.length || c.a < 20 || !c.p(0.3)) return false;
-    c.s.sibName = sibs[0].name; c.s.sibRole = sibs[0].role;
-    c.ask('isan', '父の遺したもの', '父が遺した' + (c.O && c.y < 1950 ? '田畑と家財' : '家と預金') + 'の分け方で、' + c.s.sibRole + 'の' + c.s.sibName + 'と言い争いになった。', [
+    c.s.sibName = /アイヌ語/.test(sibs[0].name || '') ? sibs[0].role : sibs[0].name; c.s.sibRole = sibs[0].role;
+    c.ask('isan', '父の遺したもの', '父が遺した' + (c.O && c.y < 1950 ? '田畑と家財' : '家と預金') + 'の分け方で、' + (c.s.sibName === c.s.sibRole ? c.s.sibRole : c.s.sibRole + 'の' + c.s.sibName) + 'と言い争いになった。', [
       { k: 'give', l: '譲る', w: 0.6 + Math.max(0, c.tr('warm')), f: ['family'] },
       { k: 'fight', l: '自分の取り分を主張する', w: 0.6 + Math.max(0, c.tr('adv')) * 0.5 + Math.max(0, -c.tr('warm')) * 0.5, f: ['earn', 'save'] }
     ]);
@@ -1591,8 +1592,8 @@
   arc({ id: 'kobyo', start: function (c) {
     var L = c.L, kid = (L.members || []).filter(function (m) { return m.role === '子' && m.alive && !m.gone && c.y - m.by <= 6 && c.y - m.by >= 1; })[0];
     if (c.s.done.kobyo || !c.O || c.y > 1945 || !kid || !c.p(0.06)) return false;
-    c.s.kidName = kid.name;
-    c.ask('kobyo', '子の熱', '子の' + kid.name + 'が高い熱を出し、三日も下がらない。', [
+    c.s.kidName = /アイヌ語/.test(kid.name || '') ? (kid.sex === 'm' ? '息子' : '娘') : kid.name;
+    c.ask('kobyo', '子の熱', (/アイヌ語/.test(kid.name || '') ? '' : '子の') + c.s.kidName + 'が高い熱を出し、三日も下がらない。', [
       { k: 'pray', l: c.y < 1868 ? '寺社に祈祷を頼む' : '神社にお百度を踏む', w: 1, f: ['family'] },
       { k: 'doc', l: c.y < 1868 ? '町の医者を呼ぶ（高くつく）' : '医者に診せる（高くつく）', w: 0.6 + (c.poor() ? -0.3 : 0.5), f: ['body'] }
     ]);
@@ -1697,10 +1698,13 @@
     var sp = one1(function (m) { return m.role === '配偶者' || m.role === 'パートナー'; });
     var kids = ms.filter(function (m) { return m.role === '子'; });
     if (!c.s.friend && c.a >= 5) { c.s.friend = c.name(c.r() < 0.5 ? 'm' : 'f'); }
+    // アイヌ語の名前は書き表さず、続き柄で呼ぶ
+    var ainu = function (n) { return !n || /アイヌ語/.test(n); };
+    var nm = function (m) { if (!m) return null; return ainu(m.name) ? (m.role === '子' ? (m.sex === 'm' ? '息子' : '娘') : m.role === '配偶者' ? (m.sex === 'm' ? '夫' : '妻') : m.role) : m.name; };
     return {
-      name: L.name, mom: (one1(function (m) { return m.role === '母'; }) || {}).name, dad: (one1(function (m) { return m.role === '父'; }) || {}).name,
-      sibOlder: older.length ? older[older.length - 1].name : null, sibYounger: younger.length ? younger[0].name : null,
-      spouse: sp ? sp.name : null, child: kids.length ? kids[kids.length - 1].name : null, friend: c.s.friend || null,
+      name: ainu(L.name) ? (c.a < 15 ? 'この子' : null) : L.name, mom: nm(one1(function (m) { return m.role === '母'; })), dad: nm(one1(function (m) { return m.role === '父'; })),
+      sibOlder: older.length ? nm(older[older.length - 1]) : null, sibYounger: younger.length ? nm(younger[0]) : null,
+      spouse: nm(sp), child: kids.length ? nm(kids[kids.length - 1]) : null, friend: ainu(c.s.friend) ? null : c.s.friend,
       place: String(c.place || '').replace(/（今の.*?）/, '')
     };
   }
