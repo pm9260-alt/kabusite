@@ -1363,6 +1363,9 @@
     item('最期を見送った人', pol(r.seeOff));
     if (r.best) { var br = L.log.filter(function (x) { return x.year === r.best.year; })[0], me = br ? mainEvent(br) : null; item('いちばん満足が高かった年', r.best.age + '歳（' + r.best.year + '年）', me && me.t ? (me.t.length > 30 ? me.t.slice(0, 30) + '…' : me.t) : null); }
     item('暮らした土地', r.places.slice(0, 3).join('、') + (r.places.length > 3 ? 'など' + r.places.length + 'か所' : ''));
+    // 遺した財産（第2弾の7・第4弾の11）：亡くなったときの貯金（今の物価）と、買った家
+    var sav = L.money && L.money.sav != null ? L.money.sav : null;
+    if (sav != null || L.boughtHome) item('遺した財産', (sav != null ? money(sav) : '') + (L.boughtHome ? (sav != null ? '・' : '') + L.boughtHome + '年に買った家' : ''), sav != null ? '今の物価に直した貯金（推計）' : null);
     var dc = cmpLine('death');
     if (dc) { var dv = el('div', 'rc-item rc-wide'); dv.appendChild(el('dt', null, 'あなたと比べると')); dv.appendChild(el('dd', null, pol(dc))); g.appendChild(dv); }
     $('rc-reflect-box').hidden = !r.reflect;

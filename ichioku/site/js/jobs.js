@@ -8,23 +8,28 @@
   // 1行 = [分類, 名前, 説明, 始まりの年, 終わりの年, 土地の種類, 都道府県, 男女, 重み]
   function mix(h) { h = h >>> 0; h ^= h >>> 16; h = Math.imul(h, 0x85ebca6b) >>> 0; h ^= h >>> 13; h = Math.imul(h, 0xc2b2ae35) >>> 0; h ^= h >>> 16; return h >>> 0; }
   function rng(seed) { var s = mix(seed) || 1; return function () { s ^= s << 13; s >>>= 0; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; }; }
+  // 合う度合い（0なら選ばない）。土地の種類が違えば少なめ、都道府県が違えば、4つ以上の県で見られる仕事だけごく少なめに残す（それより限られた土地の名物は出さない）
   function fits(row, c) {
-    if (c.y < row[3] || c.y > row[4]) return false;
-    if (row[7] && c.sex && row[7] !== c.sex) return false;
-    if (row[5] && c.kind && row[5].indexOf(c.kind) < 0) return false;
-    if (row[6] && c.pref && row[6].indexOf(String(c.pref)) < 0) return false;
-    return true;
+    if (c.y < row[3] || c.y > row[4]) return 0;
+    if (row[7] && c.sex && row[7] !== c.sex) return 0;
+    var m = 1;
+    if (row[5] && c.kind && row[5].indexOf(c.kind) < 0) { if (c.kind === 'kotan' || row[5].length === 1 && (row[5][0] === 'fish' || row[5][0] === 'kotan')) return 0; m *= 0.4; }
+    if (row[6] && c.pref && row[6].indexOf(String(c.pref)) < 0) { if (row[6].length < 4) return 0; m *= 0.15; }
+    return m;
   }
   // 分類ごとの重み（{farm: 0.85, yama: 0.15}）から1つ選ぶ。分類の中は w の割合で選ぶ
   function pick(cats, c, r) {
     var keys = Object.keys(cats).filter(function (k) { return cats[k] > 0; });
     var tot = keys.reduce(function (s, k) { return s + cats[k]; }, 0), x = r() * tot, cat = keys[keys.length - 1];
     for (var i = 0; i < keys.length; i++) { x -= cats[keys[i]]; if (x <= 0) { cat = keys[i]; break; } }
-    var list = ROWS.filter(function (row) { return row[0] === cat && fits(row, c); });
+    var list = ROWS.filter(function (row) { return row[0] === cat && fits(row, c) > 0; });
+    // 産業に合う名前だけにしぼる（しぼって残らなければ、しぼらない）
+    if (c.only || c.not) { var f = list.filter(function (row) { return (!c.only || c.only.test(row[1])) && (!c.not || !c.not.test(row[1])); }); if (f.length) list = f; }
     if (!list.length) list = ROWS.filter(function (row) { return row[0] === cat && c.y >= row[3] && c.y <= row[4] && (!row[7] || !c.sex || row[7] === c.sex); });
     if (!list.length) return null;
-    var sw = list.reduce(function (s, row) { return s + row[8]; }, 0), z = r() * sw;
-    for (var j = 0; j < list.length; j++) { z -= list[j][8]; if (z <= 0) return { cat: cat, n: list[j][1], d: list[j][2] }; }
+    var wt = function (row) { return row[8] * (fits(row, c) || 0.05); };
+    var sw = list.reduce(function (s, row) { return s + wt(row); }, 0), z = r() * sw;
+    for (var j = 0; j < list.length; j++) { z -= wt(list[j]); if (z <= 0) return { cat: cat, n: list[j][1], d: list[j][2] }; }
     return { cat: cat, n: list[0][1], d: list[0][2] };
   }
   // 身分・時代・土地から、親（家）の仕事の分類を決める
@@ -86,7 +91,16 @@
   }
   function parentJob(c, seed) { return pick(catsForHouse(c), c, rng((seed ^ 0x2545f491) >>> 0)); }
   // 家の仕事を継ぐときは親と同じ仕事にする（同じ分類のときだけ）
+  // 今の産業の分類と、細かい仕事の名前の合わせ方
+  var SHOP_RE = /店|販売|売|レジ|スーパー|コンビニ|商|鮮魚|精肉|青果|屋$|呉服/;
+  var NARROW = {
+    care: { only: /医|看護|薬|介護|保育|教|療法|福祉|歯科|助産|保健|栄養|ヘルパー|ケア|校|学童|塾|司書/ },
+    shop: { only: SHOP_RE },
+    service: { not: SHOP_RE },
+    pub: { only: /公務|役所|役場|警察|消防|自衛|郵便|刑務|裁判|税|市|県|国|官|職員/ }
+  };
   function selfJob(k, c, seed, parent, inherit) {
+    if (NARROW[k]) c = Object.assign({}, c, NARROW[k]);
     var cats = selfCats(k, c);
     if (!cats) return null;
     if (parent && cats[parent.cat] && inherit) return { cat: parent.cat, n: parent.n, d: parent.d, same: true };

@@ -575,6 +575,14 @@
     L.dadJobD = J.selfJob(L.dadJob, Object.assign({ sex: 'm' }, c), L.seed ^ 0x51ed27, null, false);
     L.momJobD = L.momJob ? J.selfJob(L.momJob, Object.assign({ sex: 'f' }, c), L.seed ^ 0x2f7a3c, null, false) : null;
   }
+  // 自分のくわしい仕事（産業の抽選はそのままで、呼び名だけ細かくする。別の乱数）
+  function selfJobE(L, k, reg) {
+    var J = jobsMod();
+    if (!J) return;
+    var c = { y: L.year, kind: ({ '大都市': 'city', '都市': 'town', '町村': 'village' })[L.place.kind] || 'town', pref: L.place.pref, sex: L.sex };
+    var sj = J.selfJob(k, c, L.seed ^ 0x3c6ef372, null, false);
+    if (sj) { L.selfJob = sj; L.lastJob = sj.n + (reg ? '' : '（非正規）'); }
+  }
   function birthEvent(L, rec) {
     var C = L.C, P = L.P, y = L.year;
     var share = val(L.place.muniObj.share, y);
@@ -700,6 +708,7 @@
     // 女性の再就職
     if (L.stage === 'home' && L.youngestBy && y - L.youngestBy >= 6 && a < 60 && rnd() < 0.14) {
       L.job = { ind: pickInd(rnd, (L.place.muniObj || {}).ind || C.nat.indNat), reg: false, since: y }; L.lastJob = IND[L.job.ind].job; L.lastInd = L.job.ind;
+      selfJobE(L, L.job.ind, false);
       L.stage = 'work';
       push(L, rec, '学歴と仕事', '子どもが小学校に上がり、近くの職場でパートとして働き始めた。', [ev(C, 'labor', y, '女性の年齢別の働く人の割合', '')]);
     }
@@ -808,6 +817,7 @@
     var pNon = clamp(base * 1.1 * eduF * sexF * jrF * againF, 0.02, 0.85);
     var reg = rnd() >= pNon;
     L.job = { ind: k, reg: reg, since: y }; L.lastJob = IND[k].job + (reg ? '' : '（非正規）'); L.lastInd = k;
+    selfJobE(L, k, reg);
     L.stage = 'work';
     var evs = [
       ev(C, 'jobs', nv(C.nat.jobs, y).y, P.name + 'のこの年の有効求人倍率', jrPref.toFixed(2) + '倍', { est: true }),
@@ -822,6 +832,7 @@
     else if (jr > 1.3) s += '求人が多い年で、早いうちに';
     var place = { agri: '地元の農家で', fish: '地元の漁業の仕事で', factory: 'ものを作る会社の工場で', build: '建設の会社で', office: '会社の事務や営業の仕事で', shop: '地元の店で', pub: '役所で', care: '病院や福祉の施設で', service: '飲食やサービスの店で' }[k];
     s += place + (reg ? '正社員として' : (L.year < 1995 ? 'パートやアルバイトとして' : '契約社員として')) + '働くことになった。';
+    if (L.selfJob) s += '仕事は' + L.selfJob.n + '（' + L.selfJob.d + '）だ。';
     return s;
   }
 
@@ -1496,6 +1507,12 @@
     var yy = y < ks[0] ? ks[0] : y > ks[ks.length - 1] ? ks[ks.length - 1] : y;
     return { r: t[yy], y: yy, est: yy !== y };
   }
+  // お金の選択で、貯まり方が長く変わる分（郵便貯金を続ける・住宅ローンを返す など）
+  function moneyMul(L, y) {
+    var k = 1;
+    (L.moneyAdj || []).forEach(function (m) { if (m.mul && y >= m.y && y <= (m.until || 9999)) k *= m.mul; });
+    return k;
+  }
   function savTable(C, y) {
     var t = C.nat.savingRatio;
     if (!t) return null;
@@ -1534,7 +1551,7 @@
       var avg = M.incN ? M.incSum / M.incN : 0;
       var scale = clamp(avg / (ref.inc[M.q - 1] * 10), 0, 2.5);
       if (L.married) scale *= 1.3;
-      var target = row.sav[M.q - 1] * 10 * scale * (M.focus === 'save' ? 1.15 : 1);
+      var target = row.sav[M.q - 1] * 10 * scale * (M.focus === 'save' ? 1.15 : 1) * moneyMul(L, y);
       if (a < 25) target *= (a - 17) / 8;
       var before = M.sav;
       M.sav += (target - M.sav) * 0.25;
@@ -1548,6 +1565,16 @@
           M.sav -= loss;
           why.push({ t: ru.t, d: -loss, ev: e.ev || [] });
         });
+      });
+      // お金の選択（第4弾の11）：その年の貯金に足し引きする。額は年収かその時の貯金に対する割合で決める
+      (L.moneyAdj || []).forEach(function (m) {
+        if (m.y !== y || m.done) return;
+        m.done = true;
+        var avgInc = M.incN ? M.incSum / M.incN : 0;
+        var d = (m.f ? M.sav * m.f : 0) + (m.inc ? avgInc * m.inc : 0);
+        if (d < 0 && -d > M.sav) d = -M.sav;
+        M.sav += d;
+        why.push({ t: m.t, d: d, ev: [], choice: true });
       });
       if (M.sav < 0) M.sav = 0;
       out.sav = M.sav;

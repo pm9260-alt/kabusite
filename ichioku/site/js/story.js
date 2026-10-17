@@ -42,7 +42,9 @@
   function ctxOf(L, rec, api, d) {
     var s = L.story;
     var c = {
-      L: L, s: s, y: L.year, a: L.age, d: d || {}, r: s.r, api: api, E: !L.old, O: !!L.old, place: rec && rec.place,
+      L: L, s: s, y: L.year, a: L.age, d: d || {}, r: s.r, api: api, E: !L.old, O: !!L.old, place: rec && rec.place, rec: rec,
+      // お金の選択（第4弾の11）：その年の貯金に足し引きする（f はその時の貯金に、inc はふだんの年収に対する割合。mul は until の年まで貯まり方を何倍にするか）
+      money: function (o) { (L.moneyAdj = L.moneyAdj || []).push(Object.assign({ y: L.year }, o)); },
       st: L.old ? L.status : 'modern',
       kind: L.old ? L.kind : (L.place && L.place.kind === '町村' ? 'village' : 'city'),
       say: function (t, st, cat) { var e = api.push(L, rec, cat || '人間関係', t, []); e.story = true; if (st) e.st = st; return e; },
@@ -1960,6 +1962,7 @@
     var c = ctxOf(L, rec, api);
     weddingNote(c, rec);
     modeYear(c, rec);
+    palYear(c);
     // 新しい筋は1年に1つまで。分かれ道を出した年は、ほかの筋を始めない
     if (s.asked === y) return;
     for (var i = 0; i < A.length; i++) {
@@ -2051,6 +2054,268 @@
   function hokoTo(L) { var r = L.story ? L.story.r : Math.random; return one(r, (L.year < 1872 ? HOKO_TO : HOKO_TO_NEW)[L.sex]); }
   function mukoHouse(L) { var r = L.story ? L.story.r : Math.random; return one(r, ['隣村の大百姓の家', '同じ村の庄屋の分家', '町の商家', '峠向こうの村の家']); }
   function yoshiHouse(L) { var r = L.story ? L.story.r : Math.random; return one(r, ['勘定方を務める家', '城の番方の家', '藩校の師範の家', '馬廻りの家']); }
+
+  /* ========== まわりの人（改善の指示書 第4弾の10） ==========
+     幼なじみ（6歳ごろ）と、仕事の仲間（働き始めたとき）に、名前と性格を付ける。何年かおきに出来事や分かれ道に出てくる。
+     配偶者にも性格を付け、時代ごとの夫婦の場面と、子との場面を出す */
+  var PTR = [
+    ['sewa', '世話焼き', '何かと世話を焼いてくれる', '相変わらず、こちらの暮らしの心配ばかりしていた。'],
+    ['quiet', '口数が少ない', '口数は少ないが、約束は必ず守る', '多くは語らなかったが、帰りぎわに「また来い」とだけ言った。'],
+    ['mie', '見栄っぱり', '人前では見栄を張りたがる', '羽振りのよさを話してばかりいたが、目は笑っていなかった。'],
+    ['yoki', '陽気', 'いつも大声で笑っている', '会うなり大声で笑い、まわりまで明るくなった。'],
+    ['tanki', '気が短い', 'すぐかっとなるが、根に持たない', '昔と同じように、ささいなことで声を荒らげ、すぐに笑った。']
+  ];
+  function ptr(k) { return PTR.filter(function (t) { return t[0] === k; })[0] || PTR[0]; }
+  function workRole(c) {
+    var L = c.L, y = c.y, j = L.old ? L.job : (L.job && L.job.ind);
+    if (y < 1868) return j === 'shop' ? '奉公先の番頭の' : j === 'craft' ? '兄弟子の' : j === 'samurai' || j === 'bushiMed' ? '同じ役目の' : j === 'fish' ? '同じ網の' : j === 'temple' ? '同じ寺の' : '隣の田の';
+    if (y < 1946) return j === 'farm' || j === 'agri' ? '隣の家の' : j === 'factory' || j === 'silk' ? '同じ工場の' : '職場の先輩の';
+    return j === 'agri' || j === 'farm' ? '農協の仲間の' : '職場の同僚の';
+  }
+  function working(L) { return L.old ? !!(L.job && L.job !== 'home') : !!(L.job && L.job.ind); }
+  var PAL_EV = {
+    child: ['{n}と、川で泳いで日が暮れるまで遊んだ。', '{n}と、大人に内緒で山の奥まで行き、こっぴどく叱られた。', '{n}と、祭りの夜店をのぞいて回った。', '{n}とけんかをしたが、次の日には何事もなかったように遊んだ。'],
+    childOld: ['{n}が、遠くの町へ奉公に出ることになった。村はずれまで見送った。'],
+    childNew: ['{n}が、親の仕事の都合で引っ越していった。手紙を書くと約束した。'],
+    young: ['{n}と、これからのことを夜通し語り合った。', '久しぶりに{n}と会った。{t}', '{n}の祝言に呼ばれた。', '{n}に、悩みを打ち明けた。'],
+    mid: ['{n}が病に倒れたと聞き、見舞いに行った。', '{n}に、暮らしの相談を持ちかけられた。', '久しぶりに{n}と会った。{t}', '{n}の子と、自分の子が仲よくなった。'],
+    old: ['{n}と、縁側で昔話をした。{t}', '{n}が訪ねてきて、幼いころの思い出話で笑い合った。']
+  };
+  var WORK_EV = ['{r}{n}に、仕事のこつを教わった。', '{r}{n}と、仕事のやり方で言い合いになった。{t}', '{r}{n}が、自分のしくじりをかばってくれた。', '{r}{n}と、忙しい時期を乗り切った。', '{r}{n}の家に招かれ、夕飯をごちそうになった。'];
+  function palYear(c) {
+    var L = c.L, s = c.s, a = c.a, y = c.y;
+    if (!L.alive || a < 6) return;
+    // 幼なじみ
+    if (!s.pal && a <= 9) {
+      var sx = c.p(0.7) ? L.sex : (L.sex === 'm' ? 'f' : 'm'), tr = PTR[Math.floor(c.r() * PTR.length)];
+      s.pal = { n: s.friend || c.name(sx), sex: sx, tr: tr[0], next: y + 2 + Math.floor(c.r() * 3) };
+      if (!s.friend) s.friend = s.pal.n;
+      c.say('近所の' + s.pal.n + 'と仲よくなった。' + tr[2] + '子だ。', { tie: 2 }, '人間関係');
+      return;
+    }
+    // 仕事の仲間
+    if (!s.wpal && working(L) && a >= 12 && !L.mode) {
+      var tw = PTR[Math.floor(c.r() * PTR.length)], sw = c.p(0.75) ? L.sex : (L.sex === 'm' ? 'f' : 'm');
+      s.wpal = { n: c.name(sw), sex: sw, tr: tw[0], r: workRole(c), next: y + 2 + Math.floor(c.r() * 4) };
+      c.say(s.wpal.r + s.wpal.n + 'と知り合った。' + tw[2] + '人だ。', { tie: 2 }, '人間関係');
+      return;
+    }
+    var pal = s.pal;
+    if (pal && !pal.gone && y >= pal.next) {
+      pal.next = y + 3 + Math.floor(c.r() * 5);
+      if (a >= 62 && c.p(0.18)) { pal.gone = y; c.say('幼なじみの' + pal.n + 'が亡くなった。幼いころからの付き合いだった。', { tie: -4, sat: -4 }, '人間関係'); return; }
+      var pool = a <= 14 ? PAL_EV.child.concat(c.y < 1900 && !pal.away ? PAL_EV.childOld : c.y >= 1950 && !pal.away ? PAL_EV.childNew : []) : a <= 30 ? PAL_EV.young : a <= 60 ? PAL_EV.mid : PAL_EV.old;
+      var t = pool[Math.floor(c.r() * pool.length)];
+      if (/奉公に出る|引っ越して/.test(t)) pal.away = y;
+      c.say(t.replace('{n}', pal.n).replace('{t}', ptr(pal.tr)[3]), { tie: 2 }, '人間関係');
+      return;
+    }
+    var w = s.wpal;
+    if (w && !w.gone && working(L) && y >= w.next) {
+      w.next = y + 3 + Math.floor(c.r() * 5);
+      var t2 = WORK_EV[Math.floor(c.r() * WORK_EV.length)];
+      c.say(t2.replace('{r}', w.r).replace('{n}', w.n).replace('{t}', ptr(w.tr)[3]), /言い合い/.test(t2) ? { tie: -1 } : { tie: 2 }, '人間関係');
+    }
+  }
+  function spouseOf(L) { return (L.members || []).filter(function (m) { return (m.role === '配偶者' || m.role === 'パートナー') && m.alive && !m.gone; })[0]; }
+  function kidOf(L, y, a0, a1, f) { return (L.members || []).filter(function (m) { return m.role === '子' && m.alive && !m.gone && y - m.by >= a0 && y - m.by <= a1 && (!f || f(m)); })[0]; }
+  function nm(m) { return m && m.name && !/アイヌ語/.test(m.name) ? m.name : null; }
+
+  // 夫婦の場面：舅姑との同居（江戸〜戦前の嫁）
+  arc({ id: 'shuto', start: function (c) {
+    var L = c.L, sp = spouseOf(L);
+    if (!L.married || !sp || L.sex !== 'f' || L.muko || c.y >= 1946 || c.a < 18 || c.a > 35 || !c.p(0.06)) return false;
+    c.s.spTr = c.s.spTr || PTR[Math.floor(c.r() * PTR.length)][0];
+    c.ask('shuto', '姑との暮らし', '嫁いだ家で、姑に家のしきたりのことで毎日のように小言を言われる。夫の' + (nm(sp) || '夫') + 'は' + ptr(c.s.spTr)[1] + 'だ。', [
+      { k: 'bear', l: '黙って従う', w: 1, f: ['family'] },
+      { k: 'talk', l: '夫に相談する', w: 0.8 + Math.max(0, c.tr('soc')) * 0.5, f: ['family'] },
+      { k: 'home', l: '実家にしばらく帰る', w: 0.3 + Math.max(0, c.tr('adv')) * 0.5, f: ['body'] }
+    ]);
+    return true;
+  }, res: {
+    bear: function (c) { c.say('黙って従った。何年か経つと、姑は台所を任せてくれるようになった。', { sat: -3, tie: 2 }, '家庭'); },
+    talk: function (c) { var ok = c.s.spTr === 'sewa' || c.s.spTr === 'quiet' || c.p(0.4); c.say(ok ? '夫が母親に話をしてくれ、小言は少しずつ減った。' : '夫は「母のことは我慢してくれ」と言うばかりだった。', ok ? { tie: 4, sat: 2 } : { tie: -3, sat: -3 }, '家庭'); },
+    home: function (c) { c.say('実家にしばらく帰った。迎えに来た夫と話し合い、ひと月後に戻った。', { tie: -2, sat: 2 }, '家庭'); }
+  } });
+  // 夫の放蕩（江戸〜戦前）。江戸では縁切寺に駆け込む道もある
+  arc({ id: 'houtou', start: function (c) {
+    var L = c.L, sp = spouseOf(L);
+    if (!L.married || !sp || L.sex !== 'f' || c.y < 1600 || c.y >= 1946 || c.a < 22 || c.a > 45 || !c.p(0.03)) return false;
+    var opts = [{ k: 'bear', l: '耐える', w: 1, f: ['family'] }, { k: 'oya', l: '実家の親に相談する', w: 0.8, f: ['family'] }];
+    if (c.y >= 1700 && c.y < 1872) opts.push({ k: 'tera', l: '縁切寺に駆け込む', w: 0.2 + Math.max(0, c.tr('adv')) * 0.4, f: ['body'] });
+    c.ask('houtou', '夫の放蕩', '夫の' + (nm(sp) || '夫') + 'が' + (c.y < 1868 ? '遊郭' : '酒場') + 'に入り浸り、家の金を持ち出すようになった。', opts);
+    return true;
+  }, res: {
+    bear: function (c) { c.money({ f: -0.2, t: '夫が家の金を持ち出した' }); c.say('耐えた。夫の遊びは何年か続き、蓄えはずいぶん減った。', { sat: -6 }, '家庭'); },
+    oya: function (c) { c.say('実家の親が夫を呼びつけて意見してくれた。夫はしばらく神妙にしていた。', { tie: 2, sat: 1 }, '家庭'); },
+    tera: function (c) { c.say('縁切寺に駆け込んだ。寺の取りなしで夫は詫びを入れ、二度としないと誓った。三行半の話まで出たが、家に戻った。', { sat: 3, tie: -3 }, '家庭'); }
+  } });
+  // 出征の見送り（戦中）
+  arc({ id: 'shussei', start: function (c) {
+    var L = c.L, sp = spouseOf(L);
+    if (!L.married || !sp || sp.sex !== 'm' || c.y < 1937 || c.y > 1945 || c.y - sp.by < 20 || c.y - sp.by > 42 || !c.p(0.25)) return false;
+    c.ask('shussei', '召集令状', '夫の' + (nm(sp) || '夫') + 'に召集令状が届いた。出発は三日後だ。', [
+      { k: 'harinuki', l: '千人針を縫って持たせる', w: 1, f: ['family'] },
+      { k: 'eki', l: '駅で万歳の声に混じって見送る', w: 0.8, f: ['family'] }
+    ]);
+    return true;
+  }, res: {
+    harinuki: function (c) { c.say('町角に立って、道行く女の人に一針ずつ縫ってもらった千人針を、夫の腹に巻いて送り出した。', { tie: 4, sat: -4 }, '家庭'); },
+    eki: function (c) { c.say('駅は日の丸の小旗でいっぱいだった。万歳の声の中で、夫の顔をただ見ていた。', { tie: 3, sat: -5 }, '家庭'); }
+  } });
+  // 定年後の夫婦の時間（戦後）
+  arc({ id: 'teinen', start: function (c) {
+    var L = c.L, sp = spouseOf(L);
+    if (!L.married || !sp || c.y < 1955 || c.a < 60 || c.a > 66 || !c.p(0.2)) return false;
+    c.ask('teinen', '定年のあと', (L.sex === 'm' ? '定年を迎え' : '夫が定年を迎え') + '、夫婦で家にいる時間が急に増えた。', [
+      { k: 'tabi', l: '二人で旅に出る', w: 1, f: ['family'] },
+      { k: 'shumi', l: 'それぞれの趣味を持つ', w: 1, f: ['study'] },
+      { k: 'kaji', l: '家のことを分け合う', w: 0.8, f: ['family'] }
+    ]);
+    return true;
+  }, res: {
+    tabi: function (c) { c.money({ inc: -0.1, t: '夫婦で旅に出た' }); c.say('二人で旅に出た。若いころに行けなかった土地を、少しずつ回った。', { sat: 6, tie: 5 }, '家庭'); },
+    shumi: function (c) { c.say('それぞれに趣味を持った。夕飯のときに、その日のことを話すのが楽しみになった。', { sat: 4, learn: 3 }, '家庭'); },
+    kaji: function (c) { c.say('家のことを分け合うことにした。最初はぎこちなかったが、いつの間にか慣れた。', { tie: 6 }, '家庭'); }
+  } });
+  // 子の奉公先を決める（江戸〜明治）
+  arc({ id: 'kohoko', start: function (c) {
+    var L = c.L, kid = kidOf(L, c.y, 10, 13);
+    if (!kid || c.y >= 1900 || ['kuge', 'bushi', 'priest', 'ainu'].indexOf(c.st) >= 0 || c.poor() === false && c.p(0.5) || !c.p(0.06)) return false;
+    c.s.kohoko = nm(kid) || (kid.sex === 'm' ? '息子' : '娘');
+    c.ask('kohoko', '子の奉公先', '子の' + c.s.kohoko + 'を、どこへ奉公に出すか決める時が来た。', [
+      { k: 'shoka', l: '町の商家へ出す', w: 1, f: ['earn'] },
+      { k: 'oyakata', l: '職人の親方に預ける', w: 0.8, f: ['study'] },
+      { k: 'home', l: '手元に置いて家の仕事をさせる', w: 0.8, f: ['family'] }
+    ]);
+    return true;
+  }, res: {
+    shoka: function (c) { c.money({ inc: 0.1, t: '子の奉公の前借り' }); c.say(c.s.kohoko + 'を町の商家へ出した。見送ったあと、しばらく夕飯がのどを通らなかった。', { tie: -3, sat: -1 }, '家庭'); },
+    oyakata: function (c) { c.say(c.s.kohoko + 'を職人の親方に預けた。十年経って、一人前の腕になって帰ってきた。', { tie: 2, sat: 2 }, '家庭'); },
+    home: function (c) { c.say(c.s.kohoko + 'を手元に置いた。家の働き手が一人増えた。', { tie: 4 }, '家庭'); }
+  } });
+  // 子の縁談に口を出すか
+  arc({ id: 'koendan', start: function (c) {
+    var L = c.L, kid = kidOf(L, c.y, 18, 26);
+    if (!kid || c.a < 40 || !c.p(0.08)) return false;
+    c.s.koen = nm(kid) || (kid.sex === 'm' ? '息子' : '娘');
+    c.ask('koendan', '子の縁談', '子の' + c.s.koen + 'に、' + (c.y < 1950 ? '縁談が持ち込まれた。相手の家は申し分ない' : '結婚したい相手がいると打ち明けられた') + '。', [
+      { k: 'kuchi', l: '口を出す', w: c.y < 1950 ? 1.2 : 0.6, f: ['family'] },
+      { k: 'makaseru', l: '本人に任せる', w: c.y < 1950 ? 0.6 : 1.2, f: ['family'] }
+    ]);
+    return true;
+  }, res: {
+    kuchi: function (c) { var ok = c.p(0.5); c.say(ok ? c.s.koen + 'は親の言うことを聞き入れた。祝言の日、ほっとした顔をしていた。' : c.s.koen + 'は「自分のことは自分で決める」と言い返し、しばらく家に寄りつかなくなった。', ok ? { tie: 3 } : { tie: -6, sat: -3 }, '家庭'); },
+    makaseru: function (c) { c.say(c.s.koen + 'に任せた。選んだ相手を連れてきた日、少し照れくさそうだった。', { tie: 5, sat: 2 }, '家庭'); }
+  } });
+  // 子が家を継がないと言い出す（家制度の跡取りとつなげる）
+  arc({ id: 'kotsugi', start: function (c) {
+    var L = c.L, kid = kidOf(L, c.y, 17, 25, function (m) { return m.sex === 'm'; });
+    if (!kid || !famBiz(L) || c.y < 1880 || c.a < 40 || !c.p(0.1)) return false;
+    c.s.kotsugi = nm(kid) || '息子';
+    c.ask('kotsugi', '跡を継がない', '跡を継ぐはずの' + c.s.kotsugi + 'が、「' + BIZ[bizKey(L)] + 'は継がない。町へ出て働きたい」と言い出した。', [
+      { k: 'settoku', l: '説得する', w: 1, f: ['family'] },
+      { k: 'yurusu', l: '好きにさせる', w: 0.8 + Math.max(0, c.tr('warm')) * 0.5, f: ['family'] }
+    ]);
+    return true;
+  }, res: {
+    settoku: function (c) { var ok = c.p(0.5); c.say(ok ? '夜通し話し合い、' + c.s.kotsugi + 'は家に残ることになった。' : c.s.kotsugi + 'は説得を振り切って町へ出ていった。', ok ? { tie: 2, sat: 2 } : { tie: -6, sat: -4 }, '家庭'); },
+    yurusu: function (c) { c.say(c.s.kotsugi + 'の好きにさせた。家の仕事をどうするかは、また考えることにした。', { tie: 4, sat: -2 }, '家庭'); }
+  } });
+
+  /* ========== お金の選択（改善の指示書 第4弾の11） ==========
+     選んだ結果は、その年の貯金に足し引きし（c.money）、死亡の記録の「遺した財産」につながる。
+     額はその人のふだんの年収や貯金に対する割合で決め、新しい金額は作らない（利息や物価の目安は推計） */
+  // 凶作の年の年貢（江戸までの百姓）
+  arc({ id: 'nengu', start: function (c) {
+    var L = c.L, t = ((c.rec && c.rec.events) || []).map(function (e) { return e.t; }).join('') + ((c.rec && c.rec.world && c.rec.world.items) || []).map(function (i) { return i.t; }).join('');
+    var bad = /凶作|飢饉|不作|日照り|冷害/.test(t);
+    if (c.y >= 1873 || ['hyakusho', 'genin', 'ryukyuHyakusho', 'gusuku'].indexOf(c.st) < 0 || c.a < 20 || c.a > 60 || !(bad ? c.p(0.6) : c.p(0.012))) return false;
+    var dau = kidOf(L, c.y, 10, 16, function (m) { return m.sex === 'f'; });
+    var opts = [{ k: 'shichi', l: '田畑を質に入れる', w: 1, f: ['save'] }, { k: 'shakumai', l: '地主から米を借りる', w: 1, f: ['family'] }];
+    // 答えは3つまで：年ごろの娘がいる家は前借り、いない家は減免の願い
+    if (dau) { c.s.nenguDau = nm(dau) || '娘'; opts.push({ k: 'mae', l: '娘を奉公に出して給金を前借りする', w: 0.6, f: ['earn'] }); }
+    else opts.push({ k: 'genmen', l: '年貢を減らしてほしいと願い出る', w: 0.4 + Math.max(0, c.tr('adv')) * 0.5, f: ['study'] });
+    c.ask('nengu', '年貢が納められない', (bad ? 'この年は不作で、' : '') + '年貢の米が足りない。納めの日は近い。', opts);
+    return true;
+  }, res: {
+    shichi: function (c) { c.money({ f: -0.4, t: '田畑を質に入れた（推計）' }); c.say('田畑の一部を質に入れて、年貢を納めた。', { sat: -6 }, '家庭'); c.later(5, 'nengu.back'); },
+    shakumai: function (c) { c.money({ f: -0.15, t: '借りた米の返済（推計）' }); c.say('地主から米を借りて納めた。利息の分まで、何年もかけて返すことになった。', { sat: -4, tie: -1 }, '家庭'); },
+    genmen: function (c) { if (c.p(0.4)) c.say('村の名主を通じて願い出ると、年貢の一部が免じられた。', { sat: 4, tie: 2 }, '家庭'); else { c.money({ f: -0.25, t: '願いは聞き入れられず、蓄えで年貢を納めた' }); c.say('願いは聞き入れられなかった。蓄えをはたいて納めた。', { sat: -5 }, '家庭'); } },
+    mae: function (c) { c.money({ inc: 0.25, t: '娘の奉公の給金を前借りした' }); c.say(c.s.nenguDau + 'を奉公に出し、給金を前借りして年貢を納めた。', { tie: -8, sat: -3 }, '家庭'); }
+  } });
+  N['nengu.back'] = function (c) { if (!c.L.alive) return; if (c.p(0.5)) { c.money({ f: -0.2, t: '質に入れた田畑を請け戻した' }); c.say('五年かけて、質に入れた田畑を請け戻した。', { sat: 6 }, '家庭'); } else c.say('質に入れた田畑は流れてしまい、その分は小作として耕すことになった。', { sat: -6 }, '家庭'); };
+  // 頼母子講・無尽に入るか
+  arc({ id: 'tanomoshi', start: function (c) {
+    if (c.y < 1300 || c.y > 1960 || c.a < 25 || c.a > 55 || !c.p(0.03)) return false;
+    c.ask('tanomoshi', c.y < 1700 ? '頼母子講' : c.y < 1900 ? '頼母子講' : '無尽', '近所の人たちが掛け金を出し合い、順番にまとまった金を受け取る' + (c.y < 1900 ? '頼母子講' : '無尽') + 'に誘われた。', [
+      { k: 'iru', l: '講に入る', w: 1 + Math.max(0, c.tr('soc')) * 0.3, f: ['save', 'family'] },
+      { k: 'iranai', l: '入らない', w: 0.8, f: ['save'] }
+    ]);
+    return true;
+  }, res: {
+    iru: function (c) { c.money({ mul: 0.95, until: c.y + 3, t: '講の掛け金' }); c.say('講に入った。毎月の掛け金は苦しかったが、寄り合いで顔を合わせる人が増えた。', { tie: 4 }, '人間関係'); c.later(2 + Math.floor(c.r() * 3), 'tanomoshi.get'); },
+    iranai: function (c) { c.say('誘いは断った。', { tie: -1 }, '人間関係'); }
+  } });
+  N['tanomoshi.get'] = function (c) { if (!c.L.alive) return; if (c.p(0.12)) { c.money({ inc: -0.3, t: '講が潰れ、掛け金が戻らなかった' }); c.say('講の世話役が金を持って逃げ、掛け金は戻らなかった。', { sat: -6, tie: -4 }, '人間関係'); } else { c.money({ inc: 0.6, t: '講の金が回ってきた' }); c.say('講の順番が回ってきて、まとまった金を受け取った。', { sat: 6 }, '家庭'); } };
+  // 郵便貯金（明治〜）
+  arc({ id: 'yucho', start: function (c) {
+    if (c.y < 1875 || c.y > 1995 || c.a < 20 || c.a > 50 || !c.p(0.03)) return false;
+    c.ask('yucho', '郵便貯金', '郵便局の窓口で、「毎月少しずつでも積み立てませんか」と勧められた。', [
+      { k: 'tsumu', l: '毎月積み立てる', w: 1 + Math.max(0, c.tr('grit')) * 0.4, f: ['save'] },
+      { k: 'tsukau', l: '今の暮らしに使う', w: 0.8, f: ['family'] }
+    ]);
+    return true;
+  }, res: {
+    tsumu: function (c) { c.money({ mul: 1.12, until: c.y + 25, t: '郵便貯金を積み立てた（利息は推計）' }); c.say('毎月の給金から少しずつ郵便貯金に回すことにした。', { sat: 1 }, '家庭'); },
+    tsukau: function (c) { c.money({ mul: 0.95, until: c.y + 10, t: '貯めずに暮らしに使った' }); c.say('積み立てはやめておき、今の暮らしに使うことにした。', { sat: 2 }, '家庭'); }
+  } });
+  // マイホームと住宅ローン（戦後）
+  arc({ id: 'myhome', start: function (c) {
+    var L = c.L;
+    if (c.y < 1960 || !L.married || c.a < 28 || c.a > 45 || c.poor() || c.s.done.myhome || !c.p(0.1)) return false;
+    c.ask('myhome', 'マイホーム', '郊外に新しい住宅地ができた。' + (c.y < 1990 ? '「一国一城の主に」という広告が目に入る' : '子どもの学区も悪くない') + '。家を買うか。', [
+      { k: 'kau', l: '住宅ローンを組んで家を買う', w: 1, f: ['family'] },
+      { k: 'chintai', l: '借家のままにする', w: 0.8, f: ['save'] }
+    ]);
+    return true;
+  }, res: {
+    kau: function (c) { c.L.boughtHome = c.y; c.money({ f: -0.6, t: '家の頭金を払った' }); c.money({ mul: 0.8, until: c.y + 30, t: '住宅ローンの返済' }); c.say('三十年の住宅ローンを組んで家を買った。引っ越しの日、子どもが庭を走り回った。', { sat: 6, tie: 3 }, '家庭'); },
+    chintai: function (c) { c.money({ mul: 1.05, until: c.y + 30, t: '借家のまま貯金を続けた' }); c.say('借家のままにした。身軽な暮らしも悪くない。', { sat: 1 }, '家庭'); }
+  } });
+  // 株を買うか（戦後）。上がるか下がるかは、その年の相場の大きな流れに合わせる（推計）
+  arc({ id: 'kabu', start: function (c) {
+    if (c.y < 1950 || c.a < 30 || c.a > 60 || c.poor() || !c.p(0.025)) return false;
+    c.ask('kabu', '株', (c.y >= 1985 && c.y <= 1989 ? '世の中は株の話でもちきりだ。' : '勤め先の同僚が株で儲けたらしい。') + '貯金の一部で株を買ってみるか。', [
+      { k: 'kau', l: '株を買う', w: 0.6 + Math.max(0, c.tr('adv')) * 0.6, f: ['earn'] },
+      { k: 'kawanai', l: '買わない', w: 1, f: ['save'] }
+    ]);
+    return true;
+  }, res: {
+    kau: function (c) { c.say('貯金の一部で株を買った。', { sat: 1 }, '家庭'); c.later(2, 'kabu.res'); },
+    kawanai: function (c) { c.say('株には手を出さなかった。', null, '家庭'); }
+  } });
+  N['kabu.res'] = function (c) {
+    if (!c.L.alive) return;
+    var y = c.y, down = (y >= 1990 && y <= 1992) || (y >= 2000 && y <= 2002) || (y >= 2008 && y <= 2009), up = (y >= 1986 && y <= 1989) || (y >= 2013 && y <= 2017);
+    var win = up ? c.p(0.8) : down ? c.p(0.15) : c.p(0.5);
+    if (win) { c.money({ f: 0.15, t: '株が値上がりした' }); c.say('買った株が値上がりした。少しだけ売って、家族で食事に出かけた。', { sat: 4 }, '家庭'); }
+    else { c.money({ f: -0.2, t: '株が値下がりした' }); c.say('買った株が値下がりした。新聞の株価の欄を見なくなった。', { sat: -4 }, '家庭'); }
+  };
+  // 老後に子と同居するか
+  arc({ id: 'rogo', start: function (c) {
+    var L = c.L, kid = kidOf(L, c.y, 25, 60);
+    if (!kid || c.a < 65 || c.a > 75 || c.y < 1900 || !c.p(0.15)) return false;
+    c.s.rogo = nm(kid) || (kid.sex === 'm' ? '息子' : '娘');
+    c.ask('rogo', '老後の暮らし', '子の' + c.s.rogo + 'に、「そろそろ一緒に暮らさないか」と言われた。', [
+      { k: 'issho', l: '子の家族と一緒に暮らす', w: c.y < 1980 ? 1.2 : 0.7, f: ['family'] },
+      { k: 'betsu', l: (L.married ? '夫婦で' : 'ひとりで') + '暮らし続ける', w: c.y < 1980 ? 0.6 : 1.1, f: ['body'] }
+    ]);
+    return true;
+  }, res: {
+    issho: function (c) { c.money({ mul: 1.1, t: '子の家族と暮らし、出費が減った' }); c.say(c.s.rogo + 'の家族と暮らし始めた。孫の声で家がにぎやかになった。', { tie: 6, sat: 2 }, '家庭'); },
+    betsu: function (c) { c.money({ mul: 0.95, t: '暮らしの費用を自分でまかなった' }); c.say('住み慣れた家で暮らし続けることにした。' + c.s.rogo + 'は週に一度、顔を見に来てくれる。', { sat: 3, tie: 1 }, '家庭'); }
+  } });
 
   /* ========== 名前の入った出来事（第2弾の6「出来事の文に人を入れる」） ==========
      名前の入った出来事がまだない年に、同じ家の人やまわりの人との小さな出来事を1つ足す。

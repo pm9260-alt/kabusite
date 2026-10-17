@@ -233,7 +233,7 @@ for (const by of YEARS) {
     const used = {};
     for (const r of L.log) {
       for (const e of r.events) {
-        if (e.flavor) continue; // 名前の入った小さな出来事（第2弾の6）は場面の割合に数えない
+        if (e.flavor || e.story) continue; // 名前の入った小さな出来事（第2弾の6）と、物語の分かれ道・まわりの人の出来事（別に数える）は場面の割合に数えない
         sim.catAll[e.cat] = (sim.catAll[e.cat] || 0) + 1;
         if (r.year <= LAST_YEAR) sim.catPre[e.cat] = (sim.catPre[e.cat] || 0) + 1;
         if (e.sid) {
@@ -289,7 +289,7 @@ function expectedLife(P0, sex, by) {
 const secs = ((Date.now() - t0) / 1000).toFixed(0);
 const share = (o, k) => { const t = Object.values(o).reduce((a, b) => a + b, 0); return t ? (o[k] || 0) / t : 0; };
 rec('学歴と仕事の場面が全体の25%以下か', share(sim.catAll, '学歴と仕事') <= 0.25, (share(sim.catAll, '学歴と仕事') * 100).toFixed(1) + '%');
-rec('時代の場面が15%以上か（' + LAST_YEAR + '年までの年で数える）', share(sim.catPre, '時代') >= 0.15, (share(sim.catPre, '時代') * 100).toFixed(1) + '%（2027年以降も含めると ' + (share(sim.catAll, '時代') * 100).toFixed(1) + '%）');
+rec('時代の場面が15%以上か（' + LAST_YEAR + '年までの年で数える。物語の分かれ道とまわりの人の出来事は除く）', share(sim.catPre, '時代') >= 0.15, (share(sim.catPre, '時代') * 100).toFixed(1) + '%（2027年以降も含めると ' + (share(sim.catAll, '時代') * 100).toFixed(1) + '%）');
 rec('場面が空の年がないか', sim.empty === 0, sim.empty + '年');
 rec('同じ人生の中で同じ場面が2回出ていないか', sim.dupe === 0, sim.dupe + '回');
 rec('能力・家族・時代の矛盾がないか', sim.contra.length === 0, [...new Set(sim.contra)].slice(0, 8).join('、'));
@@ -993,6 +993,43 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
   const aj = fs.readFileSync(path.join(SITE, 'js', 'app.js'), 'utf8'), pj = fs.readFileSync(path.join(SITE, 'js', 'prefs.js'), 'utf8');
   const ok4 = /if \(lessMotion\(\)\) \{[\s\S]{0,300}lt-v/.test(aj) && /if \(lessMotion\(\)\) \{ showEnd\(\); return; \}/.test(aj) && /ichioku-motion/.test(pj) && /prefers-reduced-motion/.test(pj);
   rec('第3弾4 動きを減らす設定で、抽選と亡くなった瞬間の切り替えの動きを出さないか', ok4, ok4 ? '' : '動きを減らす分かれがない');
+}
+
+/* ---------- 改善の指示書 第4弾（まわりの人・お金の選択） ---------- */
+{
+  const NP = TEST ? 200 : 500;
+  let adult = 0, adultOk = 0, adj = 0, adjOk = 0, choices = 0;
+  const missing = [], kinds = {};
+  for (let i = 0; i < NP; i++) {
+    const by = 1000 + Math.floor((i * 2.003 + 0.25) % 1001), seed = i * 15485863 + 11;
+    let L;
+    if (by >= 1975) L = E.newLife(C, P[E.pickPref(C, by, E.makeRng(seed ^ 0x9e3779b9))], { year: by, seed });
+    else { const b0 = O.pickBirth(C, H, by, E.makeRng(seed ^ 0x9e3779b9)); L = O.newLife(C, H, P[b0.pref] || null, { year: by, seed, birth: b0 }); }
+    const M = L.old ? O : E; let g = 0;
+    while (L.alive && g++ < 130) { let r = M.step(L); while (r && r.branch) r = M.resolve(L, r.branch.ask || r.branch.id === 'ask' ? { text: '' } : E.autoAnswer(r.branch, null)); }
+    const s = L.story || {};
+    // 1 家族以外の名前のある人が2回以上
+    if (L.deathAge >= 20) {
+      adult++;
+      const fam = new Set([L.name, ...(L.members || []).map(m => m.name)].filter(Boolean));
+      const others = [s.pal && s.pal.n, s.wpal && s.wpal.n, s.friend, s.tomo, s.koi, s.koiName, s.loverName, s.classmate, s.helpName].filter(n => n && !fam.has(n));
+      const cnt = {};
+      for (const r of L.log) for (const e of r.events) for (const n of others) if (e.t.includes(n)) cnt[n] = (cnt[n] || 0) + 1;
+      if (Object.values(cnt).some(v => v >= 2)) adultOk++;
+    }
+    // 2 お金の選択の結果が、その年の貯金に入っている
+    for (const m of L.moneyAdj || []) {
+      if (!(m.f || m.inc)) continue;
+      const r = L.log.filter(x => x.year === m.y)[0];
+      if (!r || r.age < 18) continue;
+      adj++;
+      const ok = r.money && (r.money.why || []).some(w => w.choice && w.t === m.t);
+      if (ok) adjOk++; else missing.push(L.by + '年生まれ ' + m.y + '年：' + m.t);
+    }
+    for (const c of L.choices || []) if (/nengu|tanomoshi|yucho|myhome|kabu|rogo/.test(c.kind || '') || /年貢|頼母子講|無尽|郵便貯金|マイホーム|株|老後/.test(c.title || '')) { choices++; kinds[c.title] = (kinds[c.title] || 0) + 1; }
+  }
+  rec('第4弾1 20歳以上まで生きた人生の8割以上で、家族以外の名前のある人が2回以上出てくるか', adult > 0 && adultOk / adult >= 0.8, adult + '人のうち ' + Math.round(adultOk / adult * 100) + '%');
+  rec('第4弾2 お金の選択の結果が、その年の貯金の数字に入っているか', adj > 0 && missing.length === 0, missing.slice(0, 4).join('、') || adj + '件（お金の分かれ道 ' + choices + '回：' + Object.entries(kinds).map(([k, v]) => k + ' ' + v).join('・') + '）');
 }
 
 /* ---------- S 物語の分かれ道（作る人の指示 2026-10-17） ---------- */
