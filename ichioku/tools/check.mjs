@@ -1084,6 +1084,54 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
   rec('v8直し12 女性の人生に、藩校・寄り合いに出る・若者組・兵役の選択が出ないか', gender.length === 0, gender.slice(0, 4).join('、'));
 }
 
+/* ---------- v8 の直し（ichioku1000-v8-fix-spec1：2・3・13） ---------- */
+{
+  const CHx = require(path.join(SITE, 'js', 'choices.js'));
+  const NP = TEST ? 200 : 500;
+  // 2 すべての小さな選択に土地の種類（kind）と仕事の種類（ind）の条件があるか。時代の言葉が出せる年に収まっているか
+  const noCond = CHx.list.filter(o => !(o.when && Array.isArray(o.when.kind) && Array.isArray(o.when.ind))).map(o => o.id);
+  const eraBad = [];
+  CHx.list.forEach(o => { const all = o.texts.join('') + o.options.map(p => p.l + (p.after || '')).join(''); const elite = (o.when.status || []).every(st => ['bushi', 'kuge', 'priest'].includes(st)) && (o.when.status || []).length > 0;
+    for (const e of CHx.ERA_WORDS) if (e[0].test(all) && (o.y[0] < e[1] || o.y[1] > e[2]) && !(e[3] && elite) && !(o.when.y && o.when.y[0] >= e[1] && o.when.y[1] <= e[2])) eraBad.push(o.id + '（' + String(e[0]).slice(1, 6) + '）'); });
+  let tot = 0, uni = 0, overLife = 0;
+  const cityBad = [], offBad = [], tri = [];
+  for (let i = 0; i < NP; i++) {
+    const by = 1000 + Math.floor((i * 2.003 + 0.8) % 1001), seed = i * 40503 + 9;
+    let L;
+    if (by >= 1975) L = E.newLife(C, P[E.pickPref(C, by, E.makeRng(seed ^ 0x9e3779b9))], { year: by, seed });
+    else { const b0 = O.pickBirth(C, H, by, E.makeRng(seed ^ 0x9e3779b9)); L = O.newLife(C, H, P[b0.pref] || null, { year: by, seed, birth: b0 }); }
+    const M = L.old ? O : E; let g = 0; const lab = {};
+    while (L.alive && g++ < 130) { let r = M.step(L); while (r && r.branch) { const br = r.branch; (br.groups || []).forEach(gr => (gr.options || []).forEach(o => { lab[o.l] = (lab[o.l] || 0) + 1; })); r = M.resolve(L, br.ask || br.id === 'ask' ? { text: '' } : E.autoAnswer(br, null)); } }
+    const sm = (L.choices || []).filter(c => c.kind === 'small');
+    tot += sm.length; const nu = sm.filter(c => c.u).length; uni += nu;
+    if (sm.length >= 5 && nu / sm.length > 0.3) overLife++;
+    for (const c of sm) {
+      if (c.place === 'city' && /村|畑|田んぼ|田植|稲/.test(c.q || '')) cityBad.push(L.by + '年生まれ：' + (c.q || '').slice(0, 18));
+      if (c.ind === 'office' && /仕入れ|客が|売り上げ|商い/.test((c.q || '') + c.l)) offBad.push(L.by + '年生まれ：' + (c.q || '').slice(0, 18));
+    }
+    const t3 = Object.entries(lab).filter(([k, v]) => v >= 3 && !/^「/.test(k));
+    if (t3.length) tri.push(L.by + '年生まれ：' + t3.slice(0, 2).map(x => x[0] + '×' + x[1]).join('・'));
+  }
+  rec('v8直し2 すべての小さな選択に、土地の種類と仕事の種類の条件があり、時代に合わない言葉がないか', noCond.length === 0 && eraBad.length === 0, noCond.slice(0, 4).concat(eraBad.slice(0, 4)).join('、') || CHx.list.length + 'の選択');
+  rec('v8直し2 時代を問わない選択が3割以下か（' + NP + '人）', tot > 0 && uni / tot <= 0.3 && overLife === 0, '全体 ' + Math.round(uni / tot * 100) + '%・3割を超えた人生 ' + overLife);
+  rec('v8直し2 市街地の人生に村・畑・田の選択が出ず、勤め人に商いの選択が出ないか', cityBad.length === 0 && offBad.length === 0, cityBad.slice(0, 3).concat(offBad.slice(0, 3)).join('、'));
+  rec('v8直し13 同じ答えの文が、1つの人生に3回以上出ないか', tri.length === 0, tri.slice(0, 4).join('、'));
+  // 3 1935〜1938年生まれの町の子：1944〜1945年に疎開か空襲の出来事・選択が出る
+  let n3 = 0, ok3 = 0; const miss3 = [];
+  for (let i = 0; n3 < (TEST ? 40 : 100) && i < 5000; i++) {
+    const by = 1935 + i % 4, seed = i * 31 + 7, b0 = O.pickBirth(C, H, by, E.makeRng(seed ^ 0x9e3779b9));
+    const L = O.newLife(C, H, P[b0.pref] || null, { year: by, seed, birth: b0 });
+    if (L.kind !== 'city' && L.kind !== 'town') continue;
+    let g = 0; const qs = [];
+    while (L.alive && g++ < 130) { let r = O.step(L); while (r && r.branch) { qs.push([L.year, (r.branch.groups || []).map(x => x.q).join('')]); r = O.resolve(L, r.branch.ask ? { text: '' } : E.autoAnswer(r.branch, null)); } }
+    if (L.deathYear < 1945) continue;
+    n3++;
+    const ok = L.log.some(r => (r.year === 1944 || r.year === 1945) && r.events.some(e => /疎開|空襲/.test(e.t))) || qs.some(([y, q]) => (y === 1944 || y === 1945) && /疎開|空襲/.test(q));
+    if (ok) ok3++; else miss3.push(L.by + '年生まれ');
+  }
+  rec('v8直し3 1935〜1938年生まれの町の子（' + n3 + '人）で、1944〜1945年に疎開か空襲の出来事・選択が出るか', n3 > 0 && ok3 === n3, miss3.slice(0, 4).join('、'));
+}
+
 /* ---------- S 物語の分かれ道（作る人の指示 2026-10-17） ---------- */
 {
   const Sx = require(path.join(SITE, 'js', 'story.js'));

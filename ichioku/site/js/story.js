@@ -46,12 +46,15 @@
       // お金の選択（第4弾の11）：その年の貯金に足し引きする（f はその時の貯金に、inc はふだんの年収に対する割合。mul は until の年まで貯まり方を何倍にするか）
       money: function (o) { (L.moneyAdj = L.moneyAdj || []).push(Object.assign({ y: L.year }, o)); },
       st: L.old ? L.status : 'modern',
-      kind: L.old ? L.kind : (L.place && L.place.kind === '町村' ? 'village' : 'city'),
+      // 土地の種類：村・浜の村・町・市街地（今の進め方は 町村・都市・大都市 を読みかえる）
+      kind: L.old ? (L.kind === 'kotan' ? 'village' : L.kind) : ({ '町村': 'village', '都市': 'town', '大都市': 'city' })[(L.place || {}).kind] || 'town',
       say: function (t, st, cat) { var e = api.push(L, rec, cat || '人間関係', t, []); e.story = true; if (st) e.st = st; return e; },
       later: function (dy, id, data) { s.at.push({ y: L.year + dy, id: id, d: data || {} }); },
       ask: function (id, title, q, opts, data, resArc) {
         // 1年に出す物語の分かれ道は1つまで。すでに出した年は、この場面を翌年に回す
         if (s.asked === L.year) { if (s.cur) s.at.push({ y: L.year + 1, id: s.cur, d: d || {} }); return; }
+        // 戦時中は、縁日や旅人などの場面の分かれ道を出さない
+        if (L.year >= 1938 && L.year <= 1945 && api.WAR_BAN && api.WAR_BAN.test(q + opts.map(function (o) { return o.l; }).join(''))) return;
         var ew = function (t) { return api.eraWords ? api.eraWords(t, L.year) : t; };
         q = ew(q); opts.forEach(function (o) { o.l = ew(o.l); });
         var br = { id: 'story', kind: 'story', big: true, sid: id, ra: resArc || id.split('.')[0], title: title, groups: [{ id: 's', q: q, options: opts.map(function (o) { return { k: o.k, l: o.l, f: o.f || [], h: o.h || HINTS[id + ':' + o.k] || '結果しだい' }; }) }], ev: [], w: {}, d: data || {} };
@@ -477,7 +480,7 @@
     if (!c.E || c.s.done.account || c.a < 18 || c.a > 25 || c.y < 2005 || (L.incPct || 0.5) > 0.5 || c.s.tr.adv < 0 || !c.p(0.03)) return false;
     c.ask('account', 'もうかる話', '借金の返済に追われていたとき、SNSで「口座を売れば5万円」という話が来た。', [
       { k: 'sell', l: '口座を売る', w: 0.3 + Math.max(0, c.tr('adv')) * 0.4 },
-      { k: 'no', l: '断る', w: 2, f: ['family', 'body', 'study', 'earn', 'save'] }
+      { k: 'no', l: '怪しい話だと相手にしない', w: 2, f: ['family', 'body', 'study', 'earn', 'save'] }
     ]);
     return true;
   }, res: {
@@ -542,7 +545,7 @@
     if (c.s.done.reality || c.a < 19 || c.a > 26 || c.y < 2012 || !gifted(c.s, 'looks') || !single(L) || !c.p(0.15)) return false;
     c.ask('reality', '番組の誘い', 'SNSに載せた写真が目に留まり、恋愛リアリティ番組から出演の誘いが来た。', [
       { k: 'yes', l: '出る', w: 0.5 + Math.max(0, c.tr('adv')) + Math.max(0, c.tr('soc')) * 0.5, f: ['earn'] },
-      { k: 'no', l: '断る', w: 1, f: ['family', 'body', 'study', 'save'] }
+      { k: 'no', l: '人前に出るのはやめておく', w: 1, f: ['family', 'body', 'study', 'save'] }
     ]);
     return true;
   }, res: {
@@ -1189,11 +1192,13 @@
     },
     no: function (c) { c.say('一座が去った翌朝、村はいつもより静かに感じられた。', { sat: -1 }); }
   } });
+  // 何度も聞かれるので、答えの言い回しを変える（同じ答えの文は1つの人生で2回まで）
+  var GEINO_L = [['村に戻る', '一座に残って旅を続ける'], ['故郷へ帰ると座頭に告げる', 'もう一年だけ舞台に立つ'], ['親の顔を見に村へ帰る', '次の国まで一座についていく'], ['芸をやめて田畑に戻る', '芸の道を選び続ける']];
   N['geino.ret'] = function (c) {
     if (!c.L.alive || c.L.mode !== 'tabi') return;
     c.ask('geino.ret', '一座か、村か', '旅暮らしも' + (c.y - (c.s.done.geino || c.y)) + '年になる。故郷の村から、' + (c.s.tr.warm > 0 ? '親が会いたがっている' : '戻ってこいという') + '便りが届いた。', [
-      { k: 'home', l: '村に戻る', w: 1 + Math.max(0, c.tr('warm')), f: ['family', 'save'] },
-      { k: 'stay', l: '一座に残って旅を続ける', w: 1 + Math.max(0, c.tr('adv')) + Math.max(0, c.tr('dream')) * 0.5, f: ['study', 'earn'] }
+      { k: 'home', l: GEINO_L[(c.s.geinoN = (c.s.geinoN || 0) + 1) % GEINO_L.length][0], w: 1 + Math.max(0, c.tr('warm')), f: ['family', 'save'] },
+      { k: 'stay', l: GEINO_L[c.s.geinoN % GEINO_L.length][1], w: 1 + Math.max(0, c.tr('adv')) + Math.max(0, c.tr('dream')) * 0.5, f: ['study', 'earn'] }
     ], null, 'geino3');
   };
   arc({ id: 'geino3', nodes: {}, res: {
@@ -1309,7 +1314,7 @@
     if (c.s.done.tozoku || !c.O || c.y > 1600 || L.sex !== 'm' || LOW.indexOf(L.status) < 0 || !c.poor() || c.a < 15 || c.a > 25 || c.s.tr.adv < 0.5 || !c.p(0.06)) return false;
     c.ask('tozoku', '盗賊の誘い', '飢えに苦しんでいたとき、山に住む盗賊の一味に誘われた。「金持ちの蔵から取るだけだ」と言う。', [
       { k: 'join', l: '一味に加わる', w: 0.4 + Math.max(0, c.tr('adv')) * 0.6 },
-      { k: 'no', l: '断る', w: 1.4, f: ['family', 'body', 'save', 'study', 'earn'] }
+      { k: 'no', l: '飢えても盗みはしない', w: 1.4, f: ['family', 'body', 'save', 'study', 'earn'] }
     ]);
     return true;
   }, res: {
@@ -1524,8 +1529,8 @@
     if (c.marryPending() || c.s.done.miai || !c.O || c.y < 1900 || c.y > 1970 || L.sex !== 'f' || L.married || c.a < 18 || c.a > 26 || !c.p(0.05)) return false;
     c.s.miaiName = c.name('m');
     c.ask('miai', '見合い', '遠い町の' + c.s.miaiName + 'という人との見合いの話が来た。写真を一枚見ただけで、会ったのは一度きり。受ける？', [
-      { k: 'yes', l: '受ける', w: 1.2 + Math.max(0, c.tr('adv')) * 0.5, f: ['family'] },
-      { k: 'no', l: '断る', w: 0.8, f: ['study', 'earn'] }
+      { k: 'yes', l: '見合いの席に出る', w: 1.2 + Math.max(0, c.tr('adv')) * 0.5, f: ['family'] },
+      { k: 'no', l: '写真だけで決めるのは嫌だと断る', w: 0.8, f: ['study', 'earn'] }
     ]);
     return true;
   }, res: {
@@ -1582,8 +1587,8 @@
     if (c.s.done.kasu || c.y < 1300 || c.a < 22 || c.a > 55 || c.poor() || !c.p(0.025)) return false;
     c.s.tomo = c.name(L.sex);
     c.ask('kasu', '友の頼み', '古くからの友の' + c.s.tomo + 'に、「商いの元手が足りない。必ず返すから」と' + (c.y < 1950 ? '金の請け人（保証人）になってほしい' : '借金の保証人になってほしい') + 'と頼まれた。', [
-      { k: 'yes', l: '引き受ける', w: 0.6 + Math.max(0, c.tr('warm')), f: ['family'] },
-      { k: 'no', l: '断る', w: 1 + Math.max(0, -c.tr('warm')) * 0.5, f: ['save', 'earn'] }
+      { k: 'yes', l: '請け人を引き受ける', w: 0.6 + Math.max(0, c.tr('warm')), f: ['family'] },
+      { k: 'no', l: '請け人だけは断る', w: 1 + Math.max(0, -c.tr('warm')) * 0.5, f: ['save', 'earn'] }
     ]);
     return true;
   }, res: {
@@ -1634,8 +1639,8 @@
     var L = c.L;
     if (c.s.done.matsuri || !c.O || c.a < 16 || c.a > 26 || !c.p(0.04 + 0.03 * Math.max(0, c.tr('soc')))) return false;
     c.ask('matsuri', '祭り', (L.sex === 'm' ? '村の若者組で、秋祭りの神輿の先頭' : '村の娘組で、秋祭りの踊りの手本') + 'を任せたいと言われた。', [
-      { k: 'yes', l: '引き受ける', w: 0.8 + Math.max(0, c.tr('soc')), f: ['family', 'body'] },
-      { k: 'no', l: '断る', w: 0.8 + Math.max(0, -c.tr('soc')), f: ['study', 'save'] }
+      { k: 'yes', l: '先頭に立つと引き受ける', w: 0.8 + Math.max(0, c.tr('soc')), f: ['family', 'body'] },
+      { k: 'no', l: '裏方に回りたいと言う', w: 0.8 + Math.max(0, -c.tr('soc')), f: ['study', 'save'] }
     ]);
     return true;
   }, res: {
@@ -1724,8 +1729,40 @@
     var out = t.replace(/\{(\w+)\}/g, function (m0, k) { var v = P[k]; if (!v) { bad = true; return ''; } return v; });
     return bad ? null : out;
   }
+  // その人の仕事の種類（子どものうちは家の仕事）：農・漁・商・職人・勤め人・武士・寺社（v8の直し 2）
+  var IND_OLD = { farm: 'farm', fish: 'fish', shop: 'shop', store: 'shop', maid: 'shop', kozo: 'shop', hoko: 'shop', craft: 'craft', factory: 'craft', silk: 'craft', build: 'craft', leather: 'craft', kawara: 'craft',
+    samurai: 'bushi', bushiMed: 'bushi', court: 'office', temple: 'priest', clerk: 'office', office: 'office', teacher: 'office', genin: 'farm', hunt: 'fish', ainu: 'fish', ryuOff: 'office' };
+  var IND_NEW = { agri: 'farm', fish: 'fish', shop: 'shop', service: 'shop', factory: 'craft', build: 'craft', office: 'office', pub: 'office', care: 'office' };
+  var CAT_IND = { farm: 'farm', yama: 'farm', ryuFarm: 'farm', ryukyu: 'farm', fish: 'fish', hunt: 'fish', ainu: 'fish', craft: 'craft', factory: 'craft', build: 'craft', leather: 'craft', kawara: 'craft', shop: 'shop', store: 'shop', maid: 'shop',
+    samurai: 'bushi', bushiMed: 'bushi', kuge: 'office', court: 'office', clerk: 'office', office: 'office', teacher: 'office', shizoku: 'office', temple: 'priest', genin: 'farm', ryuOff: 'office', rare: 'shop' };
+  function indOf(c) {
+    var L = c.L;
+    if (L.old) {
+      if (c.a >= 13 && L.job && L.job !== 'home' && IND_OLD[L.job]) return IND_OLD[L.job];
+      if (L.parentJob && CAT_IND[L.parentJob.cat]) return CAT_IND[L.parentJob.cat];
+      return { bushi: 'bushi', shizoku: 'office', kuge: 'office', priest: 'priest', chonin: 'shop' }[L.status] || (L.kind === 'fish' ? 'fish' : L.kind === 'city' || L.kind === 'town' ? 'shop' : 'farm');
+    }
+    if (c.a >= 15 && L.job && L.job.ind) return IND_NEW[L.job.ind] || 'office';
+    return IND_NEW[L.dadJob] || 'office';
+  }
+  // 大きな出来事の年（その年と前の年の出来事、戦時中）：その出来事に関わる選択を先に出し、時代を問わない選択は出さない（v8の直し 3）
+  function bigEv(c) {
+    var y = c.y, L = c.L, recs = [c.rec].concat((L.log || []).slice(-2));
+    var t = recs.map(function (r) { return r ? (r.events || []).map(function (e) { return e.t; }).join('') + ((r.world && r.world.items) || []).map(function (i) { return i.t; }).join('') : ''; }).join('');
+    if (y >= 1937 && y <= 1945) return 'war';
+    if (/空襲|出征|合戦|戦に|落城|戦が/.test(t)) return 'war';
+    if (/大きな地震|大地震|地震で|揺れ/.test(t)) return 'quake';
+    if (/飢饉|凶作/.test(t)) return 'famine';
+    if (/大火|焼け出され/.test(t)) return 'fire';
+    if (/疫病|コレラ|はやり病|疱瘡がはやり|かぜが流行|スペインかぜ|新型コロナ/.test(t)) return 'epidemic';
+    return null;
+  }
   function eligible(c, o) {
     var L = c.L, w = o.when || {}, y = c.y, a = c.a;
+    if (w.ind && w.ind.indexOf('home') < 0 && w.ind.indexOf(c.ind || (c.ind = indOf(c))) < 0) return false;
+    if (w.pref && w.pref.indexOf(String(L.old ? L.pref : (L.place || {}).pref)) < 0) return false;
+    if (w.ev && w.ev !== c.ev) return false;
+    if (w.u && c.ev) return false;
     if (y < o.y[0] || y > o.y[1] || a < o.a[0] || a > o.a[1]) return false;
     if (w.y && (y < w.y[0] || y > w.y[1])) return false;
     if (w.sex && w.sex !== L.sex) return false;
@@ -1769,17 +1806,40 @@
       return makeChoiceBranch(c, '小さな選択', '縁談を断るのも' + c.L.refused + '度目になった。' + (P.dad ? P.dad : '親') + 'と村の年寄りに、「いつまで選り好みをするのか」と囲まれた。', [
         { k: 'promise', l: '次の話は受けると約束する', fx: { tie: 2, sat: -1 } }, { k: 'own', l: '自分の考えを通す', fx: { sat: 1, tie: -2 } }], { cid: '_press', kind: 'small' });
     }
-    if (!c.p(a <= 5 ? 0.5 : 0.6)) return;
+    // 1944〜1945年の町の国民学校の子には、学童疎開の選択を必ず出す（v8の直し 3）
+    var sokaiKid = c.y >= 1944 && c.y <= 1945 && a >= 6 && a <= 12 && (c.kind === 'city' || c.kind === 'town') && !s.sokaiSeen;
+    if (!sokaiKid && !c.p(a <= 5 ? 0.5 : 0.6)) return;
+    c.ev = bigEv(c); c.ind = indOf(c);
+    s.labUse = s.labUse || {}; s.nC = s.nC || 0; s.nU = s.nU || 0;
+    var pref = String(c.L.old ? c.L.pref : (c.L.place || {}).pref), elite = ['bushi', 'kuge', 'priest'].indexOf(c.st) >= 0;
+    var CHk = CHm;
     var list = CHm.list.filter(function (o) { return eligible(c, o) && !(s.cool[o.id] && c.y - s.cool[o.id] < (o.cool || 8)); });
-    // 文の候補（同じ文は1回だけ）
+    // 同じ答えの文は、1つの人生で2回まで（v8の直し 13）
+    list = list.filter(function (o) { return !o.options.some(function (p) { return (s.labUse[p.l] || 0) >= 2; }); });
+    // 時代を問わない選択は、選択の3割まで（v8の直し 2）
+    if ((s.nU + 1) / (s.nC + 1) > 0.3) list = list.filter(function (o) { return !(o.when || {}).u; });
+    // 文の候補（同じ文は1回だけ。時代に合わない品物・言葉、住んでいない土地の地名、戦時中に出せない場面は出さない）
     var cand = [];
-    list.forEach(function (o) { o.texts.forEach(function (t, i) { var ft = fillT(t, P); if (ft && !s.seen[ft]) cand.push({ o: o, t: ft, i: i }); }); });
+    list.forEach(function (o) { o.texts.forEach(function (t, i) {
+      var ft = fillT(t, P), all = ft + o.options.map(function (p) { return p.l + (p.after || ''); }).join('');
+      if (!ft || s.seen[ft]) return;
+      if (CHk.eraOk && (!CHk.eraOk(all, c.y, elite) || !CHk.placeOk(all, pref))) return;
+      if (c.y >= 1938 && c.y <= 1945 && c.api.WAR_BAN && c.api.WAR_BAN.test(all)) return;
+      cand.push({ o: o, t: ft, i: i });
+    }); });
     if (!cand.length) return;
-    var pk = cand[Math.floor(c.r() * cand.length)], o = pk.o;
+    // 大きな出来事の年は、その出来事の選択を先に。ふだんは時代と土地で絞った選択を多めに
+    var evc = cand.filter(function (x) { return (x.o.when || {}).ev; }), loc = cand.filter(function (x) { return !(x.o.when || {}).u; });
+    var pool = evc.length ? evc : loc.length && c.r() < 0.8 ? loc : cand;
+    if (sokaiKid) { var sk = cand.filter(function (x) { return /疎開/.test(x.t); }); if (sk.length) pool = sk; }
+    var pk = pool[Math.floor(c.r() * pool.length)], o = pk.o;
+    if (/疎開/.test(pk.t)) s.sokaiSeen = c.y;
     var opts = [];
     for (var i = 0; i < o.options.length; i++) { var p = o.options[i], l = fillT(p.l, P); if (!l) return; opts.push({ k: p.k, l: l, fx: p.fx }); }
     s.seen[pk.t] = 1; s.cool[o.id] = c.y;
-    makeChoiceBranch(c, o.kind === 'parent' ? '親の選択' : '小さな選択', pk.t, opts, { cid: o.id, kind: o.kind });
+    if (o.kind !== 'parent') { s.nC++; if ((o.when || {}).u) s.nU++; }
+    o.options.forEach(function (p) { s.labUse[p.l] = (s.labUse[p.l] || 0) + 1; });
+    makeChoiceBranch(c, o.kind === 'parent' ? '親の選択' : '小さな選択', pk.t, opts, { cid: o.id, kind: o.kind, u: !!(o.when || {}).u, ev: (o.when || {}).ev || null, ind: c.ind, k: c.kind });
   }
   function nameChoice(c, P) {
     var L = c.L;
@@ -2009,7 +2069,7 @@
   }
   // 選んだ分かれ道を覚えておく（死亡の記録の「ひとこと」に使う。第2弾の7）
   function noteChoice(L, br, label, big) {
-    (L.choices = L.choices || []).push({ age: L.age, y: L.year, title: br.title || '', q: (br.groups[0] || {}).q || '', l: label, big: !!big, sid: br.sid, kind: (br.d && br.d.kind) || (big ? 'big' : 'small') });
+    (L.choices = L.choices || []).push({ age: L.age, y: L.year, title: br.title || '', q: (br.groups[0] || {}).q || '', l: label, big: !!big, sid: br.sid, place: (br.d && br.d.k) || (L.old ? L.kind : ({ '町村': 'village', '都市': 'town', '大都市': 'city' })[(L.place || {}).kind]), u: !!(br.d && br.d.u), ind: br.d && br.d.ind, kind: (br.d && br.d.kind) || (big ? 'big' : 'small') });
   }
   // おまかせ：今年の重点に合う答え（なければ null で、気質のまま）
   function autoAnswer(br, focus) {
@@ -2117,7 +2177,7 @@
       pal.next = y + 3 + Math.floor(c.r() * 5);
       if (a >= 62 && c.p(0.18)) { pal.gone = y; c.say('幼なじみの' + pal.n + 'が亡くなった。幼いころからの付き合いだった。', { tie: -4, sat: -4 }, '人間関係'); return; }
       var pool0 = a <= 14 ? PAL_EV.child.concat(c.y < 1900 && !pal.away ? PAL_EV.childOld : c.y >= 1950 && !pal.away ? PAL_EV.childNew : []) : a <= 30 ? PAL_EV.young : a <= 60 ? PAL_EV.mid : PAL_EV.old;
-      var pool = L.mode ? pool0.filter(function (x) { return !/自分の子/.test(x); }) : pool0;
+      var pool = pool0.filter(function (x) { return !(L.mode && /自分の子/.test(x)) && !(y >= 1938 && y <= 1945 && c.api.WAR_BAN && c.api.WAR_BAN.test(x)); });
       var t = pool[Math.floor(c.r() * pool.length)];
       if (/奉公に出る|引っ越して/.test(t)) pal.away = y;
       c.say(t.replace('{n}', pal.n).replace('{t}', ptr(pal.tr)[3]), { tie: 2 }, '人間関係');
@@ -2388,6 +2448,7 @@
       else if (m.role === '孫') add(FAM.grand, m, 1);
     });
     if (!cands.length && L.story && L.story.friend && a >= 5) add(FAM.friend, { name: L.story.friend, role: '友' }, 1);
+    if (y >= 1938 && y <= 1945 && api.WAR_BAN) cands = cands.filter(function (x) { return !api.WAR_BAN.test(x.t); });
     if (!cands.length) return;
     var used = L.famUsed = L.famUsed || {};
     var free = cands.filter(function (c) { return !used[c.t + c.m.name]; });

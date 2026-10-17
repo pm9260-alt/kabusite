@@ -182,7 +182,10 @@
     var m = homeMuni(L);
     L.place = { pref: L.home.pref, prefName: L.home.prefName, muni: L.home.muni, muniName: L.home.muniName, kind: m ? m.kind : '都市', away: false, muniObj: m };
   }
+  // 戦時中（1938〜1945年）に出せない場面と選択（縁日の夜店・旅人を泊める など。v8の直し 3）
+  var WAR_BAN = /綿菓子|金魚すくい|夜店|縁日|旅人|花火大会|海水浴|行楽|物見遊山/;
   var STORY_API = {
+    WAR_BAN: WAR_BAN,
     surv5: function (L) { var l = 1; for (var a = 0; a < 5; a++) l *= 1 - deathProb(L.C, L.P, L.sex, a, L.by + a); return l; },
     makeRng: makeRng, gauss: gauss, eraWords: function (t, y) { return eraWords(t, y); }, push: function (L, rec, cat, t, evs) { return push(L, rec, cat, t, evs); }, nameFor: storyName, move: storyMove,
     job: function (L, label, pay, reg, ind) { L.job = { ind: IND[ind] ? ind : (L.job && L.job.ind) || 'service', reg: !!reg, since: L.year, pay: pay, label: label }; L.lastJob = label; L.lastInd = L.job.ind; L.stage = 'work'; },
@@ -1921,7 +1924,7 @@
     pickPref: pickPref, newLife: newLife, step: step, resolve: resolve, autoRun: autoRun,
     cohort: cohort, majorTimeline: majorTimeline, familyList: familyList, fill: fill, sceneOk: sceneOk,
     pickCause: pickCause, deathStory: deathStory, ev: ev, askFor: askFor, answerAsk: answerAsk, ASK_AGES: ASK_AGES,
-    storyMod: storyMod, jobsMod: jobsMod, eraWords: eraWords, awayWords: awayWords, WAR_BAN: /綿菓子|金魚すくい|夜店|縁日|旅人|花火大会|海水浴|行楽|物見遊山/, storyName: storyName, namesMod: namesMod, withPool: withPool,
+    storyMod: storyMod, jobsMod: jobsMod, eraWords: eraWords, awayWords: awayWords, WAR_BAN: WAR_BAN, storyName: storyName, namesMod: namesMod, withPool: withPool,
     statusYear: statusYear, bodyMult: bodyMult, moneyYear: moneyYear, autoAnswer: autoAnswer, FOCUS: FOCUS, yearKind: yearKind, MAP_KINDS: MAP_KINDS, ST_KEYS: ST_KEYS, ST_NAMES: ST_NAMES
   };
 });

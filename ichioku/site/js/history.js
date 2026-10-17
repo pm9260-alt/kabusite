@@ -586,6 +586,7 @@
   /* ---------- 物語の分かれ道（js/story.js）とのつなぎ ---------- */
   var STORY_TO = { tokyo: '13', edo: '13', osaka: '27', kyoto: '26', hokkaido: '01' };
   var STORY_API = {
+    WAR_BAN: E.WAR_BAN,
     surv5: function (L) { var l = 1, v = Object.create(L); for (var a = 0; a < 5; a++) l *= 1 - dp(L, L.sex, a, L.by + a); return l; },
     makeRng: E.makeRng, eraWords: function (t, y) { return E.eraWords(t, y); }, gauss: function (r) { var u = 1 - r(), v = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); },
     push: function (L, rec, cat, t, evs) { return push(L, rec, cat, t, evs); },
@@ -1022,6 +1023,17 @@
     } else push(L, rec, '地域', w === 'go' ? '都会へ出たかったが、家の働き手として残ることになった' : '地元に残って暮らすことにした', br.ev);
   }
 
+  // 縁談・婿養子・養子の答えの文は、話が来るたびに言い回しを変える（同じ答えの文は1つの人生で2回まで。v8の直し 13）
+  var OFFER = {
+    marry: [['受ける', '断る'], ['この縁談を進めてもらう', '今回は見送る'], ['一度会ってみると答える', '気が進まないと伝える'], ['親の勧めに従う', 'まだ一緒になる気はないと言う'], ['祝言の支度を始める', 'もう少し待ってほしいと頼む'], ['この人となら、と心を決める', '仲人に詫びて断る']],
+    muko: [['婿養子に入る', '断る'], ['その家の婿になる', '生まれた家を離れるのは断る'], ['先方の家名を継ぐと決める', '跡取りの重さに尻込みして断る']],
+    yoshi: [['養子に入る', '断る'], ['その家の子になると決める', '生まれた家に残りたいと答える'], ['家名を継ぐ覚悟を決める', '今の家を離れられないと断る']]
+  };
+  function offerOpts(L, k) {
+    L.offerN = L.offerN || {}; var n = L.offerN[k] = (L.offerN[k] || 0) + 1, list = OFFER[k], p = list[(n - 1) % list.length];
+    return [{ k: 'yes', l: p[0] }, { k: 'no', l: p[1] }];
+  }
+
   /* 結婚・子ども・離婚 */
   function marryYear(L, rec) {
     var y = L.year, a = L.age, rnd = L.rnd, H = L.H;
@@ -1042,14 +1054,14 @@
     if (a >= L.marryAt && a < 55 && L.sex === 'm' && !L.heir && !L.adopted && !L.mukoNo && !L.muko && ieOK(L) && L.status !== 'bushi') {
       var hr = heirlessRates(L), pm = clamp((hr.muko + hr.adopt) / hr.supply, 0, 0.6);
       if (L.rnd2() < pm / 0.8) {
-        L.queue.push({ title: '婿養子の話', kind: 'muko', rate: 0.8, groups: [{ id: 'muko', q: (E.storyMod() && L.story ? E.storyMod().mukoHouse(L) : '跡取りの男子がいない家') + 'から、跡取りの男子がいないので婿養子に来てほしいという話が来た。受ける？', options: [{ k: 'yes', l: '婿養子に入る' }, { k: 'no', l: '断る' }] }],
+        L.queue.push({ title: '婿養子の話', kind: 'muko', rate: 0.8, groups: [{ id: 'muko', q: (E.storyMod() && L.story ? E.storyMod().mukoHouse(L) : '跡取りの男子がいない家') + 'から、跡取りの男子がいないので婿養子に来てほしいという話が来た。受ける？', options: offerOpts(L, 'muko') }],
           ev: [ev(L, 'ipss', near(H.nat.children, L.mom.by), '跡取りの男子がいない家の割合（妻が産んだ子どもの数と、20歳まで生きる割合から計算した目安）', pct(hr.muko + hr.adopt), { est: true })] });
         return;
       }
     }
     var SMs = E.storyMod(), su = SMs && L.story && a >= L.marryAt && a < 55 ? SMs.suitor(L, 'marry') : null;
     if (su) { (L.suitors = L.suitors || []).push(su); su.name = nameFor(L, L.sex === 'm' ? 'f' : 'm', su.by, su.st || L.status, L.story ? L.story.r : L.rnd2); }
-    if (a >= L.marryAt && a < 55) L.queue.push({ title: '縁談', kind: 'marry', suitor: su, groups: [{ id: 'marry', q: su ? E.eraWords(SMs.suitorText(L, su, su.name), L.year) : '縁談が持ち込まれた。受ける？', options: [{ k: 'yes', l: '受ける' }, { k: 'no', l: '断る' }] }],
+    if (a >= L.marryAt && a < 55) L.queue.push({ title: '縁談', kind: 'marry', suitor: su, groups: [{ id: 'marry', q: su ? E.eraWords(SMs.suitorText(L, su, su.name), L.year) : '縁談が持ち込まれた。受ける？', options: offerOpts(L, 'marry') }],
       ev: [ev(L, 'ipss', near(H.nat.marriage[L.sex], y), '平均初婚年齢（' + (L.sex === 'm' ? '夫' : '妻') + '。1898年以前は村の研究の目安）', lin(H.nat.marriage[L.sex], y).toFixed(1) + '歳', { est: y < 1899 }), ev(L, 'ipss', near(H.nat.neverMarried[L.sex], y), '50歳まで一度も結婚しない人の割合', pct(lin(H.nat.neverMarried[L.sex], y)))] });
   }
   function resolveMarry(L, rec, br, answers) {
@@ -1149,7 +1161,7 @@
       L.yoshiAsked = true;
       var t = bushiAdoptT(y), hr = heirlessRates(L), hf = hr.heirShare;
       var py = clamp(t / (1 - t) * hf / Math.max(0.05, 1 - hf), 0, 0.95);
-      L.queue.push({ title: '養子の話', kind: 'yoshi', rate: py, groups: [{ id: 'yoshi', q: '跡取りのいない' + (E.storyMod() && L.story ? E.storyMod().yoshiHouse(L) : '武士の家') + 'から、養子に迎えたいという話が来た。受ける？', options: [{ k: 'yes', l: '養子に入る' }, { k: 'no', l: '断る' }] }],
+      L.queue.push({ title: '養子の話', kind: 'yoshi', rate: py, groups: [{ id: 'yoshi', q: '跡取りのいない' + (E.storyMod() && L.story ? E.storyMod().yoshiHouse(L) : '武士の家') + 'から、養子に迎えたいという話が来た。受ける？', options: offerOpts(L, 'yoshi') }],
         ev: [ev(L, 'murakoshi', y, '武士の当主のうち養子の人の割合（徳島藩の知行取。ほかの藩にも使う目安）', pct(t), { est: true })] });
       return;
     }
