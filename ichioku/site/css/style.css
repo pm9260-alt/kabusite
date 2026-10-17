@@ -319,7 +319,12 @@ button { font: inherit; cursor: pointer; border-radius: 0; }
 .map-note { font-size: 11px; color: var(--sub); margin: 4px 0 0; }
 .life-top { position: sticky; top: 0; z-index: 3; display: flex; justify-content: space-between; align-items: center; background: var(--bg); padding: 6px 0; margin-bottom: 6px; border-bottom: 1px solid var(--line); }
 .lt-name { font-size: 15px; font-weight: 700; }
-.reborn-top { min-height: 36px; padding: 6px 12px; font-size: 14px; }
+.reborn-top, .auto-top, .back-top { min-height: 36px; padding: 6px 10px; font-size: 13px; }
+.life-top { gap: 6px; }
+.life-top .lt-name { margin-right: auto; }
+.back-top + .lt-name { display: none; }
+.back-top { margin-right: auto; }
+@media (max-width: 360px) { .reborn-top, .auto-top, .back-top { padding: 6px 6px; font-size: 12px; } }
 .life-head .life-id { flex: 1 1 auto; }
 .life-head .avatar { width: 72px; height: 96px; }
 .mini-map { flex: none; width: 116px; padding: 0; border: 0; background: none; cursor: pointer; align-self: flex-start; }
@@ -492,3 +497,24 @@ button { font: inherit; cursor: pointer; border-radius: 0; }
 .more > summary::-webkit-details-marker { display: none; }
 .more > summary::before { content: "＋ "; }
 .more[open] > summary::before { content: "－ "; }
+
+/* 分かれ道（改善の指示書 第1弾の3） */
+.br-kind { font-size: 12px; color: var(--sub); margin: 0; }
+.branch .opts { display: flex; flex-direction: column; gap: 8px; }
+.opt-btn { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-height: 48px; text-align: left; padding: 8px 12px; }
+.opt-btn .opt-l { font-size: 15px; }
+.opt-btn .opt-h { font-size: 12px; font-weight: 400; color: var(--sub); }
+/* 年齢の下の4つの数値 */
+.mini4 { display: flex; flex-direction: column; gap: 2px; margin-top: 6px; padding: 0; border: 0; background: none; cursor: pointer; width: 100%; color: var(--text); font: inherit; }
+.mini-row { display: grid; grid-template-columns: 4.2em minmax(0, 1fr) 2.4em; align-items: center; gap: 4px; font-size: 11px; }
+.mini-k { color: var(--sub); text-align: left; }
+.mini-bar { height: 4px; background: var(--track); display: block; }
+.mini-bar span { display: block; height: 100%; width: 0; background: var(--bar); }
+.mini-d { font-size: 11px; font-weight: 700; }
+.mini-d.up { color: var(--bar); }
+.mini-d.down { color: var(--beni); }
+@media (prefers-reduced-motion: no-preference) { .mini-bar span { transition: width .4s ease; } }
+
+.end-fact { display: flex; flex-direction: column; gap: 2px; }
+.big-pct { font-size: 44px; font-weight: 700; line-height: 1.1; }
+.big-cap { font-size: 14px; color: var(--sub); }

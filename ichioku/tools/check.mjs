@@ -837,6 +837,65 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
   rec('L 一生の浮き沈みの曲線が200人分すべてで描け、点の数・いちばん高い年と低い年の印・0歳の一生・比べる線の途切れ・文字の重なりとはみ出し（幅320・390・768・1366）・コントラストが合っているか', bad.length === 0, [...new Set(bad)].slice(0, 8).join('、') || n + '人分（0歳で亡くなった ' + zero + '人・比べる線が途切れた ' + cmpCut + '件）');
 }
 
+/* ---------- 改善の指示書 第1弾（選ぶ回数・結果を返す・状態・幼い人生） ---------- */
+{
+  const CHx = require(path.join(SITE, 'js', 'choices.js')), Sx = require(path.join(SITE, 'js', 'story.js'));
+  const NP = TEST ? 200 : 500;
+  const KSC = new Set(H.scenes.filter(sc => sc.k).map(sc => sc.t.split('{')[0]));
+  let adult = 0, sumR = 0, young = 0, youngW = 0;
+  const dup = [], noHint = [], badDir = [], modeBad = [], brace = [];
+  const sgn = h => { const o = {}; [['暮らしの満足', 'sat'], ['つながり', 'tie'], ['学び', 'learn'], ['からだ', 'body']].forEach(([w, k]) => { if (h.includes(w + '＋')) o[k] = 1; if (h.includes(w + '−')) o[k] = -1; }); return o; };
+  for (let i = 0; i < NP; i++) {
+    const by = 1000 + Math.floor((i * 2.003) % 1001), seed = i * 7919 + 101;
+    let L;
+    if (by >= 1975) L = E.newLife(C, P[E.pickPref(C, by, E.makeRng(seed ^ 0x9e3779b9))], { year: by, seed });
+    else { const b0 = O.pickBirth(C, H, by, E.makeRng(seed ^ 0x9e3779b9)); L = O.newLife(C, H, P[b0.pref] || null, { year: by, seed, birth: b0 }); }
+    const M = L.old ? O : E; let g = 0, n = 0; const seen = new Set();
+    while (L.alive && g++ < 130) {
+      let r = M.step(L);
+      while (r && r.branch) {
+        const br = r.branch;
+        if (br.ask || br.id === 'ask') { r = M.resolve(L, { text: '' }); continue; }
+        n++;
+        for (const gr of br.groups) {
+          if (/\{\w+\}/.test(gr.q)) brace.push(gr.q.slice(0, 20));
+          for (const o of gr.options) if (!Sx.hintFor(br, o)) noHint.push((br.title || '') + ':' + o.l);
+        }
+        if (br.ra === '__choice') { const q = br.groups[0].q; if (seen.has(q)) dup.push(q.slice(0, 20)); seen.add(q); }
+        // おまかせ（今年の重点なし）で答える
+        const auto = E.autoAnswer(br, null);
+        r = M.resolve(L, auto);
+        if (br.id === 'story') {
+          const opt = br.groups[0].options.filter(o => o.l === r.storyPick)[0];
+          if (opt) {
+            const h = Sx.hintFor(br, opt);
+            if (!/しだい/.test(h)) {
+              const want = sgn(h), got = r.storyFx || {};
+              const ok = ['sat', 'tie', 'learn', 'body'].every(k => (want[k] || 0) === Math.sign(got[k] || 0));
+              if (!ok) badDir.push((br.title || '') + '「' + opt.l + '」' + h + ' / ' + JSON.stringify(got));
+            }
+          }
+        }
+      }
+      if (r.mode) for (const e of r.events) { if (/で一人前に働き始めた/.test(e.t) || KSC.has(e.t.split('{')[0]) && !e.story) modeBad.push(L.by + '年生まれ ' + r.year + '年：' + e.t.slice(0, 20)); }
+      for (const e of r.events) if (/\{\w+\}/.test(e.t)) brace.push(e.t.slice(0, 20));
+    }
+    if (L.deathAge >= 20) { adult++; sumR += n / (L.deathAge + 1); }
+    if (L.deathAge <= 5) { young++; if (n) youngW++; }
+  }
+  rec('第1弾1 20歳以上まで生きた人生の選択回数の平均が、生きた年数×0.5以上か', adult > 0 && sumR / adult >= 0.5, adult + '人の平均 ' + (sumR / adult).toFixed(2) + '回／年');
+  rec('第1弾2 5歳までに亡くなった人生の90%以上で選択が1回以上あるか', young > 0 && youngW / young >= 0.9, young + '人のうち ' + Math.round(youngW / young * 100) + '%');
+  rec('第1弾3 1つの人生の中で、同じ文の選択が2回以上出ないか', dup.length === 0, dup.slice(0, 4).join('、'));
+  rec('第1弾4 すべての選択肢にヒントがあり、ヒントの向きと実際に動いた数値の向きが一致するか', noHint.length === 0 && badDir.length === 0, noHint.slice(0, 3).concat(badDir.slice(0, 4)).join('、'));
+  rec('第1弾5 家を出ている年（旅・奉公・出征など）に、生まれた土地の場面と家の仕事を始める出来事が出ないか', modeBad.length === 0, [...new Set(modeBad)].slice(0, 4).join('、'));
+  // 6 小さな選択が25の枠すべてに4つ以上
+  const ER = [[1000, 1332], [1333, 1602], [1603, 1867], [1868, 1945], [1946, 2120]], AG = [[0, 5], [6, 14], [15, 29], [30, 59], [60, 110]], slot = [];
+  ER.forEach((er, e) => AG.forEach((ag, b) => { const n2 = CHx.list.filter(o => !(o.y[1] < er[0] || o.y[0] > er[1]) && !(o.a[1] < ag[0] || o.a[0] > ag[1]) && (b === 0) === (o.kind === 'parent')).length; if (n2 < 4) slot.push(e + '-' + b + ':' + n2); }));
+  const univ = CHx.list.filter(o => o.y[0] <= 1000 && o.y[1] >= 2100).length;
+  rec('第1弾6 小さな選択が時代×年齢の25の枠すべてに4つ以上、時代を問わない選択が20以上あるか', slot.length === 0 && univ >= 20, slot.join('、') || CHx.list.length + 'の選択・時代を問わないもの ' + univ);
+  rec('第1弾7 差し込み（{sibOlder} など）が埋まらないまま画面に出ないか', brace.length === 0, brace.slice(0, 4).join('、'));
+}
+
 /* ---------- S 物語の分かれ道（作る人の指示 2026-10-17） ---------- */
 {
   const Sx = require(path.join(SITE, 'js', 'story.js'));
@@ -1030,6 +1089,14 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
   const pr = fs.readFileSync(path.join(SITE, 'js', 'prefs.js'), 'utf8');
   for (const k of ["'auto'", "'light'", "'dark'", 'ichioku-theme']) if (!pr.includes(k)) bad.push('prefs.js に ' + k + ' がない');
   rec('J ホーム画面に追加（manifest とアイコン）・明るさの切り替え・ページ（プライバシー・問い合わせ先・更新履歴）がそろっているか', bad.length === 0, bad.slice(0, 8).join('、'));
+
+  // 画面の部品の取りちがえ（app.js が探す部品が index.html にない。2026-10-17 最期の画面が途中で止まったミスから）
+  {
+    const aj = fs.readFileSync(path.join(SITE, 'js', 'app.js'), 'utf8'), ih = fs.readFileSync(path.join(SITE, 'index.html'), 'utf8');
+    const ids = [...new Set([...aj.matchAll(/\$\('([\w-]+)'\)/g)].map(m => m[1]))];
+    const miss = ids.filter(i => !ih.includes('id="' + i + '"') && !aj.includes("if ($('" + i + "'))") && !new RegExp("\\.id = '" + i + "'").test(aj));
+    rec('J2 人生・最期の画面の部品（app.js が探すもの）が index.html にそろっているか', miss.length === 0, miss.length ? 'ない部品：' + miss.join('、') : ids.length + 'の部品を確かめた');
+  }
 
   // 遊ぶ画面に「統計」の文言を出さない（作る人の指示 2026-10-17。出どころは「このサイトについて」だけ）
   {

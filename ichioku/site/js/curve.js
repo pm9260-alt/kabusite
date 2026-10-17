@@ -17,7 +17,11 @@
     var W = Math.max(240, Math.round(o.width)), Hh = o.height || (W >= 768 ? 240 : 200);
     var L0 = 30, R0 = 12, T0 = 22, B0 = 22;
     var pw = W - L0 - R0, ph = Hh - T0 - B0, pts = o.pts, n = pts.length, dA = Math.max(1, pts[n - 1].age);
-    var X = function (a) { return L0 + pw * a / dA; }, Y = function (v) { return T0 + ph * (1 - v / 100); };
+    // 縦は、その人の数値の幅に合わせて広げる（上下に5の余白。幅は20より狭くしない）
+    var all = pts.map(function (p) { return p.sat; }).concat((o.compare || []).filter(function (v, a) { return v != null && a <= dA; }));
+    var lo = Math.max(0, Math.floor((Math.min.apply(null, all) - 5) / 5) * 5), hi = Math.min(100, Math.ceil((Math.max.apply(null, all) + 5) / 5) * 5);
+    if (hi - lo < 20) { var mid0 = (hi + lo) / 2; lo = Math.max(0, Math.round(mid0 - 10)); hi = Math.min(100, lo + 20); lo = Math.max(0, hi - 20); }
+    var X = function (a) { return L0 + pw * a / dA; }, Y = function (v) { return T0 + ph * (1 - (v - lo) / (hi - lo)); };
     var m = { W: W, H: Hh, plot: { x: L0, y: T0, w: pw, h: ph }, curve: [], compare: [], ticks: [], eras: [], marks: [], labels: [], single: false, note: '' };
     if (n === 1) {
       m.single = true; m.note = '1年に満たない一生でした';
@@ -33,7 +37,8 @@
       return s / c;
     });
     m.curve = pts.map(function (p, i) { return { x: X(p.age), y: Y(vs[i]), age: p.age, year: p.year, sat: p.sat }; });
-    m.mid = Y(50);
+    m.ref = lo < 50 && hi > 50 ? 50 : Math.round((lo + hi) / 20) * 10;
+    m.mid = Y(m.ref); m.lo = lo; m.hi = hi;
     // 比べる線（生きている人が10人を下回った年齢から先は描かない）
     var cmp = [];
     for (var a = 0; a <= dA && o.compare; a++) { var v = o.compare[a]; if (v == null) break; cmp.push({ x: X(a), y: Y(v) }); }
@@ -114,7 +119,7 @@
     }
     var p = m.plot;
     s.appendChild(el('line', { x1: p.x, x2: p.x + p.w, y1: m.mid, y2: m.mid, stroke: rule, 'stroke-width': 1 }));
-    tx(p.x - 6, m.mid + 4, '50', sub, 'end');
+    tx(p.x - 6, m.mid + 4, String(m.ref), sub, 'end');
     m.eras.forEach(function (e) {
       s.appendChild(el('line', { x1: e.x, x2: e.x, y1: p.y - 4, y2: p.y + p.h, stroke: rule, 'stroke-width': 1 }));
       if (e.label) tx(e.label.x, e.label.y, e.label.t, sub);

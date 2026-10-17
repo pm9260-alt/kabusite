@@ -134,7 +134,7 @@
     var keys = Object.keys(L.C.names).map(Number).sort(function (a, b) { return a - b; });
     var k = keys[0];
     for (var i = 0; i < keys.length; i++) if (keys[i] <= by) k = keys[i];
-    var list = L.C.names[k][sex];
+    var list = withPool(L.C.names[k][sex], by, sex);
     var used = {};
     L.members.forEach(function (m) { used[m.name] = 1; });
     if (L.name) used[L.name] = 1;
@@ -142,6 +142,19 @@
     if (!free.length) free = L.C.names[keys[keys.length - 1]][sex].filter(function (n) { return !used[n]; });
     return free.length ? free[Math.floor(L.rnd() * free.length)] : list[0] + '（二）';
   }
+  // 上位10の名前に、その時代によくある名前（js/names.js）を足す
+  function namesMod() {
+    if (typeof self !== 'undefined' && self.IchiokuNames) return self.IchiokuNames;
+    if (typeof require === 'function') { try { return require('./names.js'); } catch (e) { return null; } }
+    return null;
+  }
+  function withPool(top, by, sex) {
+    var N = namesMod(), pool = N ? N.modernPool(by, sex) : [];
+    var out = top.slice();
+    pool.forEach(function (n) { if (out.indexOf(n) < 0) out.push(n); });
+    return out;
+  }
+
   /* ---------- 物語の分かれ道（js/story.js）とのつなぎ ---------- */
   function storyMod() {
     if (typeof self !== 'undefined' && self.IchiokuStory) return self.IchiokuStory;
@@ -153,7 +166,7 @@
     var keys = Object.keys(L.C.names).map(Number).sort(function (a, b) { return a - b; });
     var k = keys[0];
     for (var i = 0; i < keys.length; i++) if (keys[i] <= by) k = keys[i];
-    var list = L.C.names[k][sex], used = {};
+    var list = withPool(L.C.names[k][sex], by, sex), used = {};
     L.members.forEach(function (m) { used[m.name] = 1; });
     if (L.name) used[L.name] = 1;
     var free = list.filter(function (n) { return !used[n]; });
@@ -165,6 +178,7 @@
     L.place = { pref: L.home.pref, prefName: L.home.prefName, muni: L.home.muni, muniName: L.home.muniName, kind: m ? m.kind : '都市', away: false, muniObj: m };
   }
   var STORY_API = {
+    surv5: function (L) { var l = 1; for (var a = 0; a < 5; a++) l *= 1 - deathProb(L.C, L.P, L.sex, a, L.by + a); return l; },
     makeRng: makeRng, gauss: gauss, push: function (L, rec, cat, t, evs) { return push(L, rec, cat, t, evs); }, nameFor: storyName, move: storyMove,
     job: function (L, label, pay, reg, ind) { L.job = { ind: IND[ind] ? ind : (L.job && L.job.ind) || 'service', reg: !!reg, since: L.year, pay: pay, label: label }; L.lastJob = label; L.lastInd = L.job.ind; L.stage = 'work'; },
     noJob: function (L) { if (L.job) { L.job = null; L.stage = 'jobless'; } },
@@ -526,7 +540,7 @@
     var y = L.year, a = L.age;
     var rec = { year: y, age: a, place: placeLabel(L), pin: { pref: L.place.pref, muni: L.place.muni || null }, world: worldLine(L, y, a), events: [], branch: null, future: y >= FUTURE_FROM };
     L.rec = rec;
-    if (a === 0) { birthEvent(L, rec); if (L.house && L.house.deathYear >= y) fixedDeathsAtBirth(L, rec); }
+    if (a === 0) { birthEvent(L, rec); if (L.house && L.house.deathYear >= y) fixedDeathsAtBirth(L, rec); storyYear(L, rec); }
     else {
       familyYear(L, rec);
       lifeYear(L, rec);
@@ -582,7 +596,7 @@
       if (m.gone) return;
       if (m.by === y && (m.sib || m.role === '子' || m.role === '孫')) {
         if (m.role === '子' || m.role === '孫') return; // 子と孫の誕生は別の所で出す
-        if (!L.mom.alive) { m.gone = true; m.alive = false; return; } // 母が亡くなっていれば生まれない
+        if (!L.mom.alive && !fixedYear(L, m)) { m.gone = true; m.alive = false; return; } // 母が亡くなっていれば生まれない
         var who = m.role === '孫' ? '孫の' + m.name + 'が生まれた。' : relWord(L, m) + 'の' + m.name + 'が生まれた。';
         push(L, rec, '家庭', who, [ev(C, 'vital', y, '出生数', '')]);
         if (fixedYear(L, m) && m.fixDy === y) {
@@ -816,7 +830,8 @@
       var diff = L.sex === 'm' ? -Math.round(Math.abs(gauss(rnd)) * 2) : Math.round(Math.abs(gauss(rnd)) * 2.5);
       var sp = addMember(L, '配偶者', L.sex === 'm' ? 'f' : 'm', L.by + diff);
       L.married = true; L.everMarried = true; L.marriedY = y; L.divorced = false; L.widowed = false;
-      push(L, rec, '家庭', (a <= 30 ? '' : '') + sp.name + 'さんと結婚した。相手は' + (L.by + diff) + '年生まれ。', [ev(C, 'vital', y, '生まれ年ごとの、50歳までに結婚する人の割合', pct(target), { est: true })]);
+      var SMd = storyMod();
+      push(L, rec, '家庭', sp.name + 'さんと結婚した。' + (SMd && L.story ? SMd.spouseDesc(L, sp, y) : '相手は' + (L.by + diff) + '年生まれ。'), [ev(C, 'vital', y, '生まれ年ごとの、50歳までに結婚する人の割合', pct(target), { est: true })]);
       wifeNameYear(L, rec);
     }
   }
@@ -1836,7 +1851,7 @@
     pickPref: pickPref, newLife: newLife, step: step, resolve: resolve, autoRun: autoRun,
     cohort: cohort, majorTimeline: majorTimeline, familyList: familyList, fill: fill, sceneOk: sceneOk,
     pickCause: pickCause, deathStory: deathStory, ev: ev, askFor: askFor, answerAsk: answerAsk, ASK_AGES: ASK_AGES,
-    storyMod: storyMod, storyName: storyName,
+    storyMod: storyMod, storyName: storyName, namesMod: namesMod, withPool: withPool,
     statusYear: statusYear, bodyMult: bodyMult, moneyYear: moneyYear, autoAnswer: autoAnswer, FOCUS: FOCUS, yearKind: yearKind, MAP_KINDS: MAP_KINDS, ST_KEYS: ST_KEYS, ST_NAMES: ST_NAMES
   };
 });

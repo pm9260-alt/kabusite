@@ -42,7 +42,7 @@
   function ctxOf(L, rec, api, d) {
     var s = L.story;
     var c = {
-      L: L, s: s, y: L.year, a: L.age, d: d || {}, r: s.r, api: api, E: !L.old, O: !!L.old,
+      L: L, s: s, y: L.year, a: L.age, d: d || {}, r: s.r, api: api, E: !L.old, O: !!L.old, place: rec && rec.place,
       st: L.old ? L.status : 'modern',
       kind: L.old ? L.kind : (L.place && L.place.kind === '町村' ? 'village' : 'city'),
       say: function (t, st, cat) { var e = api.push(L, rec, cat || '人間関係', t, []); e.story = true; if (st) e.st = st; return e; },
@@ -50,15 +50,16 @@
       ask: function (id, title, q, opts, data, resArc) {
         // 1年に出す物語の分かれ道は1つまで。すでに出した年は、この場面を翌年に回す
         if (s.asked === L.year) { if (s.cur) s.at.push({ y: L.year + 1, id: s.cur, d: d || {} }); return; }
-        var br = { id: 'story', sid: id, ra: resArc || id.split('.')[0], title: title, groups: [{ id: 's', q: q, options: opts.map(function (o) { return { k: o.k, l: o.l, f: o.f || [] }; }) }], ev: [], w: {}, d: data || {} };
+        var br = { id: 'story', kind: 'story', big: true, sid: id, ra: resArc || id.split('.')[0], title: title, groups: [{ id: 's', q: q, options: opts.map(function (o) { return { k: o.k, l: o.l, f: o.f || [], h: o.h || HINTS[id + ':' + o.k] || '結果しだい' }; }) }], ev: [], w: {}, d: data || {} };
         opts.forEach(function (o) { br.w[o.k] = typeof o.w === 'number' ? o.w : 1; });
         L.queue.push(br);
-        s.asked = L.year;
+        s.asked = L.year; s.nBig = (s.nBig || 0) + 1;
       },
       job: function (label, pay, reg, ind) { api.job(L, label, pay, reg, ind); },
       noJob: function () { api.noJob(L); },
       marry: function (k) { api.marryBoost(L, k); },
-      move: function (where) { api.move(L, where); },
+      move: function (where) { api.move(L, where); if (where === 'home') L.mode = null; },
+      mode: function (m) { L.mode = m; },
       base: function (k, v) { s.base[k] += v; },
       p: function (x) { return s.r() < x; },
       tr: function (k) { return s.tr[k]; },
@@ -384,7 +385,7 @@
       ]);
     }
   }, res: {
-    ask: function (c) { c.s.f.reunion = c.y; c.marry(4); c.say(c.s.classmate + 'と毎晩のように電話で話すようになった。', { sat: 6, tie: 5 }); },
+    ask: function (c) { c.s.f.reunion = c.y; c.marry(1.6); c.say(c.s.classmate + 'と毎晩のように電話で話すようになった。', { sat: 6, tie: 5 }); },
     no: function (c) { c.say('連絡先は聞かずに帰った。電車の窓に映る自分の顔を、しばらく見ていた。'); }
   } });
   // 結婚が決まった年に、同窓会の相手なら一言そえる（結婚するかどうかは結婚の割合のまま）
@@ -441,8 +442,8 @@
     ]);
     return true;
   }, res: {
-    follow: function (c) { c.marry(5); c.noJob(); c.s.f.followed = c.y; c.say('会社を辞め、' + c.s.partner + 'と海を渡ることにした。送別会で、同期がそっと肩をたたいてくれた。', { sat: 2, tie: 6 }, '学歴と仕事'); c.later(5, 'abroad.back'); },
-    long: function (c) { if (c.p(0.4)) { c.marry(3); c.say('時差のある電話を2年続けた。' + c.s.partner + 'の帰国の日、空港で待った。', { tie: 4 }); } else c.say('最初は毎晩だった電話が週に1度になり、やがて途切れた。', { sat: -8 }); },
+    follow: function (c) { c.marry(1.8); c.noJob(); c.s.f.followed = c.y; c.say('会社を辞め、' + c.s.partner + 'と海を渡ることにした。送別会で、同期がそっと肩をたたいてくれた。', { sat: 2, tie: 6 }, '学歴と仕事'); c.later(5, 'abroad.back'); },
+    long: function (c) { if (c.p(0.4)) { c.marry(1.4); c.say('時差のある電話を2年続けた。' + c.s.partner + 'の帰国の日、空港で待った。', { tie: 4 }); } else c.say('最初は毎晩だった電話が週に1度になり、やがて途切れた。', { sat: -8 }); },
     part: function (c) { c.s.f.career = c.y; c.say('悩んだすえ、仕事を選んだ。空港で見送ったあと、ひとりで泣いた。その年、大きな仕事を任された。', { sat: -6, learn: 3 }, '学歴と仕事'); c.later(10 + Math.floor(c.r() * 8), 'abroad.echo'); }
   } });
   N['abroad.back'] = function (c) { if (c.L.alive && c.s.f.followed) c.say('帰国して、もう一度働き始めた。前の会社の同期は管理職になっていた。', { sat: -2 }, '学歴と仕事'); };
@@ -460,7 +461,7 @@
     ]);
     return true;
   }, res: {
-    take: function (c) { c.job('知り合いの会社の受付', 3540, true, 'office'); c.s.f.conne = true; c.say('知り合いの紹介で、大きな会社の受付に座ることになった。毎朝、同じ笑顔であいさつをした。', { sat: 3 }, '学歴と仕事'); if (single(c.L)) c.marry(1.5); },
+    take: function (c) { c.job('知り合いの会社の受付', 3540, true, 'office'); c.s.f.conne = true; c.say('知り合いの紹介で、大きな会社の受付に座ることになった。毎朝、同じ笑顔であいさつをした。', { sat: 3 }, '学歴と仕事'); if (single(c.L)) c.marry(1.1); },
     own: function (c) { c.say('紹介の話は断った。自分で選んだ会社の面接に、何十社も通った。', { learn: 3, sat: 2 }, '学歴と仕事'); }
   } });
 
@@ -736,7 +737,7 @@
     var L = c.L;
     if (c.s.done.ise || !c.O || c.y < 1640 || c.y > 1890 || !c.common() || L.abroad || L.pref === '47' || L.pref === '01' || c.a < 12 || c.a > 65) return false;
     var okage = !!OKAGE[c.y];
-    var p = okage ? 0.35 : (c.a >= 18 ? 0.022 : 0.004) * (L.prov === '伊勢' ? 0.3 : 1);
+    var p = okage ? 0.35 : (c.a >= 18 ? 0.022 : 0.004) * (L.prov === '伊勢' ? 0.3 : 1) * (c.s.persona === 'iseFan' ? 4 : 1);
     if (!c.p(p)) return false;
     c.s.iseOkage = okage;
     var young = c.a < 20 || (L.hoko && !L.hoko.done);
@@ -776,7 +777,7 @@
     go: function (c) {
       c.s.f.yashiki = c.y;
       c.move('edo');
-      c.job('大名屋敷の奥女中', 2000, false, 'maid');
+      c.job('大名屋敷の奥女中', 2000, false, 'maid'); c.mode('hoko');
       c.say('江戸の大名屋敷に奥女中として上がった。言葉づかいから歩き方まで、一から仕込まれた。', { sat: 4, tie: -4, learn: 4 }, '学歴と仕事');
       c.later(2 + Math.floor(c.r() * 3), 'gyoretsu.next');
     },
@@ -854,7 +855,7 @@
   }, res: {
     go: function (c) {
       c.move('edo');
-      c.job('相撲取りの見習い', 1200, false, 'craft');
+      c.job('相撲取りの見習い', 1200, false, 'craft'); c.mode('away');
       c.say('親方の部屋に入り、相撲取りの見習いになった。腹いっぱい食べられることが、何よりうれしかった。', { body: 6, sat: 6, tie: -4 }, '学歴と仕事');
       c.later(5 + Math.floor(c.r() * 4), 'sumoOld.next');
     },
@@ -907,7 +908,7 @@
     if (c.s.done.yukaku || !c.O || L.sex !== 'f' || c.y < 1620 || c.y > 1956 || ['hyakusho', 'genin', 'heimin', 'chonin'].indexOf(L.status) < 0 || (L.incPct || 0.5) > 0.12 || c.a < 12 || c.a > 16 || L.married || !c.p(0.04)) return false;
     c.s.f.yukaku = c.y;
     c.move(c.y < 1868 ? 'edo' : 'tokyo');
-    c.job('遊郭の女郎', 2500, false, 'maid');
+    c.job('遊郭の女郎', 2500, false, 'maid'); c.mode('away');
     c.say('凶作の年、借金を返すために、遊郭へ年季奉公に出されることになった。親は泣いていた。年季は10年と決められた。', { sat: -20, tie: -10 }, '家庭');
     c.later(5 + Math.floor(c.r() * 4), 'yukaku.next');
     return true;
@@ -963,7 +964,7 @@
     ]);
     return true;
   }, res: {
-    go: function (c) { c.move('osaka'); c.say('大坂の蘭学の塾に入った。夜は辞書を写して、言葉を覚えた。', { learn: 10, tie: -4 }, '学歴と仕事'); c.later(5, 'rangaku.doc'); },
+    go: function (c) { c.move('osaka'); c.mode('away'); c.say('大坂の蘭学の塾に入った。夜は辞書を写して、言葉を覚えた。', { learn: 10, tie: -4 }, '学歴と仕事'); c.later(5, 'rangaku.doc'); },
     no: function (c) { c.say('家に残った。ときどき、塾に行った友の手紙を開いた。', { sat: -2 }); }
   } });
   N['rangaku.doc'] = function (c) { if (c.L.alive) { c.move('home'); c.job('医者', 5000, false, 'craft'); c.say('故郷に戻って医者を開いた。' + (c.y >= 1849 ? '牛痘の種痘を広め、村の子どもたちを疱瘡から守った。' : '遠くの村からも患者が訪ねてきた。'), { sat: 10, tie: 6 }, '学歴と仕事'); c.base('sat', 2); } };
@@ -980,7 +981,7 @@
     return true;
   }, res: {
     go: function (c) {
-      c.move('kyoto');
+      c.move('kyoto'); c.mode('away');
       c.s.f.shishi = c.y;
       if (c.p(0.25)) c.say('京で斬り合いに巻き込まれ、深い傷を負った。仲間の多くが命を落とした。', { body: -16, sat: -8, tie: -6 }, '時代');
       else c.say('京に上り、身を隠しながら仲間と走り回った。家には手紙も出せなかった。', { sat: 4, tie: -6 }, '時代');
@@ -1022,7 +1023,7 @@
     ]);
     return true;
   }, res: {
-    go: function (c) { c.job('製糸工場の工女', 1200, false, 'silk'); c.say('峠を越えて製糸工場の寮に入った。朝から晩まで湯の中の繭から糸を引いた。仕送りの金で、家の借金が減った。', { sat: -2, body: -6, tie: -4 }, '学歴と仕事'); if (c.p(0.08)) c.later(2, 'kojo.tb'); },
+    go: function (c) { c.job('製糸工場の工女', 1200, false, 'silk'); c.mode('away'); c.say('峠を越えて製糸工場の寮に入った。朝から晩まで湯の中の繭から糸を引いた。仕送りの金で、家の借金が減った。', { sat: -2, body: -6, tie: -4 }, '学歴と仕事'); if (c.p(0.08)) c.later(2, 'kojo.tb'); },
     no: function (c) { c.say('村に残り、家の田畑を手伝った。', { sat: 1 }); }
   } });
   N['kojo.tb'] = function (c) { if (c.L.alive) { c.move('home'); c.say('咳が止まらなくなり、工場を出されて村へ帰された。結核だった。', { body: -14, sat: -8 }, '健康'); } };
@@ -1038,7 +1039,7 @@
     ]);
     return true;
   }, res: {
-    go: function (c) { c.move('tokyo'); c.job('カフェーの女給', 2000, false, 'store'); c.say('都会に出て、カフェーの女給になった。洋装で蓄音機の音楽が流れる店に立つと、自分が別の人になった気がした。', { sat: 8, tie: -2 }, '学歴と仕事'); c.marry(1.5); },
+    go: function (c) { c.move('tokyo'); c.mode('away'); c.job('カフェーの女給', 2000, false, 'store'); c.say('都会に出て、カフェーの女給になった。洋装で蓄音機の音楽が流れる店に立つと、自分が別の人になった気がした。', { sat: 8, tie: -2 }, '学歴と仕事'); c.marry(1.5); },
     no: function (c) { c.say('家に残った。雑誌のカフェーの写真を、こっそり切り抜いて持っていた。'); }
   } });
 
@@ -1053,12 +1054,13 @@
     ]);
     return true;
   }, res: {
-    go: function (c) { c.s.f.manshu = c.y; c.say('家族と海を渡り、満州の開拓村に入った。見渡すかぎりの平原だった。', { sat: 4, tie: -4 }, '地域'); c.later(Math.max(1, 1945 - c.y), 'manshu.45'); },
+    go: function (c) { c.s.f.manshu = c.y; c.mode('away'); c.say('家族と海を渡り、満州の開拓村に入った。見渡すかぎりの平原だった。', { sat: 4, tie: -4 }, '地域'); c.later(Math.max(1, 1945 - c.y), 'manshu.45'); },
     no: function (c) { c.say('村に残った。開拓団で発った家の田畑を、村で分けて耕した。'); }
   } });
   N['manshu.45'] = function (c) {
     if (!c.L.alive || c.y !== 1945) return;
     c.say('ソ連軍が攻めこみ、開拓村を捨てて逃げた。何百キロも歩き、途中で多くの人が倒れた。翌年、やっとの思いで引揚げ船に乗った。', { body: -18, sat: -20, tie: -10 }, '時代');
+    c.move('home');
     c.base('sat', -3);
   };
 
@@ -1175,10 +1177,23 @@
   }, res: {
     go: function (c) {
       c.job(c.s.mode, 1600, false, 'craft');
+      c.mode('tabi'); c.s.troupe = c.s.mode;
       c.say(c.s.mode + 'に加わり、国々を渡り歩いた。社の祭りで舞うと、見物の人垣ができた。', { sat: 8, tie: -4, learn: 4 }, '学歴と仕事');
       if (c.p(0.15)) c.later(3 + Math.floor(c.r() * 4), 'geino.big');
+      c.later(3 + Math.floor(c.r() * 6), 'geino.ret');
     },
     no: function (c) { c.say('一座が去った翌朝、村はいつもより静かに感じられた。', { sat: -1 }); }
+  } });
+  N['geino.ret'] = function (c) {
+    if (!c.L.alive || c.L.mode !== 'tabi') return;
+    c.ask('geino.ret', '一座か、村か', '旅暮らしも' + (c.y - (c.s.done.geino || c.y)) + '年になる。故郷の村から、' + (c.s.tr.warm > 0 ? '親が会いたがっている' : '戻ってこいという') + '便りが届いた。', [
+      { k: 'home', l: '村に戻る', w: 1 + Math.max(0, c.tr('warm')), f: ['family', 'save'] },
+      { k: 'stay', l: '一座に残って旅を続ける', w: 1 + Math.max(0, c.tr('adv')) + Math.max(0, c.tr('dream')) * 0.5, f: ['study', 'earn'] }
+    ], null, 'geino3');
+  };
+  arc({ id: 'geino3', nodes: {}, res: {
+    home: function (c) { c.move('home'); c.job('家の田畑の仕事', 1500, false, 'farm'); c.say('一座に別れを告げ、故郷の村に戻った。祭りの日には、村の子どもたちに舞を教えた。', { tie: 8, sat: 2 }, '家庭'); },
+    stay: function (c) { c.say('一座に残ることにした。次の国へ向かう道で、仲間と新しい演目を考えた。', { sat: 4, tie: -2, learn: 2 }, '学歴と仕事'); c.later(5 + Math.floor(c.r() * 5), 'geino.ret'); }
   } });
   N['geino.big'] = function (c) { if (c.L.alive) { c.job(c.s.mode + '（名の知れた芸人）', 4000, false, 'craft'); c.say('都の有力者の目に留まり、屋敷の宴に呼ばれるほどになった。', { sat: 10 }, '学歴と仕事'); } };
 
@@ -1195,7 +1210,7 @@
     ]);
     return true;
   }, res: {
-    go: function (c) { c.job('出家した身', 800, false, 'temple'); c.say('髪を下ろし、山あいの寺に入った。朝夕の勤行の鐘の音が、少しずつ心を静めてくれた。', { sat: 4, tie: -6, learn: 4 }, '家庭'); },
+    go: function (c) { c.job('出家した身', 800, false, 'temple'); c.mode('shukke'); c.say('髪を下ろし、山あいの寺に入った。朝夕の勤行の鐘の音が、少しずつ心を静めてくれた。', { sat: 4, tie: -6, learn: 4 }, '家庭'); },
     no: function (c) { c.say('家族の顔を思い浮かべ、俗世にとどまった。', { tie: 2 }); }
   } });
 
@@ -1232,7 +1247,7 @@
     return true;
   }, res: {
     go: function (c) {
-      c.job('足軽', 1500, false, 'bushiMed');
+      c.job('足軽', 1500, false, 'bushiMed'); c.mode('hei');
       c.say('槍一本を渡され、足軽の列に加わった。初めての戦で、膝が震えて止まらなかった。', { sat: 2, body: -4, tie: -4 }, '時代');
       c.later(2 + Math.floor(c.r() * 4), 'ashigaru.next');
     },
@@ -1241,9 +1256,9 @@
   N['ashigaru.next'] = function (c) {
     if (!c.L.alive) return;
     var r = c.r();
-    if (r < 0.12) { c.job('取り立てられた侍', 4500, false, 'bushiMed'); c.say('戦で手柄を立て、侍に取り立てられた。村の親に、初めて腹いっぱいの米を食べさせることができた。', { sat: 15 }, '時代'); c.base('sat', 3); }
+    if (r < 0.12) { c.mode('away'); c.job('取り立てられた侍', 4500, false, 'bushiMed'); c.say('戦で手柄を立て、侍に取り立てられた。村の親に、初めて腹いっぱいの米を食べさせることができた。', { sat: 15 }, '時代'); c.base('sat', 3); }
     else if (r < 0.45) { c.say('戦で腕に矢を受け、槍を握れなくなった。村へ帰って田を耕した。', { body: -14, sat: -6 }, '健康'); c.move('home'); c.job('家の田畑の仕事', 1500, false, 'farm'); }
-    else c.say('いくつもの戦を生きのびた。仲間の数は、戦のたびに減っていった。', { sat: -3, tie: -3 }, '時代');
+    else { c.say('いくつもの戦を生きのびた。仲間の数は、戦のたびに減っていった。やがて戦が収まり、村に戻った。', { sat: -3, tie: -3 }, '時代'); c.move('home'); }
   };
 
   // 46 戦国の村：乱取りから村を守る
@@ -1287,7 +1302,7 @@
     ]);
     return true;
   }, res: {
-    join: function (c) { c.s.f.tozoku = c.y; c.job('盗賊の一味', 1200, false, 'genin'); c.say('盗賊の一味に加わった。夜の都の屋敷に忍びこむたび、心臓が破れそうだった。', { sat: -4, tie: -6 }, '人間関係'); c.later(2 + Math.floor(c.r() * 3), 'tozoku.end'); },
+    join: function (c) { c.s.f.tozoku = c.y; c.mode('away'); c.job('盗賊の一味', 1200, false, 'genin'); c.say('盗賊の一味に加わった。夜の都の屋敷に忍びこむたび、心臓が破れそうだった。', { sat: -4, tie: -6 }, '人間関係'); c.later(2 + Math.floor(c.r() * 3), 'tozoku.end'); },
     no: function (c) { c.say('誘いを断り、飢えをしのいで春を待った。', { sat: -2 }); }
   } });
   N['tozoku.end'] = function (c) {
@@ -1383,7 +1398,7 @@
     return true;
   }, res: {
     go: function (c) {
-      c.job(c.s.mode + 'の弟子', 1200, false, 'craft');
+      c.job(c.s.mode + 'の弟子', 1200, false, 'craft'); c.mode('hoko');
       c.say(c.s.mode + 'の親方に弟子入りした。最初の数年は掃除と道具の手入ればかりで、仕事に触らせてもらえなかった。', { learn: 6, tie: -2 }, '学歴と仕事');
       c.later(8 + Math.floor(c.r() * 4), 'shokunin.next');
     },
@@ -1391,7 +1406,7 @@
   } });
   N['shokunin.next'] = function (c) {
     if (!c.L.alive) return;
-    if (c.p(0.4 + 0.1 * c.tr('grit'))) { c.job(c.s.mode, 4500, false, 'craft'); c.say('親方に腕を認められ、一人前の' + c.s.mode + 'になった。初めて自分の名で請けた仕事を納めた日、親方が黙って酒をついでくれた。', { sat: 10, learn: 4 }, '学歴と仕事'); c.base('sat', 2); }
+    if (c.p(0.4 + 0.1 * c.tr('grit'))) { c.mode('away'); c.job(c.s.mode, 4500, false, 'craft'); c.say('親方に腕を認められ、一人前の' + c.s.mode + 'になった。初めて自分の名で請けた仕事を納めた日、親方が黙って酒をついでくれた。', { sat: 10, learn: 4 }, '学歴と仕事'); c.base('sat', 2); }
     else { c.job(c.s.mode + 'の職人', 3000, false, 'craft'); c.say('一人前と認められるまで、まだ何年もかかりそうだった。それでも、毎日少しずつ手が覚えていった。', { sat: 1 }, '学歴と仕事'); }
   };
 
@@ -1458,7 +1473,7 @@
     ]);
     return true;
   }, res: {
-    go: function (c) { c.s.f.imin = c.y; c.say('船で' + c.s.mode + 'へ渡った。' + (c.s.mode === 'ブラジル' ? 'コーヒー農園で、朝から晩まで実を摘んだ。' : 'さとうきび畑で、照りつける日差しの下で働いた。') + '故郷への仕送りの手紙に、つらいことは書かなかった。', { sat: -2, tie: -10, body: -4 }, '地域'); c.later(8 + Math.floor(c.r() * 10), 'imin.next'); },
+    go: function (c) { c.s.f.imin = c.y; c.mode('away'); c.say('船で' + c.s.mode + 'へ渡った。' + (c.s.mode === 'ブラジル' ? 'コーヒー農園で、朝から晩まで実を摘んだ。' : 'さとうきび畑で、照りつける日差しの下で働いた。') + '故郷への仕送りの手紙に、つらいことは書かなかった。', { sat: -2, tie: -10, body: -4 }, '地域'); c.later(8 + Math.floor(c.r() * 10), 'imin.next'); },
     no: function (c) { c.say('村に残った。海を渡った幼なじみからの手紙を、何度も開いた。'); }
   } });
   N['imin.next'] = function (c) { if (c.L.alive) { if (c.p(0.4)) c.say('異国で小さな店を持ち、家族を呼び寄せた。故郷へは戻らないと決めた。', { sat: 8, tie: 6 }, '地域'); else c.say('稼いだ金を持って故郷へ帰り、田を買った。村の人たちは「' + c.s.mode + '帰り」と呼んだ。', { sat: 6, tie: 4 }, '地域'); } };
@@ -1649,10 +1664,285 @@
     no: function (c) { c.say('「昔のことは忘れたよ」と笑ってごまかした。本当は、ひとつも忘れていなかった。', { sat: 1 }, '家庭'); }
   } });
 
+  function sumFx(evs) { var o = {}; evs.forEach(function (e) { if (e.st) for (var k in e.st) o[k] = (o[k] || 0) + e.st[k]; }); return o; }
+  // 分かれ道の答えごとに動く数値の向き（何千回も回して、いつも同じ向きに動くものだけ向きを書く。向きが毎回ちがうものは「結果しだい」）
+  var HINTS = {"kobyo:doc": "暮らしの満足−　つながり＋", "matsuri:yes": "暮らしの満足＋　つながり＋", "mizu:no": "大きくは変わらない", "kumano:go": "暮らしの満足＋　つながり＋", "koi:keep": "暮らしの満足−", "tozoku:join": "暮らしの満足−　つながり−", "atozoe:yes": "暮らしの満足＋", "kumano:no": "大きくは変わらない", "chosan:stay": "暮らしの満足−　からだ−", "koi:tell": "結果しだい", "matsuri:no": "大きくは変わらない", "kobyo:pray": "つながり＋", "shukke:no": "つながり＋", "shukke:go": "暮らしの満足＋　つながり−　学び＋", "atozoe:no": "暮らしの満足−　つながり＋", "geino:no": "暮らしの満足−", "isan:fight": "結果しだい", "chosan:go": "結果しだい", "geino:go": "暮らしの満足＋　つながり−　学び＋", "mizu:go": "結果しだい", "kasu:yes": "つながり＋", "randori:hide": "暮らしの満足−", "randori:fort": "結果しだい", "kasu:no": "つながり−", "kunigae:stay": "暮らしの満足−　つながり＋", "ise:go": "暮らしの満足＋　つながり＋", "yukaku.next:run": "結果しだい", "isan:give": "暮らしの満足−　つながり＋", "henro:no": "つながり＋", "ise:no": "暮らしの満足−", "bakuchi:go": "暮らしの満足−　つながり−", "ikki:no": "暮らしの満足−", "katari:tell": "暮らしの満足＋　つながり＋", "rangaku:go": "つながり−　学び＋", "henro:go": "暮らしの満足＋　つながり＋　からだ−", "bakuchi:no": "暮らしの満足＋　つながり＋", "yamiichi:no": "暮らしの満足−　からだ−", "miai:yes": "暮らしの満足＋　つながり＋", "yamiichi:sell": "結果しだい", "yamiichi:buy": "暮らしの満足＋　からだ＋", "help:help": "暮らしの満足＋　つながり＋", "care:home": "暮らしの満足−　つながり＋　からだ−", "help:pass": "暮らしの満足−", "late:no": "暮らしの満足＋", "biz:no": "つながり−", "care:home2": "暮らしの満足−", "toxic.leave:stay": "暮らしの満足−", "conne:take": "暮らしの満足＋", "katari:no": "暮らしの満足＋", "toxic.leave:go": "暮らしの満足＋　つながり−", "toxic.call:no": "結果しだい", "late:go": "暮らしの満足＋　つながり＋　学び＋", "doikki:no": "暮らしの満足−", "kirishitan:yes": "暮らしの満足＋　つながり＋", "kirishitan:no": "大きくは変わらない", "kunigae:go": "暮らしの満足−　つながり＋", "ikki:join": "結果しだい", "rangaku:no": "暮らしの満足−", "shoya:tell": "結果しだい", "shokunin:go": "つながり−　学び＋", "imin:no": "大きくは変わらない", "imin:go": "暮らしの満足−　つながり−　からだ−", "manshu:go": "暮らしの満足＋　つながり−", "bubble:buy": "暮らしの満足＋", "shokunin:no": "大きくは変わらない", "doikki:join": "暮らしの満足＋　つながり＋", "ashigaru:go": "暮らしの満足＋　つながり−　からだ−", "rakujo:flee": "暮らしの満足−　つながり−", "kojo:go": "暮らしの満足−　つながり−　からだ−", "cafe:go": "結果しだい", "bubble:no": "大きくは変わらない", "biz:yes": "暮らしの満足＋　つながり＋", "dream.go:go": "暮らしの満足＋　つながり−", "dream.quit:keep": "暮らしの満足−", "dream.quit:home": "結果しだい", "shukko:go": "暮らしの満足−　つながり＋", "care:work": "暮らしの満足−　からだ−", "rakujo:stay": "暮らしの満足＋　つながり＋", "shoya:give": "暮らしの満足−", "cafe:no": "大きくは変わらない", "yukaku.next:ukeru": "結果しだい", "orphan:take": "暮らしの満足＋　つながり＋", "machi:no": "大きくは変わらない", "dream.go:drop": "結果しだい", "orphan:no": "暮らしの満足−", "love5.reunion:ask": "結果しだい", "account:sell": "結果しだい", "account.home:stay": "結果しだい", "ashigaru:no": "つながり＋", "narrow:no": "暮らしの満足−", "side:a": "結果しだい", "gyoretsu:no": "暮らしの満足−", "miai:no": "暮らしの満足−", "toxic.call:meet": "暮らしの満足＋　つながり＋", "shishi:no": "暮らしの満足−", "conne:own": "結果しだい", "shishi:go": "結果しだい", "kojo:no": "暮らしの満足＋", "manshu:no": "結果しだい", "machi:go": "結果しだい", "shukko:quit": "暮らしの満足−", "abroad:follow": "結果しだい", "tozoku:no": "暮らしの満足−", "shoya.up:down": "結果しだい", "taika:stay": "結果しだい", "sumoOld:go": "結果しだい", "dream.go:side": "暮らしの満足＋", "reality:yes": "結果しだい", "miyazukae:go": "結果しだい", "love5.reunion:no": "結果しだい", "kirishitan.ban:hide": "結果しだい", "yukaku.next:stay": "暮らしの満足−", "taika:go": "結果しだい", "gyoretsu:go": "結果しだい", "kirishitan.ban:drop": "結果しだい", "side:b": "結果しだい", "miyazukae:no": "結果しだい"};
+  // 進め方の本体（engine.js・history.js）の分かれ道の答え。結果は統計の割合で決まるので「しだい」と書く
+  var ENGINE_HINT = {
+    take: '学び＋になりやすい（受かるかしだい）', no: '大きくは変わらない', gen: '学び＋になりやすい（結果しだい）', voc: '仕事に就くのが早くなりやすい（結果しだい）',
+    study: '学び＋になりやすい（受かるかしだい）', work: '暮らしの満足＋になりやすい（結果しだい）', go: '暮らしが変わる（結果しだい）', stay: 'つながり＋になりやすい（結果しだい）',
+    yes: 'つながり＋になりやすい（相手しだい）', family: 'つながり＋になりやすい（家族しだい）', friend: 'つながり＋になりやすい（相手しだい）', none: '大きくは変わらない',
+    pledge: 'つながり＋になりやすい（相手しだい）', live: 'つながり＋になりやすい（相手しだい）', alone: '大きくは変わらない', maybe: '縁しだい',
+    office: '暮らしの満足＋になりやすい（結果しだい）', tech: '暮らしの満足＋になりやすい（結果しだい）', care: '暮らしの満足＋になりやすい（結果しだい）', service: '暮らしの満足＋になりやすい（結果しだい）'
+  };
+  function hintFor(br, o) {
+    if (o.h) return o.h;
+    if (br.sid && HINTS[br.sid + ':' + o.k]) return HINTS[br.sid + ':' + o.k];
+    if (br.id === 'story') return '結果しだい';
+    return ENGINE_HINT[o.k] || '結果しだい';
+  }
+  /* ========== 小さな選択・親の選択（js/choices.js） ========== */
+  function choicesMod() {
+    if (root.IchiokuChoices) return root.IchiokuChoices;
+    if (typeof require === 'function') { try { return require('./choices.js'); } catch (e) { return null; } }
+    return null;
+  }
+  // 選択肢と重点（おまかせ）の対応
+  function focusOf(fx) { var f = []; if (fx.learn > 0) f.push('study'); if (fx.tie > 0) f.push('family'); if (fx.body > 0) f.push('body'); if (fx.sat > 0) f.push('earn', 'save'); return f; }
+  // 差し込み：家族と幼なじみの名前。埋められないときは null
+  function people(c) {
+    var L = c.L, y = c.y, ms = (L.members || []).filter(function (m) { return m.alive && !m.gone && m.by <= y && !m.before; });
+    var one1 = function (f) { return ms.filter(f)[0]; };
+    var older = ms.filter(function (m) { return m.sib && m.by < L.by; }), younger = ms.filter(function (m) { return m.sib && m.by > L.by; });
+    var sp = one1(function (m) { return m.role === '配偶者' || m.role === 'パートナー'; });
+    var kids = ms.filter(function (m) { return m.role === '子'; });
+    if (!c.s.friend && c.a >= 5) { c.s.friend = c.name(c.r() < 0.5 ? 'm' : 'f'); }
+    return {
+      name: L.name, mom: (one1(function (m) { return m.role === '母'; }) || {}).name, dad: (one1(function (m) { return m.role === '父'; }) || {}).name,
+      sibOlder: older.length ? older[older.length - 1].name : null, sibYounger: younger.length ? younger[0].name : null,
+      spouse: sp ? sp.name : null, child: kids.length ? kids[kids.length - 1].name : null, friend: c.s.friend || null,
+      place: String(c.place || '').replace(/（今の.*?）/, '')
+    };
+  }
+  function fillT(t, P) {
+    if (t == null) return null;
+    var bad = false;
+    var out = t.replace(/\{(\w+)\}/g, function (m0, k) { var v = P[k]; if (!v) { bad = true; return ''; } return v; });
+    return bad ? null : out;
+  }
+  function eligible(c, o) {
+    var L = c.L, w = o.when || {}, y = c.y, a = c.a;
+    if (y < o.y[0] || y > o.y[1] || a < o.a[0] || a > o.a[1]) return false;
+    if (w.y && (y < w.y[0] || y > w.y[1])) return false;
+    if (w.sex && w.sex !== L.sex) return false;
+    if (w.status && w.status.indexOf(c.st) < 0) return false;
+    if (w.kind && w.kind.indexOf(c.kind) < 0) return false;
+    if (L.mode && (w.kind || w.status) && !(w.mode && w.mode.indexOf(L.mode) >= 0)) return false;
+    if (w.poor && !c.poor()) return false;
+    if (w.heirOnly && !(L.heir || (!L.old && L.sex === 'm'))) return false;
+    if (w.unmarried && L.married) return false;
+    if (w.married && !L.married) return false;
+    if (w.job && !(L.job && L.job !== 'home')) return false;
+    if (w.hoko && !((L.hoko && !L.hoko.done) || L.mode === 'hoko')) return false;
+    if (w.hasChild && !(L.members || []).some(function (m) { return m.role === '子' && m.alive && !m.gone && m.by <= y; })) return false;
+    if (w.hasSib && !(L.members || []).some(function (m) { return m.sib && m.alive && !m.gone && m.by <= y; })) return false;
+    if (w.parentOld && !parentOld(L, 70)) return false;
+    if (o.kind === 'parent' && a > 5) return false;
+    if (o.kind !== 'parent' && a < 6) return false;
+    return true;
+  }
+  function makeChoiceBranch(c, title, text, options, data) {
+    var br = { id: 'story', kind: 'story', sid: 'choice', ra: '__choice', title: title, groups: [{ id: 's', q: text, options: options.map(function (p) { return { k: p.k, l: p.l, f: focusOf(p.fx || {}), h: p.h || CHint(p.fx || {}) }; }) }], w: {}, d: data };
+    options.forEach(function (p, i) { br.w[p.k] = 1 + (i === 0 ? 0.3 : -0.3) * (c.s.tr.adv || 0) + (p.fx && p.fx.tie > 0 ? 0.3 * (c.s.tr.warm || 0) : 0); });
+    c.L.queue.push(br);
+    c.s.asked = c.y; c.s.nChoice = (c.s.nChoice || 0) + 1;
+  }
+  function CHint(fx) { var CHm = choicesMod(); return CHm ? CHm.hint(fx) : ''; }
+  // 毎年の小さな選択（出る年はおよそ6割強。大きな決断が出る年は出さない）
+  function choiceYear(c, P) {
+    var CHm = choicesMod(), s = c.s;
+    if (!CHm) return;
+    s.seen = s.seen || {}; s.cool = s.cool || {};
+    var a = c.a;
+    // 0歳：名付け／2歳：気質／5歳：節目（必ず出す）
+    if (a === 0) return nameChoice(c, P);
+    if (a === 2) return tempChoice(c, P);
+    if (a === 5) return fiveChoice(c, P);
+    if ((c.L.refused || 0) >= 3 && !s.pressured && !c.L.married && a >= 18) {
+      s.pressured = c.y;
+      return makeChoiceBranch(c, '小さな選択', '縁談を断るのも' + c.L.refused + '度目になった。' + (P.dad ? P.dad : '親') + 'と村の年寄りに、「いつまで選り好みをするのか」と囲まれた。', [
+        { k: 'promise', l: '次の話は受けると約束する', fx: { tie: 2, sat: -1 } }, { k: 'own', l: '自分の考えを通す', fx: { sat: 1, tie: -2 } }], { cid: '_press', kind: 'small' });
+    }
+    if (!c.p(a <= 5 ? 0.5 : 0.6)) return;
+    var list = CHm.list.filter(function (o) { return eligible(c, o) && !(s.cool[o.id] && c.y - s.cool[o.id] < (o.cool || 8)); });
+    // 文の候補（同じ文は1回だけ）
+    var cand = [];
+    list.forEach(function (o) { o.texts.forEach(function (t, i) { var ft = fillT(t, P); if (ft && !s.seen[ft]) cand.push({ o: o, t: ft, i: i }); }); });
+    if (!cand.length) return;
+    var pk = cand[Math.floor(c.r() * cand.length)], o = pk.o;
+    var opts = [];
+    for (var i = 0; i < o.options.length; i++) { var p = o.options[i], l = fillT(p.l, P); if (!l) return; opts.push({ k: p.k, l: l, fx: p.fx }); }
+    s.seen[pk.t] = 1; s.cool[o.id] = c.y;
+    makeChoiceBranch(c, o.kind === 'parent' ? '親の選択' : '小さな選択', pk.t, opts, { cid: o.id, kind: o.kind });
+  }
+  function nameChoice(c, P) {
+    var L = c.L;
+    if (L.inherited || !L.name || /アイヌ語/.test(L.name)) return;
+    var alt = c.name(L.sex);
+    if (!alt || alt === L.name) return;
+    c.s.altName = alt;
+    var who = P.dad ? P.dad : '父';
+    makeChoiceBranch(c, '親の選択', '名前を決める。' + who + 'は「' + L.name + '」、' + (P.mom || '母') + 'は「' + alt + '」がいいと言う。', [
+      { k: 'a', l: '「' + L.name + '」にする', fx: { tie: 1 } }, { k: 'b', l: '「' + alt + '」にする', fx: { sat: 1 } }], { cid: '_name', kind: 'parent' });
+  }
+  function tempChoice(c, P) {
+    makeChoiceBranch(c, '親の選択', '2歳。' + P.name + 'は、目を離すとすぐどこかへ行ってしまう。どう育てる？', [
+      { k: 'out', l: '外で思いきり遊ばせる', fx: { body: 1, sat: 1 } }, { k: 'near', l: 'そばで見守り、話しかける', fx: { tie: 2 } }, { k: 'self', l: '何でも自分でやらせてみる', fx: { learn: 1, body: 1 } }], { cid: '_temp', kind: 'parent' });
+  }
+  function fiveChoice(c, P) {
+    var sv = c.api.surv5 ? c.api.surv5(c.L) : null;
+    var line = sv != null ? '同じ年に生まれた子のうち、5歳を迎えられたのは約' + Math.round(sv * 10) + '割。' : '';
+    makeChoiceBranch(c, '節目', '5歳になった。' + line + P.name + 'は、このごろ何に夢中だろう。', [
+      { k: 'play', l: '近所の子と遊び回る', fx: { tie: 2, body: 1 } }, { k: 'help', l: '家の手伝いを覚える', fx: { learn: 1, tie: 1 } }, { k: 'dream', l: 'ひとりで空想にふける', fx: { sat: 2 } }], { cid: '_five', kind: 'small' });
+  }
+  function resolveChoice(L, rec, br, k, api) {
+    var c = ctxOf(L, rec, api, br.d), d = br.d || {}, CHm = choicesMod();
+    var opt = br.groups[0].options.filter(function (o) { return o.k === k; })[0] || br.groups[0].options[0];
+    var o = CHm ? CHm.list.filter(function (x) { return x.id === d.cid; })[0] : null;
+    var fx = o ? (o.options.filter(function (x) { return x.k === opt.k; })[0] || {}).fx : null;
+    if (d.cid === '_name') {
+      fx = opt.k === 'a' ? { tie: 1 } : { sat: 1 };
+      if (opt.k === 'b' && c.s.altName) { var old = L.name; L.name = c.s.altName; rec.events.forEach(function (e) { e.t = e.t.split(old).join(L.name); }); }
+      c.say('名前は「' + L.name + '」に決まった。', fx, '家庭');
+      return;
+    }
+    if (d.cid === '_press') {
+      fx = opt.k === 'promise' ? { tie: 2, sat: -1 } : { sat: 1, tie: -2 };
+      if (opt.k === 'promise') { L.never = false; L.marryAt = Math.min(L.marryAt || 99, L.age + 1); }
+      c.say(opt.k === 'promise' ? '次の縁談は受けると、父に頭を下げた。' : '「自分の相手は自分で決める」と言い切った。座敷が静まり返った。', fx, '家庭');
+      return;
+    }
+    if (d.cid === '_temp') {
+      fx = { out: { body: 1, sat: 1 }, near: { tie: 2 }, self: { learn: 1, body: 1 } }[opt.k];
+      var tr = c.s.tr; if (opt.k === 'out') tr.adv += 0.4; else if (opt.k === 'near') tr.warm += 0.4; else tr.grit += 0.4;
+      c.say({ out: '泥だらけになって帰ってくる日が増えた。', near: '何でも話してくれる子になった。', self: '転んでも、自分で起き上がるようになった。' }[opt.k], fx, '家庭');
+      return;
+    }
+    if (d.cid === '_five') {
+      fx = { play: { tie: 2, body: 1 }, help: { learn: 1, tie: 1 }, dream: { sat: 2 } }[opt.k];
+      c.say({ play: '日が暮れるまで、近所の子と駆け回った。', help: '小さな手で、家の手伝いを覚えた。', dream: '雲の形を眺めては、ひとりで物語をこしらえた。' }[opt.k], fx, '家庭');
+      return;
+    }
+    var P = people(c);
+    var after = o ? fillT((o.options.filter(function (x) { return x.k === opt.k; })[0] || {}).after, P) : null;
+    var t = after || (d.kind === 'parent' ? '親は、' + opt.l + 'ことにした。' : opt.l + 'ことにした。');
+    c.say(t, fx || {}, d.kind === 'parent' ? '家庭' : '人間関係');
+  }
+
+  /* ========== 親の人物像（作る人の指示 2026-10-17。下調べの「親や家の人物像」の型から） ========== */
+  // 身分ごとに、父か母の人物像を1つ引き、生まれた年に1行で出す。暮らし向きと、のちの筋の起こりやすさに少し効かせる
+  var PERSONA = {
+    bushi: [
+      ['父は藩の家老のひとりで、表は穏やかだが、裏で藩の政を動かしている。', 0.25, 'karo'], ['父は下城の太鼓とともにまっすぐ家に帰り、病がちな母の看病をする平侍だ。剣の腕は立つらしい。', -0.05, 'heishi'],
+      ['父は借金で首が回らず、算盤をはじいては家の立て直しに頭を抱えている。', -0.15, 'debt'], ['父は主家を失った浪人で、傘張りの内職で食いつないでいる。', -0.3, 'ronin'],
+      ['父は家督を継げなかった次男で、婿に入った家で肩身のせまい思いをしている。', 0, 'muko'], ['父は藩の勘定方で、帳面の数字にうるさい。', 0.05, 'kanjo']],
+    kuge: [
+      ['父は受領として地方の国を治め、任国から戻るたびに珍しい品を持ち帰る。', 0.2, 'zuryo'], ['父は権門に取り入るのに忙しく、家にいることは少ない。', 0.1, 'kenmon'],
+      ['母は物語好きで、夜ごと古い物語を語って聞かせる。', 0, 'monogatari'], ['父は和歌の家の当主で、歌合の勝ち負けに一喜一憂する。', 0.05, 'uta']],
+    hyakusho: [
+      ['父は村の庄屋に信頼されている平百姓で、寄り合いではいつも意見を求められる。', 0.05, 'trusted'], ['父は伊勢参りのためなら何でも犠牲にする人で、毎年の講の積み立てで家計はいつも苦しい。', -0.15, 'iseFan'],
+      ['父は田を耕すかたわら炭を焼き、冬は町へ売りに出る。', 0, 'sumi'], ['母は口数が少ないが、村一番の機織りの名手だ。', 0.05, 'hata'],
+      ['父は酒が好きで、年貢の前になると決まって機嫌が悪くなる。', -0.1, 'drink'], ['父は小作で、地主の家に頭が上がらない。', -0.2, 'kosaku'],
+      ['母は教育熱心で、字の読めない自分の代わりに子に手習いをさせたいと願っている。', 0, 'kyoiku']],
+    chonin: [
+      ['父は倹約と才覚で一代で店を大きくした商人だ。', 0.2, 'self'], ['母は夫亡きあとの店を女手ひとつで切り盛りしている後家だ。', 0.05, 'goke'],
+      ['父は腕はいいが気が短い職人で、喧嘩で仕事をしくじることがある。', -0.1, 'tanki'], ['父は上方から下ってきた職人で、江戸の流儀になじめずにいる。', -0.05, 'kamigata'],
+      ['父は大晦日になると借金取りに居留守を使う。', -0.2, 'shakkin'], ['父は宿場で旅籠を営み、人の出入りが絶えない。', 0.1, 'hatago']],
+    heimin: [
+      ['父は小作で、口減らしの話が出るほど家は苦しい。', -0.2, 'kuchi'], ['父は炭鉱で働く荒くれ者で、町の誰もが一目置いている。', -0.05, 'tanko'],
+      ['母は教育熱心で、子だけは上の学校へやりたいと内職を増やした。', 0, 'kyoiku'], ['父は頑固だが情に厚い職人で、近所の子にも慕われている。', 0, 'shokunin'],
+      ['父は網元で、浜では顔がきく。', 0.2, 'amimoto'], ['父は鉄道に勤め、仕事一筋で家にいることは少ない。', 0.1, 'rail']],
+    shizoku: [
+      ['父は没落した士族で、昔の誇りを捨てきれず家計を顧みない。', -0.15, 'botsuraku'], ['父は士族の出だが、学校の先生として新しい世を生きている。', 0.05, 'sensei']],
+    modern: [
+      ['父は単身赴任が多く、家族そろう日は年に数回だ。', 0.05, 'tanshin'], ['母は女手ひとつで子を育てている。', -0.2, 'single'],
+      ['父は商店街で店を営み、近所の誰とでも顔なじみだ。', 0, 'shotengai'], ['父は仕事一筋の会社員で、休みの日もほとんど家にいない。', 0.1, 'kaisha'],
+      ['母は教育熱心で、習い事の送り迎えに走り回っている。', 0.05, 'kyoiku'], ['父は頑固だが情に厚い職人だ。', 0, 'shokunin'], ['両親は共働きで、祖母が家のことを見てくれている。', 0.05, 'sobo']]
+  };
+  function personaYear(c) {
+    var L = c.L, s = c.s;
+    if (s.persona || L.inherited) return;
+    var key = c.E ? 'modern' : (L.status === 'genin' || L.status === 'outcast' || L.status === 'buraku' ? 'hyakusho' : L.status);
+    if (key === 'heimin' && c.y >= 1946) key = 'modern';
+    var list = PERSONA[key];
+    if (!list) { s.persona = '-'; return; }
+    var p = one(c.r, list);
+    s.persona = p[2];
+    if (typeof L.incPct === 'number') L.incPct = clamp(L.incPct + p[1], 0.01, 0.99);
+    c.say(p[0], null, '家庭');
+  }
+
+  /* ========== 人生の山場（どの人生にも1つは作る） ==========
+     ほかの大きな決断がまだない人に、10・20・30・42・55歳ごろ、時代に合った山場を1つ出す。型は下調べの「人生の山場」から */
+  var DRAMA = [
+    { id: 'hitokai', y: [1000, 1650], a: [9, 14], t: '人買い', q: '山道で見知らぬ男に「都へ行けば腹いっぱい食える」と手を引かれた。', o: [['run', '手を振りほどいて逃げる', { body: -2, sat: 2 }, '必死に走って村へ逃げ帰った。あとで、隣村の子がさらわれたと聞いた。'], ['cry', '大声で助けを呼ぶ', { tie: 3 }, '畑にいた大人たちが駆けつけ、男は逃げていった。']] },
+    { id: 'kamikakushi', y: [1000, 1900], a: [8, 13], t: '神隠し', q: '祭りの夜、気づくと見知らぬ山の中にいた。遠くで、自分の名を呼ぶ声がする。', o: [['voice', '声のする方へ歩く', { tie: 3, sat: 2 }, '三日目の朝、村の衆に見つけられた。「神隠しから戻った子」と、しばらく噂になった。'], ['stay', '夜が明けるまで動かない', { body: -3, learn: 2 }, '夜明けに沢を下り、自分の足で村へたどり着いた。']] },
+    { id: 'ochimusha', y: [1180, 1600], a: [16, 50], k: ['village', 'fish'], t: '落武者', q: '戦に負けた武者が、傷を負って家の納屋に隠れていた。「かくまってくれ」と言う。', o: [['hide', 'かくまう', { tie: 3, sat: -2 }, '十日のあいだ粥を運んだ。武者は礼に、古い刀の鍔を置いて夜に去った。'], ['tell', '村の衆に知らせる', { tie: 1, sat: -3 }, '武者は村の衆に引き渡された。その夜の叫び声が、長く耳に残った。']] },
+    { id: 'katami', y: [1000, 1700], a: [25, 60], t: '形見の再会', q: '旅の途中、宿の女が、幼いころに生き別れた姉の形見と同じ守り袋を下げていた。', o: [['ask', '声をかける', { tie: 6, sat: 6 }, '女は、生き別れた姉の娘だった。ふたりで夜が明けるまで泣いた。'], ['pass', '見間違いだと思い直す', { sat: -2 }, '翌朝、女の姿はもうなかった。']] },
+    { id: 'ekibyo', y: [1000, 1880], a: [20, 60], t: '疫病', q: '疫病が村に入り、隣の家が次々に倒れた。看病の手が足りない。', o: [['help', '看病に通う', { tie: 5, body: -5 }, '隣の家の子どもが、ひとり助かった。'], ['shut', '戸を閉ざして家族を守る', { body: 2, tie: -4 }, '疫病が去ったあと、隣の家の者と目を合わせづらくなった。']] },
+    { id: 'hitome', y: [1000, 1700], a: [16, 25], unm: true, t: '一目惚れ', q: '辻ですれ違った人の横顔が忘れられない。人づてに、その人の家が分かった。', o: [['write', '文を届けさせる', { sat: 4, tie: 2 }, '三通目の文に、返事が来た。'], ['forget', '忘れることにする', { sat: -3 }, '春が来るたびに、あの辻を思い出した。']] },
+    { id: 'taika2', y: [1600, 1945], a: [20, 60], k: ['city', 'town'], t: '大火', q: '夜半、町が火に包まれた。家財を持ち出す時間はわずかしかない。', o: [['people', '近所の年寄りを背負って逃げる', { tie: 6, sat: -6 }, '家は焼けたが、背負った隣の婆さんは助かった。焼け跡で、その家族に手を合わされた。'], ['goods', '家の金と帳面を持ち出す', { sat: -2, tie: -2 }, '家は焼けたが、持ち出した金で翌月には小屋を建て直した。']] },
+    { id: 'enzai', y: [1600, 1945], a: [18, 50], t: '濡れ衣', q: '奉公先の金がなくなり、疑いをかけられた。', o: [['fight', '身の潔白を訴え続ける', { sat: -4, tie: 2 }, 'ひと月後、本当の盗人が捕まった。主人は手をついて詫びた。'], ['leave', '黙って店を去る', { sat: -6, tie: -4 }, '町を出た。あとで疑いが晴れたと風の便りに聞いた。']] },
+    { id: 'kandou', y: [1600, 1960], a: [17, 28], t: '勘当', q: '親の決めた道を蹴ったことで、「勘当だ」と言い渡された。', o: [['go', '家を出る', { sat: 2, tie: -6 }, '風呂敷包みひとつで家を出た。十年後、父の葬儀で久しぶりに敷居をまたいだ。'], ['bow', '頭を下げて許しを請う', { tie: 2, sat: -4 }, '父は何も言わずに背を向けたが、翌朝の膳には好物が並んでいた。']] },
+    { id: 'kakushigo', y: [1600, 2100], a: [35, 65], t: '隠し子', q: '親の葬儀の席に、見知らぬ若者が現れた。親の隠し子だという。', o: [['accept', '家に迎え入れる', { tie: 4, sat: -2 }, '戸惑いながらも、きょうだいとして付き合うことにした。'], ['refuse', '関わりを断る', { sat: -1, tie: -3 }, '若者は黙って頭を下げ、二度と来なかった。']] },
+    { id: 'saikai', y: [1600, 2100], a: [45, 75], t: '再会', q: '若いころ約束を交わしたまま別れた人から、何十年ぶりかに便りが届いた。', o: [['meet', '会いに行く', { sat: 6, tie: 4 }, '昔の橋のたもとで会った。互いの白髪を見て、声をあげて笑った。'], ['letter', '手紙だけ返す', { sat: 2 }, '長い手紙を書いた。それきりだったが、胸のつかえが取れた。']] },
+    { id: 'hyoryu', y: [1600, 1870], a: [18, 45], k: ['fish'], sex: 'm', t: '漂流', q: '嵐で舟が流され、何日も漂った末に見知らぬ島に流れ着いた。', o: [['wait', '島で助けを待つ', { body: -6, learn: 4 }, '半年後に通りかかった船に救われ、村に戻った。死んだと思われ、墓が建っていた。'], ['raft', 'いかだを組んで海に出る', { body: -8, sat: 4 }, '十日かけて隣の島にたどり着いた。村では大騒ぎになった。']] },
+    { id: 'shusei', y: [1868, 2100], a: [14, 30], t: '出生の秘密', q: '戸籍を取り寄せて、自分が養子だったと知った。', o: [['ask', '親に問いただす', { tie: -2, sat: 2 }, '母は泣きながら、本当の母のことを話してくれた。それでも、育ててくれた親は親だと思えた。'], ['keep', '知らないふりを続ける', { sat: -4 }, '何も言わないまま、胸の奥にしまった。']] },
+    { id: 'shinsai', y: [1868, 2100], a: [15, 70], t: '大きな揺れ', q: '大きな地震で家が傾いた。家族は無事だが、近所に下敷きになった人がいる。', o: [['dig', '素手で瓦を掘り起こす', { tie: 6, body: -4 }, '夜明けまで掘り続け、隣の家の子を助け出した。'], ['family', '家族を連れて広い場所へ逃げる', { body: 2, tie: -2 }, '火の手が上がる前に逃げのびた。']] },
+    { id: 'kako', y: [1900, 2100], a: [35, 65], t: '過去を知る人', q: '仕事がうまくいき始めたころ、昔の自分を知る人が訪ねてきた。誰にも話していない過去だ。', o: [['face', '向き合って話を聞く', { sat: -2, tie: 3 }, '相手は、昔の詫びを言いに来ただけだった。'], ['shut', '門前払いにする', { sat: 1, tie: -3 }, 'その夜は眠れなかった。']] },
+    { id: 'gyakuten', y: [1868, 2100], a: [28, 55], t: 'どん底から', q: '仕事を失い、借金だけが残った。昔書きためたものを本にしないかと、知り合いが言う。', o: [['try', '最後の望みをかける', { sat: 6, learn: 3 }, '出した本が思いがけず売れた。どん底からの一発逆転だった。'], ['work', '日雇いで地道に返す', { body: -4, tie: 2 }, '十年かけて借金を返し終えた。']] },
+    { id: 'jiko', y: [1950, 2100], a: [18, 60], t: '事故', q: '帰り道、目の前で人が車にはねられた。運転手は逃げようとしている。', o: [['help', '倒れた人に駆け寄る', { tie: 4, sat: 2 }, '救急車が来るまで手を握っていた。のちに、その人から礼状が届いた。'], ['chase', 'ナンバーを覚えて通報する', { learn: 2, sat: 2 }, '運転手はその日のうちに捕まった。']] },
+    { id: 'kokuhatsu', y: [1960, 2100], a: [30, 58], job: true, t: '告発', q: '会社の帳簿のごまかしに気づいた。黙っていれば昇進は目の前だ。', o: [['tell', '告発する', { sat: -4, tie: -2, learn: 2 }, '会社は大騒ぎになり、居場所を失った。それでも後悔はしなかった。'], ['quiet', '黙っている', { sat: -3 }, '昇進したが、帳簿を見るたびに胸が痛んだ。']] }
+  ];
+  function dramaEligible(c, d) {
+    var L = c.L;
+    if (c.y < d.y[0] || c.y > d.y[1] || c.a < d.a[0] || c.a > d.a[1]) return false;
+    if (d.k && d.k.indexOf(c.kind) < 0) return false;
+    if (d.sex && d.sex !== L.sex) return false;
+    if (d.unm && L.married) return false;
+    if (d.job && !(L.job && L.job !== 'home')) return false;
+    return true;
+  }
+  var DRAMA_AGES = [11, 20, 30, 42, 55];
+  arc({ id: 'drama', start: function (c) {
+    var s = c.s;
+    if ((s.nBig || 0) > 0 || DRAMA_AGES.indexOf(c.a) < 0 && !(c.a > 11 && DRAMA_AGES.indexOf(c.a - 1) >= 0)) return false;
+    var list = DRAMA.filter(function (d) { return dramaEligible(c, d) && !(s.dramaSeen || {})[d.id]; });
+    if (!list.length) return false;
+    var d = one(c.r, list);
+    (s.dramaSeen = s.dramaSeen || {})[d.id] = 1;
+    c.ask('drama.' + d.id, d.t, d.q, d.o.map(function (o) { return { k: o[0], l: o[1], w: 1, f: focusOf(o[2]), h: CHint(o[2]) }; }), { id: d.id }, 'dramaR');
+    return true;
+  } });
+  arc({ id: 'dramaR', nodes: {}, res: {} });
+  // 山場の答え（どの山場も、答えの名前で続きを引く）
+  (function () {
+    var R = A.filter(function (o) { return o.id === 'dramaR'; })[0].res;
+    DRAMA.forEach(function (d) { d.o.forEach(function (o) { if (!R[o[0]]) R[o[0]] = function (c) { var dd = DRAMA.filter(function (x) { return x.id === c.d.id; })[0], oo = dd && dd.o.filter(function (x) { return x[0] === o[0]; })[0]; if (oo) c.say(oo[3], oo[2]); }; }); });
+  })();
+
+  /* ---------- 家を出ている間の暮らし（L.mode） ---------- */
+  var MODE_LINES = {
+    tabi: ['{prov}の社の祭りに呼ばれ、夜通し舞台に立った。', '{prov}の宿場で、雨が上がるのを待って三日を過ごした。', '新しい演目を覚え、一座の長にほめられた。', '{prov}の峠道で、草鞋を何足もはきつぶした。', '{prov}の村の子どもたちが、一座のあとをどこまでもついてきた。', '故郷の村の方角の空を、ときどき眺めた。'],
+    hoko: ['藪入りの日を指折り数えて待った。', '奉公先の仕事に、少しずつ慣れてきた。', '奉公先の朝は早く、夜は誰よりも遅くまで働いた。', '奉公仲間と、ふるさとの話をして夜を過ごした。', '主人から、仕事ぶりをほめられた。'],
+    away: ['町の暮らしに、少しずつ慣れてきた。', 'ふるさとからの便りを、何度も開いた。', '町の人ごみの中で、ふと故郷の山を思い出した。', '仕事の帰りに、同じ国の出の人と知り合った。'],
+    hei: ['陣中で、粥をすすりながら夜を明かした。', '国元の家族に宛てて、短い便りを書いた。', '仲間が戦で傷つき、肩を貸して陣に戻った。'],
+    shukke: ['朝の勤行のあと、寺の庭を掃き清めた。', '経を写す手が、少しずつ速くなった。', '寺を訪ねてきた人の話を、黙って聞いた。']
+  };
+  function modeYear(c, rec) {
+    var L = c.L;
+    rec.mode = L.mode || null;
+    if (L.old) {
+      if (L.hoko && !L.hoko.done && !L.mode) { L.mode = 'hoko'; c.s.modeEngine = true; }
+      if (c.s.modeEngine && L.mode === 'hoko' && (!L.hoko || L.hoko.done)) { L.mode = null; c.s.modeEngine = false; }
+      if (L.mode === 'tabi' && c.api.provs && c.p(0.6)) { var ps = c.api.provs(L); c.api.move(L, { prov: ps[Math.floor(c.r() * ps.length)] }); }
+    }
+    if (!L.mode || !MODE_LINES[L.mode] || rec.events.some(function (e) { return e.story; }) || !c.p(0.55)) return;
+    var prov = L.old && L.H && L.H.prov[L.prov] ? L.H.prov[L.prov].kuni : '旅先';
+    var cand = MODE_LINES[L.mode].map(function (t) { return t.replace('{prov}', prov); }).filter(function (t) { return !(c.s.seen || {})[t]; });
+    if (!cand.length) return;
+    var t = cand[Math.floor(c.r() * cand.length)];
+    (c.s.seen = c.s.seen || {})[t] = 1;
+    c.say(t, null, L.mode === 'tabi' || L.mode === 'away' ? '地域' : '学歴と仕事');
+  }
+
   /* ---------- 毎年の処理 ---------- */
   function year(L, rec, api) {
-    if (!L.alive || L.age < 1) return;
+    if (!L.alive) return;
     var s = L.story || init(L, api), y = L.year;
+    // 1年に出す選択は、大きな決断も含めて1つまで
+    if (L.queue.some(function (b) { return !b.ask && b.id !== 'ask' && b.kind !== 'ask'; })) s.asked = y;
+    if (L.age < 1) { personaYear(ctxOf(L, rec, api)); if (s.asked !== y) choiceYear(ctxOf(L, rec, api), people(ctxOf(L, rec, api))); return; }
     // 決めてあった出来事（その年の分）
     var due = s.at.filter(function (x) { return x.y <= y; });
     s.at = s.at.filter(function (x) { return x.y > y; });
@@ -1665,6 +1955,7 @@
     });
     var c = ctxOf(L, rec, api);
     weddingNote(c, rec);
+    modeYear(c, rec);
     // 新しい筋は1年に1つまで。分かれ道を出した年は、ほかの筋を始めない
     if (s.asked === y) return;
     for (var i = 0; i < A.length; i++) {
@@ -1672,16 +1963,27 @@
       if (!o.start || s.done[o.id]) continue;
       if (o.start(c)) { s.done[o.id] = y; s.last = y; break; }
     }
+    if (s.asked !== y) choiceYear(c, people(c));
   }
   // 分かれ道の答え。answers が null のときは、その人の気質で選ぶ
   function resolve(L, rec, br, answers, api) {
     var s = L.story, k = answers && answers.s;
     if (!k || !br.w.hasOwnProperty(k)) k = pickW(s.r, br.w);
+    if (br.ra === '__choice') {
+      var pk0 = br.groups[0].options.filter(function (o) { return o.k === k; })[0];
+      rec.storyPick = pk0 ? pk0.l : k;
+      var m0 = rec.events.length;
+      resolveChoice(L, rec, br, k, api);
+      rec.storyFx = sumFx(rec.events.slice(m0));
+      return k;
+    }
     var target = null;
     A.forEach(function (o) { if (o.id === br.ra && o.res && o.res[k]) target = o.res[k]; });
     var picked = br.groups[0].options.filter(function (o) { return o.k === k; })[0];
     rec.storyPick = picked ? picked.l : k;
+    var n0 = rec.events.length;
     if (target) target(ctxOf(L, rec, api, br.d));
+    rec.storyFx = sumFx(rec.events.slice(n0));
     return k;
   }
   // おまかせ：今年の重点に合う答え（なければ null で、気質のまま）
@@ -1691,7 +1993,56 @@
     return o ? { s: o.k } : null;
   }
 
-  var API = { init: init, year: year, resolve: resolve, autoAnswer: autoAnswer, arcs: A, nodes: N };
+  /* ---------- 結婚相手の人となり（結婚するたびに出す） ---------- */
+  var SP_ADJ = ['よく笑う', '口数の少ない', '働き者の', '気の強い', 'おっとりした', '世話好きの', '負けず嫌いの', '涙もろい', 'まじめな', 'ひょうきんな', '手先の器用な', '読書好きの', '朝の早い', '歌のうまい', '料理の上手な', '人見知りの'];
+  var SP_OLD = {
+    hyakusho: ['隣村の百姓の家', '庄屋の遠縁の家', '小作の家', '村一番の働き者と評判の家', '馬を飼う家', '機織りの上手な家'],
+    chonin: ['呉服屋の家', '大工の家', '豆腐屋の家', '船宿の家', '薬種問屋の奉公人の家', '長屋の髪結いの家'],
+    bushi: ['藩の勘定方の家', '足軽の家', '城の番方の家', '家老の家の分家', '浪人の家', '藩の剣術指南の家'],
+    kuge: ['中流の貴族の家', '受領を務める家', '学問の家', '雅楽を伝える家'],
+    heimin: ['農家', '商家', '職人の家', '漁師の家', '役場勤めの家', '小学校の先生の家'],
+    shizoku: ['旧藩士の家', '元足軽の家', '巡査の家', '学校の先生の家'],
+    other: ['隣の村の家', '同じ村の家', '遠い親戚の家']
+  };
+  var SP_NEW = ['会社員', '公務員', '看護師', '工場勤め', '店の店員', '自営業の家の跡取り', '保育士', 'エンジニア', '教員', '美容師', '営業職', '介護の仕事', '料理人', '銀行員', '建設の仕事', '農家', '研究者', '事務職'];
+  function spouseDesc(L, sp, y) {
+    var r = (L.story && L.story.r) || Math.random, age = y - sp.by, adj = one(r, SP_ADJ);
+    if (!L.old || y >= 1950) return '相手は' + age + '歳、' + one(r, SP_NEW) + 'の' + adj + '人。';
+    var st = sp.st || L.status, list = SP_OLD[st] || SP_OLD.other;
+    var order = sp.sex === 'f' ? one(r, ['長女', '次女', '三女', '末娘', 'ひとり娘']) : one(r, ['長男', '次男', '三男', '末っ子']);
+    return '相手は' + age + '歳、' + one(r, list) + 'の' + order + 'で、' + adj + '人。';
+  }
+
+  /* ---------- 縁談・婿養子・養子・奉公の相手と行き先（毎回作り直す。改善の指示書 第1弾の1） ---------- */
+  var SUIT_TRAIT = ['まじめだが口数の少ない', 'よく笑う', '気が短いが情に厚い', '見栄っぱりな', '世話焼きの', 'おっとりした', '働き者で評判の'];
+  var SUIT_JOB = {
+    hyakusho: ['田を耕す', '馬を引いて荷を運ぶ', '炭を焼く', '機を織る', '蚕を飼う'], chonin: ['豆腐屋を営む', '大工の', '呉服屋に勤める', '船宿の', '桶屋の'],
+    bushi: ['勘定方を務める', '城の番方の', '藩校で教える', '剣術の腕で知られた'], heimin: ['役場に勤める', '鉄道に勤める', '小学校の先生の', '工場に勤める', '商店を営む'],
+    shizoku: ['巡査の', '役場に勤める', '学校の先生の'], kuge: ['歌の家の', '受領の家の'], other: ['同じ村の', '隣村の']
+  };
+  function suitor(L, kind) {
+    var S = L.story; if (!S) return null;
+    var r = S.r, y = L.year, osex = L.sex === 'm' ? 'f' : 'm';
+    var g = Math.max(-2, Math.round(3 + (r() - 0.5) * 6));
+    var by = L.sex === 'm' ? L.by + g : L.by - g;
+    var nm = null;
+    try { nm = L.old ? null : null; } catch (e) { nm = null; }
+    var st = L.status || 'heimin', jobs = SUIT_JOB[st] || SUIT_JOB.other, house = (SP_OLD[st] || SP_OLD.other);
+    var o = { y: y, by: by, age: y - by, house: one(r, house), job: one(r, jobs), trait: one(r, SUIT_TRAIT), order: osex === 'f' ? one(r, ['長女', '次女', '三女', '末娘']) : one(r, ['長男', '次男', '三男']) };
+    return o;
+  }
+  function suitorText(L, o, name) {
+    var prev = (L.suitors || []).filter(function (x) { return x !== o; });
+    var head = prev.length ? 'また縁談が持ち込まれた。前の話を断ってから' + Math.max(1, o.y - prev[prev.length - 1].y) + '年になる。' : '縁談が持ち込まれた。';
+    return head + '相手は' + o.house + 'の' + o.order + '、' + o.age + '歳。' + o.job + '、' + o.trait + (name ? name : '人') + '。受ける？';
+  }
+  var HOKO_TO = { m: ['城下の呉服屋', '江戸の油問屋', '大坂の薬種問屋', '町の酒屋', '宿場の旅籠'], f: ['城下の商家', '庄屋の家', '江戸の武家屋敷', '町の料理屋', '隣村の大百姓の家'] };
+  var HOKO_TO_NEW = { m: ['町の工場', '都会の商店', '製材所', '鉄工所'], f: ['町の紡績工場', '都会の商家の女中', '製糸工場', '旅館'] };
+  function hokoTo(L) { var r = L.story ? L.story.r : Math.random; return one(r, (L.year < 1872 ? HOKO_TO : HOKO_TO_NEW)[L.sex]); }
+  function mukoHouse(L) { var r = L.story ? L.story.r : Math.random; return one(r, ['隣村の大百姓の家', '同じ村の庄屋の分家', '町の商家', '峠向こうの村の家']); }
+  function yoshiHouse(L) { var r = L.story ? L.story.r : Math.random; return one(r, ['勘定方を務める家', '城の番方の家', '藩校の師範の家', '馬廻りの家']); }
+
+  var API = { init: init, year: year, resolve: resolve, autoAnswer: autoAnswer, spouseDesc: spouseDesc, hintFor: hintFor, suitor: suitor, suitorText: suitorText, hokoTo: hokoTo, mukoHouse: mukoHouse, yoshiHouse: yoshiHouse, arcs: A, nodes: N };
   if (typeof module !== 'undefined' && module.exports) module.exports = API;
   root.IchiokuStory = API;
 })(typeof self !== 'undefined' ? self : this);

@@ -20,7 +20,7 @@
       <div class="top-main">
         <h1 id="top-title" class="top-title" aria-label="1000分の1"><span class="tt-l1">1000</span><span class="tt-l2">分の<span class="tt-one">1</span></span></h1>
         <p class="top-catch">どこに いつ生まれるかは選べない</p>
-        <p class="top-lead"><span id="r0">1000</span>年から<span id="r1">2000</span>年までの中から1年が選ばれ、その年に日本のどこかで生まれます。平安の都、江戸の城下町、北の島のコタン、琉球の村、戦後の団地。家も進学も仕事も、その時代とその土地でありえた形で決まります。</p>
+        <p class="top-lead"><span id="r0">1000</span>〜<span id="r1">2000</span>年のどこかの1年に、日本のどこかで生まれます。</p>
 
         <div class="top-count" aria-label="このページを開いてからの日本の数">
           <div class="tc-item tc-birth">
@@ -33,12 +33,13 @@
             <span class="tc-track" aria-hidden="true"><span class="tc-fill" id="cnt-death-fill"></span></span>
             <span class="tc-k"><span class="nw">同じ時間に</span><span class="nw">日本で亡くなった人</span></span>
           </div>
-          <p class="tc-note">いまの日本では、約47秒にひとりが生まれ、約20秒にひとりが亡くなっています（2025年）</p>
+          <p class="tc-note">約47秒にひとり生まれ、約20秒にひとり亡くなる（2025年）</p>
         </div>
 
         <div class="top-born" id="top-born">
           <button type="button" class="btn-main btn-born" id="born" disabled>準備中</button>
           <button type="button" class="btn-sub" id="resume" hidden>続きから</button>
+          <button type="button" class="btn-sub" id="auto-born" aria-pressed="false">すべておまかせで生きる：切</button>
         </div>
 
         <div class="top-past">
@@ -50,12 +51,11 @@
 
       <aside class="top-side" aria-labelledby="era-title">
         <h2 id="era-title" class="ts-title">どの年に生まれるか</h2>
-        <p class="ts-sub">1マスが1年。<span id="r0b">1000</span>〜<span id="r1b">2000</span>年の<span id="rn">1,001</span>マスのどれに生まれる確率も同じです。この端末で生まれた年のマスは、時代の色で埋まっていきます</p>
+        <p class="ts-sub">1マス1年・<span id="r0b">1000</span>〜<span id="r1b">2000</span>年の<span id="rn">1,001</span>マス。生まれた年が時代の色で埋まります</p>
         <div class="board" id="board"></div>
         <p class="board-cap" id="board-cap" aria-live="off"></p>
         <ul class="era-share" id="era-share"></ul>
         <p class="ts-src" id="board-fill"></p>
-        <p class="ts-src">長く続いた時代ほど生まれやすくなります。数字の出どころは「このサイトについて」にまとめています</p>
       </aside>
     </div>
 
@@ -77,7 +77,9 @@
 
   <!-- 人生の画面と最期の画面で、いつも右上に「生まれ変わる」を出す -->
   <div class="life-top" id="life-top" hidden>
-    <span class="lt-name">1000分の<span class="tt-one">1</span></span>
+    <button type="button" class="btn-sub back-top" id="back-top" hidden>‹ 一つ前の人生へ</button>
+    <span class="lt-name" id="lt-name">1000分の<span class="tt-one">1</span></span>
+    <button type="button" class="btn-sub auto-top" id="auto-top" aria-pressed="false">すべておまかせ</button>
     <button type="button" class="btn-sub reborn-top" id="reborn-top">生まれ変わる</button>
   </div>
   <section id="screen-life" class="screen" hidden aria-live="polite">
@@ -88,6 +90,12 @@
         <div id="year-now" class="year-now">1975年</div>
         <div id="place" class="place"></div>
         <div class="ybar" aria-hidden="true"><span id="ybar-fill"></span></div>
+        <button type="button" class="mini4" id="mini4" aria-label="4つの数値。押すとくわしく">
+          <span class="mini-row"><span class="mini-k">からだ</span><span class="mini-bar"><span id="mini-body"></span></span><span class="mini-d" id="mini-body-d"></span></span>
+          <span class="mini-row"><span class="mini-k">満足</span><span class="mini-bar"><span id="mini-sat"></span></span><span class="mini-d" id="mini-sat-d"></span></span>
+          <span class="mini-row"><span class="mini-k">学び</span><span class="mini-bar"><span id="mini-learn"></span></span><span class="mini-d" id="mini-learn-d"></span></span>
+          <span class="mini-row"><span class="mini-k">つながり</span><span class="mini-bar"><span id="mini-tie"></span></span><span class="mini-d" id="mini-tie-d"></span></span>
+        </button>
       </div>
       <button type="button" class="mini-map" id="map-open" aria-label="地図を大きく開く"><svg id="map" class="jmap" role="img" aria-label="日本地図"></svg></button>
     </header>
@@ -95,7 +103,7 @@
     <div id="branch" class="branch" hidden></div>
     <!-- 人生の記録：原作「80億分の1」の記録の並べ方（新しい順・左に年齢）にならう -->
     <section class="now" aria-label="人生の記録">
-      <div class="rec-head"><h2>人生の記録</h2><span>新しい順・押すと印</span></div>
+      <div class="rec-head"><h2>人生の記録</h2><span>新しい順</span></div>
       <ol id="feed" class="feed"></ol>
       <div class="now-row">
         <button type="button" class="link-btn" id="now-more">これまでをすべて見る</button>
@@ -105,7 +113,7 @@
     <div id="hotline" class="hotline" hidden></div>
     <nav class="controls" aria-label="進め方">
       <button type="button" class="btn-sub" id="pause">一時停止</button>
-      <button type="button" class="btn-sub" id="speed">速さ 1倍</button>
+      <button type="button" class="btn-sub" id="speed">速さ 1倍（1年 約7秒）</button>
       <button type="button" class="btn-sub" id="skip">次の分かれ道まで</button>
       <button type="button" class="btn-sub" id="detail">くわしく</button>
     </nav>
@@ -123,7 +131,6 @@
       <div class="block">
         <h2 class="h-self">自分の出来事</h2>
         <ul id="events" class="list"></ul>
-        <p class="hint">出来事を押すと印が付きます</p>
       </div>
       <button type="button" class="st4" id="st4" aria-label="4つの数値。押すと今年の理由が出ます">
         <span class="st-row"><span class="st-k">からだ</span><span class="st-bar"><span class="st-fill" id="st-body"></span></span><span class="st-v" id="st-body-v">—</span></span>
@@ -141,7 +148,7 @@
       <div class="block">
         <h2 class="h-self">家系図</h2>
         <div class="tree-wrap" id="tree"></div>
-        <p class="hint">これまでに出てきた3親等までの家族。亡くなった人は灰色で、亡くなった年を添えています</p>
+        <p class="hint">灰色は亡くなった人</p>
       </div>
       <div class="block">
         <h2 class="h-self">同じ日に日本で生まれた4人</h2>
@@ -174,7 +181,6 @@
     <div class="next-life" id="next-life">
       <div id="kyodai-block" hidden>
         <h2 class="h-next">この家の続きを生きる</h2>
-        <p class="note">選んだ人として、この人が亡くなった年から続きを生きます</p>
         <div id="kyodai-list" class="kyodai-list"></div>
       </div>
       <button type="button" class="btn-main" id="again">別の時代に生まれる</button>
@@ -183,7 +189,6 @@
       <h2 class="h-self">一生の浮き沈み</h2>
       <div id="life-curve" class="life-curve"></div>
       <p class="curve-legend" id="curve-legend"><span class="lg-me">この人の暮らしの満足</span><span class="lg-avg" id="lg-avg">同じ町・同じ年の100人の平均</span></p>
-      <p class="note" id="curve-cmp-note">細い線は、同じ町・同じ年に生まれた100人のうち、その年齢で生きている人の平均です。生きている人が10人を下回る年齢からは描いていません。</p>
       <p class="end-fact" id="surv-pct"></p>
     </div>
     <div class="block">
@@ -196,6 +201,10 @@
       <h2 class="h-self">生涯の移動距離</h2>
       <p id="dist-num" class="earn-num"></p>
       <p id="dist-sub" class="note"></p>
+    </div>
+    <div class="block">
+      <h2 class="h-self">家系図</h2>
+      <div class="tree-wrap" id="tree-end"></div>
     </div>
     <div class="block" id="house-block" hidden>
       <h2 class="h-self">この家で生きた人生</h2>
@@ -217,12 +226,12 @@
         <h2 class="h-self">人生地図</h2>
         <div class="lifemap" id="lifemap" role="group" aria-label="1年を1マスにした人生地図"></div>
         <div class="legend" id="legend"></div>
-        <p class="note">1年を1マスにして、横10マスで折り返しています。その年のいちばん大きな出来事の種類で色を分けました。マスを押すと、その年の記録が出ます</p>
+        <p class="note">1マス1年。押すとその年の記録</p>
       </div>
       <div class="block">
         <h2 class="h-self" id="cohort-title">同じ町・同じ年に生まれた100人のその後</h2>
         <ul id="cohort" class="cohort"></ul>
-        <p class="note">同じ町・同じ年の生まれで、100回の人生を回した結果です</p>
+
       </div>
       <div class="block">
         <h2 class="h-self">同じ日に日本で生まれた4人のその後</h2>
@@ -247,6 +256,8 @@
   </div>
 
 </main>
+<script src="js/names.js"></script>
+<script src="js/choices.js"></script>
 <script src="js/story.js"></script>
 <script src="js/engine.js"></script>
 <script src="js/history.js"></script>
