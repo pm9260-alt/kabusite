@@ -1,14 +1,22 @@
 /* 1000分の1 画面の見た目
-   決まり（13章）：ゴシック体だけ。グラデーション・影・ぼかし・下線・左側だけの色・飾りの英語見出し・絵文字は使わない。
+   原作「80億分の1」の見た目にならう（作る人の指示 2026-10-17）：本文はゴシック体、大きな数字と見出しは明朝体、年齢は等幅。
+   角の丸い白い面を1pxの線で囲む。グラデーション・ぼかし・下線・左側だけの色・絵文字は使わない。
    境界は1pxの線。強調色の意味は画面全体で同じにする。
    --accent：押せるもの（ボタン・リンク・出来事）　--world：その年の世の中　--warn：注意と相談先 */
 :root {
-  --bg: #ffffff;
-  --surface: #f3f3f1;
-  --text: #1a1a1a;
-  --sub: #555555;
-  --line: #c9c9c6;
-  --accent: #0a58a8;
+  --f-display: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif JP", "Noto Serif CJK JP", serif;
+  --f-mono: "IBM Plex Mono", "Hiragino Sans", "Yu Gothic", "Noto Sans JP", ui-monospace, Menlo, monospace;
+  --stamp: #0f6e68;
+  --c-body: #2b7a4e;
+  --c-sat: #9c7020;
+  --c-learn: #0f6e68;
+  --c-tie: #8c1d3c;
+  --bg: #ebf0ed;
+  --surface: #f7faf8;
+  --text: #13212a;
+  --sub: #4a5a61;
+  --line: #c7d2ce;
+  --accent: #8c1d3c;
   --on-accent: #ffffff;
   --world: #7a4600;
   --warn: #a3000b;
@@ -16,12 +24,12 @@
   --prov-text: #5a3b00;
   --reborn-bg: #7a4600;
   --reborn-text: #ffffff;
-  --dead: #8a8a86;
-  --map-land: #ebe6dc;
-  --map-line: #b5ab99;
-  --beni: #a3132f;
+  --dead: #5f6e72;
+  --map-land: #dfe6e2;
+  --map-line: #a9b6b1;
+  --beni: #8c1d3c;
   --on-beni: #ffffff;
-  --bar: #2c6a66;
+  --bar: #0f6e68;
   --bar2: #679591;
   --era0: #b0306a;
   --era1: #2f6b3a;
@@ -33,9 +41,9 @@
   --era7: #00798a;
   --era8: #c04a00;
   --era9: #4b6584;
-  --track: #e6ebe9;
-  --area: #e9efed;
-  --rule: #dfe3e1;
+  --track: #e3e8e6;
+  --area: #e3ebe7;
+  --rule: #dce4e1;
   --m1: #2f6db5;
   --m2: #8a6d00;
   --m3: #b03a6f;
@@ -47,25 +55,25 @@
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #121212;
-    --surface: #1d1d1d;
-    --text: #ececec;
-    --sub: #b4b4b4;
-    --line: #4a4a4a;
-    --accent: #7fb8ff;
-    --on-accent: #0b1a2b;
+    --bg: #0d1316;
+    --surface: #141d21;
+    --text: #e1e9e6;
+    --sub: #a3b2af;
+    --line: #2a383d;
+    --accent: #e2678a;
+    --on-accent: #1b0910;
     --world: #f2c47e;
     --warn: #ff8f87;
     --prov-bg: #3a2e10;
     --prov-text: #ffe2a3;
     --reborn-bg: #f2c47e;
     --reborn-text: #1a1206;
-    --dead: #8e8e8e;
-  --map-land: #2b2a27;
-  --map-line: #5c574d;
-  --beni: #ff8a99;
-  --on-beni: #2a0008;
-  --bar: #7cc4bd;
+    --dead: #8a9a96;
+  --map-land: #253237;
+  --map-line: #3d4d52;
+  --beni: #e2678a;
+  --on-beni: #1b0910;
+  --bar: #4cc0af;
   --bar2: #3f726d;
   --era0: #ff8fc0;
   --era1: #7fd18a;
@@ -77,9 +85,9 @@
   --era7: #5fd3e0;
   --era8: #ffad6b;
   --era9: #a9bdd6;
-  --track: #2a302e;
-  --area: #1d2624;
-  --rule: #2e3331;
+  --track: #1b2629;
+  --area: #16211f;
+  --rule: #1d282c;
     --m1: #7fb2f0;
     --m2: #d9b84a;
     --m3: #f08ab8;
@@ -87,29 +95,34 @@
     --m5: #b9a2ec;
     --m6: #ff8f87;
     --m7: #7fd1a1;
+    --stamp: #4cc0af;
+    --c-body: #5cc38b;
+    --c-sat: #d9af59;
+    --c-learn: #4cc0af;
+    --c-tie: #e2678a;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #121212;
-  --surface: #1d1d1d;
-  --text: #ececec;
-  --sub: #b4b4b4;
-  --line: #4a4a4a;
-  --accent: #7fb8ff;
-  --on-accent: #0b1a2b;
+  --bg: #0d1316;
+  --surface: #141d21;
+  --text: #e1e9e6;
+  --sub: #a3b2af;
+  --line: #2a383d;
+  --accent: #e2678a;
+  --on-accent: #1b0910;
   --world: #f2c47e;
   --warn: #ff8f87;
   --prov-bg: #3a2e10;
   --prov-text: #ffe2a3;
   --reborn-bg: #f2c47e;
   --reborn-text: #1a1206;
-  --dead: #8e8e8e;
-  --map-land: #2b2a27;
-  --map-line: #5c574d;
-  --beni: #ff8a99;
-  --on-beni: #2a0008;
-  --bar: #7cc4bd;
+  --dead: #8a9a96;
+  --map-land: #253237;
+  --map-line: #3d4d52;
+  --beni: #e2678a;
+  --on-beni: #1b0910;
+  --bar: #4cc0af;
   --bar2: #3f726d;
   --era0: #ff8fc0;
   --era1: #7fd18a;
@@ -121,9 +134,9 @@
   --era7: #5fd3e0;
   --era8: #ffad6b;
   --era9: #a9bdd6;
-  --track: #2a302e;
-  --area: #1d2624;
-  --rule: #2e3331;
+  --track: #1b2629;
+  --area: #16211f;
+  --rule: #1d282c;
   --m1: #7fb2f0;
   --m2: #d9b84a;
   --m3: #f08ab8;
@@ -131,6 +144,11 @@
   --m5: #b9a2ec;
   --m6: #ff8f87;
   --m7: #7fd1a1;
+  --stamp: #4cc0af;
+  --c-body: #5cc38b;
+  --c-sat: #d9af59;
+  --c-learn: #4cc0af;
+  --c-tie: #e2678a;
   color-scheme: dark;
 }
 
@@ -518,3 +536,99 @@ button { font: inherit; cursor: pointer; border-radius: 0; }
 .end-fact { display: flex; flex-direction: column; gap: 2px; }
 .big-pct { font-size: 44px; font-weight: 700; line-height: 1.1; }
 .big-cap { font-size: 14px; color: var(--sub); }
+
+/* ---------- 原作にならった見た目（2026-10-17） ---------- */
+button { border-radius: 8px; }
+.btn-main { border-radius: 8px; }
+.btn-sub { border-radius: 8px; background: var(--surface); }
+.o-card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+/* 上の帯 */
+.o-head { position: sticky; top: 0; z-index: 3; background: var(--bg); padding: 6px 0 10px; margin: 0 -16px; padding-left: 16px; padding-right: 16px; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; }
+.o-age { display: flex; align-items: baseline; gap: 4px; flex-wrap: wrap; }
+.o-num { font-family: var(--f-display); font-size: 40px; font-weight: 700; line-height: 1; }
+.o-unit { font-family: var(--f-display); font-size: 20px; margin-right: 8px; }
+.o-meta { font-size: 13px; color: var(--sub); }
+.o-head .ybar { height: 4px; background: var(--track); border-radius: 2px; overflow: hidden; }
+.o-head .ybar span { display: block; height: 100%; width: 0; background: var(--accent); }
+.o-ctrl { display: flex; gap: 6px; align-items: stretch; }
+.o-btn { background: var(--surface); color: var(--text); border: 1px solid var(--line); min-height: 44px; padding: 0 12px; font-size: 15px; }
+.o-btn.on { background: var(--text); color: var(--bg); border-color: var(--text); }
+.o-pause { display: flex; align-items: center; justify-content: center; min-width: 44px; }
+.o-speeds { display: flex; flex: 1; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.o-sp { flex: 1; min-width: 0; background: var(--surface); color: var(--text); border: 0; border-radius: 0; font-size: 13px; padding: 0 2px; min-height: 44px; }
+.o-sp.on { background: var(--text); color: var(--bg); }
+.o-skip { white-space: nowrap; font-size: 14px; padding: 0 8px; }
+.o-more { min-width: 40px; padding: 0 8px; }
+/* 情景 */
+.scene-card { overflow: hidden; }
+.scene { display: block; width: 100%; aspect-ratio: 192 / 72; image-rendering: pixelated; image-rendering: crisp-edges; background: var(--track); }
+.scene-cap { display: block; width: 100%; text-align: left; background: transparent; color: var(--text); border: 0; border-top: 1px solid var(--line); border-radius: 0; padding: 10px 14px; font-size: 15px; line-height: 1.5; }
+/* 4つの数値 */
+.stats4 { display: flex; align-items: center; gap: 8px; padding: 10px 12px; }
+.st4-grid { flex: 1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; background: transparent; border: 0; padding: 0; text-align: left; color: var(--text); }
+.s4 { display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto auto; column-gap: 4px; }
+.s4-k { grid-column: 1 / 3; font-size: 12px; color: var(--sub); }
+.s4-v { font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.s4 .mini-d { font-size: 11px; align-self: center; }
+.s4-bar { grid-column: 1 / 3; height: 4px; background: var(--track); border-radius: 2px; overflow: hidden; margin-top: 3px; }
+.s4-bar span { display: block; height: 100%; width: 0; transition: width .4s; }
+.c-body { background: var(--c-body); } .c-sat { background: var(--c-sat); } .c-learn { background: var(--c-learn); } .c-tie { background: var(--c-tie); }
+.o-money { flex: none; border-radius: 999px; min-height: 44px; min-width: 56px; background: var(--bg); color: var(--text); border: 1px solid var(--line); font-size: 14px; }
+/* 人生の記録 */
+.now.o-card { padding: 14px 16px; }
+.rec-head h2 { font-family: var(--f-body, inherit); font-size: 20px; font-weight: 700; }
+.feed .fa { font-family: var(--f-mono); color: var(--sub); font-size: 13px; }
+.feed .feed-row.cur .ft { font-weight: 700; font-size: 17px; }
+.branch.o-card { border-color: var(--accent); }
+/* 亡くなった瞬間 */
+.death { position: fixed; inset: 0; z-index: 50; background: #0d1316; color: #ece6dc; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 24px 20px; cursor: pointer; }
+.death-body { display: flex; flex-direction: column; gap: 14px; max-width: 420px; }
+.death-h { font-family: var(--f-display); font-size: 40px; font-weight: 700; line-height: 1.3; }
+.death-t { font-size: 18px; }
+.death-c { font-size: 15px; color: #b9c4c1; }
+.death-hint { position: absolute; bottom: 28px; left: 0; right: 0; font-size: 14px; color: #a3b2af; }
+.death-skip { position: absolute; top: 14px; right: 14px; background: transparent; color: #ece6dc; border: 1px solid #56636a; border-radius: 999px; padding: 8px 18px; min-height: 44px; font-size: 15px; }
+/* 死亡の記録 */
+.record { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.rc-k { font-family: var(--f-mono); font-size: 12px; color: var(--sub); letter-spacing: .04em; }
+.record .end-head { align-items: center; }
+.record .end-title { font-family: var(--f-display); font-size: 28px; line-height: 1.25; }
+.rc-sub { font-size: 13px; color: var(--sub); margin-top: 4px; }
+.rc-line { font-family: var(--f-display); font-size: 19px; font-weight: 700; line-height: 1.6; }
+.rc-sum { font-size: 15px; line-height: 1.8; }
+.rc-cause { font-size: 15px; font-weight: 700; }
+.rc-ck { font-weight: 400; font-size: 13px; color: var(--sub); margin-right: 6px; }
+.rc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 18px; margin: 0; }
+.rc-item { padding: 10px 0; border-top: 1px solid var(--line); }
+.rc-item dt { font-size: 12px; color: var(--sub); }
+.rc-item dd { margin: 2px 0 0; font-size: 15px; font-weight: 700; line-height: 1.5; word-break: break-all; }
+.rc-item dd.rc-subv { font-weight: 400; font-size: 12px; color: var(--sub); }
+.rc-again { align-self: flex-start; }
+.rc-reflect { padding: 16px; display: flex; flex-direction: column; gap: 8px; }
+.rc-reflect h2 { font-size: 18px; }
+.btn-sub.kyodai-btn { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+/* 抽選 */
+.lottery { position: fixed; inset: 0; z-index: 40; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 24px 16px; text-align: center; }
+.lt-k { font-size: 15px; color: var(--sub); }
+.lt-board { width: 100%; max-width: 440px; }
+.lt-board svg { width: 100%; height: auto; display: block; }
+.lt-v { font-family: var(--f-display); font-size: 30px; font-weight: 700; min-height: 1.4em; }
+.lt-p { font-family: var(--f-display); font-size: 22px; min-height: 1.4em; }
+.bd-cell.hit { fill: var(--accent) !important; }
+/* 生まれの記録 */
+.birth-rec .btn-main { margin-top: 4px; }
+.bt-cmp { font-size: 15px; line-height: 1.7; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+.bt-comps .comps li { display: flex; flex-direction: column; padding: 8px 0; border-top: 1px solid var(--line); }
+.bt-comps .cn { font-size: 14px; font-weight: 700; }
+.bt-comps .cs { font-size: 13px; color: var(--sub); }
+.rc-item.rc-wide { grid-column: 1 / 3; }
+.rc-item.rc-wide dd { font-weight: 400; }
+/* あなたとの比べ */
+.feed-row.cmp .fa { color: var(--stamp); font-weight: 700; }
+.feed-row.cmp .ft { color: var(--stamp); font-size: 15px; font-weight: 400; }
+.me-box { padding: 10px 14px; }
+.me-box summary { cursor: pointer; font-size: 14px; font-weight: 700; color: var(--text); }
+.me-row { display: flex; gap: 10px; margin: 10px 0 6px; flex-wrap: wrap; }
+.me-l { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--sub); flex: 1; min-width: 130px; }
+.me-l select { font: inherit; font-size: 16px; padding: 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--text); min-height: 44px; }

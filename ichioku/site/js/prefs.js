@@ -29,6 +29,18 @@
       row.appendChild(btn(t[1], cur === t[0], function () { set('ichioku-theme', t[0]); applyTheme(t[0]); mount(box); }));
     });
     box.appendChild(row);
+    // 動きを減らす（亡くなった瞬間の画面と、生まれる年と場所の抽選の動きを出さない）
+    var h2 = document.createElement('p'); h2.className = 'set-k'; h2.textContent = '画面の動き'; box.appendChild(h2);
+    var row2 = document.createElement('div'); row2.className = 'set-row'; row2.setAttribute('role', 'group'); row2.setAttribute('aria-label', '画面の動き');
+    var mv = get('ichioku-motion', 'auto');
+    [['auto', 'ふつう'], ['less', '減らす']].forEach(function (t) {
+      row2.appendChild(btn(t[1], mv === t[0], function () { set('ichioku-motion', t[0]); mount(box); }));
+    });
+    box.appendChild(row2);
   }
-  root.IchiokuPrefs = { mount: mount, classMode: function () { return false; } };
+  function lessMotion() {
+    if (get('ichioku-motion', 'auto') === 'less') return true;
+    try { return !!(root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches); } catch (e) { return false; }
+  }
+  root.IchiokuPrefs = { mount: mount, classMode: function () { return false; }, lessMotion: lessMotion };
 })(typeof self !== 'undefined' ? self : this);

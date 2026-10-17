@@ -1976,6 +1976,7 @@
     if (br.ra === '__choice') {
       var pk0 = br.groups[0].options.filter(function (o) { return o.k === k; })[0];
       rec.storyPick = pk0 ? pk0.l : k;
+      noteChoice(L, br, rec.storyPick, false);
       var m0 = rec.events.length;
       resolveChoice(L, rec, br, k, api);
       rec.storyFx = sumFx(rec.events.slice(m0));
@@ -1985,10 +1986,15 @@
     A.forEach(function (o) { if (o.id === br.ra && o.res && o.res[k]) target = o.res[k]; });
     var picked = br.groups[0].options.filter(function (o) { return o.k === k; })[0];
     rec.storyPick = picked ? picked.l : k;
+    noteChoice(L, br, rec.storyPick, true);
     var n0 = rec.events.length;
     if (target) target(ctxOf(L, rec, api, br.d));
     rec.storyFx = sumFx(rec.events.slice(n0));
     return k;
+  }
+  // 選んだ分かれ道を覚えておく（死亡の記録の「ひとこと」に使う。第2弾の7）
+  function noteChoice(L, br, label, big) {
+    (L.choices = L.choices || []).push({ age: L.age, y: L.year, title: br.title || '', q: (br.groups[0] || {}).q || '', l: label, big: !!big, kind: (br.d && br.d.kind) || (big ? 'big' : 'small') });
   }
   // おまかせ：今年の重点に合う答え（なければ null で、気質のまま）
   function autoAnswer(br, focus) {
@@ -2046,7 +2052,74 @@
   function mukoHouse(L) { var r = L.story ? L.story.r : Math.random; return one(r, ['隣村の大百姓の家', '同じ村の庄屋の分家', '町の商家', '峠向こうの村の家']); }
   function yoshiHouse(L) { var r = L.story ? L.story.r : Math.random; return one(r, ['勘定方を務める家', '城の番方の家', '藩校の師範の家', '馬廻りの家']); }
 
-  var API = { init: init, year: year, resolve: resolve, autoAnswer: autoAnswer, spouseDesc: spouseDesc, hintFor: hintFor, suitor: suitor, suitorText: suitorText, hokoTo: hokoTo, mukoHouse: mukoHouse, yoshiHouse: yoshiHouse, arcs: A, nodes: N };
+  /* ========== 名前の入った出来事（第2弾の6「出来事の文に人を入れる」） ==========
+     名前の入った出来事がまだない年に、同じ家の人やまわりの人との小さな出来事を1つ足す。
+     生きた年の3割を超えたら足さない。数値やお金は動かさない（年の終わりの計算のあとに足す）。乱数は人生の番号と年から作る */
+  var FAM = {
+    parentKid: [
+      '{w}の背中で、夕焼けの田んぼを見た。', '{w}に、草履の鼻緒のすげ方を教わった。', '{w}が、寝る前に昔話をしてくれた。', '熱を出した夜、{w}が朝まで額を冷やしてくれた。',
+      '{w}に手を引かれて、隣の村の市へ行った。', '{w}に叱られて、物置の陰で泣いた。', '{w}が、ふかした芋を半分に割ってくれた。', '{w}の仕事を、そばでじっと見ていた。',
+      '{w}と、川で小さな魚をすくった。', '{w}に、数の数え方を教わった。'
+    ],
+    parentKidNew: [
+      '{w}と、自転車の練習をした。', '{w}が、運動会で一番大きな声を出していた。', '{w}に、夏休みの宿題を手伝ってもらった。', '{w}と、夜店で金魚すくいをした。',
+      '{w}が、誕生日にケーキを買ってきてくれた。', '{w}に、テストの点数のことで叱られた。'
+    ],
+    sib: [
+      '{w}と、残った最後の団子を取り合った。', '{w}と並んで、軒下で雨宿りをした。', '{w}が、こっそり自分の分の干し柿を分けてくれた。', '{w}と、夜遅くまで小声で話した。',
+      '{w}とけんかをして、三日口をきかなかった。', '{w}が転んで泣くのを、おぶって家まで帰った。', '{w}と、祭りの夜に田楽を見に行った。', '{w}の髪を結ってやった。'
+    ],
+    sibNew: ['{w}と、テレビのチャンネルを取り合った。', '{w}と、こたつで同じ漫画を読みふけった。', '{w}の受験を、家族みんなで見守った。', '{w}と、久しぶりに二人で飲みに行った。'],
+    spouse: [
+      '{w}と、縁側で月を見た。', '{w}が、黙って温かい汁をよそってくれた。', '{w}と、家のこれからのことを夜遅くまで話した。', '{w}とささいなことで言い合いになり、翌朝そっと謝った。',
+      '{w}と二人で、冬支度の薪を割った。', '{w}の具合が悪く、一日そばについていた。', '{w}と、若いころの思い出話をして笑った。', '{w}と、初物の野菜を分け合った。'
+    ],
+    spouseNew: ['{w}と、久しぶりに二人で旅行に出かけた。', '{w}と、家計簿を前に頭を抱えた。', '{w}の誕生日に、花を買って帰った。'],
+    kid: [
+      '{w}が、はじめて自分の足で立った。', '{w}が、はじめて「おとう」「おかあ」と呼んだ。', '{w}に、仕事のこつを教えた。', '{w}が、手習いの字をうれしそうに見せに来た。',
+      '{w}が熱を出し、一晩じゅう看病した。', '{w}と、川で魚を釣った。', '{w}のけんかの仲裁に入った。', '{w}が、はじめて一人で使いに出た。', '{w}の成長を、柱の傷で測った。'
+    ],
+    kidNew: ['{w}の運動会で、声をからして応援した。', '{w}の受験に、夜食を作って付き合った。', '{w}が、はじめての給料でごちそうしてくれた。', '{w}の結婚相手が、あいさつに来た。'],
+    grand: ['孫の{n}を膝に乗せて、昔話をした。', '孫の{n}が、遊びに来てくれた。', '孫の{n}に、お手玉を教えた。'],
+    gp: ['{w}の昔話を、いろりのそばで聞いた。', '{w}に、薬草の見分け方を教わった。', '{w}の肩をたたいてあげた。'],
+    friend: ['幼なじみの{n}と、日が暮れるまで遊んだ。', '近所の{n}と、山へ栗を拾いに行った。', '{n}に、悩みを打ち明けた。', '久しぶりに{n}と会い、昔の話で笑った。', '{n}の家の手伝いに行った。']
+  };
+  function h32(a, b) { var h = (Math.imul(a >>> 0, 2654435761) ^ Math.imul(b + 1, 40503)) >>> 0; h ^= h >>> 15; h = Math.imul(h, 2246822519) >>> 0; h ^= h >>> 13; return h >>> 0; }
+  function famWho(m, L) {
+    var r = m.role === '配偶者' ? (m.sex === 'm' ? '夫' : '妻') : m.role === 'パートナー' ? 'パートナー' : m.role === '子' ? (m.sex === 'm' ? '息子' : '娘') : m.role;
+    return r + 'の' + m.name;
+  }
+  function familyLine(L, rec, api) {
+    if (!L.alive || !rec || rec.dead || rec.age < 2) return;
+    var y = rec.year, a = rec.age, ms = (L.members || []).filter(function (m) { return m.alive && !m.gone && !m.before && m.by <= y && m.name && !/アイヌ語/.test(m.name); });
+    var names = ms.map(function (m) { return m.name; }).concat([L.name, L.story && L.story.friend]).filter(Boolean);
+    var has = function (r) { return (r.events || []).some(function (e) { return names.some(function (n) { return e.t && e.t.indexOf(n) >= 0; }); }); };
+    if (has(rec)) return;
+    var logs = (L.log || []).filter(function (r) { return r !== rec; }), yrs = logs.length + 1, hit = logs.filter(has).length;
+    if (hit / yrs >= 0.34) return;
+    var hh = h32(L.seed, y), newEra = y >= 1955, cands = [];
+    function add(list, m, w) { list.forEach(function (t) { cands.push({ t: t, m: m, w: w }); }); }
+    ms.forEach(function (m) {
+      var ma = y - m.by;
+      if ((m.role === '父' || m.role === '母') && a <= 20) { add(FAM.parentKid, m, 1); if (newEra) add(FAM.parentKidNew, m, 1); }
+      else if ((m.role === '祖父' || m.role === '祖母') && a <= 15 && m.live) add(FAM.gp, m, 1);
+      else if (m.sib && Math.abs(m.by - L.by) < 15 && (a <= 30 || newEra)) { add(FAM.sib, m, 1); if (newEra) add(FAM.sibNew, m, 1); }
+      else if ((m.role === '配偶者' || m.role === 'パートナー') && L.married) { add(FAM.spouse, m, 1.4); if (newEra) add(FAM.spouseNew, m, 1); }
+      else if (m.role === '子' && ma <= 25) { add(FAM.kid.filter(function (t) { return ma <= 1 ? /はじめて/.test(t) : !/自分の足|「おとう」/.test(t); }), m, 1.2); if (newEra && ma >= 6) add(FAM.kidNew, m, 1); }
+      else if (m.role === '孫') add(FAM.grand, m, 1);
+    });
+    if (!cands.length && L.story && L.story.friend && a >= 5) add(FAM.friend, { name: L.story.friend, role: '友' }, 1);
+    if (!cands.length) return;
+    var used = L.famUsed = L.famUsed || {};
+    var free = cands.filter(function (c) { return !used[c.t + c.m.name]; });
+    if (!free.length) free = cands;
+    var c = free[hh % free.length];
+    used[c.t + c.m.name] = 1;
+    var t = c.t.replace('{w}', c.m.role === '友' ? c.m.name : famWho(c.m, L)).replace('{n}', c.m.name);
+    var e = api.push(L, rec, '家庭', t, []);
+    if (e) e.flavor = true;
+  }
+  var API = { init: init, year: year, familyLine: familyLine, resolve: resolve, autoAnswer: autoAnswer, spouseDesc: spouseDesc, hintFor: hintFor, suitor: suitor, suitorText: suitorText, hokoTo: hokoTo, mukoHouse: mukoHouse, yoshiHouse: yoshiHouse, arcs: A, nodes: N };
   if (typeof module !== 'undefined' && module.exports) module.exports = API;
   root.IchiokuStory = API;
 })(typeof self !== 'undefined' ? self : this);

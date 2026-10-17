@@ -41,6 +41,15 @@
           <button type="button" class="btn-sub" id="resume" hidden>続きから</button>
           <button type="button" class="btn-sub" id="auto-born" aria-pressed="false">すべておまかせで生きる：切</button>
         </div>
+        <!-- 遊ぶ人自身と比べる（第3弾の8）。任意で、この端末にだけ保存する -->
+        <details class="me-box o-card" id="me-box">
+          <summary>あなたが生まれた年と都道府県（入れなくても遊べます）</summary>
+          <div class="me-row">
+            <label class="me-l">生まれた年<select id="me-year"></select></label>
+            <label class="me-l">都道府県<select id="me-pref"></select></label>
+          </div>
+          <p class="note" id="me-note">入れると、主人公の一生とあなたの生まれ年の数字を並べて出します。この端末にだけ保存します</p>
+        </details>
 
         <div class="top-past">
           <p class="past" id="past"></p>
@@ -82,27 +91,58 @@
     <button type="button" class="btn-sub auto-top" id="auto-top" aria-pressed="false">すべておまかせ</button>
     <button type="button" class="btn-sub reborn-top" id="reborn-top">生まれ変わる</button>
   </div>
-  <section id="screen-life" class="screen" hidden aria-live="polite">
-    <header class="life-head">
-      <canvas id="avatar" class="avatar" width="48" height="64" role="img" aria-label=""></canvas>
-      <div class="life-id">
-        <div class="age"><span id="age">0</span><span class="unit">歳</span></div>
-        <div id="year-now" class="year-now">1975年</div>
-        <div id="place" class="place"></div>
-        <div class="ybar" aria-hidden="true"><span id="ybar-fill"></span></div>
-        <button type="button" class="mini4" id="mini4" aria-label="4つの数値。押すとくわしく">
-          <span class="mini-row"><span class="mini-k">からだ</span><span class="mini-bar"><span id="mini-body"></span></span><span class="mini-d" id="mini-body-d"></span></span>
-          <span class="mini-row"><span class="mini-k">満足</span><span class="mini-bar"><span id="mini-sat"></span></span><span class="mini-d" id="mini-sat-d"></span></span>
-          <span class="mini-row"><span class="mini-k">学び</span><span class="mini-bar"><span id="mini-learn"></span></span><span class="mini-d" id="mini-learn-d"></span></span>
-          <span class="mini-row"><span class="mini-k">つながり</span><span class="mini-bar"><span id="mini-tie"></span></span><span class="mini-d" id="mini-tie-d"></span></span>
-        </button>
+  <!-- 生まれの記録（第3弾の9）：抽選のあと、人生を始める前に出す -->
+  <section id="screen-birth" class="screen" hidden aria-labelledby="bt-name">
+    <section class="o-card record birth-rec">
+      <p class="rc-k" id="bt-k">生まれの記録</p>
+      <div class="end-head">
+        <canvas id="avatar-birth" class="avatar" width="48" height="64" role="img" aria-label=""></canvas>
+        <div>
+          <h1 id="bt-name" class="end-title"></h1>
+          <p id="bt-sub" class="rc-sub"></p>
+        </div>
       </div>
-      <button type="button" class="mini-map" id="map-open" aria-label="地図を大きく開く"><svg id="map" class="jmap" role="img" aria-label="日本地図"></svg></button>
+      <dl class="rc-grid" id="bt-grid"></dl>
+      <p class="bt-cmp" id="bt-cmp" hidden></p>
+      <div class="bt-comps" id="bt-comps-box">
+        <h2 class="h-self">同じ日に日本で生まれた4人</h2>
+        <ul class="comps" id="bt-comps"></ul>
+      </div>
+      <button type="button" class="btn-main" id="bt-start">人生を始める</button>
+    </section>
+  </section>
+
+  <section id="screen-life" class="screen" hidden aria-live="polite">
+    <!-- 原作にならった上の帯：年齢・その年・名前・1年の速さ、進み具合の棒、進め方 -->
+    <header class="o-head">
+      <div class="o-age"><span class="o-num" id="age">0</span><span class="o-unit">歳</span><span class="o-meta"><span id="year-now">1975年</span> · <span id="o-name"></span> · <span id="o-sec"></span></span></div>
+      <div class="ybar" aria-hidden="true"><span id="ybar-fill"></span></div>
+      <nav class="o-ctrl" aria-label="進め方">
+        <button type="button" class="o-btn o-pause" id="pause" aria-pressed="false"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><rect x="3" y="2" width="3.5" height="12" fill="currentColor"/><rect x="9.5" y="2" width="3.5" height="12" fill="currentColor"/></svg><span class="sr">一時停止</span></button>
+        <div class="o-speeds" id="speed" role="group" aria-label="速さ"></div>
+        <button type="button" class="o-btn o-skip" id="skip">次へ »</button>
+        <button type="button" class="o-btn o-more" id="detail" aria-label="くわしく">⋯</button>
+      </nav>
     </header>
+    <!-- その年の情景（第2弾の6）。下の1行を押すと地図 -->
+    <section class="o-card scene-card">
+      <canvas id="scene" class="scene" role="img" aria-label=""></canvas>
+      <button type="button" class="scene-cap" id="map-open"><span id="place"></span>・<span id="scene-cap"></span> <span aria-hidden="true">▾</span></button>
+    </section>
+    <!-- 4つの数値をいつも出す -->
+    <section class="o-card stats4">
+      <button type="button" class="st4-grid" id="mini4" aria-label="4つの数値。押すとくわしく">
+        <span class="s4"><span class="s4-k">からだ</span><span class="s4-v" id="mini-body-v">—</span><span class="mini-d" id="mini-body-d"></span><span class="s4-bar"><span id="mini-body" class="c-body"></span></span></span>
+        <span class="s4"><span class="s4-k">満足</span><span class="s4-v" id="mini-sat-v">—</span><span class="mini-d" id="mini-sat-d"></span><span class="s4-bar"><span id="mini-sat" class="c-sat"></span></span></span>
+        <span class="s4"><span class="s4-k">学び</span><span class="s4-v" id="mini-learn-v">—</span><span class="mini-d" id="mini-learn-d"></span><span class="s4-bar"><span id="mini-learn" class="c-learn"></span></span></span>
+        <span class="s4"><span class="s4-k">つながり</span><span class="s4-v" id="mini-tie-v">—</span><span class="mini-d" id="mini-tie-d"></span><span class="s4-bar"><span id="mini-tie" class="c-tie"></span></span></span>
+      </button>
+      <button type="button" class="o-money" id="o-money">お金</button>
+    </section>
     <!-- 分かれ道：出たときに1画面で見えるよう、記録より上に置く -->
-    <div id="branch" class="branch" hidden></div>
-    <!-- 人生の記録：原作「80億分の1」の記録の並べ方（新しい順・左に年齢）にならう -->
-    <section class="now" aria-label="人生の記録">
+    <div id="branch" class="branch o-card" hidden></div>
+    <!-- 人生の記録：原作「80億分の1」の記録の並べ方（新しい順・左に年齢） -->
+    <section class="o-card now" aria-label="人生の記録">
       <div class="rec-head"><h2>人生の記録</h2><span>新しい順</span></div>
       <ol id="feed" class="feed"></ol>
       <div class="now-row">
@@ -111,12 +151,6 @@
       </div>
     </section>
     <div id="hotline" class="hotline" hidden></div>
-    <nav class="controls" aria-label="進め方">
-      <button type="button" class="btn-sub" id="pause">一時停止</button>
-      <button type="button" class="btn-sub" id="speed">速さ 1倍（1年 約7秒）</button>
-      <button type="button" class="btn-sub" id="skip">次の分かれ道まで</button>
-      <button type="button" class="btn-sub" id="detail">くわしく</button>
-    </nav>
     <!-- くわしく：ふだんは隠し、「くわしく」を押したときだけ下の画面（シート）に出す -->
     <div id="details" hidden>
       <div class="d-btns">
@@ -171,12 +205,27 @@
   </section>
 
   <section id="screen-end" class="screen" hidden aria-labelledby="end-title">
-    <div class="end-head">
-      <canvas id="avatar-end" class="avatar" width="48" height="64" role="img" aria-label=""></canvas>
-      <h1 id="end-title" class="end-title"></h1>
-    </div>
-    <p id="end-sub" class="lead"></p>
+    <!-- 死亡の記録（第2弾の7。原作の「死亡記録」の並べ方にならう） -->
+    <section class="o-card record" id="record">
+      <p class="rc-k">死亡の記録 · <span id="rc-no"></span></p>
+      <div class="end-head">
+        <canvas id="avatar-end" class="avatar" width="48" height="64" role="img" aria-label=""></canvas>
+        <div>
+          <h1 id="end-title" class="end-title"></h1>
+          <p id="end-sub" class="rc-sub"></p>
+        </div>
+      </div>
+      <p class="rc-line" id="rc-line"></p>
+      <p class="rc-sum" id="rc-sum"></p>
+      <p class="rc-cause"><span class="rc-ck">死因</span> <span id="rc-cause"></span></p>
+      <dl class="rc-grid" id="rc-grid"></dl>
+      <button type="button" class="btn-sub rc-again" id="rc-again">最後の瞬間をもう一度見る</button>
+    </section>
     <div id="hotline-end" class="hotline" hidden></div>
+    <section class="o-card rc-reflect" id="rc-reflect-box" hidden>
+      <h2>振り返って</h2>
+      <p id="rc-reflect"></p>
+    </section>
     <!-- 次の人生：すぐ選べるように最期の画面のいちばん上に置く -->
     <div class="next-life" id="next-life">
       <div id="kyodai-block" hidden>
@@ -245,6 +294,25 @@
     <p class="credit end-credit">原作 <a href="https://1in8b.life/ja/" rel="noopener">80億分の1</a>（作者の方の許可を得て制作）</p>
   </section>
 
+  <!-- 生まれる年と場所の抽選（第3弾の9）。2秒以内。動きを減らす設定では結果だけ -->
+  <div id="lottery" class="lottery" hidden aria-live="assertive">
+    <p class="lt-k" id="lt-k">生まれる年を決めています</p>
+    <div class="lt-board" id="lt-board"></div>
+    <p class="lt-v" id="lt-v"></p>
+    <p class="lt-p" id="lt-p"></p>
+  </div>
+
+  <!-- 亡くなった瞬間（第2弾の7）。押すか2秒で次へ。動きを減らす設定では出さない -->
+  <div id="death" class="death" hidden role="dialog" aria-modal="true" aria-labelledby="death-h">
+    <button type="button" class="death-skip" id="death-skip">スキップ</button>
+    <div class="death-body">
+      <p class="death-h" id="death-h"></p>
+      <p class="death-t" id="death-t"></p>
+      <p class="death-c" id="death-c"></p>
+    </div>
+    <p class="death-hint">画面を押すと次へ進みます</p>
+  </div>
+
   <div id="sheet" class="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sheet-title">
     <div class="sheet-body">
       <div class="sheet-head">
@@ -262,6 +330,11 @@
 <script src="js/engine.js"></script>
 <script src="js/history.js"></script>
 <script src="js/avatar.js"></script>
+<script src="js/scene.js"></script>
+<script src="js/polite.js"></script>
+<script src="js/record.js"></script>
+<script src="js/compare.js"></script>
+<script src="js/jobs.js"></script>
 <script src="js/card.js"></script>
 <script src="js/curve.js"></script>
 <script src="js/app.js"></script>

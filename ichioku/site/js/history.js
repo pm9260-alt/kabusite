@@ -308,8 +308,21 @@
       old: true, seed: L.seed0 || L.seed, deathYear: L.deathYear, deathAge: L.deathAge, cause: L.cause,
       prev: { name: L.name, sex: L.sex, by: L.by, heir: !!L.heir, surname: L.surname || null },
       members: mem, status: L.status, ainu: L.ainu, ryukyu: L.ryukyu, home: home, goods: L.goods || {}, incPct: L.incPct, surname: L.surnameOld || L.surname || null,
+      jobs: { parent: L.parentJob || null, self: L.selfJob || null },
       chain: (chain || []).slice(), story: L.story ? { toxic: !!L.story.f.toxic, bigwig: !!L.story.f.bigwig, prosper: L.story.f.prosper || L.story.f.prosperHouse || 0 } : null
     };
+  }
+  // 親（家）のくわしい仕事（js/jobs.js）。別の乱数で選ぶ
+  function pickParentJob(L, seed) {
+    var J = E.jobsMod && E.jobsMod();
+    return J ? J.parentJob({ y: L.by, status: L.status, kind: L.kind, pref: L.pref, sex: 'm' }, seed) : null;
+  }
+  // 自分のくわしい仕事。家の仕事を継ぐ跡取り（と婿）は親と同じ仕事
+  function pickSelfJob(L, k) {
+    var J = E.jobsMod && E.jobsMod();
+    if (!J) return null;
+    var inherit = (L.heir || L.muko || (L.sex === 'm' && !L.moved && ((L.seed >>> 0) % 7 + L.year % 3) % 2 === 0)) && !L.moved;
+    return J.selfJob(k, { y: L.year, status: L.status, kind: L.kind, pref: L.pref, sex: L.sex }, L.seed, L.parentJob, inherit);
   }
   function sibRole(sex, by, myBy) { return by < myBy ? (sex === 'm' ? '兄' : '姉') : (sex === 'm' ? '弟' : '妹'); }
   // きょうだいの候補：亡くなった年に生きているきょうだいと、これから生まれる弟や妹
@@ -401,6 +414,9 @@
     L.rnd2 = E.makeRng((seed ^ 0x2545f491) >>> 0);
     L.incPct = h.incPct != null ? h.incPct : L.rnd2();
     L.surname = h.surname || pickSurname(L, L.rnd2);
+    // 家の仕事：きょうだいなら同じ親の仕事、子なら亡くなった人（父）の仕事
+    var hj = h.jobs || {};
+    L.parentJob = kidGen ? (h.prev.sex === 'm' && hj.self ? hj.self : pickParentJob(L, seed)) : (hj.parent || pickParentJob(L, seed));
     updateHeir(L, null);
     return L;
   }
@@ -476,6 +492,7 @@
     L.rnd2 = E.makeRng((seed ^ 0x2545f491) >>> 0);
     L.incPct = L.rnd2();
     L.surname = pickSurname(L, L.rnd2);
+    L.parentJob = pickParentJob(L, seed);
     updateHeir(L, null);
     return L;
   }
@@ -617,11 +634,20 @@
     if (y < 1185 && st === 'hyakusho') return '田を耕す農民の家';
     return ST_WORD[st];
   }
+  // 「百姓（スイカ農家）の家」の形（作る人の指示 2026-10-17）
+  function stWordJob(L) {
+    var w = stWord(L), j = L.parentJob;
+    if (!j || !w) return w;
+    if (/）の家$/.test(w)) return w.replace(/）の家$/, '・' + j.n + '）の家');
+    return /の家$/.test(w) ? w.replace(/の家$/, '（' + j.n + '）の家') : w + '（' + j.n + '）';
+  }
   function birthEvent(L, rec) {
     var H = L.H, y = L.year, st = L.status;
     var sibs = L.members.filter(function (m) { return m.sib && m.by < y; });
-    var s = rec.place + 'で、' + stWord(L) + 'に' + (L.sex === 'm' ? '男の子' : '女の子') + 'として生まれた。' + (st === 'satsumon' ? '名前は土地の言葉で付けられた。' : /アイヌ語/.test(L.name) ? '名前はアイヌ語で付けられた。' : '名前は' + L.name + '。');
+    var s = rec.place + 'で、' + stWordJob(L) + 'に' + (L.sex === 'm' ? '男の子' : '女の子') + 'として生まれた。' + (st === 'satsumon' ? '名前は土地の言葉で付けられた。' : /アイヌ語/.test(L.name) ? '名前はアイヌ語で付けられた。' : '名前は' + L.name + '。');
     s += '父は' + L.fAge + '歳、母は' + L.mAge + '歳。';
+    var J = E.jobsMod && E.jobsMod();
+    if (L.parentJob && J) s += '家の仕事は' + L.parentJob.n + '（' + L.parentJob.d + '）だ。';
     var alive = sibs.filter(function (m) { return !m.before; }), dead = sibs.filter(function (m) { return m.before; });
     if (alive.length) s += alive.map(who).join('、') + 'がいる。';
     else if (!dead.length) s += 'はじめての子どもだった。';
@@ -908,7 +934,9 @@
         st === 'priest' ? 'temple' : st === 'outcast' ? 'leather' : st === 'ainu' ? 'ainu' : st === 'ryukyuShi' ? (sx === 'm' ? 'ryuOff' : 'farm') : 'farm';
       L.job = k || 'home';
       if (k) L.lastJob = JOB[k];
-      if (k) push(L, rec, '学歴と仕事', JOB[k] + 'で一人前に働き始めた', [y < 1600 ? ev(L, 'medStatus', y, '中世の身分と暮らしの目安', '', { est: true }) : ev(L, 'jinshin', 1873, '明治6年の職業別人口（農79%・工4%・商7%・雑業9%・雇人2%）', '', { est: true })]);
+      var sj = k ? pickSelfJob(L, k) : null;
+      if (sj) { L.selfJob = sj; L.lastJob = sj.n; }
+      if (k) push(L, rec, '学歴と仕事', sj ? (sj.same ? '家の仕事を継ぎ、' + sj.n + 'として一人前に働き始めた。' : sj.n + '（' + sj.d + '）として一人前に働き始めた。') : JOB[k] + 'で一人前に働き始めた', [y < 1600 ? ev(L, 'medStatus', y, '中世の身分と暮らしの目安', '', { est: true }) : ev(L, 'jinshin', 1873, '明治6年の職業別人口（農79%・工4%・商7%・雑業9%・雇人2%）', '', { est: true })]);
       return;
     }
     if (a < 12) return;
@@ -923,10 +951,13 @@
     L.job = k2;
     var evs = [ev(L, 'ipss', near(L.H.nat.sectors, y), '働く人の産業の割合（農林漁業・工業・商業やサービス）', L.H.nat.sectors[near(L.H.nat.sectors, y)].map(function (v) { return pct(v); }).join('・'), { est: y < 1920 })];
     L.lastJob = JOB[k2];
+    var sj2 = pickSelfJob(L, k2);
+    if (sj2) { L.selfJob = sj2; L.lastJob = sj2.n; }
     var txt = {
       farm: '家の田畑の仕事を手伝い、働き手の一人になった', fish: '父の舟に乗り、漁師として働き始めた', silk: '製糸工場の女工になった。寄宿舎に入り、朝から晩まで繭から糸を繰った', build: '大工の親方に弟子入りした', factory: '工場で働き始めた',
       teacher: '学校の先生になった', clerk: '会社勤めを始めた', maid: 'よその家に住み込みで女中奉公に出た', office: '会社の事務員として働き始めた', store: '商店に住み込みで働き始めた'
     }[k2];
+    if (sj2) txt += '。' + (sj2.same ? '家と同じ' + sj2.n + 'の仕事だ。' : '仕事は' + sj2.n + '（' + sj2.d + '）だ。');
     push(L, rec, '学歴と仕事', txt, evs);
   }
   function H_sectors(L) {
@@ -1310,7 +1341,9 @@
         var soldier = e.who && e.who.sex === 'm' && e.kind === '戦争';
         var dst = E.deathStory(L, { kind: wk === 'ill' ? 'disaster' : wk, head: e.deadText.replace(/。$/, ''), withFamily: wk === 'ill' });
         if (soldier) dst.text = dst.text.replace(/。([0-9]+歳だった。)$/, '。家族のもとには、戦死を知らせる紙が届いた。$1');
-        dieBy(L, rec, wk, dst.text, evs); return;
+        dieBy(L, rec, wk, dst.text, evs);
+        if (!L.alive) L.causeName = soldier ? '戦死（' + (e.title || '戦争') + '）' : (e.title || e.kind);
+        return;
       }
       var show = e.where !== 'all' || (e.who && L.rnd() < 0.35) || (!e.who && L.rnd() < 0.2);
       if (show && !L.used['ev:' + e.id]) { L.used['ev:' + e.id] = 1; push(L, rec, '時代', e.text, evs); }
@@ -1434,6 +1467,7 @@
     finishYear0(L, rec);
     E.moneyYear(L, rec);
     E.statusYear(L, rec);
+    var Sm = E.storyMod(); if (Sm && Sm.familyLine) Sm.familyLine(L, rec, STORY_API);
   }
   function finishYear0(L, rec) {
     if (!L.alive) { L.log.push(rec); return; }
@@ -1465,6 +1499,18 @@
 
   /* 分かれ道 */
   function resolve(L, answers) {
+    var rec0 = L.rec, br0 = rec0 && rec0.branch, n0 = rec0 ? rec0.events.length : 0, sy = L.year, sa = L.age;
+    var out = resolve0(L, answers);
+    // 進学・就職・結婚などの分かれ道も覚えておく（死亡の記録の「ひとこと」に使う）
+    if (br0 && br0.id !== 'story' && !(br0.kind === 'ask')) {
+      var lab = null;
+      (br0.groups || []).forEach(function (g) { var k = answers && answers[g.id]; (g.options || []).forEach(function (o) { if (o.k === k && !lab) lab = o.l; }); });
+      var evs = rec0.events.slice(n0);
+      (L.choices = L.choices || []).push({ age: sa, y: sy, title: br0.title || '', l: lab, out: evs.length ? evs[evs.length - 1].t : '', big: true, kind: br0.kind || br0.id });
+    }
+    return out;
+  }
+  function resolve0(L, answers) {
     var rec = L.rec, br = rec.branch;
     rec.branch = null;
     if (br) {
@@ -1543,6 +1589,6 @@
   return {
     houseOf: houseOf, heirCandidates: heirCandidates, childCandidates: childCandidates, childHouse: childHouse, heirOf: heirOf, displayName: displayName, heirlessRates: heirlessRates,
     eraLabel: eraLabel, pickBirth: pickBirth, newLife: newLife, step: step, resolve: resolve, autoRun: autoRun,
-    cohort: cohort, majorTimeline: majorTimeline, familyList: familyList, endText: endText, placeLabel: placeLabel, deathProb: dp, birthShare: birthShare
+    cohort: cohort, majorTimeline: majorTimeline, familyList: familyList, endText: endText, houseWord: stWordJob, placeLabel: placeLabel, deathProb: dp, birthShare: birthShare
   };
 });

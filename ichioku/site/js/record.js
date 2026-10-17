@@ -1,0 +1,103 @@
+/* 1000分の1 死亡の記録（改善の指示書 第2弾の7。原作の「死亡記録」の並べ方にならう）
+   一生をひとことで表す1行（選んだ分かれ道と仕事から）・死因・一生の要約・学び・仕事・ともに生きた人・最期を見送った人・
+   いちばん満足が高かった年・暮らした土地・振り返っての1行を、人生の記録（L）から作る。文は普通体で作り、画面で丁寧体に直す。 */
+(function (root) {
+  'use strict';
+  var CAUSE_WORD = { war: '戦争', disaster: '災害', sui: '自殺', acc: '不慮の事故', ill: '病気' };
+  function causeText(L) {
+    if (L.cause === 'sui') return '自殺';
+    return L.causeName || CAUSE_WORD[L.cause] || '病気';
+  }
+  function members(L) { return (L.members || []).filter(function (m) { return !m.gone && !m.before; }); }
+  function jobOf(L) {
+    if (L.selfJob && L.selfJob.n) return L.selfJob.n;
+    if (L.job && L.job.label) return L.job.label;
+    if (L.lastJob && !/出家|身$/.test(L.lastJob)) return L.lastJob;
+    return null;
+  }
+  function clean(t) { return String(t || '').replace(/[「」『』]/g, '').replace(/。$/, ''); }
+  // 一生をひとことで（選んだ分かれ道の結果を入れる）
+  function oneLine(L) {
+    var a = L.deathAge, job = jobOf(L), ch = (L.choices || []).filter(function (c) { return c.l; });
+    var bigs = ch.filter(function (c) { return c.big && c.kind !== 'parent'; });
+    var pickC = bigs.filter(function (c) { return c.age >= 12 && c.age <= 45; }).slice(-1)[0] || bigs.slice(-1)[0] || ch.filter(function (c) { return c.kind !== 'parent'; }).slice(-1)[0] || ch.slice(-1)[0];
+    var head = '';
+    var about = pickC && pickC.title && !/^(小さな選択|親の選択|節目|大きな決断)$/.test(pickC.title) ? clean(pickC.title).replace(/[？?]$/, '') : '';
+    if (pickC) head = pickC.kind === 'parent' ? (pickC.age === 0 ? '生まれてすぐ、親が「' + clean(pickC.l) + '」と決め、' : pickC.age + '歳のとき、親が「' + clean(pickC.l) + '」と決め、') : pickC.age + '歳' + (about ? 'の分かれ道（' + about + '）で' : 'で') + '「' + clean(pickC.l) + '」を選び、';
+    var tail;
+    if (a < 5) tail = (a === 0 ? '1年に満たない' : a + '年の') + '短い一生';
+    else if (job) tail = job + 'として生きた' + a + '年の一生';
+    else if (L.everMarried) tail = '家族とともに生きた' + a + '年の一生';
+    else tail = a + '年の一生';
+    return head + tail;
+  }
+  // 一生の要約（3〜6文）
+  function summary(L, o) {
+    var s = [], a = L.deathAge, ms = (L.members || []);
+    s.push(o.birthPlace + 'で、' + (o.house ? o.house + 'に' : '') + (L.sex === 'm' ? '男の子' : '女の子') + 'として生まれた。');
+    if (L.edu && a >= 12) s.push(L.edu + 'まで学んだ。');
+    var job = jobOf(L);
+    if (job && a >= 13) s.push(job + 'として働いた。');
+    if (L.everMarried) {
+      var sp = ms.filter(function (m) { return m.role === '配偶者' || m.role === 'パートナー'; }).slice(-1)[0];
+      var end = sp && !sp.alive && sp.dy != null ? Math.min(sp.dy, L.deathYear) : L.deathYear;
+      var yrs = L.marriedY ? Math.max(0, end - L.marriedY) : null;
+      if (sp && sp.name && yrs != null) s.push((sp.sex === 'm' ? '夫' : sp.sex === 'f' ? '妻' : '相手') + 'の' + sp.name + 'と' + (yrs || 1) + '年連れ添った' + (sp.dy != null && sp.dy <= L.deathYear && !sp.alive ? 'のち、先に見送った。' : '。'));
+      else s.push('結婚した。');
+    }
+    var kids = ms.filter(function (m) { return m.role === '子' && !m.gone && m.by <= L.deathYear; });
+    if (kids.length) {
+      var lost = kids.filter(function (m) { return m.dy != null && m.dy <= L.deathYear; }).length;
+      s.push(kids.length + '人の子を育て' + (lost ? '、そのうち' + lost + '人を先に見送った。' : 'た。'));
+    }
+    var gk = ms.filter(function (m) { return m.role === '孫' && !m.gone && m.by <= L.deathYear; }).length;
+    if (gk) s.push('孫' + gk + '人に恵まれた。');
+    if (o.deathPlace && o.deathPlace !== o.birthPlace) s.push(o.deathPlace + 'に移り住んだ。');
+    s.push(a + '歳のとき、' + (L.cause === 'sui' ? '自ら命を絶った。' : causeText(L) + 'で亡くなった。'));
+    return s;
+  }
+  // 最期を見送った人
+  function seeOff(L) {
+    var ms = (L.members || []).filter(function (m) { return !m.gone && m.alive && m.by <= L.deathYear; }), parts = [];
+    var sp = ms.filter(function (m) { return m.role === '配偶者' || m.role === 'パートナー'; })[0];
+    if (sp) parts.push((sp.role === 'パートナー' ? 'パートナー' : sp.sex === 'm' ? '夫' : '妻') + 'の' + sp.name);
+    var par = ms.filter(function (m) { return m.role === '父' || m.role === '母'; });
+    if (par.length === 2) parts.push('両親'); else if (par.length) parts.push(par[0].role);
+    var kids = ms.filter(function (m) { return m.role === '子'; }).length; if (kids) parts.push('子ども' + kids + '人');
+    var gk = ms.filter(function (m) { return m.role === '孫'; }).length; if (gk) parts.push('孫' + gk + '人');
+    var sib = ms.filter(function (m) { return m.sib; }).length; if (sib) parts.push('きょうだい' + (sib > 1 ? sib + '人' : ''));
+    return parts.length ? parts.join('、') : '見送る家族はいなかった';
+  }
+  function bestYear(L) {
+    var best = null;
+    (L.log || []).forEach(function (r) { if (r.st && r.st.sat != null && (!best || r.st.sat > best.st.sat)) best = r; });
+    return best;
+  }
+  function reflect(L) {
+    var pts = (L.log || []).filter(function (r) { return r.st && r.st.sat != null; });
+    if (L.deathAge < 15 || pts.length < 20) return L.deathAge < 15 ? '短い一生だった。それでも、家族の記憶に残った。' : null;
+    var last = pts.slice(-10), before = pts.slice(0, -10);
+    var avg = function (a) { return a.reduce(function (s, r) { return s + r.st.sat; }, 0) / a.length; };
+    var d = avg(last) - avg(before);
+    if (d > 5) return '最後の10年は、それまでより穏やかな日々だった。';
+    if (d < -5) return '最後の10年は、それまでより苦しい日々だった。';
+    return '暮らしの満足は、生涯を通じておだやかなままだった。';
+  }
+  function places(L) {
+    var seen = [], out = [];
+    (L.log || []).forEach(function (r) { var p = String(r.place || '').replace(/（今の(.*?)）/, '').replace(/（.*?）/g, ''); if (p && seen.indexOf(p) < 0) { seen.push(p); out.push(p); } });
+    return out;
+  }
+  function build(L, o) {
+    o = o || {};
+    var b = bestYear(L), pl = places(L);
+    return {
+      no: 'No. ' + (o.code || '') + '-' + L.by + '-' + L.deathAge,
+      cause: causeText(L), line: oneLine(L), summary: summary(L, o), seeOff: seeOff(L), reflect: reflect(L),
+      best: b ? { age: b.age, year: b.year, sat: b.st.sat } : null, places: pl, job: jobOf(L), edu: L.edu || null
+    };
+  }
+  var API = { build: build, causeText: causeText, oneLine: oneLine };
+  if (typeof module !== 'undefined' && module.exports) module.exports = API;
+  root.IchiokuRecord = API;
+})(typeof self !== 'undefined' ? self : this);

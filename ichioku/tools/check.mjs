@@ -198,10 +198,10 @@ function vars(block) { const o = {}; block.replace(/(--[a-z0-9-]+)\s*:\s*(#[0-9a
   const forbid = [
     [/gradient\s*\(/i, 'グラデーション'], [/box-shadow\s*:\s*(?!none)/i, '影'], [/text-shadow\s*:\s*(?!none)/i, '文字の影'],
     [/backdrop-filter|filter\s*:\s*blur/i, 'ぼかし'], [/text-decoration[^;]*underline/i, '下線'],
-    [/border-left\s*:/i, '枠の左側だけの色付け'], [/serif|mincho|明朝/i, '明朝体']
+    [/border-left\s*:/i, '枠の左側だけの色付け']
   ];
   const f = forbid.filter(([re]) => re.test(css.replace(/sans-serif/gi, ''))).map(([, n]) => n);
-  rec('使わないもの（グラデーション・影・ぼかし・下線・左側だけの色・明朝）がないか', f.length === 0, f.join('、'));
+  rec('使わないもの（グラデーション・影・ぼかし・下線・左側だけの色）がないか（明朝体は原作に合わせて大きな数字と見出しにだけ使う。2026-10-17 作る人の指示）', f.length === 0, f.join('、'));
   const light = vars((css.match(/:root\s*\{([\s\S]*?)\}/) || [])[1] || '');
   const dark = vars((css.match(/:root\[data-theme="dark"\]\s*\{([\s\S]*?)\}/) || [])[1] || '');
   const pairs = [['--text', '--bg'], ['--text', '--surface'], ['--sub', '--bg'], ['--sub', '--surface'], ['--accent', '--bg'], ['--accent', '--surface'], ['--on-accent', '--accent'], ['--world', '--bg'], ['--world', '--surface'], ['--warn', '--bg'], ['--warn', '--surface'], ['--prov-text', '--prov-bg'], ['--reborn-text', '--reborn-bg']];
@@ -233,6 +233,7 @@ for (const by of YEARS) {
     const used = {};
     for (const r of L.log) {
       for (const e of r.events) {
+        if (e.flavor) continue; // 名前の入った小さな出来事（第2弾の6）は場面の割合に数えない
         sim.catAll[e.cat] = (sim.catAll[e.cat] || 0) + 1;
         if (r.year <= LAST_YEAR) sim.catPre[e.cat] = (sim.catPre[e.cat] || 0) + 1;
         if (e.sid) {
@@ -877,7 +878,7 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
           }
         }
       }
-      if (r.mode) for (const e of r.events) { if (/で一人前に働き始めた/.test(e.t) || KSC.has(e.t.split('{')[0]) && !e.story) modeBad.push(L.by + '年生まれ ' + r.year + '年：' + e.t.slice(0, 20)); }
+      if (r.mode) for (const e of r.events) { if (/一人前に働き始めた/.test(e.t) || KSC.has(e.t.split('{')[0]) && !e.story) modeBad.push(L.by + '年生まれ ' + r.year + '年：' + e.t.slice(0, 20)); }
       for (const e of r.events) if (/\{\w+\}/.test(e.t)) brace.push(e.t.slice(0, 20));
     }
     if (L.deathAge >= 20) { adult++; sumR += n / (L.deathAge + 1); }
@@ -894,6 +895,104 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
   const univ = CHx.list.filter(o => o.y[0] <= 1000 && o.y[1] >= 2100).length;
   rec('第1弾6 小さな選択が時代×年齢の25の枠すべてに4つ以上、時代を問わない選択が20以上あるか', slot.length === 0 && univ >= 20, slot.join('、') || CHx.list.length + 'の選択・時代を問わないもの ' + univ);
   rec('第1弾7 差し込み（{sibOlder} など）が埋まらないまま画面に出ないか', brace.length === 0, brace.slice(0, 4).join('、'));
+}
+
+/* ---------- 改善の指示書 第2弾（情景・名前の入った出来事・死亡の記録・コントラスト） ---------- */
+{
+  const Sc = require(path.join(SITE, 'js', 'scene.js')), Rc = require(path.join(SITE, 'js', 'record.js'));
+  const NP = TEST ? 200 : 500;
+  const sceneBad = [], nameLow = [], noCause = [], noPick = [];
+  let named = 0, scLives = 0;
+  for (let i = 0; i < NP; i++) {
+    const by = 1000 + Math.floor((i * 2.003 + 0.5) % 1001), seed = i * 104729 + 7;
+    let L;
+    if (by >= 1975) L = E.newLife(C, P[E.pickPref(C, by, E.makeRng(seed ^ 0x9e3779b9))], { year: by, seed });
+    else { const b0 = O.pickBirth(C, H, by, E.makeRng(seed ^ 0x9e3779b9)); L = O.newLife(C, H, P[b0.pref] || null, { year: by, seed, birth: b0 }); }
+    const M = L.old ? O : E; let g = 0;
+    const checkScene = i < 20;
+    while (L.alive && g++ < 130) {
+      let r = M.step(L);
+      while (r && r.branch) r = M.resolve(L, r.branch.ask || r.branch.id === 'ask' ? { text: '' } : E.autoAnswer(r.branch, null));
+      if (checkScene && L.alive) {
+        const pl = Sc.plan(L, r), hh = Sc.household(L);
+        if (pl.count !== 1 + hh.length || pl.people.length !== pl.count) sceneBad.push(L.by + '年生まれ ' + r.year + '年：家族' + (1 + hh.length) + '人・情景' + pl.people.length + '人');
+      }
+    }
+    if (checkScene) scLives++;
+    if (L.deathAge >= 5) {
+      const names = [L.name, ...(L.members || []).map(m => m.name), L.story && L.story.friend].filter(x => x && !/アイヌ語/.test(x)).map(x => String(x).replace(/（.*?）/g, ''));
+      const hit = L.log.filter(r => r.events.some(e => names.some(nm => nm && e.t.includes(nm)))).length;
+      named++;
+      if (hit / L.log.length < 0.3) nameLow.push(L.by + '年生まれ ' + Math.round(hit / L.log.length * 100) + '%');
+    }
+    const rr = Rc.build(L, { birthPlace: 'どこか', deathPlace: 'どこか' });
+    if (!rr.cause) noCause.push(L.by + '年生まれ');
+    const picked = (L.choices || []).filter(c => c.l);
+    if (picked.length && !picked.some(c => rr.line.includes(String(c.l).replace(/[「」『』]/g, '').replace(/。$/, '')))) noPick.push(rr.line.slice(0, 24));
+  }
+  rec('第2弾2 家族の人数と、情景に描く人数が一致するか（' + scLives + '人の各年）', sceneBad.length === 0, sceneBad.slice(0, 4).join('、'));
+  rec('第2弾3 5歳以上まで生きた人生で、名前の入った出来事が生きた年数の3割以上あるか', nameLow.length === 0, nameLow.slice(0, 5).join('、') || named + '人を確かめた');
+  rec('第2弾4 ' + NP + '件の人生の死亡の記録すべてに死因が出るか', noCause.length === 0, noCause.slice(0, 4).join('、'));
+  rec('第2弾5 選択が1回以上ある人生で、ひとことの1行に選んだ分かれ道の結果が入っているか', noPick.length === 0, noPick.slice(0, 4).join('、'));
+  // 6 コントラスト比（文字4.5以上、線と印3以上）を明るい画面と暗い画面で
+  const css = fs.readFileSync(path.join(SITE, 'css', 'style.css'), 'utf8');
+  const blockOf = (start, end) => { const i0 = css.indexOf(start), i1 = css.indexOf(end, i0 + 1); return css.slice(i0, i1); };
+  const tokens = b => { const o = {}; for (const m of b.matchAll(/(--[\w-]+):\s*(#[0-9a-fA-F]{6})/g)) o[m[1]] = m[2]; return o; };
+  const light = tokens(blockOf(':root {', '@media (prefers-color-scheme: dark)')), dark = tokens(blockOf(':root[data-theme="dark"]', '* { box-sizing'));
+  const lum = h => { const c = [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255).map(v => v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4)); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; };
+  const ratio = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+  const TXT = [['--text', '--bg'], ['--sub', '--bg'], ['--text', '--surface'], ['--sub', '--surface'], ['--accent', '--bg'], ['--accent', '--surface'], ['--on-accent', '--accent'], ['--world', '--bg']];
+  const GFX = [['--c-body', '--track'], ['--c-sat', '--track'], ['--c-learn', '--track'], ['--c-tie', '--track'], ['--accent', '--track'], ['--bar', '--surface']];
+  const low = [];
+  [['明るい', light], ['暗い', dark]].forEach(([nm, t]) => {
+    TXT.forEach(([a, b]) => { if (t[a] && t[b] && ratio(t[a], t[b]) < 4.5) low.push(nm + ' ' + a + '/' + b + ' ' + ratio(t[a], t[b]).toFixed(2)); else if (!t[a] || !t[b]) low.push(nm + ' ' + a + ' か ' + b + ' がない'); });
+    GFX.forEach(([a, b]) => { if (t[a] && t[b] && ratio(t[a], t[b]) < 3) low.push(nm + ' ' + a + '/' + b + ' ' + ratio(t[a], t[b]).toFixed(2)); else if (!t[a] || !t[b]) low.push(nm + ' ' + a + ' か ' + b + ' がない'); });
+  });
+  [['#ece6dc', '#0d1316'], ['#b9c4c1', '#0d1316'], ['#a3b2af', '#0d1316']].forEach(([a, b]) => { if (ratio(a, b) < 4.5) low.push('亡くなった瞬間の画面 ' + a + ' ' + ratio(a, b).toFixed(2)); });
+  rec('第2弾6 文字のコントラスト比4.5以上・線と印3以上（明るい画面と暗い画面）', low.length === 0, low.slice(0, 6).join('、'));
+}
+
+/* ---------- 改善の指示書 第3弾（遊ぶ人自身と比べる・生まれる瞬間） ---------- */
+{
+  const K = require(path.join(SITE, 'js', 'compare.js'));
+  const KINDS = ['birth', 5, 15, 30, 50, 70, 'death'];
+  const leak = [], mism = [], share = [];
+  const pc = v => v > 0 && v < 0.01 ? '1%未満' : '約' + Math.round(v * 100) + '%';
+  const lin = (s, y) => { const ks = Object.keys(s).map(Number).sort((a, b) => a - b); if (y <= ks[0]) return s[ks[0]]; for (let i = 1; i < ks.length; i++) if (y <= ks[i]) { const a = ks[i - 1], b = ks[i]; return s[a] + (s[b] - s[a]) * (y - a) / (b - a); } return s[ks[ks.length - 1]]; };
+  const qOf = (sex, age, y) => y >= 1975 ? E.deathProb(C, null, sex, age, y) : O.deathProb({ C, H, pref: null, kind: 'town', P: null }, sex, age, y);
+  const survOf = (by, sex, a) => { let s = 1; for (let k = 0; k < a; k++) s *= 1 - qOf(sex, k, by + k); return s; };
+  for (let i = 0; i < 60; i++) {
+    const by = 1000 + (i * 167) % 1001, seed = i * 31 + 5, py = 1925 + (i * 7) % 100;
+    let L;
+    if (by >= 1975) L = E.newLife(C, P[E.pickPref(C, by, E.makeRng(seed ^ 0x9e3779b9))], { year: by, seed });
+    else { const b0 = O.pickBirth(C, H, by, E.makeRng(seed ^ 0x9e3779b9)); L = O.newLife(C, H, P[b0.pref] || null, { year: by, seed, birth: b0 }); }
+    L.deathAge = 20 + (i * 13) % 70;
+    // 1 生まれ年を入れていなければ、比べの文は出ない
+    for (const k of KINDS) if (K.line(C, H, L, null, k) != null || K.line(C, H, L, {}, k) != null) leak.push(by + ':' + k);
+    // 2 比べの数字が生命表・進学率・初婚年齢の値と一致する
+    const me = { y: py }, sex = L.sex;
+    const b = K.line(C, H, L, me, 'birth');
+    if (!b.includes(K.per(qOf(sex, 0, by))) || !b.includes(K.per(qOf(sex, 0, py)))) mism.push(by + ' 0歳');
+    const d = K.line(C, H, L, me, 'death');
+    if (!d.includes(pc(survOf(by, sex, L.deathAge))) || !d.includes(pc(survOf(py, sex, L.deathAge)))) mism.push(by + ' 最期');
+    const t15 = K.line(C, H, L, me, 15);
+    if (/高校へ進んだ人は/.test(t15)) { const h1 = lin(H.nat.hs[sex], by + 15), h2 = lin(H.nat.hs[sex], py + 15); if (!t15.includes(pc(h1)) || !t15.includes(pc(h2))) mism.push(by + ' 15歳'); }
+    const t30 = K.line(C, H, L, me, 30);
+    if (/結婚する年齢/.test(t30)) { const m1 = lin(H.nat.marriage[sex], by + 25), m2 = lin(H.nat.marriage[sex], py + 25); if (!t30.includes(m1.toFixed(1)) || !t30.includes(m2.toFixed(1))) mism.push(by + ' 30歳'); }
+    // 3 抽選で出す確率が、その年の統計の値と一致する
+    const bs = K.birthShare(C, L);
+    let want;
+    if (L.old) { const bb = O.birthShare(L); want = bb.share; }
+    else { let tot = 0, mine = 0; C.prefs.forEach(p => { const v = E.val(p.births, by); tot += v; if (p.code === L.home.pref) mine = v; }); want = mine / tot; }
+    if (!(bs.share > 0) || Math.abs(bs.share - want) > 1e-12) share.push(by + ' ' + bs.where);
+  }
+  rec('第3弾1 生まれ年を入れていないとき、比べの文が1か所も出ないか', leak.length === 0, leak.slice(0, 4).join('、'));
+  rec('第3弾2 比べに出る数字が、同じ年の生命表・進学率・初婚年齢の値と一致するか', mism.length === 0, mism.slice(0, 4).join('、'));
+  rec('第3弾3 抽選で出る確率が、その年の人口・出生数の割合と一致するか', share.length === 0, share.slice(0, 4).join('、'));
+  // 4 動きを減らす設定で、切り替えの動きを出さないか（ブラウザの検査で確かめる。ここでは仕組みがあるかを見る）
+  const aj = fs.readFileSync(path.join(SITE, 'js', 'app.js'), 'utf8'), pj = fs.readFileSync(path.join(SITE, 'js', 'prefs.js'), 'utf8');
+  const ok4 = /if \(lessMotion\(\)\) \{[\s\S]{0,300}lt-v/.test(aj) && /if \(lessMotion\(\)\) \{ showEnd\(\); return; \}/.test(aj) && /ichioku-motion/.test(pj) && /prefers-reduced-motion/.test(pj);
+  rec('第3弾4 動きを減らす設定で、抽選と亡くなった瞬間の切り替えの動きを出さないか', ok4, ok4 ? '' : '動きを減らす分かれがない');
 }
 
 /* ---------- S 物語の分かれ道（作る人の指示 2026-10-17） ---------- */
@@ -1053,7 +1152,7 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
   { const bad = []; let n = 0;
     for (let s0 = 1; n < 30 && s0 < 80000; s0++) { const L = firstLife(1700 + s0 % 200, s0); if (L.status !== 'hyakusho' || L.sex !== 'm') continue; run(O, L); if (!L.muko && !L.adopted) continue; n++; if (!L.surnameOld || O.displayName(L) !== L.surname + L.name + '（旧姓 ' + L.surnameOld + '）') bad.push('名字の出し方'); }
     const app = fs.readFileSync(path.join(SITE, 'js', 'app.js'), 'utf8');
-    if (!/dispName\(\) \+ 'さんの一生/.test(app) || !/name: dispName\(\)/.test(app) || !/'旧姓 ' \+ L\.surnameOld/.test(app)) bad.push('最期の画面・共有用の画像・家系図に新しい名字と旧姓が出ない');
+    if (!/\$\('end-title'\)\.textContent = dispName\(\)/.test(app) || !/name: dispName\(\)/.test(app) || !/'旧姓 ' \+ L\.surnameOld/.test(app)) bad.push('最期の画面・共有用の画像・家系図に新しい名字と旧姓が出ない');
     res['14 婿養子・養子に入った人の名字と旧姓（' + n + '人）'] = bad; }
   // 15 1948年からの生まれに奉公・分家・婿養子・養子の分かれ道が出ない
   { const bad = [];

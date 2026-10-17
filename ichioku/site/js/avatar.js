@@ -61,8 +61,8 @@
     var n = parseInt(c.slice(1), 16), k = 0.42;
     return 'rgb(' + Math.round((n >> 16 & 255) * k) + ',' + Math.round((n >> 8 & 255) * k) + ',' + Math.round((n & 255) * k) + ')';
   }
-  function draw(canvas, L) {
-    // 1) 24×32 で描く（色は '#rrggbb' の文字で持つ。重ね塗りの半透明は下の色と混ぜる）
+  // 1) 24×32 で描く（色は '#rrggbb' の文字で持つ。重ね塗りの半透明は下の色と混ぜる）
+  function raw(L) {
     var px = new Array(W * H);
     function hex(n) { return '#' + ('00000' + n.toString(16)).slice(-6); }
     function mix(base, rgba) {
@@ -83,7 +83,23 @@
       },
       clearRect: function () {}
     };
-    var desc = drawSmall(fake, L);
+    raw.desc = drawSmall(fake, L);
+    return { px: px };
+  }
+  // 情景に並べる小さな姿（24×32 のまま、まわりに1マスの輪郭線）
+  function sprite(L) {
+    var px = raw(L).px, out = px.slice();
+    for (var y = 0; y < H; y++) for (var x = 0; x < W; x++) {
+      if (px[y * W + x]) continue;
+      var nb = null;
+      [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(function (d) { var xx = x + d[0], yy = y + d[1]; if (!nb && xx >= 0 && yy >= 0 && xx < W && yy < H && px[yy * W + xx]) nb = px[yy * W + xx]; });
+      if (nb) out[y * W + x] = darker(nb);
+    }
+    return { w: W, h: H, px: out };
+  }
+  function draw(canvas, L) {
+    var px = raw(L).px;
+    var desc = raw.desc;
     // 2) 48×64 になめらかに拡大し、3) 輪郭線を付ける
     var big = scale2x(px), outl = big.slice();
     for (var y = 0; y < H2; y++) for (var x = 0; x < W2; x++) {
@@ -373,5 +389,5 @@
     return (h && DESC[h.style] ? DESC[h.style] + '、' : '') + (CDESC[c.desc || c.type] || '') + who;
   }
 
-  root.IchiokuAvatar = { draw: draw, lookOf: lookOf };
+  root.IchiokuAvatar = { draw: draw, lookOf: lookOf, sprite: sprite };
 })(typeof self !== 'undefined' ? self : this);
