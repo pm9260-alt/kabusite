@@ -205,9 +205,11 @@
   </section>
 
   <section id="screen-end" class="screen" hidden aria-labelledby="end-title">
-    <!-- 死亡の記録（第2弾の7。原作の「死亡記録」の並べ方にならう） -->
+    <!-- 死亡記録（原作「80億分の1」の死亡記録の並べ方にならう：見出し・要約・死因と数字・項目・最後の瞬間・振り返って） -->
     <section class="o-card record" id="record">
-      <p class="rc-k">死亡の記録 · <span id="rc-no"></span></p>
+      <p class="rc-k">死亡記録 · RECORD OF DEATH</p>
+      <p class="rc-k" id="rc-no"></p>
+      <p class="rc-where" id="rc-where"></p>
       <div class="end-head">
         <canvas id="avatar-end" class="avatar" width="48" height="64" role="img" aria-label=""></canvas>
         <div>
@@ -215,9 +217,11 @@
           <p id="end-sub" class="rc-sub"></p>
         </div>
       </div>
-      <p class="rc-line" id="rc-line"></p>
       <p class="rc-sum" id="rc-sum"></p>
-      <p class="rc-cause"><span class="rc-ck">死因</span> <span id="rc-cause"></span></p>
+      <div class="rc-causebox">
+        <p class="rc-cause"><span class="rc-ck">死因</span> <span id="rc-cause"></span></p>
+        <p class="rc-cnote" id="rc-cnote"></p>
+      </div>
       <dl class="rc-grid" id="rc-grid"></dl>
       <button type="button" class="btn-sub rc-again" id="rc-again">最後の瞬間をもう一度見る</button>
     </section>
@@ -226,30 +230,21 @@
       <h2>振り返って</h2>
       <p id="rc-reflect"></p>
     </section>
-    <!-- 次の人生：すぐ選べるように最期の画面のいちばん上に置く -->
+    <section class="o-card rc-reflect" id="rc-line-box">
+      <h2>この人生をひとことで</h2>
+      <p class="rc-line" id="rc-line"></p>
+      <div class="end-buttons">
+        <button type="button" class="btn-sub" id="card-end">最期のカード</button>
+        <button type="button" class="btn-sub" id="end-log">一生をふり返る</button>
+      </div>
+    </section>
+    <!-- 次の人生：この家の続き（きょうだい・子として生きる）と、別の時代 -->
     <div class="next-life" id="next-life">
       <div id="kyodai-block" hidden>
         <h2 class="h-next">この家の続きを生きる</h2>
         <div id="kyodai-list" class="kyodai-list"></div>
       </div>
       <button type="button" class="btn-main" id="again">別の時代に生まれる</button>
-    </div>
-    <div class="block">
-      <h2 class="h-self">一生の浮き沈み</h2>
-      <div id="life-curve" class="life-curve"></div>
-      <p class="curve-legend" id="curve-legend"><span class="lg-me">この人の暮らしの満足</span><span class="lg-avg" id="lg-avg">同じ町・同じ年の100人の平均</span></p>
-      <p class="end-fact" id="surv-pct"></p>
-    </div>
-    <div class="block">
-      <h2 class="h-self">生涯に働いて得た賃金</h2>
-      <p id="earn-era" class="earn-num"></p>
-      <p id="earn-num" class="earn-now"></p>
-      <p id="earn-sub" class="note"></p>
-    </div>
-    <div class="block">
-      <h2 class="h-self">生涯の移動距離</h2>
-      <p id="dist-num" class="earn-num"></p>
-      <p id="dist-sub" class="note"></p>
     </div>
     <div class="block">
       <h2 class="h-self">家系図</h2>
@@ -259,12 +254,25 @@
       <h2 class="h-self">この家で生きた人生</h2>
       <ol id="house-lives" class="list house-lives"></ol>
     </div>
-    <div class="end-buttons">
-      <button type="button" class="btn-sub" id="end-log">一生をふり返る</button>
-      <button type="button" class="btn-sub" id="card-end">最期のカード</button>
-    </div>
     <details class="more" id="end-more">
-      <summary>ほかの記録を開く（生きた場所・人生地図・同じ町の100人・時代の出来事）</summary>
+      <summary>ほかの記録を開く（浮き沈み・稼ぎ・移動距離・生きた場所・人生地図・同じ町の100人・時代の出来事）</summary>
+      <div class="block">
+        <h2 class="h-self">一生の浮き沈み</h2>
+        <div id="life-curve" class="life-curve"></div>
+        <p class="curve-legend" id="curve-legend"><span class="lg-me">この人の暮らしの満足</span><span class="lg-avg" id="lg-avg">同じ町・同じ年の100人の平均</span></p>
+        <p class="end-fact" id="surv-pct"></p>
+      </div>
+      <div class="block">
+        <h2 class="h-self">生涯に働いて得た賃金</h2>
+        <p id="earn-era" class="earn-num"></p>
+        <p id="earn-num" class="earn-now"></p>
+        <p id="earn-sub" class="note"></p>
+      </div>
+      <div class="block">
+        <h2 class="h-self">生涯の移動距離</h2>
+        <p id="dist-num" class="earn-num"></p>
+        <p id="dist-sub" class="note"></p>
+      </div>
       <div class="block map-box">
         <h2 class="h-self">生きた場所</h2>
         <svg id="map-end" class="jmap" role="img" aria-label="生きた場所の地図"></svg>

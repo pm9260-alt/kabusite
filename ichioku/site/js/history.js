@@ -1489,7 +1489,7 @@
       var t = [rec].concat((L.log || []).slice(-1)).map(function (r) { return r ? (r.events || []).map(function (e) { return e.t; }).join('') + ((r.world && r.world.items) || []).map(function (i) { return i.t; }).join('') : ''; }).join('');
       var famine = /飢饉|凶作|食べるものが|ひもじ/.test(t) || (L.year >= 1945 && L.year <= 1947);
       var pk = K.pick(L.year, a, L.sex, { place: L.kind, famine: famine }, L.rnd);
-      if (pk) return { n: K.show(pk.n), kind: pk.kind, rank: pk.from ? K.show(pk.from) + '（' + pk.n + 'は細かい病名の推計）' : pk.n, est: K.est(L.year) || !!pk.from };
+      if (pk) return { n: K.show(pk.n), share: pk.share, kind: pk.kind, rank: pk.from ? K.show(pk.from) + '（' + pk.n + 'は細かい病名の推計）' : pk.n, est: K.est(L.year) || !!pk.from };
     }
     var list = (H.nat.causeRank[y] || H.nat.causeRank[1900] || []).filter(Boolean);
     if (a < 5) return L.year < 1900 && L.rnd() < 0.3 ? { n: '疱瘡・はしか' } : { n: L.rnd() < 0.5 ? '肺炎' : '胃腸炎' };
@@ -1518,6 +1518,7 @@
       var st = E.deathStory(L, { kind: ck, cause: c.n });
       if (L.abroad) st.text = st.text.replace(/(自宅|家|病院|診療所)で亡くなった/, '移り住んだ' + L.abroad + 'の地で亡くなった');
       L.causeName = c.n;
+      L.causeShare = c.cd ? { v: c.cd.share, y0: c.cd.years[0], y1: c.cd.years[c.cd.years.length - 1], est: !!c.cd.group } : c.share != null ? { v: c.share, est: true, old: true } : null;
       if (ck === 'sui') rec.hotline = true;
       dieBy(L, rec, ck, st.text, [ev(L, y < 1975 ? 'ipss' : 'lifetable', y, a + '歳の人が1年のうちに亡くなる確率（平均寿命と乳児死亡率から推計）', (q * 100).toFixed(2) + '%', { est: y < 1975 }),
         c.cd ? ev(L, 'vital', c.cd.years[c.cd.years.length - 1], 'この年齢の死因のうち「' + c.n + '」の割合（' + c.cd.years[0] + '〜' + c.cd.years[c.cd.years.length - 1] + '年の死亡数から）', pct(c.cd.share)) :
@@ -1526,8 +1527,10 @@
       return;
     }
     if (a === 0 && q > 0 && L.rnd() < q) {
-      var c0 = y >= 1975 ? (E.pickCause(L.C, 0, L.sex, y, L.rnd, 'ill') || { name: 'その他の病気' }).name : causeOf(L, rec).n;
+      var c0p = y >= 1975 ? E.pickCause(L.C, 0, L.sex, y, L.rnd, 'ill') : causeOf(L, rec), c0 = c0p ? (c0p.name || c0p.n) : 'その他の病気';
+      var c0s = c0p && c0p.share != null ? (c0p.years ? { v: c0p.share, y0: c0p.years[0], y1: c0p.years[c0p.years.length - 1], est: !!c0p.group } : { v: c0p.share, est: true, old: true }) : null;
       L.causeName = c0;
+      if (c0s) L.causeShare = c0s;
       dieBy(L, rec, 'ill', E.deathStory(L, { kind: 'ill', cause: c0 }).text, [ev(L, 'ipss', near(L.H.mort.q0, y), '0歳で亡くなる確率（乳児死亡率。1899年以前は江戸時代の研究の目安から推計）', (q * 100).toFixed(1) + '%', { est: y < 1900 })]);
       L.log.push(rec);
       return;

@@ -31,8 +31,8 @@
     var r = rnd() * t, x = ws[ws.length - 1], u = 0.5;
     for (var i = 0; i < ws.length; i++) { if (r < ws[i].w) { x = ws[i]; u = r / ws[i].w; break; } r -= ws[i].w; }
     // 選ばれた幅の中の位置で細かい病名を選ぶ（乱数を余分に引かない）
-    var d = refine(x.n, a, sex, y, u);
-    return d === x.n ? x : { n: d, w: x.w, kind: x.kind, from: x.n };
+    var d = refine(x.n, a, sex, y, u), sh = x.w / t;
+    return d === x.n ? { n: x.n, w: x.w, kind: x.kind, share: sh } : { n: d, w: x.w, kind: x.kind, from: x.n, share: sh * subShare(x.n, a, sex, y, d) };
   }
   // 統計で「その他の病気」「ほかのがん」「その他の事故」とまとめられた死因を、細かい病名に分ける（推計）。
   // 割合は人口動態統計の死因簡単分類（2023年ごろの死亡数）をもとにした目安。子どもと若い人は、その年齢で多い病名から選ぶ
@@ -62,10 +62,19 @@
     for (var i = 0; i < ks.length; i++) { x -= row[ks[i]]; if (x < 0) return ks[i]; }
     return ks[ks.length - 1];
   }
+  // 細かく分けた病名が、まとめられた死因の中で占める割合
+  function subShare(n, a, sex, y, d) {
+    var t = SPLIT[n], row = null;
+    if (!t) return 1;
+    t.forEach(function (r) { if (a >= r[0] && a <= r[1]) row = r[2]; });
+    if (!row || row[d] == null) return 1;
+    var tot = Object.keys(row).filter(function (k) { return !(k === '卵巣がん' && sex !== 'f') && !(k === '熱中症' && y < 1960); }).reduce(function (s, k) { return s + row[k]; }, 0);
+    return row[d] / tot;
+  }
   // 画面に出す呼び名
   var SHOW = { '胃腸炎（下痢腸炎）': '胃腸炎', 'ほかのがん': 'がん', '肺炎・気管支炎': '肺炎', '肺炎・かぜ': '肺炎', '心臓の病気': '心臓の病気', '自害': '自害', '赤痢・疫痢': '赤痢' };
   function show(n) { return SHOW[n] || n; }
-  var API = { pick: pick, weights: weights, show: show, refine: refine, eras: D.eras, est: function (y) { var e = eraOf(y); return !!(e && e.est); } };
+  var API = { pick: pick, weights: weights, show: show, refine: refine, subShare: subShare, eras: D.eras, est: function (y) { var e = eraOf(y); return !!(e && e.est); } };
   if (typeof module !== 'undefined' && module.exports) module.exports = API;
   root.IchiokuCauses = API;
 })(typeof self !== 'undefined' ? self : this);

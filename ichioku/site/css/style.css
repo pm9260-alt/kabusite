@@ -598,6 +598,10 @@ button { border-radius: 8px; }
 .rc-line { font-family: var(--f-display); font-size: 19px; font-weight: 700; line-height: 1.6; }
 .rc-sum { font-size: 15px; line-height: 1.8; }
 .rc-cause { font-size: 15px; font-weight: 700; }
+.rc-where { font-size: 13px; color: var(--sub); }
+.rc-causebox { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border-radius: 12px; background: var(--card2, rgba(127,127,127,.08)); }
+.rc-cnote { font-size: 13px; line-height: 1.75; color: var(--sub); }
+#rc-line-box .end-buttons { margin-top: 4px; }
 .rc-ck { font-weight: 400; font-size: 13px; color: var(--sub); margin-right: 6px; }
 .rc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 18px; margin: 0; }
 .rc-item { padding: 10px 0; border-top: 1px solid var(--line); }

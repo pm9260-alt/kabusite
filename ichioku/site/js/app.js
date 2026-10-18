@@ -1346,9 +1346,11 @@
     var houseW = L.old ? O.houseWord(L) : (L.dadJobD ? '父が' + L.dadJobD.n + 'の家' : null);
     var r = R.build(L, { birthPlace: String(birthPlace()).replace(/（今の(.*?)）/, '（$1）'), deathPlace: String(deathPlace()).replace(/（今の(.*?)）/, '（$1）'), house: houseW, houseShort: L.old ? (L.parentJob ? L.parentJob.n + 'の家' : (O.houseWord(L) || '').replace(/（.*?）/, '')) : (L.dadJobD ? '父が' + L.dadJobD.n + 'の家' : null), code: L.old ? L.pref : (L.home.pref || '') });
     $('rc-no').textContent = r.no;
-    $('rc-line').textContent = r.line;
+    $('rc-where').textContent = String(L.old ? (L.home.label || '').replace(/（.*?）/g, '') : L.home.prefName) + ' · ' + (L.sex === 'm' ? '男性' : '女性');
+    $('rc-line').textContent = pol(r.line + 'だった。');
     $('rc-sum').textContent = r.summary.map(pol).join('');
     $('rc-cause').textContent = r.cause;
+    $('rc-cnote').textContent = causeNote();
     var g = $('rc-grid');
     clear(g);
     function item(k, v, sub) {
@@ -1358,24 +1360,66 @@
       if (sub) d.appendChild(el('dd', 'rc-subv', sub));
       g.appendChild(d);
     }
+    // 項目の並びは原作の死亡記録と同じ：最終学歴・最後の仕事・ともに生きた人・最期を見送った人・いちばん幸せだった年・暮らした土地・遺した財産・大人になってから時間を注いだこと
     item('最終学歴', r.edu || (L.deathAge < 6 ? '—' : '学校には通わなかった'));
     item('最後の仕事', r.job || '—');
     var sp = L.members.filter(function (m) { return m.role === '配偶者' || m.role === 'パートナー'; }).slice(-1)[0];
-    if (sp && L.everMarried) { var end = sp.dy != null && !sp.alive ? Math.min(sp.dy, L.deathYear) : L.deathYear; item('ともに生きた人', (sp.sex === 'm' ? '夫 ' : '妻 ') + sp.name, L.marriedY ? Math.max(1, end - L.marriedY) + '年をともに' : null); }
     var kids = L.members.filter(function (m) { return m.role === '子' && !m.gone && m.by <= L.deathYear; }).length;
     var gk = L.members.filter(function (m) { return m.role === '孫' && !m.gone && m.by <= L.deathYear; }).length;
-    if (kids) item('子ども', kids + '人', gk ? '孫' + gk + '人' : null);
+    if ((sp && L.everMarried) || kids) {
+      var tw = el('div', 'rc-item'); tw.appendChild(el('dt', null, 'ともに生きた人'));
+      if (sp && L.everMarried) { var end = sp.dy != null && !sp.alive ? Math.min(sp.dy, L.deathYear) : L.deathYear; tw.appendChild(el('dd', null, (sp.role === 'パートナー' ? 'パートナー ' : sp.sex === 'm' ? '夫 ' : '妻 ') + sp.name)); if (L.marriedY) tw.appendChild(el('dd', 'rc-subv', Math.max(1, end - L.marriedY) + '年をともに')); }
+      if (kids) { tw.appendChild(el('dd', null, '子ども ' + kids + '人')); if (gk) tw.appendChild(el('dd', 'rc-subv', '孫' + gk + '人')); }
+      g.appendChild(tw);
+    }
     item('最期を見送った人', pol(r.seeOff));
-    if (r.best) { var br = L.log.filter(function (x) { return x.year === r.best.year; })[0], me = br ? mainEvent(br) : null; item('いちばん満足が高かった年', r.best.age + '歳（' + r.best.year + '年）', me && me.t ? (me.t.length > 30 ? me.t.slice(0, 30) + '…' : me.t) : null); }
+    if (r.best) { var br = L.log.filter(function (x) { return x.year === r.best.year; })[0], me = br ? mainEvent(br) : null; item('いちばん幸せだった年', r.best.age + '歳（' + r.best.year + '年）', me && me.t ? (me.t.length > 30 ? me.t.slice(0, 30) + '…' : me.t) : null); }
     item('暮らした土地', r.places.slice(0, 3).join('、') + (r.places.length > 3 ? 'など' + r.places.length + 'か所' : ''));
     // 遺した財産（第2弾の7・第4弾の11）：亡くなったときの貯金（今の物価）と、買った家
     var sav = L.money && L.money.sav != null ? L.money.sav : null;
     if (sav != null || L.boughtHome) item('遺した財産', (sav != null ? money(sav) : '') + (L.boughtHome ? (sav != null ? '・' : '') + L.boughtHome + '年に買った家' : ''), sav != null ? '今の物価に直した貯金（推計）' : null);
+    var tf = timeGiven();
+    if (tf) item('大人になってから時間を注いだこと', tf);
     var dc = cmpLine('death');
     if (dc) { var dv = el('div', 'rc-item rc-wide'); dv.appendChild(el('dt', null, 'あなたと比べると')); dv.appendChild(el('dd', null, pol(dc))); g.appendChild(dv); }
     $('rc-reflect-box').hidden = !r.reflect;
     $('rc-reflect').textContent = r.reflect ? pol(r.reflect) : '';
     $('rc-again').onclick = function () { showDeath(function () { window.scrollTo(0, 0); }); };
+  }
+  // 死因の下の数字（原作にならう）：同じ死因の割合・同じ年に生まれた人のうち長く生きた割合・平均の寿命との差
+  function pctW(v) { return v < 0.01 ? '1%未満' : '約' + Math.round(v * 100) + '%'; }
+  var BANDS_OLD = [[0, 0, '0歳'], [1, 4, '1〜4歳'], [5, 14, '5〜14歳'], [15, 39, '15〜39歳'], [40, 64, '40〜64歳'], [65, 200, '65歳以上']];
+  function bandWord(bands, a) { var w = ''; bands.forEach(function (b) { if (a >= b[0] && a <= b[1]) w = b[2] || (b[1] >= 200 ? b[0] + '歳以上' : b[0] === b[1] ? b[0] + '歳' : b[0] + '〜' + b[1] + '歳'); }); return w; }
+  function causeNote() {
+    var out = [], a = L.deathAge, cs = L.causeShare, sx = L.sex === 'm' ? (a < 15 ? '男の子' : '男性') : (a < 15 ? '女の子' : '女性');
+    if (cs && cs.v > 0 && L.cause !== 'sui') {
+      if (cs.old) out.push('この時代に' + bandWord(BANDS_OLD, a) + 'で亡くなった人のうち、' + pctW(cs.v) + 'が同じ死因によるものでした（' + (L.deathYear < 1900 ? '寺の過去帳の研究や流行病の記録からの推計' : '人口動態調査の死因別の死亡率からの推計') + '）。');
+      else out.push(cs.y0 + '〜' + cs.y1 + '年に' + bandWord((C.nat.causeDetail && C.nat.causeDetail.bands) || [], a) + 'で亡くなった人のうち、' + pctW(cs.v) + 'が同じ死因によるものです（人口動態調査' + (cs.est ? '。細かい病名の割合は推計' : '') + '）。');
+    }
+    var l = 1, e0 = 0, longer = null;
+    for (var k = 0; k <= 110; k++) {
+      if (k === a + 1) longer = l;
+      if (k > 0) e0 += l;
+      l *= 1 - (L.old ? O.deathProb(Object.create(L), L.sex, k, L.by + k) : E.deathProb(C, P, L.sex, k, L.by + k));
+    }
+    e0 += 0.5;
+    if (longer != null) out.push('同じ' + L.by + '年に生まれた' + sx + 'のうち、' + pctW(longer) + 'がこの人より長く生きます。');
+    var d = Math.round((a + 0.5 - e0) * 10) / 10;
+    out.push('同じ年に生まれた' + (L.sex === 'm' ? '男性' : '女性') + 'の平均の寿命' + e0.toFixed(1) + '歳（推計）より、' + Math.abs(d).toFixed(1) + '年' + (d >= 0 ? '長く' : '短く') + '生きました。');
+    return out.join('');
+  }
+  // 大人になってから時間を注いだこと：20歳からの毎年、今年の重点か、その年のいちばん大きな出来事の種類で数える
+  var GIVE = { study: '学び', earn: '仕事', family: '家族', body: 'からだ', save: '貯え', '学歴と仕事': '仕事', '家庭': '家族', '人間関係': '家族・友人', '健康': 'からだ', '地域': '地域のつとめ' };
+  function timeGiven() {
+    var cnt = {}, n = 0;
+    L.log.forEach(function (r) {
+      if (r.age < 20) return;
+      var f = G ? focusAt(G, r.year) : null, me = f ? null : mainEvent(r), k = GIVE[f] || (me && me.i != null && r.events[me.i] && GIVE[r.events[me.i].cat]);
+      if (k) { cnt[k] = (cnt[k] || 0) + 1; n++; }
+    });
+    if (n < 5) return null;
+    var top = Object.keys(cnt).sort(function (x, y) { return cnt[y] - cnt[x]; })[0];
+    return top + ' ' + cnt[top] + '年';
   }
   function showEnd(again) {
     clearTimeout(timer);
@@ -1386,9 +1430,9 @@
     $('end-sub').textContent = L.by + ' – ' + L.deathYear + ' · ' + L.deathAge + '歳没 · ' + String(deathPlace()).replace(/（今の(.*?)）/, ' $1');
     renderRecord();
     var nl = $('next-life'), rcb = $('record');
-    var rfb = $('rc-reflect-box');
+    var lnb = $('rc-line-box');
     if (L.deathAge < 5) { if (nl.nextElementSibling !== rcb) rcb.parentNode.insertBefore(nl, rcb); }
-    else if (rfb.nextElementSibling !== nl) rfb.parentNode.insertBefore(nl, rfb.nextSibling);
+    else if (lnb.nextElementSibling !== nl) lnb.parentNode.insertBefore(nl, lnb.nextSibling);
     window.scrollTo(0, 0);
     renderHotline($('hotline-end'), L.cause === 'sui');
     renderLifeMap();
@@ -1514,6 +1558,8 @@
       b.onclick = function () { var f = b.getAttribute('data-f'); setFocus(L && L.focus === f ? null : f); };
     });
     $('auto-top').onclick = function () { $('auto').onclick(); };
+    // 浮き沈みのグラフは「ほかの記録を開く」の中にあるので、開いたときに幅に合わせて描き直す
+    $('end-more').addEventListener('toggle', function () { if ($('end-more').open && L && !L.alive) renderLifeCurve(); });
     $('auto-born').onclick = function () { auto = !auto; try { localStorage.setItem('ichioku-auto', auto ? '1' : '0'); } catch (e) { /* 保存できない環境 */ } renderFocus(); };
     $('back-top').onclick = backToPrev;
     $('auto').onclick = function () {
