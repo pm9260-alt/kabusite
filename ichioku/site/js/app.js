@@ -296,8 +296,27 @@
       born(first || undefined);
     });
   }
+  // 20歳までに亡くなる人生が3回続かないようにする（作る人の指示 2026-10-19）。直前の2回が20歳までに終わっていたら、
+  // おまかせ（統計どおりの答え）で進めて21歳を迎える生まれを探す。選んだ答えしだいで早く亡くなることはある
+  function survivesTo21(sd) {
+    var year = yearOfSeed(sd);
+    var ready = year >= 1975 ? Promise.resolve({ pref: E.pickPref(C, year, E.makeRng(sd ^ 0x9e3779b9)) }) : getHistory().then(function (h) { return O.pickBirth(C, h, year, E.makeRng(sd ^ 0x9e3779b9)); });
+    return ready.then(function (b) { return getPref(b.pref).then(function (p) {
+      var T = year >= 1975 ? E.newLife(C, p, { year: year, seed: sd }) : O.newLife(C, H, p, { year: year, seed: sd, birth: b }), MM = year >= 1975 ? E : O, g = 0;
+      while (T.alive && T.age <= 20 && g++ < 40) { var r = MM.step(T); while (r && r.branch) r = MM.resolve(T, r.branch.ask ? { text: '' } : null); }
+      return T.alive || T.deathAge > 20;
+    }); });
+  }
+  function pickSeed() {
+    var streak = store('ichioku-short') || 0, first = randomSeed();
+    if (streak < 2) return Promise.resolve(first);
+    var tries = 0;
+    function next(sd) { return survivesTo21(sd).then(function (ok) { return ok || ++tries >= 30 ? sd : next(randomSeed()); }); }
+    return next(first).catch(function () { return first; });
+  }
   function born(fixedSeed) {
-    var seed = typeof fixedSeed === 'number' ? fixedSeed : randomSeed();
+    if (typeof fixedSeed !== 'number') { $('born').disabled = true; pickSeed().then(function (sd) { born(sd); }); return; }
+    var seed = fixedSeed;
     $('born').disabled = true;
     G = { v: 2, seed: seed, year: yearOfSeed(seed), answers: [], marks: [], focus: [], auto: auto };
     houseLives = [];
@@ -1509,6 +1528,7 @@
       var names = houseLives.map(function (h) { return h.name; }).concat([L.name]);
       if (G) lives.unshift({ v: 2, seed: G.seed, year: G.year, answers: G.answers || [], focus: G.focus || [], marks: G.marks || [], house: G.house || null, names: names, name: L.name, by: L.by, place: L.old ? L.home.label : L.home.prefName + L.home.muniName, age: L.deathAge, dy: L.deathYear });
       store('ichioku-lives', lives.slice(0, 10));
+      store('ichioku-short', L.deathAge <= 20 ? (store('ichioku-short') || 0) + 1 : 0);
       if (G) G.done = true;
     }
   }
@@ -1626,6 +1646,8 @@
     // 別の時代に生まれる・生まれ変わる：トップに戻らず、すぐ次の人生を始める
     $('again').onclick = rebornNow;
     $('same-again').onclick = sameAgain;
+    // 同じ人生をもう一度（作る人の指示 2026-10-19）：同じ種で、同じ年・同じ場所・同じ家族に生まれ直す
+    $('same-life').onclick = function () { if (!G) return; var sd = G.seed, sn = snapshotG(); if (sn) store('ichioku-prev', sn); clearTimeout(timer); closeSheetQuiet(); L = null; cur = null; houseLives = []; window.scrollTo(0, 0); born(sd); };
     $('reborn-top').onclick = rebornNow;
     $('map-open').onclick = openBigMap;
     $('mini4').onclick = openSt;

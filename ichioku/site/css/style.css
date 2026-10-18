@@ -645,7 +645,7 @@ button { border-radius: 8px; }
 #screen-end.infant #rc-again, #screen-end.infant #rc-reflect-box, #screen-end.infant #rc-line-box, #screen-end.infant .block, #screen-end.infant #end-more, #screen-end.infant .end-credit { display: none; }
 #screen-end.infant .record { gap: 8px; padding: 14px 16px; }
 #screen-end.infant .rc-grid { grid-template-columns: 1fr; }
-#screen-end.infant #rc-no, #screen-end.infant #rc-grid { display: none; }
+#screen-end.infant #rc-no, #screen-end.infant #rc-grid, #screen-end.infant #same-life { display: none; }
 #screen-end.infant .next-life { margin: 4px 0 10px; gap: 6px; }
 #screen-end.infant .h-next { font-size: 16px; margin: 0 0 4px; }
 #screen-end.infant .kyodai-list { gap: 6px; }

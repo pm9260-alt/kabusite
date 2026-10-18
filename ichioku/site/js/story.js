@@ -2038,6 +2038,8 @@
     hei: ['陣中で、粥をすすりながら夜を明かした。', '国元の家族に宛てて、短い便りを書いた。', '仲間が戦で傷つき、肩を貸して陣に戻った。'],
     shukke: ['朝の勤行のあと、寺の庭を掃き清めた。', '経を写す手が、少しずつ速くなった。', '寺を訪ねてきた人の話を、黙って聞いた。']
   };
+  // 戦後に家を離れて暮らす年（長屋・国の出などの古い言い方を使わない）
+  var AWAY_NEW = ['都会の暮らしに、少しずつ慣れてきた。', 'ふるさとの家族からの電話を、心待ちにした。', '同じ県の出身の人と知り合い、話がはずんだ。', '休みの日に、ふるさとの山を思い出して少し寂しくなった。', '盆と正月には、なるべくふるさとへ帰るようにした。', '近所の店の人と、顔なじみになった。'];
   var MODE_MORE = {
     tabi: ['一座の長に「{me}、今日の舞はよかった」とほめられた。', '{prov}の見物人から、「{me}」と名を呼ばれるようになった。', '{prov}の城下で、大きな芝居小屋に呼ばれた。', '一座の荷車の車輪が外れ、皆で直した。', '{prov}の茶屋の娘に、舞をほめられた。', '雪で道がふさがり、{prov}の寺の軒先で夜を明かした。', '一座の若い者に、口上の言い方を教えた。', '祭りの客が少なく、その日は粥だけで過ごした。'],
     hoko: ['番頭に「{me}、よく気がつくな」と言われた。', '店の帳面のつけ方を、番頭から教わった。', '使いに出され、町の道をひとつずつ覚えた。', '主人の家の子の子守りを任された。', '盆と正月の藪入りに、ふるさとの家へ帰った。', '仕事でしくじり、夜遅くまで叱られた。', '新しく入った小僧に、仕事を教える番になった。', '奉公先の祭りの支度を手伝った。'],
@@ -2058,7 +2060,7 @@
     if (own && !c.p(0.3)) return;
     var prov = L.old && L.H && L.H.prov[L.prov] ? L.H.prov[L.prov].kuni : '旅先';
     var famine = /飢饉|凶作|飢え/.test(rec.events.map(function (e) { return e.t; }).join('') + ((rec.world && rec.world.items) || []).map(function (i) { return i.t; }).join(''));
-    var base = L.mode === 'shukke' ? templeLines(c, famine) : MODE_LINES[L.mode].concat(MODE_MORE[L.mode] || []);
+    var base = L.mode === 'shukke' ? templeLines(c, famine) : L.mode === 'away' && c.y >= 1946 ? AWAY_NEW : MODE_LINES[L.mode].concat(MODE_MORE[L.mode] || []);
     var me = String(L.name || '').replace(/（.*?）/g, '');
     // 同じ型の文は、国の名前が違っても1回だけ（出しきるまで）
     var tm = {}, all = base.filter(function (t) { return me || t.indexOf('{me}') < 0; }).map(function (t) { var f = t.replace('{prov}', prov).replace('{me}', me); tm[f] = t; return f; }), seen = c.s.seen = c.s.seen || {};
@@ -2531,6 +2533,81 @@
     var e = api.push(L, rec, '家庭', t, []);
     if (e) e.flavor = true;
   }
+  /* ---------- 人生の筋（js/paths.js。作る人の指示 2026-10-19）----------
+     珍しい仕事への道・売られた子や預けられた子の人生・ちょっとしたきっかけで都や幕府・国の役所で働く道・将軍家や大名家の人生。
+     どの分かれ道にも地元に残る答えがあり、その答えにも地元で幸せに暮らす続きがある（誘導しない） */
+  function pathsMod() {
+    if (root.IchiokuPaths) return root.IchiokuPaths;
+    if (typeof require === 'function') { try { return require('./paths.js'); } catch (e) { return null; } }
+    return null;
+  }
+  // 筋に出会う割合（作る人の指示 2026-10-19「大幅に増やす」）。書いた p の何倍で始めるか
+  var PATH_X = 3;
+  var PATH_IND = { farm: 'agri', fish: 'fish', shop: 'shop', craft: 'factory', office: 'office', samurai: 'pub', temple: 'service', teacher: 'pub', clerk: 'office', service: 'service' };
+  function pFill(c, t) {
+    var P = people(c), L = c.L;
+    return String(t || '').replace(/\{(\w+)\}/g, function (m0, k) {
+      if (k === 'name') return String(L.name || '').replace(/（.*?）/g, '');
+      if (k === 'dad') return P.dad || '父';
+      if (k === 'mom') return P.mom || '母';
+      if (k === 'place') return P.place || 'ふるさと';
+      return P[k] || '';
+    });
+  }
+  function pathDo(c, path, o) {
+    var L = c.L;
+    if (!o) return;
+    if (o.move) c.move(o.move);
+    if (o.away) c.mode('away');
+    if (o.status && L.old && !L.rank) L.status = o.status;
+    if (o.job) {
+      c.job(o.job.n, o.job.pay || 1500, o.job.reg !== false, c.O ? o.job.cat : (PATH_IND[o.job.cat] || 'service')); // 筋で就く仕事は、書いていなければ正規の勤め（非正規の割合の統計を崩さない）
+      L.selfJob = { cat: o.job.cat || 'craft', n: o.job.n, d: o.job.d || '' }; L.lastJob = o.job.n;
+    }
+    if (o.say) c.say(pFill(c, o.say), o.fx || {}, o.job ? '学歴と仕事' : (o.cat || '人間関係'));
+    c.s.f[path.id] = c.y;
+    if (o.next && o.next.node) { var lo = o.next['in'] ? o.next['in'][0] : 2, hi = o.next['in'] ? o.next['in'][1] : lo; c.later(lo + Math.floor(c.r() * (hi - lo + 1)), path.id + '.' + o.next.node); }
+  }
+  function pathAsk(c, path, key, title, text, opts) {
+    c.ask(key === 'start' ? path.id : path.id + '.' + key, title || path.title, pFill(c, text), opts.map(function (o) {
+      return { k: key + '__' + o.k, l: o.l, w: typeof o.w === 'number' ? o.w : 1, f: o.f || [] };
+    }), null, path.id);
+  }
+  function pathOk(c, path) {
+    var L = c.L, y = c.y, a = c.a;
+    if (y < path.y[0] || y > path.y[1] || a < path.a[0] || a > path.a[1]) return false;
+    if (path.sex && path.sex !== L.sex) return false;
+    if (path.st && path.st.indexOf(c.st) < 0) return false;
+    if (path.kind && path.kind.indexOf(c.kind) < 0) return false;
+    if (path.rank ? path.rank.indexOf(L.rank) < 0 : !!L.rank && !path.anyRank) return false;
+    if (path.married === false && L.married) return false;
+    return true;
+  }
+  (function () {
+    var PM = pathsMod();
+    if (!PM || !PM.list) return;
+    PM.list.forEach(function (path) {
+      var res = {};
+      path.opts.forEach(function (o) { res['start__' + o.k] = function (c) { pathDo(c, path, o); }; });
+      var nodes = {};
+      Object.keys(path.nodes || {}).forEach(function (nk) {
+        var nd = path.nodes[nk];
+        nodes[nk] = function (c) {
+          if (!c.L.alive) return;
+          pathDo(c, path, nd);
+          if (nd.ask) pathAsk(c, path, nk, nd.ask.title, nd.ask.text, nd.ask.opts);
+        };
+        if (nd.ask) nd.ask.opts.forEach(function (o) { res[nk + '__' + o.k] = function (c) { pathDo(c, path, o); }; });
+      });
+      arc({ id: path.id, path: true, start: function (c) {
+        if (c.s.pathN >= 2 || !pathOk(c, path) || !c.p(Math.min(0.06, (path.p || 0.01) * PATH_X))) return false;
+        c.s.pathN = (c.s.pathN || 0) + 1;
+        pathAsk(c, path, 'start', path.title, path.text, path.opts);
+        return true;
+      }, res: res, nodes: nodes });
+    });
+  })();
+
   var API = { init: init, year: year, familyLine: familyLine, resolve: resolve, autoAnswer: autoAnswer, spouseDesc: spouseDesc, hintFor: hintFor, suitor: suitor, suitorText: suitorText, hokoTo: hokoTo, mukoHouse: mukoHouse, yoshiHouse: yoshiHouse, arcs: A, nodes: N };
   if (typeof module !== 'undefined' && module.exports) module.exports = API;
   root.IchiokuStory = API;

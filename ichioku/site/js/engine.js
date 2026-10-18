@@ -1312,7 +1312,7 @@
     var cw = a < 15 ? C.nat.cause.child : a < 40 ? C.nat.cause.young : a < 65 ? C.nat.cause.mid : C.nat.cause.old;
     var sm = L.story && L.story.sui > 1 ? L.story.sui : 1;
     var cause = pick(rnd, ['ill', 'acc', 'sui'], function (k) { return k === 'sui' ? cw[k] * sm : cw[k]; });
-    var cd = pickCause(C, a, L.sex, y, rnd, cause);
+    var cd = pickCause(C, a, L.sex, y, rnd, cause, { place: ({ '町村': 'village', '都市': 'town', '大都市': 'city' })[(L.place || {}).kind] || 'town', pref: (L.place || {}).pref });
     var st = deathStory(L, { kind: cause, cause: cd });
     L.alive = false; L.deathAge = a; L.deathYear = y; L.cause = cause; L.causeName = cd ? cd.name : null; L.causeShare = cd ? { v: cd.share, y0: cd.years[0], y1: cd.years[cd.years.length - 1], est: !!cd.group } : null;
     rec.dead = true;
@@ -1683,7 +1683,7 @@
     if (typeof require === 'function') { try { return require('./causes.js'); } catch (e) { return null; } }
     return null;
   }
-  function pickCause(C, a, sex, y, rnd, kind) {
+  function pickCause(C, a, sex, y, rnd, kind, ctx) {
     var D = C.nat.causeDetail;
     if (!D || !D.dist) return null;
     var bi = 0;
@@ -1703,7 +1703,8 @@
     for (var i = 0; i < keys.length; i++) { var w = Math.max(0, d[keys[i]]); if (x < w) { name = keys[i]; u = w ? x / w : 0.5; break; } x -= w; }
     if (!name) name = keys[keys.length - 1];
     // 統計で「その他の病気」「がん（ほかのがん）」「その他の事故」とまとめられたものは、細かい病名に分ける（js/causes.js。推計）
-    var K = causesMod(), sub = K && K.refine ? K.refine(name, a, sex, y, u) : name;
+    var K = causesMod(), rare = /^(その他の事故|その他の外因|窒息|溺れる事故|転倒・転落)$/.test(name) && K && K.rareModern && ctx ? K.rareModern(y, a, sex, ctx.place, ctx.pref, u) : null;
+    var sub = rare || (K && K.refine ? K.refine(name, a, sex, y, u) : name);
     return { name: sub, group: sub !== name ? name : null, share: d[name] * (sub !== name && K.subShare ? K.subShare(name, a, sex, y, sub) : 1), kind: name === '自殺' ? 'sui' : ACC_NAMES.indexOf(name) >= 0 ? 'acc' : 'ill', years: D.years };
   }
   // 病気ごとの経過（統計ではなく、その病気でよく見られる経過の書き方）
@@ -1864,7 +1865,8 @@
       // 自ら命を絶った場合は、方法や様子を書かない（報道の指針にそろえる）
       parts.push('自ら命を絶った');
     } else if (o.kind === 'ill' || o.kind === 'acc') {
-      var c = COURSE[name] || COURSE[o.kind === 'acc' ? 'その他の事故' : 'その他の病気'];
+      var K0 = causesMod(), rl = K0 && K0.rareLine ? K0.rareLine(name) : null;
+      var c = COURSE[name] || (rl ? [rl] : null) || COURSE[o.kind === 'acc' ? 'その他の事故' : 'その他の病気'];
       var line = c[Math.floor(rnd() * c.length)];
       // 家を離れている間は、家族や村の暮らしの出てくる言い方を、その場の言い方に変える
       if (!homeLife(L)) line = line.replace(/^村に/, 'あたりに').replace(/看病していた家族/g, '看病してくれた人').replace(/家族/g, 'まわりの人');

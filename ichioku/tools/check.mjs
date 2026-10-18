@@ -1132,6 +1132,48 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
   rec('v8直し3 1935〜1938年生まれの町の子（' + n3 + '人）で、1944〜1945年に疎開か空襲の出来事・選択が出るか', n3 > 0 && ok3 === n3, miss3.slice(0, 4).join('、'));
 }
 
+/* ---------- 作る人の指示 2026-10-19（A〜H） ---------- */
+{
+  const K = require(path.join(SITE, 'js', 'causes.js')), PM = require(path.join(SITE, 'js', 'paths.js')), Rc = require(path.join(SITE, 'js', 'record.js'));
+  const rareSrc = JSON.parse(fs.readFileSync(path.join(ROOT, 'data-src', 'causes-rare.json'), 'utf8')), RN = rareSrc.map(r => r.n);
+  const oldLife = (by, seed) => { const b0 = O.pickBirth(C, H, by, E.makeRng(seed ^ 0x9e3779b9)); return O.newLife(C, H, P[b0.pref] || null, { year: by, seed, birth: b0 }); };
+  const newLife = (by, seed) => E.newLife(C, P[E.pickPref(C, by, E.makeRng(seed ^ 0x9e3779b9))], { year: by, seed });
+  // A まれな死因：どれにも亡くなり方の文があり、たくさんの人生の中で実際に出る
+  const noLine = RN.filter(n => !K.rareLine(n));
+  const rareSeen = {}, pathLives = { all: 0, adult: 0, hit: 0 }, moved = []; let stayOk = 0, stayAll = 0;
+  for (let s0 = 1; s0 <= (TEST ? 800 : 2000); s0++) {
+    const by = s0 % 4 === 0 ? 1975 + s0 % 26 : 1000 + (s0 * 1.668 | 0) % 975;
+    const L = by >= 1975 ? E.autoRun(newLife(by, s0)) : O.autoRun(oldLife(by, s0)), ct = Rc.causeText(L);
+    if (RN.includes(ct)) rareSeen[ct] = (rareSeen[ct] || 0) + 1;
+    if (L.deathAge >= 20) { pathLives.adult++; if ((L.choices || []).some(c => /^[bcer]_/.test(c.sid || ''))) pathLives.hit++; }
+  }
+  rec('A まれな死因（毒キノコ・クラゲ・雷など' + RN.length + '種類）に亡くなり方の文があり、人生の中で出るか', noLine.length === 0 && Object.keys(rareSeen).length >= 3, noLine.slice(0, 3).join('、') || Object.entries(rareSeen).map(x => x.join(' ')).join('、'));
+  // B・C・E 人生の筋：どの分かれ道にも、家を出ない・身分の変わらない答えがあり、その答えにも続きがあるか
+  const noStay = [];
+  for (const p of PM.list) {
+    const asks = [{ at: 'start', opts: p.opts }].concat(Object.entries(p.nodes || {}).filter(([, n]) => n.ask).map(([k, n]) => ({ at: k, opts: n.ask.opts })));
+    for (const a of asks) { stayAll++; const st = a.opts.filter(o => !o.move || o.move === 'home').filter(o => !o.away && !o.status); if (st.length) stayOk++; else noStay.push(p.id + '.' + a.at); }
+  }
+  const kinds = { b: 0, c: 0, e: 0, r: 0 }; PM.list.forEach(p => kinds[p.id[0]]++);
+  rec('B・C・E 人生の筋（珍しい仕事' + kinds.b + '・売られた子や預けられた子' + kinds.c + '・都や幕府や国で働く道' + kinds.e + '・将軍家と大名家' + kinds.r + '）のどの分かれ道にも、地元に残る答えがあるか', noStay.length === 0 && kinds.b >= 20 && kinds.c >= 20 && kinds.e >= 20, noStay.slice(0, 4).join('、') || stayOk + 'の分かれ道');
+  rec('B・C・E 20歳以上まで生きた人生の2割以上が、人生の筋に出会うか（' + pathLives.adult + '人）', pathLives.hit / pathLives.adult >= 0.2, Math.round(pathLives.hit / pathLives.adult * 100) + '%');
+  // D 武士・士族は統計の3倍、将軍家・大名家が生まれる
+  let nb = 0, bu = 0; const rk = {};
+  for (let s0 = 1; s0 <= (TEST ? 6000 : 20000); s0++) { const L = oldLife(1000 + s0 % 975, s0); nb++; if (L.status === 'bushi' || L.status === 'shizoku') bu++; if (L.rank) rk[L.rank] = (rk[L.rank] || 0) + 1; }
+  const hj = fs.readFileSync(path.join(SITE, 'js', 'history.js'), 'utf8');
+  rec('D 武士・士族の生まれを統計の3倍にし、将軍家・大名家の生まれがあるか', /STATUS_MULT = \{ kuge: 2, bushi: 3 \}/.test(hj) && (rk.daimyo || 0) > 0, '武士・士族 ' + (bu / nb * 100).toFixed(1) + '%・' + Object.entries(rk).map(x => x.join(' ')).join('・') + '（' + nb + '人）');
+  // H 名前の候補が、どの一覧も前の版より3割以上多いか（2026-10-19 の版と比べる）
+  try {
+    const cur = require(path.join(SITE, 'js', 'names.js')), base = JSON.parse(fs.readFileSync(path.join(ROOT, 'data-src', 'names-count-20261019.json'), 'utf8'));
+    const cnt = {}; (function walk(o, k) { if (Array.isArray(o)) { if (o.every(x => typeof x === 'string' || (Array.isArray(x) && typeof x[0] === 'string'))) cnt[k] = o.length; else o.forEach((x, i) => walk(x, k + '[' + i + ']')); } else if (o && typeof o === 'object') for (const kk in o) walk(o[kk], k ? k + '.' + kk : kk); })(cur, '');
+    const low = Object.keys(base).filter(k => cnt[k] != null && cnt[k] < base[k] * 1.3);
+    rec('H 名前の候補が、どの一覧も前の版より3割以上多いか', low.length === 0, low.slice(0, 4).map(k => k + ' ' + base[k] + '→' + cnt[k]).join('、') || Object.keys(base).length + 'の一覧');
+  } catch (e) { rec('H 名前の候補が、どの一覧も前の版より3割以上多いか', false, String(e.message).slice(0, 60)); }
+  // F・G 画面の仕組み（ブラウザの試験でも確かめる）
+  const aj = fs.readFileSync(path.join(SITE, 'js', 'app.js'), 'utf8');
+  rec('F・G 20歳までに亡くなる人生が3回続かない仕組みと、同じ人生をもう一度生きるボタンがあるか', /ichioku-short/.test(aj) && /survivesTo21/.test(aj) && /'same-life'/.test(aj) && /id="same-life"/.test(fs.readFileSync(path.join(SITE, 'index.html'), 'utf8')), '');
+}
+
 /* ---------- v11の直し（指示書 ichioku1000-v11-fix-spec2） ---------- */
 {
   const K = require(path.join(SITE, 'js', 'causes.js')), Rc = require(path.join(SITE, 'js', 'record.js')), CHx = require(path.join(SITE, 'js', 'choices.js'));
@@ -1226,7 +1268,8 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
   for (const e of K.eras) for (const c of e.causes) if (c.kind !== 'sui') names.add(K.show(c.n));
   for (const n of ['その他の病気', 'がん', 'その他の事故']) for (const a of [0, 20, 60]) for (let u = 0; u < 1; u += 0.01) names.add(K.refine(n, a, 'f', 2000, u));
   for (const d of C.nat.causeDetail.dist) for (const k of Object.keys(d)) if (k !== '自殺') names.add(k);
-  const noText = [...names].filter(n => !E.COURSE[n]);
+  for (const r of JSON.parse(fs.readFileSync(path.join(ROOT, 'data-src', 'causes-rare.json'), 'utf8'))) names.add(r.n);
+  const noText = [...names].filter(n => !E.COURSE[n] && !K.rareLine(n));
   rec('死因1 どの死因にも、その病気やけがの亡くなり方の文があるか', noText.length === 0, noText.slice(0, 6).join('、') || names.size + '種類');
   // 2 1000〜2000年生まれの人生で、死因が多種多様か（「病気」「その他の病気」だけの死因がほぼない）
   const cnt = {}; let nL = 0;

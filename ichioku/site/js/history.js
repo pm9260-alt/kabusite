@@ -161,8 +161,19 @@
     if (prov !== '山城') w.kuge = 0;
     return w;
   }
-  // 貴族と武士は、統計の割合の2倍にする（作る人の判断 2026-10-17：遊ぶたびに出会いやすく）
-  var STATUS_MULT = { kuge: 2, bushi: 2 };
+  // 貴族は統計の割合の2倍、武士（明治からの士族）は3倍にする（作る人の判断 2026-10-17、2026-10-19：遊ぶたびに出会いやすく）
+  var STATUS_MULT = { kuge: 2, bushi: 3 };
+  // 将軍家・大名家に生まれる（作る人の指示 2026-10-19）。武士の家のうち、将軍家は幕府の置かれた国で、大名家は戦国の世から廃藩置県までの国々で、まれに生まれる。
+  // ほかの抽選の順番を変えないよう、別の乱数で決める
+  var SHOGUN = [[1192, 1333, '相模', '鎌倉'], [1338, 1573, '山城', '室町'], [1603, 1867, '武蔵', '江戸']];
+  function drawRank(L, seed) {
+    if (L.status !== 'bushi') return null;
+    var r = E.makeRng((seed ^ 0x6b43a9b5) >>> 0)(), y = L.by;
+    var sg = SHOGUN.filter(function (x) { return y >= x[0] && y <= x[1] && L.prov === x[2]; })[0];
+    if (sg && r < 0.03) return 'shogun';
+    if (y >= 1467 && y <= 1867 && r < 0.03) return 'daimyo';
+    return null;
+  }
   function drawStatus(L) {
     var H = L.H, y = L.by, rnd = L.rnd, p = H.prov[L.prov];
     if (L.prov === '蝦夷・松前' || (L.pref === '01' && y < 1900)) {
@@ -309,7 +320,7 @@
     return {
       old: true, seed: L.seed0 || L.seed, deathYear: L.deathYear, deathAge: L.deathAge, cause: L.cause,
       prev: { name: L.name, sex: L.sex, by: L.by, heir: !!L.heir, surname: L.surname || null },
-      members: mem, status: L.status, ainu: L.ainu, ryukyu: L.ryukyu, home: home, goods: L.goods || {}, incPct: L.incPct, surname: L.surnameOld || L.surname || null,
+      members: mem, status: L.status, rank: L.rank || null, parentJobH: L.rank ? L.parentJob : null, ainu: L.ainu, ryukyu: L.ryukyu, home: home, goods: L.goods || {}, incPct: L.incPct, surname: L.surnameOld || L.surname || null,
       jobs: { parent: L.parentJob || null, self: L.selfJob || null },
       chain: (chain || []).slice(), story: L.story ? { toxic: !!L.story.f.toxic, bigwig: !!L.story.f.bigwig, prosper: L.story.f.prosper || L.story.f.prosperHouse || 0 } : null
     };
@@ -379,7 +390,7 @@
       edu: null, school: null, job: null, married: false, everMarried: false, abroad: null,
       stats: { school: false, mid: false, to5: false, to60: false, events: 0 },
       earn: { real: 0, years: 0, est: true },
-      status: h.status, ainu: h.ainu, ryukyu: h.ryukyu, goods: {}, inherited: true
+      status: h.status, rank: h.rank || null, ainu: h.ainu, ryukyu: h.ryukyu, goods: {}, inherited: true
     };
     CATS.forEach(function (c) { L.cat[c] = 0; });
     L.house = { deathYear: h.deathYear, prevName: h.prev.name, prevSex: h.prev.sex, prevBy: h.prev.by, prevAge: h.deathAge, prevHeir: h.prev.heir, chain: h.chain, story: h.gen === 'child' ? (h.story && h.story.prosper ? { prosper: h.story.prosper } : null) : h.story };
@@ -495,6 +506,13 @@
     L.incPct = L.rnd2();
     L.surname = pickSurname(L, L.rnd2);
     L.parentJob = pickParentJob(L, seed);
+    L.rank = drawRank(L, seed);
+    if (L.rank) {
+      L.incPct = 0.995; L.kind = 'city';
+      var sgE = SHOGUN.filter(function (x) { return year >= x[0] && year <= x[1]; })[0];
+      L.parentJob = L.rank === 'shogun' ? { cat: 'samurai', n: '将軍', d: (sgE ? sgE[3] + '幕府の' : '') + '武家の棟梁として、天下の政をつかさどる' } :
+        { cat: 'samurai', n: year < 1600 ? '戦国大名' : '大名（藩主）', d: year < 1600 ? '一国を治め、家臣を率いて戦に備える' : '藩を治め、参勤交代で江戸と国元を行き来する' };
+    }
     updateHeir(L, null);
     return L;
   }
@@ -646,6 +664,8 @@
   var JOB_HEAD = { '下司': '荘園の役人', '荘官の公文': '荘園の役人' };
   function stWordJob(L) {
     var w = stWord(L), j = L.parentJob;
+    if (L.rank === 'shogun') return '将軍家';
+    if (L.rank === 'daimyo') return (L.H.prov[L.prov] ? L.H.prov[L.prov].kuni + 'の' : '') + (L.by < 1600 ? '戦国大名の家' : '大名家');
     // 1948年からの生まれは族籍（士族・平民・華族）を付けず、「父が○○の家」の形にする（v11の直し 5-1）
     if (L.year >= 1948 && /^(shizoku|heimin|kazoku)$/.test(L.status)) return j ? (L.dad && L.dad.alive === false && L.mom ? '母が' : '父が') + j.n + 'の家' : '家';
     if (!j || !w) return w;
@@ -1498,13 +1518,13 @@
   }
   function causeOf(L, rec) {
     var H = L.H, y = Math.max(1900, Math.min(1970, Math.floor(L.year / 10) * 10)), a = L.age;
-    if (L.year >= 1975) { var cd = E.pickCause(L.C, a, L.sex, L.year, L.rnd, 'ill'); if (cd) return { n: cd.name, cd: cd }; }
+    if (L.year >= 1975) { var cd = E.pickCause(L.C, a, L.sex, L.year, L.rnd, 'ill', { place: L.kind, pref: L.pref }); if (cd) return { n: cd.name, cd: cd }; }
     // 1974年までは、年代・年齢・男女・土地・飢饉の年で、細かい死因から選ぶ（js/causes.js）
     var K = causesMod();
     if (K) {
       var t = [rec].concat((L.log || []).slice(-1)).map(function (r) { return r ? (r.events || []).map(function (e) { return e.t; }).join('') + ((r.world && r.world.items) || []).map(function (i) { return i.t; }).join('') : ''; }).join('');
       var famine = /飢饉|凶作|食べるものが|ひもじ/.test(t) || (L.year >= 1945 && L.year <= 1947);
-      var pk = K.pick(L.year, a, L.sex, { place: L.kind, famine: famine }, L.rnd);
+      var pk = K.pick(L.year, a, L.sex, { place: L.kind, pref: L.pref, famine: famine }, L.rnd);
       if (pk) return { n: K.show(pk.n, a), share: pk.share, kind: pk.kind, rank: pk.from ? K.show(pk.from) + '（' + pk.n + 'は細かい病名の推計）' : pk.n, est: K.est(L.year) || !!pk.from };
     }
     var list = (H.nat.causeRank[y] || H.nat.causeRank[1900] || []).filter(Boolean);

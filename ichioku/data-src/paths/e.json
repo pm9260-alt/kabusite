@@ -1,0 +1,1158 @@
+[
+{
+  "id": "e_falcon", "title": "畑に下りた鷹",
+  "y": [1660, 1840], "a": [14, 22], "st": ["hyakusho"], "kind": ["village"], "p": 0.008,
+  "text": "将軍家の鷹場の近くで、足に紐をつけた鷹が{name}の畑に下りた。そっと抱えて届けると、鳥見役の侍が「手先として働かぬか」と言った。どうする？",
+  "opts": [
+    { "k": "go", "l": "鳥見役の手先になる", "f": ["earn"], "w": 1,
+      "say": "{name}は鳥見役の手先として、鷹場の見回りに出るようになった。",
+      "fx": { "sat": 3, "learn": 3, "tie": -2, "body": -1 },
+      "job": { "n": "鳥見役の手先", "pay": 700, "cat": "samurai" },
+      "next": { "in": [3, 6], "node": "edo" } },
+    { "k": "stay", "l": "村の畑を守る", "f": ["family"], "w": 1,
+      "say": "{name}は礼を言って断り、{dad}と畑に戻った。",
+      "fx": { "sat": 1, "learn": 0, "tie": 3, "body": 1 },
+      "next": { "in": [5, 10], "node": "home" } }
+  ],
+  "nodes": {
+    "edo": {
+      "say": "鷹の扱いの確かさを買われ、{name}は江戸の役所へ呼ばれた。",
+      "fx": { "sat": 2, "learn": 3, "tie": -3, "body": -1 }, "move": "edo", "away": true,
+      "ask": { "title": "御家人の株", "text": "上役が、子のない御家人の家へ養子に入る話を持ってきた。村には二度と戻れなくなる。どうする？",
+        "opts": [
+          { "k": "go", "l": "養子に入る", "f": ["earn"], "w": 1,
+            "say": "{name}は御家人の家を継ぎ、鳥見役の一人として名を連ねた。",
+            "fx": { "sat": 3, "learn": 2, "tie": -4, "body": 0 }, "status": "bushi",
+            "job": { "n": "御鳥見", "pay": 1400, "cat": "samurai" },
+            "next": { "in": [5, 10], "node": "top" } },
+          { "k": "stay", "l": "村へ帰る", "f": ["family"], "w": 1,
+            "say": "{name}は江戸の暮らしを切り上げ、{place}へ帰った。",
+            "fx": { "sat": 1, "learn": 0, "tie": 4, "body": 1 }, "move": "home",
+            "next": { "in": [3, 6], "node": "back" } }
+        ] }
+    },
+    "top": { "say": "{name}は鷹場の村々を回り、百姓の苦労が分かる役人として慕われた。",
+      "fx": { "sat": 4, "learn": 2, "tie": 1, "body": -1 } },
+    "back": { "say": "江戸を知る{name}は村の年寄に推され、寄合のまとめ役になった。",
+      "fx": { "sat": 4, "learn": 1, "tie": 3, "body": 0 } },
+    "home": { "say": "{name}は鷹場の村の名主に選ばれ、村人から頼りにされた。",
+      "fx": { "sat": 4, "learn": 1, "tie": 4, "body": 0 },
+      "job": { "n": "名主", "pay": 900, "cat": "farm" } }
+  }
+},
+{
+  "id": "e_tax_arith", "title": "年貢の勘定の誤り",
+  "y": [1700, 1850], "a": [16, 26], "st": ["hyakusho"], "kind": ["village"], "p": 0.01,
+  "text": "年貢を納めに代官所へ行った{name}は、手代の勘定が一俵ずれているのに気づき、遠慮がちに伝えた。手代は目を丸くし、「代官所で書役をやらぬか」と言った。どうする？",
+  "opts": [
+    { "k": "go", "l": "代官所に勤める", "f": ["study", "earn"], "w": 1,
+      "say": "{name}は代官所の書役となり、帳面と算盤の毎日が始まった。",
+      "fx": { "sat": 2, "learn": 4, "tie": -2, "body": -1 },
+      "job": { "n": "代官所の書役", "pay": 800, "cat": "clerk" }, "away": true,
+      "next": { "in": [3, 6], "node": "tedai" } },
+    { "k": "stay", "l": "村で田を耕す", "f": ["family"], "w": 1,
+      "say": "{name}は村の田に戻ったが、勘定の得意な若者として知られた。",
+      "fx": { "sat": 1, "learn": 1, "tie": 3, "body": 1 },
+      "next": { "in": [5, 10], "node": "home" } }
+  ],
+  "nodes": {
+    "tedai": {
+      "say": "{name}は手代に引き上げられ、検見や年貢割付を任された。",
+      "fx": { "sat": 3, "learn": 3, "tie": -1, "body": -2 },
+      "job": { "n": "代官所の手代", "pay": 1100, "cat": "clerk" },
+      "ask": { "title": "江戸の勘定所", "text": "代官が江戸へ移ることになり、{name}を勘定所の普請役に推したいと言った。どうする？",
+        "opts": [
+          { "k": "go", "l": "江戸へ行く", "f": ["earn"], "w": 1,
+            "say": "{name}は普請役に召し抱えられ、幕府の侍の列に加わった。",
+            "fx": { "sat": 3, "learn": 3, "tie": -4, "body": -2 }, "status": "bushi", "move": "edo",
+            "job": { "n": "勘定所の普請役", "pay": 1600, "cat": "samurai" },
+            "next": { "in": [5, 10], "node": "top" } },
+          { "k": "stay", "l": "村へ戻る", "f": ["family"], "w": 1,
+            "say": "{name}は推挙を辞し、手代の勤めを終えて村へ戻った。",
+            "fx": { "sat": 1, "learn": 0, "tie": 4, "body": 1 }, "move": "home",
+            "next": { "in": [2, 5], "node": "back" } }
+        ] }
+    },
+    "top": { "say": "{name}は川の普請で各地を回り、堤を築いた村から礼状が届いた。",
+      "fx": { "sat": 4, "learn": 2, "tie": -1, "body": -2 } },
+    "back": { "say": "役所の勘定に通じた{name}は名主となり、村の年貢を公平に割り振った。",
+      "fx": { "sat": 4, "learn": 1, "tie": 4, "body": 0 },
+      "job": { "n": "名主", "pay": 1000, "cat": "farm" } },
+    "home": { "say": "{name}は村の帳面を預かる組頭になり、誰からも信用された。",
+      "fx": { "sat": 4, "learn": 1, "tie": 3, "body": 0 },
+      "job": { "n": "組頭", "pay": 700, "cat": "farm" } }
+  }
+},
+{
+  "id": "e_petition_hand", "title": "願書の筆の跡",
+  "y": [1680, 1850], "a": [15, 25], "st": ["hyakusho", "chonin"], "kind": ["village", "town"], "p": 0.01,
+  "text": "{name}が村の頼みで清書した用水の願書が、藩の勘定方の目にとまった。「この筆を城で使いたい」と使いが来た。どうする？",
+  "opts": [
+    { "k": "go", "l": "城下へ出る", "f": ["study", "earn"], "w": 1,
+      "say": "{name}は城下へ出て、藩の勘定方の書役として筆をとった。",
+      "fx": { "sat": 2, "learn": 4, "tie": -2, "body": -1 },
+      "job": { "n": "勘定方の書役", "pay": 800, "cat": "clerk" }, "away": true,
+      "next": { "in": [3, 6], "node": "castle" } },
+    { "k": "stay", "l": "村で暮らす", "f": ["family"], "w": 1,
+      "say": "{name}は使いに頭を下げ、村で暮らし続けると決めた。",
+      "fx": { "sat": 1, "learn": 0, "tie": 3, "body": 1 },
+      "next": { "in": [5, 10], "node": "home" } }
+  ],
+  "nodes": {
+    "castle": {
+      "say": "{name}の帳面は乱れがないと評判になり、勘定奉行にも名を知られた。",
+      "fx": { "sat": 3, "learn": 3, "tie": -1, "body": -1 },
+      "ask": { "title": "藩士への取り立て", "text": "{name}を足軽の家の跡に据え、藩士として取り立てる話が出た。どうする？",
+        "opts": [
+          { "k": "go", "l": "藩士になる", "f": ["earn"], "w": 1,
+            "say": "{name}は刀を許され、勘定方の下役の藩士となった。",
+            "fx": { "sat": 3, "learn": 2, "tie": -3, "body": -1 }, "status": "bushi",
+            "job": { "n": "勘定方の下役", "pay": 1200, "cat": "samurai" },
+            "next": { "in": [5, 10], "node": "top" } },
+          { "k": "stay", "l": "村へ帰る", "f": ["family"], "w": 1,
+            "say": "{name}は勤めを退き、{place}へ帰った。",
+            "fx": { "sat": 1, "learn": 0, "tie": 4, "body": 1 }, "move": "home",
+            "next": { "in": [2, 5], "node": "back" } }
+        ] }
+    },
+    "top": { "say": "{name}は藩の勘定を立て直す役に加わり、遅くまで帳面に向かった。",
+      "fx": { "sat": 3, "learn": 3, "tie": -2, "body": -2 } },
+    "back": { "say": "{name}は村で手習いの師匠となり、子どもたちに筆を教えた。",
+      "fx": { "sat": 4, "learn": 2, "tie": 4, "body": 0 },
+      "job": { "n": "手習いの師匠", "pay": 600, "cat": "teacher" } },
+    "home": { "say": "{name}は村の願書や証文を一手に引き受け、頼られる名主になった。",
+      "fx": { "sat": 4, "learn": 1, "tie": 4, "body": 0 },
+      "job": { "n": "名主", "pay": 900, "cat": "farm" } }
+  }
+},
+{
+  "id": "e_junkenshi", "title": "山で迷った巡見使",
+  "y": [1681, 1838], "a": [15, 28], "st": ["hyakusho"], "kind": ["village"], "p": 0.006, "sex": "m",
+  "text": "幕府の巡見使の一行が峠道で迷い、薪を取りに来ていた{name}が抜け道を案内した。供の侍が「江戸で働く気はないか」と尋ねた。どうする？",
+  "opts": [
+    { "k": "go", "l": "供について行く", "f": ["earn"], "w": 1,
+      "say": "{name}は巡見使の供に加わり、諸国の道を歩いて江戸へ入った。",
+      "fx": { "sat": 3, "learn": 3, "tie": -3, "body": -1 },
+      "job": { "n": "旗本の中間", "pay": 500, "cat": "service" }, "move": "edo", "away": true,
+      "next": { "in": [3, 6], "node": "edo" } },
+    { "k": "stay", "l": "山の村に残る", "f": ["family"], "w": 1,
+      "say": "{name}は一行を見送り、山の村へ戻った。",
+      "fx": { "sat": 1, "learn": 0, "tie": 3, "body": 1 },
+      "next": { "in": [5, 10], "node": "home" } }
+  ],
+  "nodes": {
+    "edo": {
+      "say": "山道や村の様子に詳しい{name}は重宝され、普請の見分にも連れて行かれた。",
+      "fx": { "sat": 2, "learn": 3, "tie": -2, "body": -1 },
+      "ask": { "title": "普請役の口", "text": "主人が、勘定所の普請役に空きがあると教えてくれた。江戸に根を下ろすことになる。どうする？",
+        "opts": [
+          { "k": "go", "l": "普請役になる", "f": ["earn"], "w": 1,
+            "say": "{name}は普請役に召し出され、幕臣の末席に連なった。",
+            "fx": { "sat": 3, "learn": 2, "tie": -3, "body": -2 }, "status": "bushi",
+            "job": { "n": "勘定所の普請役", "pay": 1500, "cat": "samurai" },
+            "next": { "in": [5, 10], "node": "top" } },
+          { "k": "stay", "l": "山へ帰る", "f": ["family"], "w": 1,
+            "say": "{name}は暇をもらい、懐かしい山の村へ帰った。",
+            "fx": { "sat": 1, "learn": 0, "tie": 4, "body": 1 }, "move": "home",
+            "next": { "in": [2, 5], "node": "back" } }
+        ] }
+    },
+    "top": { "say": "{name}は山崩れの村を見回る役につき、生まれ故郷に似た谷を何度も救った。",
+      "fx": { "sat": 4, "learn": 2, "tie": 0, "body": -2 } },
+    "back": { "say": "諸国を見た{name}は村に新しい炭焼きのやり方を伝え、暮らしを豊かにした。",
+      "fx": { "sat": 4, "learn": 1, "tie": 4, "body": 0 } },
+    "home": { "say": "{name}は山道の案内と炭焼きで家を支え、村の寄合で頼られた。",
+      "fx": { "sat": 4, "learn": 0, "tie": 4, "body": 1 } }
+  }
+},
+{
+  "id": "e_abacus_kanjo", "title": "算盤の腕",
+  "y": [1720, 1855], "a": [14, 24], "st": ["chonin", "hyakusho"], "kind": ["town", "city", "village"], "p": 0.01,
+  "text": "{name}は算盤が速く、町の寄合で割り算の勝負に勝った。それを聞いた代官所の役人が、手代の見習いに来ないかと誘った。どうする？",
+  "opts": [
+    { "k": "go", "l": "見習いに入る", "f": ["study", "earn"], "w": 1,
+      "say": "{name}は代官所の見習いとなり、年貢の帳面を合わせる日々に入った。",
+      "fx": { "sat": 2, "learn": 4, "tie": -2, "body": -1 },
+      "job": { "n": "代官所の見習い", "pay": 600, "cat": "clerk" }, "away": true,
+      "next": { "in": [3, 6], "node": "tedai" } },
+    { "k": "stay", "l": "家の商いを継ぐ", "f": ["family"], "w": 1,
+      "say": "{name}は誘いを断り、家の帳場に座ることにした。",
+      "fx": { "sat": 1, "learn": 1, "tie": 3, "body": 0 },
+      "next": { "in": [5, 10], "node": "home" } }
+  ],
+  "nodes": {
+    "tedai": {
+      "say": "{name}は手代となり、勘定の正しさで代官から深く信頼された。",
+      "fx": { "sat": 3, "learn": 3, "tie": -1, "body": -1 },
+      "job": { "n": "代官所の手代", "pay": 1000, "cat": "clerk" },
+      "ask": { "title": "勘定所へ", "text": "江戸の勘定所から、算盤に強い者を普請役に取り立てたいという話が届いた。どうする？",
+        "opts": [
+          { "k": "go", "l": "江戸へ出る", "f": ["earn"], "w": 1,
+            "say": "{name}は勘定所の普請役となり、幕臣として江戸で暮らし始めた。",
+            "fx": { "sat": 3, "learn": 3, "tie": -4, "body": -2 }, "status": "bushi", "move": "edo",
+            "job": { "n": "勘定所の普請役", "pay": 1600, "cat": "samurai" },
+            "next": { "in": [5, 10], "node": "top" } },
+          { "k": "stay", "l": "故郷へ戻る", "f": ["family"], "w": 1,
+            "say": "{name}は手代の勤めを終え、{place}へ戻った。",
+            "fx": { "sat": 1, "learn": 0, "tie": 4, "body": 1 }, "move": "home",
+            "next": { "in": [2, 5], "node": "back" } }
+        ] }
+    },
+    "top": { "say": "{name}は勘定所で河川の普請の費えを預かり、夜更けまで算盤をはじいた。",
+      "fx": { "sat": 3, "learn": 3, "tie": -2, "body": -2 } },
+    "back": { "say": "{name}は算盤の塾を開き、町の子どもたちに慕われる師匠となった。",
+      "fx": { "sat": 4, "learn": 2, "tie": 4, "body": 0 },
+      "job": { "n": "算盤の師匠", "pay": 700, "cat": "teacher" } },
+    "home": { "say": "{name}の帳場は勘定が正しいと評判になり、店は大きく栄えた。",
+      "fx": { "sat": 4, "learn": 1, "tie": 3, "body": 0 },
+      "job": { "n": "商家の主", "pay": 1500, "cat": "shop" } }
+  }
+},
+{
+  "id": "e_ooku_merchant", "title": "大奥への奉公",
+  "y": [1650, 1855], "a": [13, 18], "st": ["chonin"], "sex": "f", "kind": ["town", "city"], "p": 0.008,
+  "text": "{name}が琴と行儀を習っていた師匠の縁で、大奥の奥女中の部屋方に奉公する話が来た。商家の娘には晴れがましい話だった。どうする？",
+  "opts": [
+    { "k": "go", "l": "大奥へ上がる", "f": ["study"], "w": 1,
+      "say": "{name}は江戸城の大奥に上がり、奥女中の部屋方として働き始めた。",
+      "fx": { "sat": 2, "learn": 3, "tie": -3, "body": -1 },
+      "job": { "n": "大奥の部屋方", "pay": 500, "cat": "service" }, "move": "edo", "away": true,
+      "next": { "in": [2, 5], "node": "oku" } },
+    { "k": "stay", "l": "家で縁を待つ", "f": ["family"], "w": 1,
+      "say": "{name}は家に残り、{mom}と店を手伝いながら暮らした。",
+      "fx": { "sat": 1, "learn": 0, "tie": 3, "body": 0 },
+      "next": { "in": [3, 7], "node": "home" } }
+  ],
+  "nodes": {
+    "oku": {
+      "say": "気働きのよさを認められ、{name}はお目見え以下の女中に取り立てられた。",
+      "fx": { "sat": 3, "learn": 3, "tie": -2, "body": -1 },
+      "job": { "n": "大奥の女中", "pay": 700, "cat": "service" },
+      "ask": { "title": "宿下がり", "text": "勤めの年季が明け、宿下がりして嫁ぐ道と、大奥に残って勤め上げる道があった。どうする？",
+        "opts": [
+          { "k": "go", "l": "大奥に残る", "f": ["earn"], "w": 1,
+            "say": "{name}は大奥に残り、一生奉公の覚悟を決めた。",
+            "fx": { "sat": 2, "learn": 2, "tie": -4, "body": -1 },
+            "next": { "in": [5, 10], "node": "top" } },
+          { "k": "stay", "l": "宿下がりする", "f": ["family"], "w": 1,
+            "say": "{name}は宿下がりし、実家の{place}へ戻った。",
+            "fx": { "sat": 2, "learn": 0, "tie": 4, "body": 1 }, "move": "home",
+            "next": { "in": [1, 3], "node": "back" } }
+        ] }
+    },
+    "top": { "say": "{name}は長年の勤めで御次に進み、若い女中たちの手本と呼ばれた。",
+      "fx": { "sat": 3, "learn": 2, "tie": -2, "body": -1 },
+      "job": { "n": "大奥の御次", "pay": 1000, "cat": "service" } },
+    "back": { "say": "大奥帰りの{name}は良縁に恵まれ、町の娘たちに行儀を教えて慕われた。",
+      "fx": { "sat": 4, "learn": 1, "tie": 4, "body": 0 } },
+    "home": { "say": "{name}は近くの店の跡取りと夫婦になり、二人で店を盛り立てた。",
+      "fx": { "sat": 4, "learn": 0, "tie": 4, "body": 0 },
+      "job": { "n": "商家のおかみ", "pay": 1000, "cat": "shop" } }
+  }
+},
+{
+  "id": "e_daimyo_oku", "title": "城の奥向きの奉公",
+  "y": [1660, 1860], "a": [13, 18], "st": ["hyakusho"], "sex": "f", "kind": ["village"], "p": 0.008,
+  "text": "庄屋の家で針仕事を手伝っていた{name}の縫い目が、城の奥向きに仕える老女の目にとまった。「城へ奉公に上がらぬか」と声がかかった。どうする？",
+  "opts": [
+    { "k": "go", "l": "城に上がる", "f": ["study"], "w": 1,
+      "say": "{name}は城の奥向きに上がり、針子の女中として勤め始めた。",
+      "fx": { "sat": 2, "learn": 3, "tie": -3, "body": -1 },
+      "job": { "n": "奥向きの女中", "pay": 500, "cat": "service" }, "away": true,
+      "next": { "in": [2, 5], "node": "oku" } },
+    { "k": "stay", "l": "村で暮らす", "f": ["family"], "w": 1,
+      "say": "{name}は村に残り、針仕事を続けながら家を助けた。",
+      "fx": { "sat": 1, "learn": 0, "tie": 3, "body": 0 },
+      "next": { "in": [3, 7], "node": "home" } }
+  ],
+  "nodes": {
+    "oku": {
+      "say": "{name}は姫君の衣装を任されるようになり、奥での信用を得た。",
+      "fx": { "sat": 3, "learn": 2, "tie": -2, "body": -1 },
+      "ask": { "title": "江戸屋敷へ", "text": "姫君の輿入れについて、江戸の屋敷へ移らないかと老女が言った。どうする？",
+        "opts": [
+          { "k": "go", "l": "江戸へ供をする", "f": ["earn"], "w": 1,
+            "say": "{name}は姫君の供をして、江戸の大名屋敷へ移った。",
+            "fx": { "sat": 2, "learn": 2, "tie": -4, "body": -1 }, "move": "edo",
+            "next": { "in": [4, 8], "node": "top" } },
+          { "k": "stay", "l": "村へ帰る", "f": ["family"], "w": 1,
+            "say": "{name}は暇をもらい、{place}へ帰った。",
+            "fx": { "sat": 2, "learn": 0, "tie": 4, "body": 1 }, "move": "home",
+            "next": { "in": [1, 3], "node": "back" } }
+        ] }
+    },
+    "top": { "say": "{name}は奥の衣装を束ねる役になり、故郷へ仕送りを続けた。",
+      "fx": { "sat": 3, "learn": 2, "tie": -1, "body": -1 },
+      "job": { "n": "奥の衣装方", "pay": 800, "cat": "service" } },
+    "back": { "say": "城勤めを終えた{name}は村で針仕事を教え、娘たちに慕われた。",
+      "fx": { "sat": 4, "learn": 1, "tie": 4, "body": 0 },
+      "job": { "n": "裁縫の師匠", "pay": 500, "cat": "teacher" } },
+    "home": { "say": "{name}は村の働き者と所帯を持ち、にぎやかな家を切り盛りした。",
+      "fx": { "sat": 4, "learn": 0, "tie": 4, "body": 0 } }
+  }
+},
+{
+  "id": "e_heian_nyoju", "title": "宮中の下仕え",
+  "y": [1000, 1180], "a": [12, 18], "st": ["chonin", "hyakusho"], "sex": "f", "kind": ["city", "town"], "p": 0.006,
+  "text": "{name}が市で歌をそらんじていると、通りがかった女房が足を止めた。「内裏で女孺として仕える気はあるか」と聞かれた。どうする？",
+  "opts": [
+    { "k": "go", "l": "内裏に仕える", "f": ["study"], "w": 1,
+      "say": "{name}は女孺として内裏に上がり、掃除や灯の世話から勤め始めた。",
+      "fx": { "sat": 2, "learn": 3, "tie": -3, "body": -1 },
+      "job": { "n": "女孺", "pay": 500, "cat": "service" }, "move": "kyoto", "away": true,
+      "next": { "in": [3, 6], "node": "court" } },
+    { "k": "stay", "l": "家に残る", "f": ["family"], "w": 1,
+      "say": "{name}は家に残り、{mom}を手伝って暮らした。",
+      "fx": { "sat": 1, "learn": 0, "tie": 3, "body": 0 },
+      "next": { "in": [3, 7], "node": "home" } }
+  ],
+  "nodes": {
+    "court": {
+      "say": "{name}の歌の才は女房たちの間で知られ、歌合の裏方にも呼ばれた。",
+      "fx": { "sat": 3, "learn": 3, "tie": -1, "body": -1 },
+      "ask": { "title": "女房の座", "text": "ある女房が、自分の局で下臈の女房として仕えないかと言った。宮中を離れられなくなる。どうする？",
+        "opts": [
+          { "k": "go", "l": "女房として仕える", "f": ["study"], "w": 1,
+            "say": "{name}は下臈の女房として局に仕え、名を与えられた。",
+            "fx": { "sat": 3, "learn": 3, "tie": -3, "body": -1 },
+            "job": { "n": "下臈の女房", "pay": 800, "cat": "service" },
+            "next": { "in": [5, 10], "node": "top" } },
+          { "k": "stay", "l": "里へ下がる", "f": ["family"], "w": 1,
+            "say": "{name}は勤めを辞し、家族のもとへ下がった。",
+            "fx": { "sat": 1, "learn": 0, "tie": 4, "body": 1 }, "move": "home",
+            "next": { "in": [1, 4], "node": "back" } }
+        ] }
+    },
+    "top": { "say": "{name}の歌は宮中で書き留められ、季節ごとの歌会で詠まれた。",
+      "fx": { "sat": 4, "learn": 3, "tie": -2, "body": -1 } },
+    "back": { "say": "{name}は近所の娘たちに歌を教え、穏やかに暮らした。",
+      "fx": { "sat": 4, "learn": 1, "tie": 4, "body": 0 } },
+    "home": { "say": "{name}は気立てのよい夫と結ばれ、子らに歌を口ずさんで育てた。",
+      "fx": { "sat": 4, "learn": 0, "tie": 4, "body": 0 } }
+  }
+},
+{
+  "id": "e_heian_zoshiki", "title": "逃げた馬をつかまえて",
+  "y": [1000, 1180], "a": [13, 20], "st": ["genin", "hyakusho"], "sex": "m", "kind": ["city", "village"], "p": 0.006,
+  "text": "都の大路で暴れて逃げた馬を、{name}が手綱をつかんで止めた。馬の主は蔵人所の役人で、「雑色として使ってやろう」と言った。どうする？",
+  "opts": [
+    { "k": "go", "l": "雑色になる", "f": ["earn"], "w": 1,
+      "say": "{name}は蔵人所の雑色となり、内裏の使い走りを務めた。",
+      "fx": { "sat": 3, "learn": 2, "tie": -2, "body": -1 },
+      "job": { "n": "蔵人所の雑色", "pay": 500, "cat": "service" }, "move": "kyoto", "away": true,
+      "next": { "in": [3, 6], "node": "court" } },
+    { "k": "stay", "l": "もとの暮らしを続ける", "f": ["family"], "w": 1,
+      "say": "{name}は礼の品だけもらい、もとの暮らしに戻った。",
+      "fx": { "sat": 1, "learn": 0, "tie": 3, "body": 1 },
+      "next": { "in": [5, 10], "node": "home" } }
+  ],
+  "nodes": {
+    "court": {
+      "say": "馬の扱いがうまい{name}は、行幸の列で馬を引く役を任された。",
+      "fx": { "sat": 3, "learn": 2, "tie": -1, "body": -1 },
+      "ask": { "title": "舎人の口", "text": "上役が、{name}を左右の馬寮の舎人に推そうと言った。都で一生を送ることになる。どうする？",
+        "opts": [
+          { "k": "go", "l": "舎人になる", "f": ["earn"], "w": 1,
+            "say": "{name}は馬寮の舎人となり、官人の端に名を連ねた。",
+            "fx": { "sat": 3, "learn": 2, "tie": -3, "body": -1 },
+            "job": { "n": "馬寮の舎人", "pay": 700, "cat": "clerk" },
+            "next": { "in": [5, 10], "node": "top" } },
+          { "k": "stay", "l": "故郷へ戻る", "f": ["family"], "w": 1,
+            "say": "{name}は雑色の勤めを終え、{place}へ戻った。",
+            "fx": { "sat": 1, "learn": 0, "tie": 4, "body": 1 }, "move": "home",
+            "next": { "in": [2, 5], "node": "back" } }
+        ] }
+    },
+    "top": { "say": "{name}は祭りの日に飾り馬を引き、見物の人々の喝采を浴びた。",
+      "fx": { "sat": 4, "learn": 1, "tie": -1, "body": -1 } },
+    "back": { "say": "{name}は馬の世話の名人として村で頼られ、穏やかに暮らした。",
+      "fx": { "sat": 4, "learn": 1, "tie": 4, "body": 0 } },
+    "home": { "say": "{name}は働き者として知られ、家族に囲まれて暮らした。",
+      "fx": { "sat": 4, "learn": 0, "tie": 4, "body": 1 } }
+  }
+},
+{
+  "id": "e_heian_shisho", "title": "国司の目にとまった筆",
+  "y": [1000, 1150], "a": [14, 22], "st": ["hyakusho"], "sex": "m", "kind": ["village", "town"], "p": 0.006,
+  "text": "国衙へ荷を運んだ{name}が、土の上に書いた文字を国司が見かけた。「任が明けたら都へ連れて行こう」と言われた。どうする？",
+  "opts": [
+    { "k": "go", "l": "国衙で働く", "f": ["study"], "w": 1,
+      "say": "{name}は国衙の書生となり、田の帳簿を写す仕事を覚えた。",
+      "fx": { "sat": 2, "learn": 4, "tie": -2, "body": -1 },
+      "job": { "n": "国衙の書生", "pay": 500, "cat": "clerk" }, "away": true,
+      "next": { "in": [3, 5], "node": "kokuga" } },
+    { "k": "stay", "l": "田を耕す", "f": ["family"], "w": 1,
+      "say": "{name}は国司に頭を下げ、田に戻った。",
+      "fx": { "sat": 1, "learn": 0, "tie": 3, "body": 1 },
+      "next": { "in": [5, 10], "node": "home" } }
+  ],
+  "nodes": {
+    "kokuga": {
+      "say": "国司の任期が明け、{name}にも都へ上る支度が告げられた。",
+      "fx": { "sat": 2, "learn": 2, "tie": -1, "body": 0 },
+      "ask": { "title": "都へ上る", "text": "都では太政官の史生として書き物の仕事があるという。どうする？",
+        "opts": [
+          { "k": "go", "l": "都へ上る", "f": ["study", "earn"], "w": 1,
+            "say": "{name}は都へ上り、太政官の史生として文書を写す役についた。",
+            "fx": { "sat": 3, "learn": 3, "tie": -4, "body": -1 }, "move": "kyoto",
+            "job": { "n": "太政官の史生", "pay": 800, "cat": "clerk" },
+            "next": { "in": [5, 10], "node": "top" } },
+          { "k": "stay", "l": "国に残る", "f": ["family"], "w": 1,
+            "say": "{name}は国に残り、新しい国司のもとで書生を続けた。",
+            "fx": { "sat": 1, "learn": 1, "tie": 4, "body": 1 }, "move": "home",
+            "next": { "in": [3, 6], "node": "back" } }
+        ] }
+    },
+    "top": { "say": "{name}の写す文書は誤りがないと言われ、上役から信頼を得た。",
+      "fx": { "sat": 3, "learn": 3, "tie": -2, "body": -1 } },
+    "back": { "say": "{name}は郡の書き役として村々の訴えを書き取り、頼られる人になった。",
+      "fx": { "sat": 4, "learn": 2, "tie": 4, "body": 0 } },
+    "home": { "say": "{name}は村の田堵として田を広げ、家は豊かになった。",
+      "fx": { "sat": 4, "learn": 0, "tie": 4, "body": 1 },
+      "job": { "n": "田堵", "pay": 700, "cat": "farm" } }
+  }
+},
+{
+  "id": "e_kamakura_monchujo", "title": "訴えの書き付け",
+  "y": [1200, 1320], "a": [15, 25], "st": ["hyakusho", "chonin"], "kind": ["village", "town"], "p": 0.006,
+  "text": "地頭との境争いで、{name}が村の言い分を書き付けて持って行くと、問注所の奉行人が筋の通った書きぶりに感心した。「鎌倉で書き役をせぬか」と誘われた。どうする？",
+  "opts": [
+    { "k": "go", "l": "鎌倉へ行く", "f": ["study", "earn"], "w": 1,
+      "say": "{name}は鎌倉に出て、問注所の奉行人に仕える書き役となった。",
+      "fx": { "sat": 2, "learn": 4, "tie": -3, "body": -1 },
+      "job": { "n": "問注所の書き役", "pay": 600, "cat": "clerk" }, "away": true,
+      "next": { "in": [3, 6], "node": "kamakura" } },
+    { "k": "stay", "l": "村に残る", "f": ["family"], "w": 1,
+      "say": "{name}は村に残り、境の争いが収まるまで村人を支えた。",
+      "fx": { "sat": 1, "learn": 0, "tie": 3, "body": 1 },
+      "next": { "in": [4, 8], "node": "home" } }
+  ],
+  "nodes": {
+    "kamakura": {
+      "say": "{name}は訴えの文書を整える腕を磨き、奉行人の右腕と呼ばれた。",
+      "fx": { "sat": 3, "learn": 3, "tie": -1, "body": -1 },
+      "ask": { "title": "御家人の家へ", "text": "奉行人が、自分の家の郎党として一生仕えないかと言った。どうする？",
+        "opts": [
+          { "k": "go", "l": "郎党になる", "f": ["earn"], "w": 1,
+            "say": "{name}は奉行人の郎党となり、幕府の評定の書類を任された。",
+            "fx": { "sat": 3, "learn": 2, "tie": -3, "body": -1 }, "status": "bushi",
+            "job": { "n": "奉行人の郎党", "pay": 900, "cat": "samurai" },
+            "next": { "in": [5, 10], "node": "top" } },
+          { "k": "stay", "l": "村へ帰る", "f": ["family"], "w": 1,
+            "say": "{name}は鎌倉を離れ、{place}へ帰った。",
+            "fx": { "sat": 1, "learn": 0, "tie": 4, "body": 1 }, "move": "home",
+            "next": { "in": [2, 5], "node": "back" } }
+        ] }
+    },
+    "top": { "say": "{name}の整えた文書で、遠い国の百姓の訴えが聞き届けられた。",
+      "fx": { "sat": 4, "learn": 2, "tie": -1, "body": -1 } },
+    "back": { "say": "{name}は村の争いごとを書き付けて収める役となり、頼りにされた。",
+      "fx": { "sat": 4, "learn": 1, "tie": 4, "body": 0 } },
+    "home": { "say": "{name}は村の沙汰人に選ばれ、穏やかに村をまとめた。",
+      "fx": { "sat": 4, "learn": 0, "tie": 4, "body": 0 } }
+  }
+},
+{
+  "id": "e_muromachi_mandokoro", "title": "政所の小舎人",
+  "y": [1350, 1480], "a": [12, 20], "st": ["chonin", "genin"], "sex": "m", "kind": ["city", "town"], "p": 0.006,
+  "text": "土倉の使いで銭を数えていた{name}を、幕府の政所の役人が見ていた。「銭勘定の速い小者がほしい」と声をかけられた。どうする？",
+  "opts": [
+    { "k": "go", "l": "政所に仕える", "f": ["earn"], "w": 1,
+      "say": "{name}は政所の小舎人となり、京の町を走り回った。",
+      "fx": { "sat": 2, "learn": 3, "tie": -2, "body": -1 },
+      "job": { "n": "政所の小舎人", "pay": 500, "cat": "service" }, "move": "kyoto", "away": true,
+      "next": { "in": [3, 6], "node": "office" } },
+    { "k": "stay", "l": "土倉で働き続ける", "f": ["family"], "w": 1,
+      "say": "{name}は土倉での奉公を続けると決めた。",
+      "fx": { "sat": 1, "learn": 1, "tie": 3, "body": 0 },
+      "next": { "in": [5, 10], "node": "home" } }
+  ],
+  "nodes": {
+    "office": {
+      "say": "{name}は銭の出納を手伝うようになり、政所の役人に名を覚えられた。",
+      "fx": { "sat": 3, "learn": 3, "tie": -1, "body": -1 },
+      "ask": { "title": "雑色への取り立て", "text": "{name}を政所の雑色として召し抱えたいという話が出た。どうする？",
+        "opts": [
+          { "k": "go", "l": "召し抱えられる", "f": ["earn"], "w": 1,
+            "say": "{name}は政所の雑色となり、幕府の銭の出入りに関わった。",
+            "fx": { "sat": 3, "learn": 2, "tie": -3, "body": -1 },
+            "job": { "n": "政所の雑色", "pay": 800, "cat": "clerk" },
+            "next": { "in": [5, 10], "node": "top" } },
+          { "k": "stay", "l": "町へ戻る", "f": ["family"], "w": 1,
+            "say": "{name}は勤めを辞し、町の暮らしへ戻った。",
+            "fx": { "sat": 1, "learn": 0, "tie": 4, "body": 1 }, "move": "home",
+            "next": { "in": [2, 5], "node": "back" } }
+        ] }
+    },
+    "top": { "say": "{name}は徳政の騒ぎのさなかも帳面を守り、上役に褒められた。",
+      "fx": { "sat": 3, "learn": 2, "tie": -2, "body": -2 } },
+    "back": { "say": "{name}は小さな酒屋を開き、町衆の寄合で頼られる人になった。",
+      "fx": { "sat": 4, "learn": 1, "tie": 4, "body": 0 },
+      "job": { "n": "酒屋の主", "pay": 1000, "cat": "shop" } },
+    "home": { "say": "{name}は土倉の番頭となり、町の人々から信用された。",
+      "fx": { "sat": 4, "learn": 1, "tie": 3, "body": 0 },
+      "job": { "n": "土倉の番頭", "pay": 1000, "cat": "shop" } }
+  }
+},
+{
+  "id": "e_uraga_rescue", "title": "海に落ちた子",
+  "y": [1725, 1860], "a": [15, 25], "st": ["hyakusho"], "sex": "m", "kind": ["fish"], "p": 0.006,
+  "text": "浜で遊んでいた奉行所の役人の子が波にさらわれ、{name}が飛び込んで助け上げた。役人は涙を流し、奉行所の水主に推すと言った。どうする？",
+  "opts": [
+    { "k": "go", "l": "水主になる", "f": ["earn"], "w": 1,
+      "say": "{name}は浦賀奉行所の水主となり、船改めの船を漕いだ。",
+      "fx": { "sat": 3, "learn": 2, "tie": -1, "body": -1 },
+      "job": { "n": "奉行所の水主", "pay": 600, "cat": "fish" }, "away": true,
+      "next": { "in": [3, 6], "node": "uraga" } },
+    { "k": "stay", "l": "浜で漁を続ける", "f": ["family"], "w": 1,
+      "say": "{name}は礼だけ受け取り、浜の漁に戻った。",
+      "fx": { "sat": 1, "learn": 0, "tie": 3, "body": 1 },
+      "next": { "in": [5, 10], "node": "home" } }
+  ],
+  "nodes": {
+    "uraga": {
+      "say": "潮と風に詳しい{name}は、船改めの役人たちから頼りにされた。",
+      "fx": { "sat": 3, "learn": 2, "tie": -1, "body": -1 },
+      "ask": { "title": "同心の株", "text": "助けた子の父が、{name}を奉行所の同心の家へ養子に出す話をまとめてきた。どうする？",
+        "opts": [
+          { "k": "go", "l": "同心になる", "f": ["earn"], "w": 1,
+            "say": "{name}は同心の家を継ぎ、侍として奉行所に勤めた。",
+            "fx": { "sat": 3, "learn": 2, "tie": -3, "body": -1 }, "status": "bushi",
+            "job": { "n": "奉行所の同心", "pay": 1000, "cat": "samurai" },
+            "next": { "in": [5, 10], "node": "top" } },
+          { "k": "stay", "l": "浜へ帰る", "f": ["family"], "w": 1,
+            "say": "{name}は水主を辞め、生まれた浜へ帰った。",
+            "fx": { "sat": 1, "learn": 0, "tie": 4, "body": 1 }, "move": "home",
+            "next": { "in": [2, 5], "node": "back" } }
+        ] }
+    },
+    "top": { "say": "{name}は異国の船が近づいた夜も持ち場を守り、仲間から信頼された。",
+      "fx": { "sat": 3, "learn": 2, "tie": -1, "body": -2 } },
+    "back": { "say": "{name}は浜の網元に見込まれ、船頭として若い衆を率いた。",
+      "fx": { "sat": 4, "learn": 1, "tie": 4, "body": 0 },
+      "job": { "n": "船頭", "pay": 800, "cat": "fish" } },
+    "home": { "say": "{name}は浜一番の漁師と呼ばれ、子どもたちに泳ぎを教えた。",
+      "fx": { "sat": 4, "learn": 0, "tie": 4, "body": 1 } }
+  }
+},
+{
+  "id": "e_gokenin_shohei", "title": "昌平坂の学問吟味",
+  "y": [1795, 1855], "a": [14, 22], "st": ["hyakusho", "chonin"], "sex": "m", "kind": ["village", "town", "city"], "p": 0.006,
+  "text": "寺の和尚が、経書をすらすらそらんじる{name}を見込み、子のない御家人の家へ養子に入る話を持ってきた。その家の者は昌平坂の学問吟味を目指せるという。どうする？",
+  "opts": [
+    { "k": "go", "l": "養子に入る", "f": ["study"], "w": 1,
+      "say": "{name}は御家人の家に養子に入り、江戸で学問に励んだ。",
+      "fx": { "sat": 2, "learn": 4, "tie": -4, "body": -1 }, "status": "bushi",
+      "job": { "n": "小普請の御家人", "pay": 700, "cat": "samurai" }, "move": "edo", "away": true,
+      "next": { "in": [3, 6], "node": "exam" } },
+    { "k": "stay", "l": "家に残る", "f": ["family"], "w": 1,
+      "say": "{name}は家に残り、和尚のもとで学びを続けた。",
+      "fx": { "sat": 1, "learn": 2, "tie": 3, "body": 0 },
+      "next": { "in": [5, 10], "node": "home" } }
+  ],
+  "nodes": {
+    "exam": {
+      "say": "{name}は昌平坂の学問吟味で及第し、褒美の品をいただいた。",
+      "fx": { "sat": 4, "learn": 4, "tie": -1, "body": -1 },
+      "ask": { "title": "役につくか", "text": "及第したことで、勘定所の役につく道が開けた。実家の{dad}からは、帰ってきてほしいという便りが届いた。どうする？",
+        "opts": [
+          { "k": "go", "l": "役につく", "f": ["earn"], "w": 1,
+            "say": "{name}は勘定所の支配勘定に任じられた。",
+            "fx": { "sat": 3, "learn": 2, "tie": -3, "body": -2 },
+            "job": { "n": "支配勘定", "pay": 1500, "cat": "samurai" },
+            "next": { "in": [5, 10], "node": "top" } },
+          { "k": "stay", "l": "故郷で教える", "f": ["family"], "w": 1,
+            "say": "{name}は家督を養家の親族に譲り、故郷へ戻った。",
+            "fx": { "sat": 1, "learn": 0, "tie": 4, "body": 1 }, "status": "hyakusho", "move": "home",
+            "next": { "in": [2, 4], "node": "back" } }
+        ] }
+    },
+    "top": { "say": "{name}は勘定所で学問を生かし、諸国の財政を調べる役に加わった。",
+      "fx": { "sat": 3, "learn": 3, "tie": -2, "body": -2 } },
+    "back": { "say": "{name}は故郷に私塾を開き、遠くの村からも子どもが通ってきた。",
+      "fx": { "sat": 4, "learn": 2, "tie": 4, "body": 0 },
+      "job": { "n": "私塾の師匠", "pay": 800, "cat": "teacher" } },
+    "home": { "say": "{name}は寺子屋の師匠となり、村じゅうの子に慕われた。",
+      "fx": { "sat": 4, "learn": 2, "tie": 4, "body": 0 },
+      "job": { "n": "寺子屋の師匠", "pay": 600, "cat": "teacher" } }
+  }
+},
+{
+  "id": "e_kori_tetsuke", "title": "田の絵図",
+  "y": [1680, 1860], "a": [15, 25], "st": ["hyakusho"], "kind": ["village"], "p": 0.01,
+  "text": "検見に来た郡奉行の手付が、{name}の描いた村の田の絵図を手に取った。「これほど正しい絵図は初めてだ。郡方で使いたい」と言われた。どうする？",
+  "opts": [
+    { "k": "go", "l": "郡方で働く", "f": ["study", "earn"], "w": 1,
+      "say": "{name}は郡奉行の手付の下で、村々の絵図を描く仕事についた。",
+      "fx": { "sat": 2, "learn": 4, "tie": -2, "body": -1 },
+      "job": { "n": "郡方の絵図書き", "pay": 600, "cat": "clerk" }, "away": true,
+      "next": { "in": [3, 6], "node": "gun" } },
+    { "k": "stay", "l": "村で田を耕す", "f": ["family"], "w": 1,
+      "say": "{name}は絵図を差し上げ、村の田に戻った。",
+      "fx": { "sat": 1, "learn": 0, "tie": 3, "body": 1 },
+      "next": { "in": [5, 10], "node": "home" } }
+  ],
+  "nodes": {
+    "gun": {
+      "say": "{name}の絵図のおかげで、隣村との水争いが一つ片づいた。",
+      "fx": { "sat": 3, "learn": 3, "tie": 0, "body": -1 },
+      "ask": { "title": "手付への取り立て", "text": "郡奉行が、{name}を正式な手付として藩に召し抱えたいと言った。どうする？",
+        "opts": [
+          { "k": "go", "l": "手付になる", "f": ["earn"], "w": 1,
+            "say": "{name}は郡奉行の手付として藩に召し抱えられた。",
+            "fx": { "sat": 3, "learn": 2, "tie": -3, "body": -1 }, "status": "bushi",
+            "job": { "n": "郡奉行の手付", "pay": 1000, "cat": "samurai" },
+            "next": { "in": [5, 10], "node": "top" } },
+          { "k": "stay", "l": "村へ帰る", "f": ["family"], "w": 1,
+            "say": "{name}は勤めを終え、{place}へ帰った。",
+            "fx": { "sat": 1, "learn": 0, "tie": 4, "body": 1 }, "move": "home",
+            "next": { "in": [2, 5], "node": "back" } }
+        ] }
+    },
+    "top": { "say": "{name}は新田の開発を任され、荒れ地が実り豊かな田に変わった。",
+      "fx": { "sat": 4, "learn": 2, "tie": -1, "body": -2 } },
+    "back": { "say": "{name}は村の用水を引き直し、名主として村を豊かにした。",
+      "fx": { "sat": 4, "learn": 1, "tie": 4, "body": 0 },
+      "job": { "n": "名主", "pay": 900, "cat": "farm" } },
+    "home": { "say": "{name}は村の境や水路に詳しい人として、寄合で頼られた。",
+      "fx": { "sat": 4, "learn": 1, "tie": 4, "body": 0 } }
+  }
+},
+{
+  "id": "e_kakizome", "title": "書き初めの一等",
+  "y": [1700, 1860], "a": [10, 16], "st": ["chonin", "hyakusho"], "kind": ["town", "village"], "p": 0.01,
+  "text": "寺子屋の書き初めの会で、{name}の字が一等になった。見物に来ていた藩の右筆の下役が「城の書き物を手伝わぬか」と言った。どうする？",
+  "opts": [
+    { "k": "go", "l": "城の書き物を手伝う", "f": ["study"], "w": 1,
+      "say": "{name}は城に通い、右筆所で書状を写す見習いになった。",
+      "fx": { "sat": 2, "learn": 4, "tie": -2, "body": -1 },
+      "job": { "n": "右筆所の見習い", "pay": 500, "cat": "clerk" }, "away": true,
+      "next": { "in": [4, 7], "node": "yuhitsu" } },
+    { "k": "stay", "l": "家の手伝いをする", "f": ["family"], "w": 1,
+      "say": "{name}は家の手伝いを続け、字の稽古は寺子屋で続けた。",
+      "fx": { "sat": 1, "learn": 1, "tie": 3, "body": 0 },
+      "next": { "in": [6, 10], "node": "home" } }
+  ],
+  "nodes": {
+    "yuhitsu": {
+      "say": "{name}は藩の公の書状を清書する役を任されるまでになった。",
+      "fx": { "sat": 3, "learn": 3, "tie": -1, "body": -1 },
+      "ask": { "title": "右筆への取り立て", "text": "{name}を右筆として藩士に取り立てる話が来た。家を継ぐ者がいなくなる。どうする？",
+        "opts": [
+          { "k": "go", "l": "右筆になる", "f": ["earn"], "w": 1,
+            "say": "{name}は藩の右筆に取り立てられ、侍の列に加わった。",
+            "fx": { "sat": 3, "learn": 2, "tie": -3, "body": -1 }, "status": "bushi",
+            "job": { "n": "藩の右筆", "pay": 1100, "cat": "samurai" },
+            "next": { "in": [5, 10], "node": "top" } },
+          { "k": "stay", "l": "家を継ぐ", "f": ["family"], "w": 1,
+            "say": "{name}は見習いを辞め、家を継ぐために戻った。",
+            "fx": { "sat": 1, "learn": 0, "tie": 4, "body": 1 }, "move": "home",
+            "next": { "in": [2, 5], "node": "back" } }
+        ] }
+    },
+    "top": { "say": "{name}の清書した書状は江戸の屋敷でも褒められ、藩の誉れとなった。",
+      "fx": { "sat": 4, "learn": 2, "tie": -2, "body": -1 } },
+    "back": { "say": "{name}は家業のかたわら看板や証文の字を頼まれ、町の名物になった。",
+      "fx": { "sat": 4, "learn": 1, "tie": 4, "body": 0 } },
+    "home": { "say": "{name}は寺子屋の師匠を継ぎ、子どもたちに筆を教えた。",
+      "fx": { "sat": 4, "learn": 2, "tie": 4, "body": 0 },
+      "job": { "n": "寺子屋の師匠", "pay": 600, "cat": "teacher" } }
+  }
+},
+{
+  "id": "e_bunkan_exam", "title": "高等文官試験",
+  "y": [1895, 1940], "a": [15, 18], "st": ["heimin"], "sex": "m", "kind": ["village", "town"], "p": 0.006,
+  "text": "村の小学校の校長が、成績のよい{name}のために村の有志から学資を集めてくれた。中学から高等学校、大学へ進み、高等文官試験を目指せという。どうする？",
+  "opts": [
+    { "k": "go", "l": "学資を受けて進学", "f": ["study"], "w": 1,
+      "say": "{name}は村の人々に見送られ、中学へ進んだ。",
+      "fx": { "sat": 2, "learn": 4, "tie": -2, "body": -1 }, "away": true,
+      "next": { "in": [6, 9], "node": "exam" } },
+    { "k": "stay", "l": "家の田を継ぐ", "f": ["family"], "w": 1,
+      "say": "{name}は礼を言って学資を辞し、家の田を継いだ。",
+      "fx": { "sat": 1, "learn": 0, "tie": 3, "body": 1 },
+      "next": { "in": [8, 14], "node": "home" } }
+  ],
+  "nodes": {
+    "exam": {
+      "say": "{name}は帝国大学を出て、高等文官試験に合格した。",
+      "fx": { "sat": 4, "learn": 4, "tie": -1, "body": -2 },
+      "ask": { "title": "どこで働くか", "text": "内務省から採用の知らせが届いた。故郷の県庁からも、地元で働いてほしいという声がかかった。どうする？",
+        "opts": [
+          { "k": "go", "l": "内務省に入る", "f": ["earn"], "w": 1,
+            "say": "{name}は内務省に入り、東京で官吏の道を歩み始めた。",
+            "fx": { "sat": 3, "learn": 2, "tie": -3, "body": -2 }, "move": "tokyo",
+            "job": { "n": "内務省の官吏", "pay": 1200, "cat": "office" },
+            "next": { "in": [8, 15], "node": "top" } },
+          { "k": "stay", "l": "故郷で働く", "f": ["family"], "w": 1,
+            "say": "{name}は故郷に戻り、県の役所で働くことにした。",
+            "fx": { "sat": 2, "learn": 1, "tie": 4, "body": 0 }, "move": "home",
+            "job": { "n": "県庁の職員", "pay": 900, "cat": "office" },
+            "next": { "in": [5, 10], "node": "back" } }
+        ] }
+    },
+    "top": { "say": "{name}は地方の県庁や本省を転々とし、ついに局長の椅子についた。",
+      "fx": { "sat": 3, "learn": 2, "tie": -3, "body": -2 },
+      "job": { "n": "内務省の局長", "pay": 4000, "cat": "office" } },
+    "back": { "say": "{name}は故郷の村長に推され、学資をくれた人々に恩を返した。",
+      "fx": { "sat": 4, "learn": 1, "tie": 4, "body": 0 },
+      "job": { "n": "村長", "pay": 800, "cat": "office" } },
+    "home": { "say": "{name}は村の農会で新しい稲の品種を広め、収穫を大きく増やした。",
+      "fx": { "sat": 4, "learn": 1, "tie": 4, "body": 1 } }
+  }
+},
+{
+  "id": "e_meiji_shoki", "title": "役場の帳簿",
+  "y": [1873, 1915], "a": [16, 25], "st": ["heimin"], "kind": ["village", "town"], "p": 0.01,
+  "text": "戸長役場で手伝いをしていた{name}の帳簿が、見回りに来た郡役所の書記の目にとまった。「郡役所で雇いたい」と言われた。どうする？",
+  "opts": [
+    { "k": "go", "l": "郡役所に勤める", "f": ["earn"], "w": 1,
+      "say": "{name}は郡役所の雇となり、地租の台帳を整える仕事についた。",
+      "fx": { "sat": 2, "learn": 3, "tie": -2, "body": -1 },
+      "job": { "n": "郡役所の雇", "pay": 500, "cat": "clerk" }, "away": true,
+      "next": { "in": [3, 6], "node": "gun" } },
+    { "k": "stay", "l": "村に残る", "f": ["family"], "w": 1,
+      "say": "{name}は村に残り、役場の手伝いを続けた。",
+      "fx": { "sat": 1, "learn": 1, "tie": 3, "body": 0 },
+      "next": { "in": [5, 10], "node": "home" } }
+  ],
+  "nodes": {
+    "gun": {
+      "say": "{name}は判任官の書記に任じられ、県内でも仕事の確かさを知られた。",
+      "fx": { "sat": 3, "learn": 3, "tie": -1, "body": -1 },
+      "job": { "n": "郡書記", "pay": 700, "cat": "clerk" },
+      "ask": { "title": "大蔵省へ", "text": "知り合いの官吏が、大蔵省で書記を探していると知らせてきた。東京へ出ることになる。どうする？",
+        "opts": [
+          { "k": "go", "l": "東京へ出る", "f": ["earn"], "w": 1,
+            "say": "{name}は大蔵省の属官となり、東京で暮らし始めた。",
+            "fx": { "sat": 3, "learn": 3, "tie": -4, "body": -2 }, "move": "tokyo",
+            "job": { "n": "大蔵省の属官", "pay": 1000, "cat": "office" },
+            "next": { "in": [5, 10], "node": "top" } },
+          { "k": "stay", "l": "故郷に戻る", "f": ["family"], "w": 1,
+            "say": "{name}は郡役所を辞し、生まれた村へ戻った。",
+            "fx": { "sat": 1, "learn": 0, "tie": 4, "body": 1 }, "move": "home",
+            "next": { "in": [2, 5], "node": "back" } }
+        ] }
+    },
+    "top": { "say": "{name}は税の帳簿を預かる係の長となり、若い属官を育てた。",
+      "fx": { "sat": 3, "learn": 2, "tie": -2, "body": -1 } },
+    "back": { "say": "{name}は村の助役となり、新しい村の仕組みづくりに尽くした。",
+      "fx": { "sat": 4, "learn": 1, "tie": 4, "body": 0 },
+      "job": { "n": "村の助役", "pay": 600, "cat": "office" } },
+    "home": { "say": "{name}は村の収入役に選ばれ、村人から厚く信頼された。",
+      "fx": { "sat": 4, "learn": 1, "tie": 4, "body": 0 },
+      "job": { "n": "村の収入役", "pay": 550, "cat": "office" } }
+  }
+},
+{
+  "id": "e_teikoku_gikai", "title": "演説会の飛び入り",
+  "y": [1880, 1930], "a": [22, 35], "st": ["heimin"], "sex": "m", "kind": ["village", "town"], "p": 0.006,
+  "text": "町の演説会で、{name}が飛び入りで村の道普請の苦労を話すと、聴衆から大きな拍手が起きた。県会議員に出ないかと誘われた。どうする？",
+  "opts": [
+    { "k": "go", "l": "県会議員に出る", "f": ["earn"], "w": 1,
+      "say": "{name}は県会議員に当選し、県議会で村の声を伝えた。",
+      "fx": { "sat": 3, "learn": 3, "tie": -1, "body": -1 },
+      "job": { "n": "県会議員", "pay": 600, "cat": "office" },
+      "next": { "in": [4, 8], "node": "ken" } },
+    { "k": "stay", "l": "家業に励む", "f": ["family"], "w": 1,
+      "say": "{name}は誘いを断り、家業と村の世話に励んだ。",
+      "fx": { "sat": 1, "learn": 0, "tie": 3, "body": 0 },
+      "next": { "in": [5, 10], "node": "home" } }
+  ],
+  "nodes": {
+    "ken": {
+      "say": "{name}は県議会で道路や橋の予算を勝ち取り、地元で名が知られた。",
+      "fx": { "sat": 3, "learn": 2, "tie": 1, "body": -1 },
+      "ask": { "title": "衆議院へ", "text": "次の衆議院議員の選挙に出てほしいと、支持者たちが頼みに来た。家を空けることが多くなる。どうする？",
+        "opts": [
+          { "k": "go", "l": "選挙に出る", "f": ["earn"], "w": 1,
+            "say": "{name}は衆議院議員に当選し、帝国議会の議場に立った。",
+            "fx": { "sat": 4, "learn": 3, "tie": -3, "body": -2 }, "move": "tokyo", "away": true,
+            "job": { "n": "衆議院議員", "pay": 2000, "cat": "office" },
+            "next": { "in": [4, 8], "node": "top" } },
+          { "k": "stay", "l": "地元に専念する", "f": ["family"], "w": 1,
+            "say": "{name}は国政への誘いを断り、地元の仕事に専念した。",
+            "fx": { "sat": 2, "learn": 0, "tie": 4, "body": 1 },
+            "next": { "in": [3, 6], "node": "back" } }
+        ] }
+    },
+    "top": { "say": "{name}の質問で地方の鉄道の計画が動き出したが、選挙の費用で家の蔵は空いた。",
+      "fx": { "sat": 3, "learn": 2, "tie": -2, "body": -2 } },
+    "back": { "say": "{name}は町長に選ばれ、念願の橋の開通式でテープを切った。",
+      "fx": { "sat": 4, "learn": 1, "tie": 4, "body": 0 },
+      "job": { "n": "町長", "pay": 900, "cat": "office" } },
+    "home": { "say": "{name}は村の世話役として道普請をまとめ、村人から感謝された。",
+      "fx": { "sat": 4, "learn": 0, "tie": 4, "body": 0 } }
+  }
+},
+{
+  "id": "e_gaikokan", "title": "港で覚えた英語",
+  "y": [1875, 1930], "a": [14, 20], "st": ["heimin"], "sex": "m", "kind": ["town", "fish", "city"], "p": 0.006,
+  "text": "港で荷を運ぶ{name}は、外国の船乗りから英語を覚えていた。ある日、迷った外国人を役所まで案内すると、居合わせた外務省の役人が驚いた。「通訳生の試験を受けてみないか」と言われた。どうする？",
+  "opts": [
+    { "k": "go", "l": "試験を受ける", "f": ["study"], "w": 1,
+      "say": "{name}は夜学で英語を磨き、外務省の通訳生の試験に受かった。",
+      "fx": { "sat": 3, "learn": 4, "tie": -2, "body": -1 },
+      "job": { "n": "外務省の通訳生", "pay": 600, "cat": "office" }, "move": "tokyo", "away": true,
+      "next": { "in": [3, 6], "node": "gaimu" } },
+    { "k": "stay", "l": "港で働き続ける", "f": ["family"], "w": 1,
+      "say": "{name}は港に残り、荷役の仕事を続けた。",
+      "fx": { "sat": 1, "learn": 1, "tie": 3, "body": 1 },
+      "next": { "in": [5, 10], "node": "home" } }
+  ],
+  "nodes": {
+    "gaimu": {
+      "say": "{name}は外国の公使との会談で通訳を務め、上役に認められた。",
+      "fx": { "sat": 3, "learn": 3, "tie": -1, "body": -1 },
+      "ask": { "title": "海外の公館へ", "text": "遠い国の公使館で書記生として働かないかという話が来た。何年も家族に会えなくなる。どうする？",
+        "opts": [
+          { "k": "go", "l": "海外へ行く", "f": ["earn"], "w": 1,
+            "say": "{name}は書記生として海を渡り、異国の公使館で働いた。",
+            "fx": { "sat": 3, "learn": 4, "tie": -4, "body": -2 },
+            "job": { "n": "公使館の書記生", "pay": 1000, "cat": "office" },
+            "next": { "in": [5, 10], "node": "top" } },
+          { "k": "stay", "l": "港町へ戻る", "f": ["family"], "w": 1,
+            "say": "{name}は外務省を辞め、生まれた港町へ戻った。",
+            "fx": { "sat": 1, "learn": 0, "tie": 4, "body": 1 }, "move": "home",
+            "next": { "in": [2, 5], "node": "back" } }
+        ] }
+    },
+    "top": { "say": "{name}は領事に任じられ、異国に暮らす日本人の暮らしを守った。",
+      "fx": { "sat": 4, "learn": 2, "tie": -2, "body": -1 },
+      "job": { "n": "領事", "pay": 1500, "cat": "office" } },
+    "back": { "say": "{name}は港に貿易の店を開き、外国の商人との取引で栄えた。",
+      "fx": { "sat": 4, "learn": 1, "tie": 4, "body": 0 },
+      "job": { "n": "貿易商", "pay": 1000, "cat": "shop" } },
+    "home": { "say": "{name}は港の荷役の親方となり、外国船の仕事を一手に引き受けた。",
+      "fx": { "sat": 4, "learn": 1, "tie": 4, "body": 0 },
+      "job": { "n": "荷役の親方", "pay": 500, "cat": "service" } }
+  }
+},
+{
+  "id": "e_typist", "title": "和文タイプの速さ",
+  "y": [1920, 1944], "a": [16, 22], "st": ["heimin"], "sex": "f", "kind": ["town", "city"], "p": 0.008,
+  "text": "女学校を出て町の商店で帳面をつけていた{name}は、和文タイプの講習会で一番の速さを出した。講師が、東京の官庁でタイピストを探していると教えてくれた。どうする？",
+  "opts": [
+    { "k": "go", "l": "官庁に応募する", "f": ["earn"], "w": 1,
+      "say": "{name}は東京の官庁にタイピストとして採用された。",
+      "fx": { "sat": 3, "learn": 3, "tie": -3, "body": -1 },
+      "job": { "n": "官庁のタイピスト", "pay": 500, "cat": "office" }, "move": "tokyo", "away": true,
+      "next": { "in": [2, 5], "node": "tokyo" } },
+    { "k": "stay", "l": "町の店に残る", "f": ["family"], "w": 1,
+      "say": "{name}は地元の店に残り、帳面つけを続けた。",
+      "fx": { "sat": 1, "learn": 0, "tie": 3, "body": 0 },
+      "next": { "in": [3, 7], "node": "home" } }
+  ],
+  "nodes": {
+    "tokyo": {
+      "say": "{name}の打つ文書は誤りがなく、局長の文書も任されるようになった。",
+      "fx": { "sat": 3, "learn": 2, "tie": -1, "body": -1 },
+      "ask": { "title": "見合いの話", "text": "故郷の{mom}から見合いの話が届いた。役所では、続けて勤めてほしいと言われている。どうする？",
+        "opts": [
+          { "k": "go", "l": "勤めを続ける", "f": ["earn"], "w": 1,
+            "say": "{name}は見合いを断り、官庁での勤めを続けた。",
+            "fx": { "sat": 2, "learn": 2, "tie": -3, "body": -1 },
+            "next": { "in": [5, 10], "node": "top" } },
+          { "k": "stay", "l": "故郷で見合いする", "f": ["family"], "w": 1,
+            "say": "{name}は役所を辞め、故郷へ帰って見合いに臨んだ。",
+            "fx": { "sat": 2, "learn": 0, "tie": 4, "body": 1 }, "move": "home",
+            "next": { "in": [1, 3], "node": "back" } }
+        ] }
+    },
+    "top": { "say": "{name}はタイピストの係を束ねる立場になり、後輩の女性たちを育てた。",
+      "fx": { "sat": 3, "learn": 2, "tie": -1, "body": -1 } },
+    "back": { "say": "{name}は穏やかな夫と結ばれ、町の店の帳場を二人で切り盛りした。",
+      "fx": { "sat": 4, "learn": 0, "tie": 4, "body": 0 } },
+    "home": { "say": "{name}は店の主人から帳場を任され、町一番のしっかり者と言われた。",
+      "fx": { "sat": 4, "learn": 1, "tie": 4, "body": 0 } }
+  }
+},
+{
+  "id": "e_fujin_shonen", "title": "婦人少年局の求人",
+  "y": [1948, 1975], "a": [20, 24], "st": ["heimin"], "sex": "f", "kind": ["village", "town", "city"], "p": 0.008,
+  "text": "新制の大学で学んだ{name}は、新聞の片隅に国家公務員試験の案内を見つけた。女性も受けられる上級の試験だった。どうする？",
+  "opts": [
+    { "k": "go", "l": "試験を受ける", "f": ["study"], "w": 1,
+      "say": "{name}は国家公務員の上級試験に合格し、労働省に採用された。",
+      "fx": { "sat": 3, "learn": 4, "tie": -2, "body": -1 },
+      "job": { "n": "労働省の職員", "pay": 2000, "cat": "office" }, "move": "tokyo", "away": true,
+      "next": { "in": [3, 6], "node": "ministry" } },
+    { "k": "stay", "l": "地元で教師になる", "f": ["family"], "w": 1,
+      "say": "{name}は地元の中学校で教師になる道を選んだ。",
+      "fx": { "sat": 2, "learn": 1, "tie": 3, "body": 0 },
+      "job": { "n": "中学校の教師", "pay": 1800, "cat": "teacher" },
+      "next": { "in": [6, 12], "node": "home" } }
+  ],
+  "nodes": {
+    "ministry": {
+      "say": "{name}は婦人少年局で、働く女性や年少者の暮らしを調べる仕事についた。",
+      "fx": { "sat": 3, "learn": 3, "tie": -1, "body": -1 },
+      "ask": { "title": "転勤の話", "text": "地方の婦人少年室の責任者への転勤の話と、故郷で家庭を持つ話が同時に来た。どうする？",
+        "opts": [
+          { "k": "go", "l": "転勤を受ける", "f": ["earn"], "w": 1,
+            "say": "{name}は地方の室長として赴任し、工場の女工たちの声を集めた。",
+            "fx": { "sat": 3, "learn": 3, "tie": -3, "body": -2 },
+            "next": { "in": [5, 10], "node": "top" } },
+          { "k": "stay", "l": "故郷に帰る", "f": ["family"], "w": 1,
+            "say": "{name}は役所を辞め、故郷へ帰った。",
+            "fx": { "sat": 2, "learn": 0, "tie": 4, "body": 1 }, "move": "home",
+            "next": { "in": [2, 5], "node": "back" } }
+        ] }
+    },
+    "top": { "say": "{name}は本省の課長となり、女性の働く場を広げる法の整備に関わった。",
+      "fx": { "sat": 4, "learn": 3, "tie": -2, "body": -2 },
+      "job": { "n": "労働省の課長", "pay": 5000, "cat": "office" } },
+    "back": { "say": "{name}は故郷で家庭を持ち、町の婦人会のまとめ役として頼られた。",
+      "fx": { "sat": 4, "learn": 1, "tie": 4, "body": 0 } },
+    "home": { "say": "{name}は生徒たちに慕われる先生となり、教え子が次々と巣立った。",
+      "fx": { "sat": 4, "learn": 2, "tie": 4, "body": 0 } }
+  }
+},
+{
+  "id": "e_norin_kanryo", "title": "品評会の稲",
+  "y": [1950, 1990], "a": [17, 22], "st": ["heimin"], "kind": ["village"], "p": 0.008,
+  "text": "{name}が育てた稲が県の品評会で入賞し、審査に来た農業試験場の技師が「大学で農学を学んで国の仕事をしてみないか」と言った。どうする？",
+  "opts": [
+    { "k": "go", "l": "大学へ進む", "f": ["study"], "w": 1,
+      "say": "{name}は奨学金を得て、大学の農学部へ進んだ。",
+      "fx": { "sat": 2, "learn": 4, "tie": -2, "body": -1 }, "away": true,
+      "next": { "in": [4, 6], "node": "exam" } },
+    { "k": "stay", "l": "家の田を継ぐ", "f": ["family"], "w": 1,
+      "say": "{name}は家に残り、{dad}と田を耕し続けた。",
+      "fx": { "sat": 1, "learn": 1, "tie": 3, "body": 1 },
+      "next": { "in": [6, 12], "node": "home" } }
+  ],
+  "nodes": {
+    "exam": {
+      "say": "{name}は国家公務員の上級試験に合格し、農林省から内定をもらった。",
+      "fx": { "sat": 4, "learn": 3, "tie": -1, "body": -1 },
+      "ask": { "title": "霞が関か故郷か", "text": "県の農業改良普及員として故郷で働く口もあった。どうする？",
+        "opts": [
+          { "k": "go", "l": "農林省に入る", "f": ["earn"], "w": 1,
+            "say": "{name}は農林省に入り、東京で働き始めた。",
+            "fx": { "sat": 3, "learn": 3, "tie": -3, "body": -2 }, "move": "tokyo",
+            "job": { "n": "農林省の技官", "pay": 2000, "cat": "office" },
+            "next": { "in": [10, 15], "node": "top" } },
+          { "k": "stay", "l": "故郷で普及員になる", "f": ["family"], "w": 1,
+            "say": "{name}は故郷へ戻り、農業改良普及員になった。",
+            "fx": { "sat": 2, "learn": 1, "tie": 4, "body": 0 }, "move": "home",
+            "job": { "n": "農業改良普及員", "pay": 1500, "cat": "office" },
+            "next": { "in": [5, 10], "node": "back" } }
+        ] }
+    },
+    "top": { "say": "{name}は米の政策の担当課長となったが、帰省は盆と正月だけになった。",
+      "fx": { "sat": 3, "learn": 2, "tie": -3, "body": -2 },
+      "job": { "n": "農林省の課長", "pay": 5000, "cat": "office" } },
+    "back": { "say": "{name}が指導した村の果樹が評判になり、若い農家が村に戻ってきた。",
+      "fx": { "sat": 4, "learn": 1, "tie": 4, "body": 0 } },
+    "home": { "say": "{name}は村の農協の組合長となり、地域の米作りを支えた。",
+      "fx": { "sat": 4, "learn": 1, "tie": 4, "body": 1 },
+      "job": { "n": "農協の組合長", "pay": 3000, "cat": "farm" } }
+  }
+},
+{
+  "id": "e_hisho", "title": "選挙事務所の手伝い",
+  "y": [1995, 2030], "a": [19, 26], "st": ["modern"], "p": 0.008,
+  "text": "{name}がアルバイトで地元の選挙事務所の名簿を整理すると、誰よりも速く正確だった。当選した議員から、国会議員の秘書として東京へ来ないかと誘われた。どうする？",
+  "opts": [
+    { "k": "go", "l": "秘書になる", "f": ["earn"], "w": 1,
+      "say": "{name}は国会議員の秘書として、議員会館で働き始めた。",
+      "fx": { "sat": 2, "learn": 3, "tie": -2, "body": -2 },
+      "job": { "n": "国会議員の秘書", "pay": 4000, "cat": "office" }, "move": "tokyo", "away": true,
+      "next": { "in": [3, 6], "node": "kaikan" } },
+    { "k": "stay", "l": "地元で就職する", "f": ["family"], "w": 1,
+      "say": "{name}は誘いを断り、地元の信用金庫に就職した。",
+      "fx": { "sat": 1, "learn": 1, "tie": 3, "body": 0 },
+      "job": { "n": "信用金庫の職員", "pay": 3500, "cat": "office" },
+      "next": { "in": [5, 10], "node": "home" } }
+  ],
+  "nodes": {
+    "kaikan": {
+      "say": "{name}は法案の資料づくりに夜遅くまで追われ、政策の仕組みを覚えた。",
+      "fx": { "sat": 2, "learn": 4, "tie": -2, "body": -2 },
+      "ask": { "title": "政策担当秘書", "text": "政策担当秘書の資格試験を受けるよう勧められた。地元の両親からは、そろそろ帰ってきてほしいと言われている。どうする？",
+        "opts": [
+          { "k": "go", "l": "試験を受ける", "f": ["study"], "w": 1,
+            "say": "{name}は政策担当秘書の試験に合格し、法案づくりの中心に入った。",
+            "fx": { "sat": 3, "learn": 3, "tie": -3, "body": -2 },
+            "job": { "n": "政策担当秘書", "pay": 7000, "cat": "office" },
+            "next": { "in": [5, 10], "node": "top" } },
+          { "k": "stay", "l": "地元に戻る", "f": ["family"], "w": 1,
+            "say": "{name}は秘書を辞め、{place}へ戻った。",
+            "fx": { "sat": 1, "learn": 0, "tie": 4, "body": 1 }, "move": "home",
+            "next": { "in": [2, 5], "node": "back" } }
+        ] }
+    },
+    "top": { "say": "{name}が下書きした法律が国会で成立し、ひそかに胸を張った。",
+      "fx": { "sat": 4, "learn": 2, "tie": -1, "body": -1 } },
+    "back": { "say": "{name}は市議会議員に当選し、地元の商店街の再生に取り組んだ。",
+      "fx": { "sat": 4, "learn": 2, "tie": 4, "body": 0 },
+      "job": { "n": "市議会議員", "pay": 6000, "cat": "office" } },
+    "home": { "say": "{name}は地元の商店の相談役として頼られ、家族と穏やかに暮らした。",
+      "fx": { "sat": 4, "learn": 1, "tie": 4, "body": 0 } }
+  }
+},
+{
+  "id": "e_space", "title": "小惑星の光",
+  "y": [1995, 2035], "a": [15, 20], "st": ["modern"], "p": 0.006,
+  "text": "{name}が高校の天文部で撮った写真に、まだ知られていない小惑星が写っていた。報告を受けた国の宇宙の研究機関の研究者が、大学の研究室を紹介すると言ってくれた。どうする？",
+  "opts": [
+    { "k": "go", "l": "研究の道に進む", "f": ["study"], "w": 1,
+      "say": "{name}は紹介された研究室のある大学へ進んだ。",
+      "fx": { "sat": 3, "learn": 4, "tie": -2, "body": -1 }, "away": true,
+      "next": { "in": [5, 8], "node": "lab" } },
+    { "k": "stay", "l": "地元の大学に行く", "f": ["family"], "w": 1,
+      "say": "{name}は家から通える大学に進み、天文の趣味を続けた。",
+      "fx": { "sat": 2, "learn": 2, "tie": 3, "body": 0 },
+      "next": { "in": [6, 10], "node": "home" } }
+  ],
+  "nodes": {
+    "lab": {
+      "say": "{name}は大学院で探査機の軌道の計算を学び、研究機関の採用試験に通った。",
+      "fx": { "sat": 3, "learn": 4, "tie": -1, "body": -2 },
+      "ask": { "title": "研究機関へ", "text": "研究機関に入れば、各地の拠点を転々とすることになる。地元の科学館からも学芸員の誘いが来た。どうする？",
+        "opts": [
+          { "k": "go", "l": "研究機関に入る", "f": ["earn"], "w": 1,
+            "say": "{name}は宇宙の研究機関の職員となり、探査機の運用班に加わった。",
+            "fx": { "sat": 4, "learn": 3, "tie": -3, "body": -2 },
+            "job": { "n": "宇宙機関の研究員", "pay": 6000, "cat": "office" },
+            "next": { "in": [5, 10], "node": "top" } },
+          { "k": "stay", "l": "科学館に勤める", "f": ["family"], "w": 1,
+            "say": "{name}は故郷の科学館の学芸員になった。",
+            "fx": { "sat": 3, "learn": 1, "tie": 4, "body": 0 }, "move": "home",
+            "job": { "n": "科学館の学芸員", "pay": 4000, "cat": "teacher" },
+            "next": { "in": [3, 6], "node": "back" } }
+        ] }
+    },
+    "top": { "say": "{name}の関わった探査機が小惑星のかけらを持ち帰り、管制室で歓声が上がった。",
+      "fx": { "sat": 5, "learn": 3, "tie": -1, "body": -2 } },
+    "back": { "say": "{name}の開く星空観察会はいつも満員で、天文部を作る子どもが増えた。",
+      "fx": { "sat": 4, "learn": 2, "tie": 4, "body": 0 } },
+    "home": { "say": "{name}は地元で働きながら新しい彗星を見つけ、町の新聞に載った。",
+      "fx": { "sat": 4, "learn": 2, "tie": 4, "body": 0 } }
+  }
+},
+{
+  "id": "e_madoguchi", "title": "役場の窓口から",
+  "y": [1997, 2035], "a": [22, 28], "st": ["modern"], "sex": "f", "p": 0.008,
+  "text": "町役場の窓口で働く{name}がまとめた子育て支援の改善案が、視察に来た国の省庁の職員の目にとまった。「総合職の試験を受けて、国で仕事をしてみないか」と言われた。どうする？",
+  "opts": [
+    { "k": "go", "l": "試験に挑む", "f": ["study"], "w": 1,
+      "say": "{name}は勤めのかたわら勉強を続け、国家公務員の総合職試験に合格した。",
+      "fx": { "sat": 3, "learn": 4, "tie": -2, "body": -2 },
+      "job": { "n": "省庁の職員", "pay": 4500, "cat": "office" }, "move": "tokyo", "away": true,
+      "next": { "in": [3, 6], "node": "kasumi" } },
+    { "k": "stay", "l": "役場で続ける", "f": ["family"], "w": 1,
+      "say": "{name}は町役場に残り、改善案を自分の手で形にすると決めた。",
+      "fx": { "sat": 2, "learn": 1, "tie": 3, "body": 0 },
+      "next": { "in": [5, 10], "node": "home" } }
+  ],
+  "nodes": {
+    "kasumi": {
+      "say": "{name}は国会の答弁の準備に追われながら、全国の自治体の声を集めた。",
+      "fx": { "sat": 2, "learn": 3, "tie": -2, "body": -2 },
+      "ask": { "title": "出向の話", "text": "故郷の県への出向の話と、本省で制度の改正を担当する話の二つが来た。どうする？",
+        "opts": [
+          { "k": "go", "l": "本省に残る", "f": ["earn"], "w": 1,
+            "say": "{name}は本省に残り、子育て支援の制度改正の担当になった。",
+            "fx": { "sat": 3, "learn": 3, "tie": -3, "body": -2 },
+            "job": { "n": "省庁の課長補佐", "pay": 7000, "cat": "office" },
+            "next": { "in": [5, 10], "node": "top" } },
+          { "k": "stay", "l": "故郷へ戻る", "f": ["family"], "w": 1,
+            "say": "{name}は国を辞して故郷へ戻り、県庁に入り直した。",
+            "fx": { "sat": 2, "learn": 1, "tie": 4, "body": 1 }, "move": "home",
+            "job": { "n": "県庁の職員", "pay": 5000, "cat": "office" },
+            "next": { "in": [3, 6], "node": "back" } }
+        ] }
+    },
+    "top": { "say": "{name}の関わった制度が全国で始まり、窓口時代の自分を思い出した。",
+      "fx": { "sat": 4, "learn": 2, "tie": -1, "body": -1 } },
+    "back": { "say": "{name}は県の子育て支援の仕組みを作り、地元の親たちから感謝された。",
+      "fx": { "sat": 4, "learn": 2, "tie": 4, "body": 0 } },
+    "home": { "say": "{name}は町の福祉課長となり、町の子育て支援は近隣の手本になった。",
+      "fx": { "sat": 4, "learn": 1, "tie": 4, "body": 0 },
+      "job": { "n": "町の福祉課長", "pay": 6000, "cat": "office" } }
+  }
+},
+{
+  "id": "e_hatamoto_gonin", "title": "江戸の寺の和尚",
+  "y": [1700, 1855], "a": [12, 18], "st": ["hyakusho", "chonin"], "sex": "f", "kind": ["village", "town"], "p": 0.006,
+  "text": "寺の和尚が、手習いの上手な{name}を見込み、江戸の旗本屋敷へ行儀見習いに出す話をまとめてきた。うまくいけば御殿勤めの道も開けるという。どうする？",
+  "opts": [
+    { "k": "go", "l": "江戸へ行く", "f": ["study"], "w": 1,
+      "say": "{name}は江戸の旗本屋敷に上がり、奥で行儀見習いを始めた。",
+      "fx": { "sat": 2, "learn": 3, "tie": -3, "body": -1 },
+      "job": { "n": "旗本屋敷の女中", "pay": 500, "cat": "service" }, "move": "edo", "away": true,
+      "next": { "in": [2, 5], "node": "yashiki" } },
+    { "k": "stay", "l": "村に残る", "f": ["family"], "w": 1,
+      "say": "{name}は村に残り、和尚の手伝いで子どもに字を教えた。",
+      "fx": { "sat": 1, "learn": 1, "tie": 3, "body": 0 },
+      "next": { "in": [3, 7], "node": "home" } }
+  ],
+  "nodes": {
+    "yashiki": {
+      "say": "{name}は奥方の文の代筆を任されるほど信頼された。",
+      "fx": { "sat": 3, "learn": 3, "tie": -1, "body": -1 },
+      "ask": { "title": "大奥への推挙", "text": "奥方の縁で、大奥の御三の間に推挙できると言われた。一生奉公になるかもしれない。どうする？",
+        "opts": [
+          { "k": "go", "l": "大奥へ上がる", "f": ["earn"], "w": 1,
+            "say": "{name}は大奥の御三の間の女中となった。",
+            "fx": { "sat": 3, "learn": 2, "tie": -4, "body": -1 },
+            "job": { "n": "大奥の御三の間", "pay": 800, "cat": "service" },
+            "next": { "in": [5, 10], "node": "top" } },
+          { "k": "stay", "l": "村へ帰る", "f": ["family"], "w": 1,
+            "say": "{name}は見習いを終え、{place}へ帰った。",
+            "fx": { "sat": 2, "learn": 0, "tie": 4, "body": 1 }, "move": "home",
+            "next": { "in": [1, 3], "node": "back" } }
+        ] }
+    },
+    "top": { "say": "{name}は大奥で右筆の仕事にも関わり、達筆で知られる女中になった。",
+      "fx": { "sat": 3, "learn": 3, "tie": -2, "body": -1 } },
+    "back": { "say": "江戸帰りの{name}は良縁を得て、村で手習いを教えながら暮らした。",
+      "fx": { "sat": 4, "learn": 1, "tie": 4, "body": 0 } },
+    "home": { "say": "{name}は寺子屋の女師匠となり、村の娘たちに慕われた。",
+      "fx": { "sat": 4, "learn": 2, "tie": 4, "body": 0 },
+      "job": { "n": "寺子屋の師匠", "pay": 500, "cat": "teacher" } }
+  }
+},
+{
+  "id": "e_naimu_shoki", "title": "大水の報告書",
+  "y": [1890, 1935], "a": [18, 28], "st": ["heimin"], "kind": ["village", "town"], "p": 0.008,
+  "text": "大水の後、{name}は村の被害を田一枚ずつ書き出して県庁へ届けた。視察に来た内務省の技師がその細かさに驚き、「土木の役所で書記をやらないか」と言った。どうする？",
+  "opts": [
+    { "k": "go", "l": "土木出張所に勤める", "f": ["earn"], "w": 1,
+      "say": "{name}は内務省の土木出張所に書記として雇われた。",
+      "fx": { "sat": 2, "learn": 3, "tie": -2, "body": -1 },
+      "job": { "n": "土木出張所の書記", "pay": 500, "cat": "clerk" }, "away": true,
+      "next": { "in": [3, 6], "node": "doboku" } },
+    { "k": "stay", "l": "村の復旧に残る", "f": ["family"], "w": 1,
+      "say": "{name}は村に残り、流された田の復旧に汗を流した。",
+      "fx": { "sat": 2, "learn": 0, "tie": 4, "body": 0 },
+      "next": { "in": [5, 10], "node": "home" } }
+  ],
+  "nodes": {
+    "doboku": {
+      "say": "{name}は堤防工事の帳簿を任され、技師たちから頼りにされた。",
+      "fx": { "sat": 3, "learn": 3, "tie": -1, "body": -1 },
+      "ask": { "title": "本省へ", "text": "東京の内務省本省で、属官として働かないかという話が来た。どうする？",
+        "opts": [
+          { "k": "go", "l": "本省へ行く", "f": ["earn"], "w": 1,
+            "say": "{name}は内務省の属官となり、東京で暮らし始めた。",
+            "fx": { "sat": 3, "learn": 2, "tie": -4, "body": -2 }, "move": "tokyo",
+            "job": { "n": "内務省の属官", "pay": 1000, "cat": "office" },
+            "next": { "in": [5, 10], "node": "top" } },
+          { "k": "stay", "l": "村へ戻る", "f": ["family"], "w": 1,
+            "say": "{name}は出張所を辞め、{place}へ戻った。",
+            "fx": { "sat": 1, "learn": 0, "tie": 4, "body": 1 }, "move": "home",
+            "next": { "in": [2, 5], "node": "back" } }
+        ] }
+    },
+    "top": { "say": "{name}は全国の河川の改修計画をまとめる係で、長年地道に働いた。",
+      "fx": { "sat": 3, "learn": 2, "tie": -2, "body": -1 } },
+    "back": { "say": "{name}は村の水利組合の長となり、二度と田が流されぬよう堤を守った。",
+      "fx": { "sat": 4, "learn": 1, "tie": 4, "body": 0 } },
+    "home": { "say": "{name}が先頭に立って直した田は、数年で元以上の実りをつけた。",
+      "fx": { "sat": 4, "learn": 0, "tie": 4, "body": 1 } }
+  }
+}
+]

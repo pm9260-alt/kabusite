@@ -17,6 +17,8 @@
       if (x.sex && x.sex !== sex) return;
       if (x.age && (a < x.age[0] || a > x.age[1])) return;
       if (!inYears(x.years, y)) return;
+      if (x.place && !(c && c.place && x.place.indexOf(c.place) >= 0)) return; // まれな死因：起きる土地の種類
+      if (x.pref && !(c && c.pref && x.pref.indexOf(String(c.pref)) >= 0)) return; // まれな死因：起きる都道府県（ハブは沖縄・奄美など）
       var w = x.w * ((D.ageMult[x.n] || {})[band(a)] || 1);
       if (Array.isArray(x.kind) && c && c.place && x.kind.indexOf(c.place) < 0) w *= 0.15; // 脚気は町に多い
       if (x.peak && x.peak.years.indexOf(y) >= 0) { var pw = Array.isArray(x.peak.w) ? x.peak.w[x.peak.years.indexOf(y)] : x.peak.w; w = pw * ((D.ageMult[x.n] || {})[band(a)] || 1); }
@@ -71,12 +73,19 @@
     var tot = Object.keys(row).filter(function (k) { return !(k === '卵巣がん' && sex !== 'f') && !(k === '熱中症' && y < 1960); }).reduce(function (s, k) { return s + row[k]; }, 0);
     return row[d] / tot;
   }
+  // 1975年からの人生のまれな死因（毒キノコ・スズメバチ・落雷など）：統計の「その他の事故」の中から、年・年齢・土地で選ぶ（u は選ばれた幅の中の位置）
+  function rareModern(y, a, sex, place, pref, u) {
+    var ks = (D.rare || []).filter(function (r) { return y >= r.y[0] && y <= r.y[1] && a >= r.age[0] && a <= r.age[1] && (!r.sex || r.sex === sex) && (!r.place || r.place.indexOf(place) >= 0) && (!r.pref || r.pref.indexOf(String(pref)) >= 0); });
+    var tot = ks.reduce(function (s, r) { return s + r.w; }, 0), x = u * 60; // その他の事故（人口10万あたりおよそ60）のうち、まれな死因の分
+    for (var i = 0; i < ks.length; i++) { x -= ks[i].w; if (x < 0) return ks[i].n; }
+    return null;
+  }
   // 画面に出す呼び名
   var SHOW = { '胃腸炎（下痢腸炎）': '胃腸炎', 'ほかのがん': 'がん', '肺炎・気管支炎': '肺炎', '肺炎・かぜ': '肺炎', '心臓の病気': '心臓の病気', '自害': '自害', '赤痢・疫痢': '赤痢' };
   // 5歳未満は子どもの呼び方にする（v11の直し 7）。乳児脚気・先天梅毒は当時の赤ちゃんの死因として記録がある
   var CHILD = { '脚気': '乳児脚気', '梅毒': '生まれつきの梅毒' };
   function show(n, a) { return (a != null && a < 5 && CHILD[n]) || SHOW[n] || n; }
-  var API = { pick: pick, weights: weights, show: show, refine: refine, subShare: subShare, eras: D.eras, est: function (y) { var e = eraOf(y); return !!(e && e.est); } };
+  var API = { pick: pick, weights: weights, show: show, refine: refine, subShare: subShare, rareModern: rareModern, rareLine: function (n) { return (D.rareLines || {})[n] || null; }, eras: D.eras, est: function (y) { var e = eraOf(y); return !!(e && e.est); } };
   if (typeof module !== 'undefined' && module.exports) module.exports = API;
   root.IchiokuCauses = API;
 })(typeof self !== 'undefined' ? self : this);
