@@ -1475,9 +1475,22 @@
   }
   // 1900〜1970年の死因の順位の名前を、亡くなり方の書き方の名前に直す
   var CAUSE_MAP = { '肺炎及び気管支炎': '肺炎', '全結核': '結核', '胃腸炎': '胃腸炎', '脳血管疾患': '脳出血', '老衰': '老衰', 'インフルエンザ': 'インフルエンザ', '悪性新生物': 'がん', '心疾患': '心不全', '不慮の事故': 'その他の事故' };
-  function causeOf(L) {
+  function causesMod() {
+    if (typeof self !== 'undefined' && self.IchiokuCauses) return self.IchiokuCauses;
+    if (typeof require === 'function') { try { return require('./causes.js'); } catch (e) { return null; } }
+    return null;
+  }
+  function causeOf(L, rec) {
     var H = L.H, y = Math.max(1900, Math.min(1970, Math.floor(L.year / 10) * 10)), a = L.age;
     if (L.year >= 1975) { var cd = E.pickCause(L.C, a, L.sex, L.year, L.rnd, 'ill'); if (cd) return { n: cd.name, cd: cd }; }
+    // 1974年までは、年代・年齢・男女・土地・飢饉の年で、細かい死因から選ぶ（js/causes.js）
+    var K = causesMod();
+    if (K) {
+      var t = [rec].concat((L.log || []).slice(-1)).map(function (r) { return r ? (r.events || []).map(function (e) { return e.t; }).join('') + ((r.world && r.world.items) || []).map(function (i) { return i.t; }).join('') : ''; }).join('');
+      var famine = /飢饉|凶作|食べるものが|ひもじ/.test(t) || (L.year >= 1945 && L.year <= 1947);
+      var pk = K.pick(L.year, a, L.sex, { place: L.kind, famine: famine }, L.rnd);
+      if (pk) return { n: K.show(pk.n), kind: pk.kind, rank: pk.from ? K.show(pk.from) + '（' + pk.n + 'は細かい病名の推計）' : pk.n, est: K.est(L.year) || !!pk.from };
+    }
     var list = (H.nat.causeRank[y] || H.nat.causeRank[1900] || []).filter(Boolean);
     if (a < 5) return L.year < 1900 && L.rnd() < 0.3 ? { n: '疱瘡・はしか' } : { n: L.rnd() < 0.5 ? '肺炎' : '胃腸炎' };
     if (a >= 80 && L.rnd() < 0.45) return { n: '老衰' };
@@ -1500,18 +1513,21 @@
     var q = clamp(dp(L, L.sex, a, y) * E.bodyMult(L, a), 0, 1);
     if (protectedYear(L)) q = 0;
     if (a > 0 && L.rnd() < q || a >= 110) {
-      var c = causeOf(L);
-      var st = E.deathStory(L, { kind: 'ill', cause: c.n });
+      var c = causeOf(L, rec);
+      var ck = c.kind === 'acc' ? 'acc' : c.kind === 'sui' ? 'sui' : 'ill';
+      var st = E.deathStory(L, { kind: ck, cause: c.n });
       if (L.abroad) st.text = st.text.replace(/(自宅|家|病院|診療所)で亡くなった/, '移り住んだ' + L.abroad + 'の地で亡くなった');
       L.causeName = c.n;
-      dieBy(L, rec, 'ill', st.text, [ev(L, y < 1975 ? 'ipss' : 'lifetable', y, a + '歳の人が1年のうちに亡くなる確率（平均寿命と乳児死亡率から推計）', (q * 100).toFixed(2) + '%', { est: y < 1975 }),
+      if (ck === 'sui') rec.hotline = true;
+      dieBy(L, rec, ck, st.text, [ev(L, y < 1975 ? 'ipss' : 'lifetable', y, a + '歳の人が1年のうちに亡くなる確率（平均寿命と乳児死亡率から推計）', (q * 100).toFixed(2) + '%', { est: y < 1975 }),
         c.cd ? ev(L, 'vital', c.cd.years[c.cd.years.length - 1], 'この年齢の死因のうち「' + c.n + '」の割合（' + c.cd.years[0] + '〜' + c.cd.years[c.cd.years.length - 1] + '年の死亡数から）', pct(c.cd.share)) :
-        ev(L, 'ipss', y < 1900 ? 1900 : Math.min(1970, Math.floor(y / 10) * 10), '死因の順位（' + (y < 1900 ? '1900年より前は1900年の順位を使用' : 'その年代') + '）', c.rank || c.n, { est: y < 1900 })].concat(st.evs));
+        ev(L, 'ipss', y < 1900 ? 1900 : Math.min(1970, Math.floor(y / 10) * 10), '死因の割合（' + (y < 1900 ? '1899年までは寺の過去帳の研究や流行病の記録からの推計' : '人口動態統計の死因別の死亡率（その年代の平均）') + '）', c.rank || c.n, { est: y < 1900 || !!c.est })].concat(st.evs));
       L.log.push(rec);
       return;
     }
     if (a === 0 && q > 0 && L.rnd() < q) {
-      var c0 = y >= 1975 ? (E.pickCause(L.C, 0, L.sex, y, L.rnd, 'ill') || { name: 'その他の病気' }).name : (L.rnd() < 0.5 ? '肺炎' : '胃腸炎');
+      var c0 = y >= 1975 ? (E.pickCause(L.C, 0, L.sex, y, L.rnd, 'ill') || { name: 'その他の病気' }).name : causeOf(L, rec).n;
+      L.causeName = c0;
       dieBy(L, rec, 'ill', E.deathStory(L, { kind: 'ill', cause: c0 }).text, [ev(L, 'ipss', near(L.H.mort.q0, y), '0歳で亡くなる確率（乳児死亡率。1899年以前は江戸時代の研究の目安から推計）', (q * 100).toFixed(1) + '%', { est: y < 1900 })]);
       L.log.push(rec);
       return;

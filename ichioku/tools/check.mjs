@@ -1132,6 +1132,39 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
   rec('v8直し3 1935〜1938年生まれの町の子（' + n3 + '人）で、1944〜1945年に疎開か空襲の出来事・選択が出るか', n3 > 0 && ok3 === n3, miss3.slice(0, 4).join('、'));
 }
 
+/* ---------- 死因を多種多様に（作る人の指示 2026-10-18） ---------- */
+{
+  const K = require(path.join(SITE, 'js', 'causes.js')), Rc = require(path.join(SITE, 'js', 'record.js'));
+  // 1 どの死因にも亡くなり方の文がある（1974年までの死因・細かく分けた病名・2015年からの死因）
+  const names = new Set();
+  for (const e of K.eras) for (const c of e.causes) if (c.kind !== 'sui') names.add(K.show(c.n));
+  for (const n of ['その他の病気', 'がん', 'その他の事故']) for (const a of [0, 20, 60]) for (let u = 0; u < 1; u += 0.01) names.add(K.refine(n, a, 'f', 2000, u));
+  for (const d of C.nat.causeDetail.dist) for (const k of Object.keys(d)) if (k !== '自殺') names.add(k);
+  const noText = [...names].filter(n => !E.COURSE[n]);
+  rec('死因1 どの死因にも、その病気やけがの亡くなり方の文があるか', noText.length === 0, noText.slice(0, 6).join('、') || names.size + '種類');
+  // 2 1000〜2000年生まれの人生で、死因が多種多様か（「病気」「その他の病気」だけの死因がほぼない）
+  const cnt = {}; let nL = 0;
+  for (let s0 = 1; s0 <= (TEST ? 400 : 1200); s0++) {
+    const by = s0 % 2 ? 1000 + (s0 * 1.668 | 0) % 975 : 1930 + (s0 * 7) % 71; let L;
+    if (by >= 1975) L = E.autoRun(E.newLife(C, P[E.pickPref(C, by, E.makeRng(s0 ^ 0x9e3779b9))], { year: by, seed: s0 }));
+    else { const b0 = O.pickBirth(C, H, by, E.makeRng(s0 ^ 0x9e3779b9)); L = O.autoRun(O.newLife(C, H, P[b0.pref] || null, { year: by, seed: s0, birth: b0 })); }
+    const k = Rc.causeText(L); cnt[k] = (cnt[k] || 0) + 1; nL++;
+  }
+  const vague = (cnt['病気'] || 0) + (cnt['その他の病気'] || 0) + (cnt['がん'] || 0) + (cnt['その他の事故'] || 0);
+  const kinds = Object.keys(cnt).length, top = Object.entries(cnt).sort((a, b) => b[1] - a[1]);
+  rec('死因2 死因が多種多様か（' + nL + '人で40種類以上・ひとまとめの死因が2%以下・いちばん多い死因が2割以下）', kinds >= 40 && vague / nL <= 0.02 && top[0][1] / nL <= 0.2, kinds + '種類・ひとまとめ ' + vague + '人・多い順 ' + top.slice(0, 5).map(a => a[0] + ' ' + a[1]).join('、'));
+  // 3 交通事故・脳梗塞・糖尿病・栄養失調が、その時代の死因として選ばれるか
+  const want = { '交通事故': [1970, 60, 'm'], '脳梗塞': [1970, 75, 'm'], '糖尿病': [1965, 70, 'f'], '栄養失調': [1946, 2, 'f'] }, miss = [];
+  for (const [n, [y, a, sx]] of Object.entries(want)) { const w = K.weights(y, a, sx, { place: 'town', famine: y === 1946 }); if (!w.some(x => x.n === n)) miss.push(n); }
+  let modern = 0; for (let s = 1; s <= 300; s++) { const c = E.pickCause(C, 60, 'm', 2010, E.makeRng(s), null); if (c && /交通事故|脳梗塞|糖尿病/.test(c.name)) modern++; }
+  // 4 亡くなり方の文が、画面で丁寧体（です・ます）に直るか
+  globalThis.self = globalThis.self || globalThis;
+  const Pz = require(path.join(SITE, 'js', 'polite.js')), plain = [];
+  for (const [k, v] of Object.entries(E.COURSE)) for (const t of v) { const r = Pz.polite(t + '。'); if (!/(ます|ました|です|でした|ません)。$/.test(r)) plain.push(k + '：' + r); }
+  rec('死因4 亡くなり方の文が、画面で丁寧体（です・ます）に直るか', plain.length === 0, plain.slice(0, 4).join('、'));
+  rec('死因3 交通事故・脳梗塞・糖尿病・栄養失調が、その時代の死因の候補に入っているか', miss.length === 0 && modern > 0, miss.join('、') || '2010年の60歳男性300人中 ' + modern + '人が交通事故・脳梗塞・糖尿病');
+}
+
 /* ---------- S 物語の分かれ道（作る人の指示 2026-10-17） ---------- */
 {
   const Sx = require(path.join(SITE, 'js', 'story.js'));
