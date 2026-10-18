@@ -84,6 +84,8 @@
       if (year >= 1975) { M = E; L = E.newLife(C, P, { year: year, seed: seed }); }
       else { M = O; L = O.newLife(C, H, P, { year: year, seed: seed, birth: x.b }); }
       L.marks = {};
+      // 試験用：?force=shukke で出家の分かれ道を必ず出す（ブラウザの受け入れ試験で使う）
+      try { if (/[?&]force=shukke\b/.test(location.search)) L.testForce = { shukke: 1 }; } catch (e) { /* 読めない環境 */ }
       return makeComps(seed, year).then(function () { return L; });
     });
   }
@@ -275,8 +277,27 @@
     if (window.IchiokuTop && window.IchiokuTop.refresh) window.IchiokuTop.refresh();
   }
   // 生まれる年は1000〜2000年のどの年も同じ確率（作る人の判断 2026-10-16）
-  function born() {
-    var seed = randomSeed();
+  // 同じ年に、同じ国（1974年までは旧国、1975年からは都道府県）でもう一度生まれる（v11の直し 6）。
+  // 人生は種の数だけで作り直せるので、その年・その場所に生まれる種を探す。見つからなければ同じ年だけそろえる
+  function sameAgain() {
+    if (!L) return;
+    var year = L.by, key = L.old ? L.prov : L.home.pref, s0 = randomSeed();
+    (year >= 1975 ? Promise.resolve(null) : getHistory()).then(function (h) {
+      var first = null;
+      for (var i = 0; i < 600000; i++) {
+        var sd = ((s0 + Math.imul(i, 2654435761)) >>> 0) || 1;
+        if (yearOfSeed(sd) !== year) continue;
+        if (first == null) first = sd;
+        var b = year >= 1975 ? E.pickPref(C, year, E.makeRng(sd ^ 0x9e3779b9)) : O.pickBirth(C, h, year, E.makeRng(sd ^ 0x9e3779b9));
+        if ((year >= 1975 ? b : b.prov) === key) { first = sd; break; }
+      }
+      var sn = snapshotG(); if (sn) store('ichioku-prev', sn);
+      clearTimeout(timer); closeSheetQuiet(); L = null; cur = null; houseLives = []; window.scrollTo(0, 0);
+      born(first || undefined);
+    });
+  }
+  function born(fixedSeed) {
+    var seed = typeof fixedSeed === 'number' ? fixedSeed : randomSeed();
     $('born').disabled = true;
     G = { v: 2, seed: seed, year: yearOfSeed(seed), answers: [], marks: [], focus: [], auto: auto };
     houseLives = [];
@@ -388,6 +409,8 @@
     if (e0 == null && K) { var sum = 0; for (var a = 1; a <= 110; a++) sum += K.surv(C, H, L.by, L.sex, a); e0 = sum + 0.5; }
     if (e0 != null) item('その年の平均寿命', '約' + Math.round(e0) + '歳');
     if (K) item('5歳までに亡くなる確率', '約' + Math.round((1 - K.surv(C, H, L.by, L.sex, 5)) * 100) + '%');
+    // 1歳を迎えられない子の割合（v11の直し 6）：始める前に分かっていれば、0歳で終わっても「そういう時代だった」と受け止めやすい
+    if (K) { var q0 = 1 - K.surv(C, H, L.by, L.sex, 1); if (q0 > 0) item('1歳を迎えられない子', Math.max(2, Math.round(1 / q0)).toLocaleString('ja-JP') + '人に1人'); }
     var cl = cmpLine('birth');
     $('bt-cmp').hidden = !cl; $('bt-cmp').textContent = cl ? pol(cl) : '';
     var ul = $('bt-comps'); clear(ul);
@@ -704,7 +727,10 @@
       // ひとこと：いちばん満足が高かった年の出来事
       var best = null;
       lifeCurveData().pts.forEach(function (p) { if (p.label && (!best || p.sat > best.sat)) best = p; });
-      K.end(cv, { L: L, name: dispName(), from: from, to: to, line: best ? 'いちばん良かった年　' + best.age + '歳　' + best.label : '', sat: sat });
+      var co = { L: L, name: dispName(), from: from, to: to, line: best ? 'いちばん良かった年　' + best.age + '歳　' + best.label : '', sat: sat };
+      K.end(cv, co);
+      // 字体（Zen Kaku Gothic New）が読み込まれてから描き直す
+      if (K.ready) K.ready(co).then(function () { K.end(cv, co); });
       cv.setAttribute('aria-label', L.name + 'さんの最期のカード');
       c.appendChild(cv);
       var b = el('button', 'btn-main', navigator.share ? '共有する' : '画像を保存する');
@@ -1334,7 +1360,8 @@
   function endWithMoment() {
     clearTimeout(timer);
     if (!L) return;
-    if (lessMotion()) { showEnd(); return; }
+    // 1歳にならずに亡くなった人生は、亡くなった瞬間の画面を挟まず、死亡記録と1画面にまとめる（v11の直し 6）
+    if (lessMotion() || L.deathAge === 0) { showEnd(); return; }
     showDeath(function () { showEnd(); });
   }
   function deathPlace() { return L.old ? O.placeLabel(L) : (L.place.away ? L.place.prefName : L.place.prefName + L.place.muniName); }
@@ -1361,6 +1388,9 @@
       g.appendChild(d);
     }
     // 項目の並びは原作の死亡記録と同じ：最終学歴・最後の仕事・ともに生きた人・最期を見送った人・いちばん幸せだった年・暮らした土地・遺した財産・大人になってから時間を注いだこと
+    var baby = L.deathAge === 0;
+    $('screen-end').classList.toggle('infant', baby);
+    if (baby) { $('rc-reflect-box').hidden = true; $('rc-again').onclick = null; return; }
     item('最終学歴', r.edu || (L.deathAge < 6 ? '—' : '学校には通わなかった'));
     item('最後の仕事', r.job || '—');
     var sp = L.members.filter(function (m) { return m.role === '配偶者' || m.role === 'パートナー'; }).slice(-1)[0];
@@ -1368,7 +1398,7 @@
     var gk = L.members.filter(function (m) { return m.role === '孫' && !m.gone && m.by <= L.deathYear; }).length;
     if ((sp && L.everMarried) || kids) {
       var tw = el('div', 'rc-item'); tw.appendChild(el('dt', null, 'ともに生きた人'));
-      if (sp && L.everMarried) { var end = sp.dy != null && !sp.alive ? Math.min(sp.dy, L.deathYear) : L.deathYear; tw.appendChild(el('dd', null, (sp.role === 'パートナー' ? 'パートナー ' : sp.sex === 'm' ? '夫 ' : '妻 ') + sp.name)); if (L.marriedY) tw.appendChild(el('dd', 'rc-subv', Math.max(1, end - L.marriedY) + '年をともに')); }
+      if (sp && L.everMarried) { var end = sp.dy != null && !sp.alive ? Math.min(sp.dy, L.deathYear) : L.deathYear; if (L.shukkeY && L.shukkeY < end) end = L.shukkeY; tw.appendChild(el('dd', null, (sp.role === 'パートナー' ? 'パートナー ' : sp.sex === 'm' ? '夫 ' : '妻 ') + sp.name)); if (L.marriedY) tw.appendChild(el('dd', 'rc-subv', Math.max(1, end - L.marriedY) + '年をともに' + (L.shukkeY === end ? '（出家するまで）' : ''))); }
       if (kids) { tw.appendChild(el('dd', null, '子ども ' + kids + '人')); if (gk) tw.appendChild(el('dd', 'rc-subv', '孫' + gk + '人')); }
       g.appendChild(tw);
     }
@@ -1494,7 +1524,14 @@
     $('house-block').hidden = all.length < 2;
     all.forEach(function (h) { hl.appendChild(el('li', null, lifeLine(h))); });
     var MM = L.old ? O : E, cands = MM.childCandidates(L).concat(MM.heirCandidates(L));
+    // 1歳にならずに亡くなった人生は1画面にまとめるので、続きの候補は2人まで（v11の直し 6）
+    if (L.deathAge === 0) cands = cands.slice(0, 2);
     $('kyodai-block').hidden = !cands.length;
+    // 1歳にならずに亡くなり、きょうだいもいないときは、同じ時代を続けて遊べるボタンを出す（v11の直し 6）
+    var sa = $('same-again');
+    sa.hidden = !(L.deathAge === 0 && !cands.length);
+    sa.textContent = '同じ年に、同じ' + (L.old ? '国' : '都道府県') + 'でもう一度生まれる';
+    $('again').className = sa.hidden ? 'btn-main' : 'btn-sub';
     cands.forEach(function (c) {
       var b = el('button', 'btn-sub kyodai-btn' + (c.child ? ' kid' : ''), c.later ? c.role + '（' + c.later + '年後に生まれる）として生きる' : (c.child ? '子の' : '') + c.role + ' ' + c.name + '（' + c.age + '歳・' + doing(c) + '）として生きる');
       b.type = 'button';
@@ -1588,6 +1625,7 @@
     };
     // 別の時代に生まれる・生まれ変わる：トップに戻らず、すぐ次の人生を始める
     $('again').onclick = rebornNow;
+    $('same-again').onclick = sameAgain;
     $('reborn-top').onclick = rebornNow;
     $('map-open').onclick = openBigMap;
     $('mini4').onclick = openSt;

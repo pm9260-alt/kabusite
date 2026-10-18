@@ -1,13 +1,22 @@
 /* 1000分の1 共有用の画像（最期のカードだけ）
-   1200×630 の横長。ゴシック体・1pxの線だけ・グラデーションや影なし・絵文字なし。
+   1200×630 の横長。字体は Zen Kaku Gothic New（題字「1000分の1」だけ今までのゴシック体）・1pxの線だけ・グラデーションや影なし・絵文字なし。
    画面の明るさの設定にかかわらず、いつも明るい色で描く（共有先で見やすいように）。 */
 (function (root) {
   'use strict';
   var W = 1200, H = 630;
   var BG = '#ffffff', TEXT = '#1a1a1a', SUB = '#555555', RULE = '#c9c9c6', ACCENT = '#0a58a8', SURF = '#f3f3f1', BENI = '#a3132f', ON_BENI = '#ffffff';
-  var FONT = '"Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", Meiryo, sans-serif';
+  var FONT = '"Zen Kaku Gothic New", "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP", "Yu Gothic", Meiryo, sans-serif';
+  var TITLE_FONT = '"Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", Meiryo, sans-serif';
+  var FIXED = '1000分の1–…さんで亡くなったで生まれ、一生の浮き沈み一生の記録　原作「80億分の1」（1in8b.life）の作者の許可を得て制作年〜歳0123456789';
 
   function font(ctx, size, bold) { ctx.font = (bold ? '700 ' : '400 ') + size + 'px ' + FONT; }
+  // 字体の読み込みを待つ（待たないと予備の字体で描かれる）。カードに出る文字の分だけ読み込む
+  function ready(o) {
+    var d = root.document;
+    if (!d || !d.fonts || !d.fonts.load) return Promise.resolve();
+    var t = FIXED + [o && o.name, o && o.from, o && o.to, o && o.line].join('');
+    return Promise.all(['400', '700'].map(function (w) { return d.fonts.load(w + ' 20px "Zen Kaku Gothic New"', t); })).catch(function () { /* 読み込めないときは予備の字体で描く */ });
+  }
   // 幅に収まるまで文字を小さくする（最小 minSize）。それでも入らなければ末尾を「…」にする
   function fit(ctx, text, x, y, maxW, size, bold, color, minSize) {
     var s = size;
@@ -45,7 +54,7 @@
     var ctx = canvas.getContext('2d'), L = o.L, mw = 760;
     base(ctx);
     ctx.fillStyle = BENI; ctx.fillRect(0, 0, W, 88);
-    font(ctx, 34, true); ctx.fillStyle = ON_BENI; ctx.fillText('1000分の1', 48, 58);
+    ctx.font = '700 34px ' + TITLE_FONT; ctx.fillStyle = ON_BENI; ctx.fillText('1000分の1', 48, 58);
     font(ctx, 22, false); ctx.textAlign = 'right'; ctx.fillText('一生の記録　' + L.by + '–' + L.deathYear, W - 48, 56); ctx.textAlign = 'left';
     // ドット絵
     ctx.fillStyle = SURF; ctx.fillRect(W - 48 - 280, 124, 280, 380);
@@ -95,5 +104,5 @@
     });
   }
 
-  root.IchiokuCard = { end: end, share: share, W: W, H: H };
+  root.IchiokuCard = { end: end, ready: ready, share: share, W: W, H: H };
 })(typeof self !== 'undefined' ? self : this);

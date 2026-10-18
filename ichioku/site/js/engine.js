@@ -25,6 +25,7 @@
     service: { name: '飲食・サービス業', job: '飲食やサービスの仕事' }
   };
   var DIRECTION = { office: ['office', 'pub'], tech: ['factory', 'build'], care: ['care'], service: ['service', 'shop'] };
+  var DIR_WORD = { office: '事務や営業', tech: 'ものづくりや技術', care: '医療・福祉・教育', service: '店やサービス' };
 
   /* ---------- 乱数と数表 ---------- */
   function makeRng(seed) {
@@ -185,7 +186,7 @@
   // 戦時中（1938〜1945年）に出せない場面と選択（縁日の夜店・旅人を泊める など。v8の直し 3）
   var WAR_BAN = /綿菓子|金魚すくい|夜店|縁日|旅人|花火大会|海水浴|行楽|物見遊山/;
   var STORY_API = {
-    WAR_BAN: WAR_BAN,
+    WAR_BAN: WAR_BAN, homeLife: function (L) { return homeLife(L); },
     surv5: function (L) { var l = 1; for (var a = 0; a < 5; a++) l *= 1 - deathProb(L.C, L.P, L.sex, a, L.by + a); return l; },
     makeRng: makeRng, gauss: gauss, eraWords: function (t, y) { return eraWords(t, y); }, push: function (L, rec, cat, t, evs) { return push(L, rec, cat, t, evs); }, nameFor: storyName, move: storyMove,
     job: function (L, label, pay, reg, ind) { L.job = { ind: IND[ind] ? ind : (L.job && L.job.ind) || 'service', reg: !!reg, since: L.year, pay: pay, label: label }; L.lastJob = label; L.lastInd = L.job.ind; L.stage = 'work'; },
@@ -570,6 +571,19 @@
     return t;
   }
   // 家を離れている年（出家・旅・奉公・出征）に家族が亡くなったときは、知らせが届いた形で書く
+  // 何年か前に選んだことと結果がつながるときの書き出し（v11の直し 9）：「16歳で決めたとおり、」。同じ年の選択や5年より前の選択には付けない
+  var WORK_RE = /働きに出|働く|働こう|就職|村を出|町に出|集団就職|奉公/, STUDY_RE = /進学|上の学校|受験|大学|勉強を続け/;
+  function asDecided(L, re) {
+    var cs = (L.choices || []).filter(function (c) { return c.y < L.year && L.year - c.y <= 5 && re.test((c.q || '') + (c.l || '')); });
+    var c = cs[cs.length - 1];
+    return c ? c.age + '歳で決めたとおり、' : '';
+  }
+  // 家で暮らしているか（v11の直し 1）。出家・旅・奉公・出征の間は false。
+  // 結婚と再婚・縁談、配偶者や子の名前の入る家の出来事、家の仕事と村の暮らしの場面、家にいる前提のまわりの人の出来事は、すべてここを通して止める
+  var AWAY_MODES = { shukke: 1, tabi: 1, hoko: 1, hei: 1 };
+  function homeLife(L) { return !(L && L.mode && AWAY_MODES[L.mode]); }
+  // 家と村の暮らしに結びついた場面の言葉（家を離れている間は出さない）
+  var HOME_RE = /近所|講を作|お伊勢参り|年貢|田植|稲刈|麦刈|夜なべ|屋根|用水|隣の田|隣の家|同じ村|五人組|寄り合い|村の者|村人|村の衆|家の田|田畑|畑|代官所|名主|庄屋|囲炉裏|台所|家の仕事|家の手伝い|看病|言い争い|夫婦|連れ添/;
   function awayWords(L, cat, t) {
     if (!L.mode || cat !== '家庭' || !t || /知らせ|便り|手紙/.test(t)) return t;
     return t.replace(/(が|、)([^。]*?)亡くなった。/, function (m0, a, b) { return a + b + '亡くなったと、知らせが届いた。'; });
@@ -577,6 +591,8 @@
   function push(L, rec, cat, text, evs, extra) {
     text = eraWords(text, rec && rec.year != null ? rec.year : L.year);
     text = awayWords(L, cat, text);
+    // 人生の記録の文は、すべて「。」で終える（v11の直し 9）
+    if (text && !/。$/.test(text)) text += '。';
     var e = { cat: cat, t: text, ev: evs || [] };
     if (extra) for (var k in extra) e[k] = extra[k];
     rec.events.push(e);
@@ -822,9 +838,11 @@
   function startWork(L, rec, dir, text, auto, outcome) {
     var C = L.C, y = L.year, rnd = L.rnd, P = L.P;
     var ind = L.place.away ? C.nat.indNat : L.place.muniObj.ind;
-    var k;
-    if (dir && DIRECTION[dir] && rnd() < 0.65) k = DIRECTION[dir][Math.floor(rnd() * DIRECTION[dir].length)];
-    else k = pickInd(rnd, ind);
+    var k, miss = null;
+    // 進路で選んだ方向の仕事から引く（v11の直し 5-2）。求人の都合で外れたときは、そのことを文で説明する
+    if (dir && DIRECTION[dir] && rnd() < 0.93) k = DIRECTION[dir][Math.floor(rnd() * DIRECTION[dir].length)];
+    else { k = pickInd(rnd, ind); if (dir && DIRECTION[dir] && DIRECTION[dir].indexOf(k) < 0) miss = DIR_WORD[dir]; }
+    L.jobDir = dir || null; L.jobMiss = !!miss;
     var base = val(C.nat.nonreg, y) / 100;
     var eduF = L.edu === '大学' ? 0.8 : 1.15;
     var sexF = L.sex === 'm' ? 0.7 : 1.3;
@@ -841,8 +859,8 @@
       ev(C, 'jobs', nv(C.nat.jobs, y).y, P.name + 'のこの年の有効求人倍率', jrPref.toFixed(2) + '倍', { est: true }),
       ev(C, 'labor', nv(C.nat.nonreg, y).y, '25〜34歳で非正規で働く人の割合', pct(base))
     ];
-    if (text) { push(L, rec, '学歴と仕事', text + jobText(L, k, reg, jrPref), evs); return; }
-    return { k: k, reg: reg, jr: jrPref, evs: evs };
+    if (text) { push(L, rec, '学歴と仕事', text + (miss ? miss + 'の仕事を目指したが、思うような求人がなく、' : '') + jobText(L, k, reg, jrPref), evs); return; }
+    return { k: k, reg: reg, jr: jrPref, evs: evs, miss: miss };
   }
   function jobText(L, k, reg, jr) {
     var s = '';
@@ -1051,11 +1069,12 @@
       var r = startWork(L, rec, natural ? null : answers.dir, null, natural);
       var school = { univ: '大学', jc: '短大', voc: '専門学校' }[L.school];
       L.school = null;
-      var txt = school ? school + 'を卒業し、' + jobText(L, r.k, r.reg, r.jr) : jobText(L, r.k, r.reg, r.jr);
+      var mt = r.miss ? r.miss + 'の仕事を目指したが、思うような求人がなく、' : '';
+      var txt = school ? school + 'を卒業し、' + mt + jobText(L, r.k, r.reg, r.jr) : mt + jobText(L, r.k, r.reg, r.jr);
       // 学校を出るときに地元へ戻るか（Uターン）
       if (school && L.place.away && rnd() < val(P.s.ret, y)) {
         L.place = { pref: L.home.pref, prefName: L.home.prefName, muni: L.home.muni, muniName: L.home.muniName, kind: homeMuni(L).kind, away: false, muniObj: homeMuni(L) };
-        txt = school + 'を卒業して地元に戻り、' + jobText(L, r.k, r.reg, r.jr);
+        txt = school + 'を卒業して地元に戻り、' + mt + jobText(L, r.k, r.reg, r.jr);
       }
       e = push(L, rec, '学歴と仕事', txt, r.evs.concat([ev(C, 'ipssmig', nv(P.s.ret, y).y, P.name + 'で生まれて県外に出たことのある人のうち、' + P.name + 'に戻って住んでいる人の割合', pct(val(P.s.ret, y)))]));
     } else if (br.id === 'out') {
@@ -1108,7 +1127,7 @@
       L.queue.push(branchJob(L));
       L.gradAge = L.age;
       L.school = 'hs-done';
-      t = '高校を卒業し、' + (away ? L.place.prefName + 'に出て' : '地元で') + '働くことにした。';
+      t = asDecided(L, WORK_RE) + '高校を卒業し、' + (away ? L.place.prefName + 'に出て' : '地元の会社や店で') + '働くことにした。';
       return push(L, rec, '学歴と仕事', t, evs);
     }
     if (path === 'semi') {
@@ -1717,6 +1736,11 @@
     '腫れ物': ['背中にできた腫れ物が膿み、高い熱が続いた'],
     '梅毒': ['長く患った瘡（梅毒）が体の奥まで進み、床から起き上がれなくなった'],
     '胃の病': ['胃の痛みが続き、食べたものを吐くようになった。やがて何も食べられなくなった'],
+    '腹くだし': ['ひどい腹くだしが続き、乳も受けつけなくなった'],
+    'ひきつけ': ['高い熱のあと、ひきつけを起こした。手当てのしようがなかった'],
+    '乳が足りず弱った': ['母の乳の出が悪く、もらい乳もままならず、日に日にやせて弱っていった'],
+    '乳児脚気': ['乳を吐き、手足がむくんで、息が苦しそうになった。乳児脚気だった'],
+    '生まれつきの梅毒': ['生まれたときから肌に湿疹があり、体が弱かった。母からうつった梅毒だった'],
     '疳の病': ['夜泣きと腹下しが続き、やせて弱っていった'],
     '腎炎': ['顔と足がむくみ、尿が出にくくなった。腎臓の病だった'],
     '肝硬変': ['腹が張って黄だんが出た。肝臓の病が進んでいた'],
@@ -1813,6 +1837,9 @@
     return { w: { hospital: '病院', clinic: '診療所', care: '介護施設', nursing: '老人ホーム', home: '自宅', other: '外出先' }[k], share: p[k], y: yy };
   }
   // 最期を見送った家族（生きていて別れていない配偶者・子・孫。いなければ、きょうだい）
+  // 家を離れている間の亡くなった場所と看取り（v11の直し 1）
+  var AWAY_PLACE = { shukke: function (L) { return L.templeName || '寺'; }, tabi: function () { return '旅先の宿'; }, hoko: function () { return '奉公先'; }, hei: function () { return '陣中'; } };
+  var AWAY_SEE = { shukke: '寺の僧たちに看取られた', tabi: '一座の仲間に看取られた', hoko: '奉公先の人たちに看取られた', hei: '同じ隊の仲間に看取られた' };
   function mourners(L) {
     var y = L.year;
     function ok(m) { return m.alive && !m.gone && m.by <= y; }
@@ -1839,6 +1866,8 @@
     } else if (o.kind === 'ill' || o.kind === 'acc') {
       var c = COURSE[name] || COURSE[o.kind === 'acc' ? 'その他の事故' : 'その他の病気'];
       var line = c[Math.floor(rnd() * c.length)];
+      // 家を離れている間は、家族や村の暮らしの出てくる言い方を、その場の言い方に変える
+      if (!homeLife(L)) line = line.replace(/^村に/, 'あたりに').replace(/看病していた家族/g, '看病してくれた人').replace(/家族/g, 'まわりの人');
       if (name === '転倒・転落') line = a >= 65 ? '家の中で転んで頭を強く打った' : '仕事中に高い所から落ちた';
       if (name === '溺れる事故' && a >= 65 && y >= 1960) line = '入浴中に意識を失い、湯船で溺れた';
       if (name === '窒息' && a < 2) line = '寝ている間に息ができなくなった';
@@ -1852,14 +1881,15 @@
     if (o.kind === 'ill') {
       var pl = placeOfDeath(C, y, rnd, o.kind);
       if (pl) {
-        parts.push(pl.w + 'で亡くなった');
+        parts.push((AWAY_PLACE[L.mode] ? AWAY_PLACE[L.mode](L) : pl.w) + 'で亡くなった');
         if (!pl.est) evs.push(ev(C, 'vital', pl.y, '亡くなった場所の割合（' + pl.w + '）', pct(pl.share)));
         else evs.push(ev(C, 'vital', 1951, '亡くなった場所の割合（1951年は自宅82.5%。それより前の統計はない）', '', { est: true }));
       }
     }
     if (o.kind !== 'war' && o.kind !== 'disaster' || o.withFamily) {
-      var ms = mourners(L);
-      if (ms.length && (!sudden || rnd() < 0.4)) parts.push(ms.map(whoName).join('、') + 'に看取られた');
+      var ms = homeLife(L) ? mourners(L) : [], aw = AWAY_SEE[L.mode];
+      if (aw) parts.push(aw);
+      else if (ms.length && (!sudden || rnd() < 0.4)) parts.push(ms.map(whoName).join('、') + 'に看取られた');
       else if (ms.length) parts.push('家族は最期に間に合わなかった');
       else parts.push('最期を看取る家族はいなかった');
     }
@@ -2003,7 +2033,7 @@
     pickPref: pickPref, newLife: newLife, step: step, resolve: resolve, autoRun: autoRun,
     cohort: cohort, majorTimeline: majorTimeline, familyList: familyList, fill: fill, sceneOk: sceneOk,
     pickCause: pickCause, deathStory: deathStory, COURSE: COURSE, ev: ev, askFor: askFor, answerAsk: answerAsk, ASK_AGES: ASK_AGES,
-    storyMod: storyMod, jobsMod: jobsMod, eraWords: eraWords, awayWords: awayWords, WAR_BAN: WAR_BAN, storyName: storyName, namesMod: namesMod, withPool: withPool,
+    storyMod: storyMod, jobsMod: jobsMod, eraWords: eraWords, awayWords: awayWords, asDecided: asDecided, WORK_RE: WORK_RE, STUDY_RE: STUDY_RE, homeLife: homeLife, HOME_RE: HOME_RE, WAR_BAN: WAR_BAN, storyName: storyName, namesMod: namesMod, withPool: withPool,
     statusYear: statusYear, bodyMult: bodyMult, moneyYear: moneyYear, autoAnswer: autoAnswer, FOCUS: FOCUS, yearKind: yearKind, MAP_KINDS: MAP_KINDS, ST_KEYS: ST_KEYS, ST_NAMES: ST_NAMES
   };
 });

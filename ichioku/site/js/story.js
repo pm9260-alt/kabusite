@@ -66,7 +66,7 @@
       noJob: function () { api.noJob(L); },
       marry: function (k) { api.marryBoost(L, k); },
       move: function (where) { api.move(L, where); if (where === 'home') L.mode = null; },
-      mode: function (m) { L.mode = m; },
+      mode: function (m) { L.mode = m; L.modeSince = L.year; },
       base: function (k, v) { s.base[k] += v; },
       p: function (x) { return s.r() < x; },
       tr: function (k) { return s.tr[k]; },
@@ -670,7 +670,7 @@
       else if (o === 'boat') { if (c.p(0.12)) { c.job('ボートレーサー', 19000, false, 'service'); c.say('倍率20倍を超える試験に受かり、1年の訓練を経てボートレーサーとしてデビューした。', { sat: 14 }, '学歴と仕事'); } else c.say('養成所の試験を受けたが、落ちた。悔しくて、その夜は眠れなかった。', { sat: -5 }, '学歴と仕事'); }
       else { c.s.f.shogi = c.y; c.say('奨励会に入った。26歳までに四段に上がれなければ、プロにはなれない。', { learn: 6 }, '学歴と仕事'); c.later(10 - Math.floor(c.r() * 3), 'narrow.shogi'); }
     },
-    no: function (c) { c.say('迷ったすえ、普通に進学することにした。', { sat: -1 }); c.s.f.narrowNo = true; }
+    no: function (c) { c.say(({ sumo: '相撲部屋', boat: 'ボートレーサーの養成所', shogi: '将棋の奨励会' }[c.s.narrow] || 'その道') + 'に進むのはやめ、迷ったすえ、普通に進学することにした。', { sat: -1 }); c.s.f.narrowNo = true; }
   } });
   N['narrow.sumo'] = function (c) {
     if (!c.L.alive) return;
@@ -730,7 +730,7 @@
     return true;
   }, res: {
     go: function (c) { c.say(c.s.lateWhat + 'に通い始めた。' + (c.s.f.dreamDrop || c.s.f.dreamSide ? '若いころにしまった夢の続きを、ようやく始められた気がした。' : '新しい仲間ができた。'), { sat: 8, tie: 6, learn: 4 }); c.base('sat', 3); },
-    no: function (c) { c.say('家で過ごす時間を楽しむことにした。', { sat: 1 }); }
+    no: function (c) { c.say((c.s.lateWhat || '習いごと') + 'に通うのはやめ、家で過ごす時間を楽しむことにした。', { sat: 1 }); }
   } });
 
   /* ========== 昔の暮らし（江戸・幕末明治・大正昭和） ========== */
@@ -1207,13 +1207,51 @@
   } });
   N['geino.big'] = function (c) { if (c.L.alive) { c.job(c.s.mode + '（名の知れた芸人）', 4000, false, 'craft'); c.say('都の有力者の目に留まり、屋敷の宴に呼ばれるほどになった。', { sat: 10 }, '学歴と仕事'); } };
 
+  // 寺の名前（v11の直し 3）：その時代にあった宗派と、よくある寺の名前から選ぶ。国ごとに選び方をずらし、同じ国で続けて同じ名前になりにくくする
+  var TEMPLES = [
+    { sect: '天台宗', from: 1000, n: ['観音寺', '薬王寺', '延命寺', '安楽寺', '普門寺', '常楽寺', '円通寺', '宝積寺'] },
+    { sect: '真言宗', from: 1000, n: ['地蔵院', '金剛院', '不動院', '福寿院', '宝泉寺', '大日寺', '遍照院', '観音院'] },
+    { sect: '浄土宗', from: 1175, n: ['阿弥陀寺', '浄土寺', '西方寺', '来迎寺', '称名寺', '極楽寺', '浄福寺', '光明寺'] },
+    { sect: '浄土真宗', from: 1224, n: ['願行寺', '西念寺', '光照寺', '専称寺', '西光寺', '正覚寺', '明福寺', '教行寺'] },
+    { sect: '臨済宗', from: 1191, n: ['瑞雲寺', '竜興寺', '長松寺', '宝林寺', '慈眼寺', '興禅寺', '大林寺', '龍泉寺'] },
+    { sect: '曹洞宗', from: 1227, n: ['永昌寺', '雲龍寺', '長福寺', '洞雲寺', '大雄寺', '清涼寺', '桂林寺', '泉竜寺'] },
+    { sect: '日蓮宗', from: 1253, n: ['妙法寺', '本覚寺', '妙蓮寺', '妙覚寺', '本立寺', '法華寺', '妙伝寺', '本行寺'] }
+  ];
+  function templeOf(c) {
+    var y = c.y, ok = TEMPLES.filter(function (t) { return y >= t.from; });
+    var t = ok[Math.floor(c.r() * ok.length)];
+    var k = (String(c.L.prov || c.L.pref || '').split('').reduce(function (h, ch) { return h * 31 + ch.charCodeAt(0) >>> 0; }, 7) + c.L.by) % t.n.length;
+    return { sect: t.sect, n: t.n[(k + Math.floor(c.r() * t.n.length)) % t.n.length] };
+  }
+  // 寺での暮らし（v11の直し 2）：宗派と時代と飢饉の年で選ぶ。1年に1つ以上出せるだけ用意する
+  function templeLines(c, famine) {
+    var L = c.L, y = c.y, sect = L.templeSect || '', tn = L.templeName || '寺', out = [
+      '朝の勤行のあと、寺の庭を掃き清めた。', '経を写す手が、少しずつ速くなった。', '檀家の人たちから「' + L.name.replace(/（.*?）/g, '') + 'さま」と呼ばれるようになった。', '寺を訪ねてきた人の話を、黙って聞いた。',
+      '檀家の葬儀を務め、夜遅くまで経を読んだ。', '檀家の法事に呼ばれ、遠くの村まで歩いた。', '托鉢に出て、家々の門口で経を唱えた。',
+      '大風で傷んだ本堂の普請に、檀家の人たちが集まった。', '冬の朝、冷たい水で身を清めてから勤行に立った。', '盆の施餓鬼の法要で、大勢の人が寺に集まった。',
+      '春の彼岸の法要を務めた。', '夜明け前に鐘をつき、一日が始まった。', '寺の畑で、自分たちの食べる菜を育てた。',
+      '新しく入った若い僧に、経の唱え方を教えた。', '弟子をとった。' + (c.s.deshi = c.s.deshi || c.name('m')) + 'という、まだ十にもならない子だった。', '師の僧が病に伏し、そばで看取りの支度をした。',
+      tn + 'の古い仏像の前で、長い時間を過ごした。', '寺の蔵の経典に、虫干しのため風を通した。', '山の上の奥の院まで、一日がかりで歩いた。',
+      '亡くなった人の名を、一人ずつ過去帳に書き入れた。', '寺の門前で、行き倒れの旅人を介抱した。'];
+    if (/天台|真言/.test(sect)) out.push('病の平癒を願う人に頼まれ、加持祈祷を行った。', '本山の' + (sect === '天台宗' ? '比叡山' : '高野山') + 'へ上り、しばらく修行を重ねた。', '護摩をたき、村の五穀豊穣を祈った。');
+    if (/浄土/.test(sect)) out.push('集まった人たちと、声をそろえて念仏を唱えた。', '念仏の教えを聞きに、遠くの村からも人が来た。');
+    if (/臨済|曹洞/.test(sect)) out.push('夜更けまで坐禅を組んだ。', '師から公案を与えられ、何日も考え続けた。', '雲水として、よその寺を訪ねて修行した。');
+    if (sect === '日蓮宗') out.push('太鼓を打ちながら、題目を唱えて歩いた。', '辻に立ち、通る人に教えを説いた。');
+    if (y >= 1640 && y <= 1871) out.push('宗門改めの時期になり、檀家の寺請証文を書いた。', '人別帳に載せるため、檀家の家の者を一人ずつ確かめた。');
+    if (y >= 1700 && y <= 1872) out.push('寺子屋を開き、近所の子どもたちに字と算盤を教えた。');
+    if (y >= 1868 && y <= 1872) out.push('神仏分離の触れが出て、寺の仏像や経典を壊す騒ぎが近くの村にまで及んだ。');
+    if (famine) out.push('飢饉で食べるものがなく、寺の蔵の米で炊き出しをした。');
+    if (c.a >= 50) out.push('寺の跡を誰に継がせるか、考えるようになった。', '若い僧たちに、自分の知る作法を残らず伝えた。');
+    return out;
+  }
+
   // 43 出家・遁世（すべての時代）
   //   型：出家・遁世（『源氏物語』『平家物語』、『徒然草』）
   arc({ id: 'shukke', start: function (c) {
     var L = c.L;
     if (c.s.done.shukke || !c.O || c.y > 1870 || L.status === 'priest' || L.status === 'ainu' || c.a < 30 || c.a > 65) return false;
     var why = L.married && L.spouse && !L.spouse.alive ? '連れ合いを亡くし、' : (L.members || []).some(function (m) { return m.role === '子' && !m.alive && m.dy >= c.y - 1; }) ? '子を亡くし、' : null;
-    if (!c.p(why ? 0.12 : 0.006)) return false;
+    if (!(L.testForce && L.testForce.shukke) && !c.p(why ? 0.12 : 0.006)) return false;
     c.ask('shukke', '出家', (why || '世の中の無常を感じ、') + '髪を下ろして仏の道に入ろうかと考えるようになった。', [
       { k: 'go', l: '出家する', w: 0.4 + Math.max(0, -c.tr('soc')) * 0.5 + (why ? 0.6 : 0), f: ['study', 'body'] },
       { k: 'no', l: '俗世にとどまる', w: 1.2, f: ['family', 'earn', 'save'] }
@@ -1221,12 +1259,14 @@
     return true;
   }, res: {
     go: function (c) {
-      var L = c.L, tn = ['西光寺', '円通寺', '長福寺', '光明寺', '宝泉寺', '常楽寺', '大林寺', '龍泉寺', '正覚寺', '浄福寺'][Math.floor(c.r() * 10)];
+      var L = c.L, tp = templeOf(c), tn = tp.n;
+      L.templeSect = tp.sect;
       var sp = spouseOf(L), kids = (L.members || []).some(function (m) { return m.role === '子' && m.alive && !m.gone && c.y - m.by < 18; });
-      c.job('僧（' + tn + '）', 800, false, 'temple'); c.mode('shukke');
-      L.selfJob = { cat: 'temple', n: '僧（' + tn + '）', d: '寺で経を読み、修行と勤行に励む' }; L.lastJob = L.selfJob.n; L.templeName = tn;
+      var bz = L.sex === 'f' ? '尼' : '僧';
+      c.job(bz + '（' + tn + '）', 800, false, 'temple'); c.mode('shukke');
+      L.selfJob = { cat: 'temple', n: bz + '（' + tn + '）', d: '寺で経を読み、修行と勤行に励む' }; L.lastJob = L.selfJob.n; L.templeName = tn; L.shukkeY = c.y;
       if (c.api.move && L.old) c.api.move(L, { prov: L.prov });
-      if (sp || kids) c.say(c.p(0.5) ? (L.sex === 'm' ? '妻' : '夫') + (kids ? 'と子' : '') + 'を' + (L.sex === 'm' ? '妻の実家に' : '夫の家に') + '預け、' + tn + 'に入ることにした。' : (L.sex === 'm' ? '妻' : '夫') + (kids ? 'と子' : '') + 'は' + tn + 'の近くの村に住まわせ、ときおり様子を聞くことにした。', { tie: -3 }, '人間関係'); c.say('髪を下ろし、山あいの寺に入った。朝夕の勤行の鐘の音が、少しずつ心を静めてくれた。', { sat: 4, tie: -6, learn: 4 }, '家庭'); },
+      if (sp || kids) c.say(c.p(0.5) ? (L.sex === 'm' ? '妻' : '夫') + (kids ? 'と子' : '') + 'を' + (L.sex === 'm' ? '妻の実家に' : '夫の家に') + '預け、' + tn + 'に入ることにした。' : (L.sex === 'm' ? '妻' : '夫') + (kids ? 'と子' : '') + 'は' + tn + 'の近くの村に住まわせ、ときおり様子を聞くことにした。', { tie: -3 }, '人間関係'); c.say('髪を下ろし、' + tp.sect + 'の' + tn + 'に入った。朝夕の勤行の鐘の音が、少しずつ心を静めてくれた。', { sat: 4, tie: -6, learn: 4 }, '家庭'); },
     no: function (c) { c.say('家族の顔を思い浮かべ、俗世にとどまった。', { tie: 2 }); }
   } });
 
@@ -1327,7 +1367,7 @@
     else c.say('検非違使に捕らえられ、遠い国へ流された。', { sat: -16, tie: -10, body: -6 }, '人間関係');
   };
 
-  // 49 重い年貢から逃げる（逃散）
+  // 49 高い年貢から逃げる（逃散）
   //   型：重税と逃亡（『万葉集』の貧窮問答歌、大河『平清盛』）・逃散と借金（大河『おんな城主 直虎』『鎌倉殿の13人』）
   arc({ id: 'chosan', start: function (c) {
     var L = c.L;
@@ -1418,7 +1458,7 @@
       c.say(c.s.mode + 'の親方に弟子入りした。最初の数年は掃除と道具の手入ればかりで、仕事に触らせてもらえなかった。', { learn: 6, tie: -2 }, '学歴と仕事');
       c.later(8 + Math.floor(c.r() * 4), 'shokunin.next');
     },
-    no: function (c) { c.say('家の仕事を手伝うことにした。', null); }
+    no: function (c) { c.say((c.s.mode || '職人') + 'の親方への弟子入りは断り、家の仕事を手伝うことにした。', null); }
   } });
   N['shokunin.next'] = function (c) {
     if (!c.L.alive) return;
@@ -1770,6 +1810,7 @@
     if (w.kind && w.kind.indexOf(c.kind) < 0) return false;
     // 家を離れている年（出家・旅・奉公・出征）は、その状態のための選択だけ出す（家の中の選択は出さない）
     if (L.mode && !(w.mode && w.mode.indexOf(L.mode) >= 0)) return false;
+    if (w.mode && (w.mode.indexOf(L.mode) < 0 || L.modeSince === y)) return false; // その状態にいる人だけ。家を離れたその年は、まだその場での選択を出さない
     if (w.poor && !c.poor()) return false;
     if (w.heirOnly && !(L.heir || (!L.old && L.sex === 'm'))) return false;
     if (w.unmarried && L.married) return false;
@@ -1808,7 +1849,7 @@
     }
     // 1944〜1945年の町の国民学校の子には、学童疎開の選択を必ず出す（v8の直し 3）
     var sokaiKid = c.y >= 1944 && c.y <= 1945 && a >= 6 && a <= 12 && (c.kind === 'city' || c.kind === 'town') && !s.sokaiSeen;
-    if (!sokaiKid && !c.p(a <= 5 ? 0.5 : 0.6)) return;
+    if (!sokaiKid && !c.p(a <= 5 ? 0.5 : 0.75)) return; // 大人の年の選択を1年に0.5回以上に（v11の直し 4）
     c.ev = bigEv(c); c.ind = indOf(c);
     s.labUse = s.labUse || {}; s.nC = s.nC || 0; s.nU = s.nU || 0;
     var pref = String(c.L.old ? c.L.pref : (c.L.place || {}).pref), elite = ['bushi', 'kuge', 'priest'].indexOf(c.st) >= 0;
@@ -1891,7 +1932,9 @@
     }
     var P = people(c);
     var after = o ? fillT((o.options.filter(function (x) { return x.k === opt.k; })[0] || {}).after, P) : null;
-    var t = after || (d.kind === 'parent' ? '親は、' + opt.l + 'ことにした。' : opt.l + 'ことにした。');
+    // 答えだけの「〜ことにした。」は出さない（v11の直し 9）。after がない選択肢は、問いの最初の文を添えて、何について決めたかが分かる文にする
+    var q1 = fillT(String((o && (o.texts || [o.text])[0]) || '').split('。')[0], P).replace(/(かどうか|か)?(迷っている|考えている|悩んでいる)$/, '').replace(/[？?]$/, '');
+    var t = after || (q1 ? q1 + '。' + (d.kind === 'parent' ? '親は考えた末、' : '考えた末、') + opt.l + 'ことにした。' : (d.kind === 'parent' ? '親は、' : '') + opt.l + 'ことにした。');
     c.say(t, fx || {}, d.kind === 'parent' ? '家庭' : '人間関係');
   }
 
@@ -1929,7 +1972,7 @@
     var L = c.L, s = c.s;
     if (s.persona || L.inherited) return;
     var key = c.E ? 'modern' : (L.status === 'genin' || L.status === 'outcast' || L.status === 'buraku' ? 'hyakusho' : L.status);
-    if (key === 'heimin' && c.y >= 1946) key = 'modern';
+    if ((key === 'heimin' || key === 'shizoku' || key === 'kazoku') && c.y >= 1946) key = 'modern'; // 戦後の生まれに族籍の人物像を出さない（v11の直し 5-1）
     var list = PERSONA[key];
     if (!list) { s.persona = '-'; return; }
     var p = one(c.r, list);
@@ -1995,6 +2038,12 @@
     hei: ['陣中で、粥をすすりながら夜を明かした。', '国元の家族に宛てて、短い便りを書いた。', '仲間が戦で傷つき、肩を貸して陣に戻った。'],
     shukke: ['朝の勤行のあと、寺の庭を掃き清めた。', '経を写す手が、少しずつ速くなった。', '寺を訪ねてきた人の話を、黙って聞いた。']
   };
+  var MODE_MORE = {
+    tabi: ['一座の長に「{me}、今日の舞はよかった」とほめられた。', '{prov}の見物人から、「{me}」と名を呼ばれるようになった。', '{prov}の城下で、大きな芝居小屋に呼ばれた。', '一座の荷車の車輪が外れ、皆で直した。', '{prov}の茶屋の娘に、舞をほめられた。', '雪で道がふさがり、{prov}の寺の軒先で夜を明かした。', '一座の若い者に、口上の言い方を教えた。', '祭りの客が少なく、その日は粥だけで過ごした。'],
+    hoko: ['番頭に「{me}、よく気がつくな」と言われた。', '店の帳面のつけ方を、番頭から教わった。', '使いに出され、町の道をひとつずつ覚えた。', '主人の家の子の子守りを任された。', '盆と正月の藪入りに、ふるさとの家へ帰った。', '仕事でしくじり、夜遅くまで叱られた。', '新しく入った小僧に、仕事を教える番になった。', '奉公先の祭りの支度を手伝った。'],
+    hei: ['点呼で「{me}」と名を呼ばれ、大きな声で返事をした。', '長い行軍で、足の豆がつぶれた。', '夜の見張りに立ち、寒さに震えた。', '同じ国の出の兵と、ふるさとの話をした。', '陣の外で、炊き出しの煙を見つめた。', '刀や槍の手入れを、毎晩欠かさなかった。'],
+    away: ['町の祭りを、遠くから眺めた。', '同じ長屋の人と、少しずつ言葉を交わすようになった。', '故郷の訛りを、町の人に笑われた。']
+  };
   function modeYear(c, rec) {
     var L = c.L;
     rec.mode = L.mode || null;
@@ -2003,12 +2052,26 @@
       if (c.s.modeEngine && L.mode === 'hoko' && (!L.hoko || L.hoko.done)) { L.mode = null; c.s.modeEngine = false; }
       if (L.mode === 'tabi' && c.api.provs && c.p(0.6)) { var ps = c.api.provs(L); c.api.move(L, { prov: ps[Math.floor(c.r() * ps.length)] }); }
     }
-    if (!L.mode || !MODE_LINES[L.mode] || rec.events.some(function (e) { return e.story; }) || !c.p(0.55)) return;
+    if (!L.mode || !MODE_LINES[L.mode] || rec.events.some(function (e) { return e.story; })) return;
+    // 家を離れている年を空にしない（v11の直し 2）：ほかに自分の出来事がない年は必ず、ある年もときどき、その場での出来事を出す
+    var own = rec.events.some(function (e) { return e.cat !== '時代'; });
+    if (own && !c.p(0.3)) return;
     var prov = L.old && L.H && L.H.prov[L.prov] ? L.H.prov[L.prov].kuni : '旅先';
-    var cand = MODE_LINES[L.mode].map(function (t) { return t.replace('{prov}', prov); }).filter(function (t) { return !(c.s.seen || {})[t]; });
+    var famine = /飢饉|凶作|飢え/.test(rec.events.map(function (e) { return e.t; }).join('') + ((rec.world && rec.world.items) || []).map(function (i) { return i.t; }).join(''));
+    var base = L.mode === 'shukke' ? templeLines(c, famine) : MODE_LINES[L.mode].concat(MODE_MORE[L.mode] || []);
+    var me = String(L.name || '').replace(/（.*?）/g, '');
+    // 同じ型の文は、国の名前が違っても1回だけ（出しきるまで）
+    var tm = {}, all = base.filter(function (t) { return me || t.indexOf('{me}') < 0; }).map(function (t) { var f = t.replace('{prov}', prov).replace('{me}', me); tm[f] = t; return f; }), seen = c.s.seen = c.s.seen || {};
+    var cand = all.filter(function (t) { return !seen[t] && !seen['tm:' + tm[t]]; });
+    // 出しきったら、直近に出したもの以外からまた選ぶ
+    if (!cand.length) { var last = c.s.lastMode || []; cand = all.filter(function (t) { return last.indexOf(t) < 0; }); }
     if (!cand.length) return;
+    // 名前の入った出来事が少ない人生では、名前を呼ばれる場面を先に選ぶ（第2弾の6）
+    var logs = L.log || [], named = logs.filter(function (r) { return (r.events || []).some(function (e) { return me && e.t.indexOf(me) >= 0; }); }).length;
+    var withMe = me ? cand.filter(function (t) { return t.indexOf(me) >= 0; }) : [];
+    if (withMe.length && logs.length && named / logs.length < 0.3) cand = withMe;
     var t = cand[Math.floor(c.r() * cand.length)];
-    (c.s.seen = c.s.seen || {})[t] = 1;
+    seen[t] = 1; seen['tm:' + tm[t]] = 1; c.s.lastMode = (c.s.lastMode || []).concat([t]).slice(-6);
     c.say(t, null, L.mode === 'tabi' || L.mode === 'away' ? '地域' : '学歴と仕事');
   }
 
@@ -2157,6 +2220,8 @@
   function palYear(c) {
     var L = c.L, s = c.s, a = c.a, y = c.y;
     if (!L.alive || a < 6) return;
+    // 出家・旅・奉公・出征の間は、家にいる前提のまわりの人（幼なじみ・隣の田の仲間）の出来事を出さない（v11の直し 1）
+    if (c.api.homeLife && !c.api.homeLife(L)) return;
     // 幼なじみ
     if (!s.pal && a <= 9) {
       var sx = c.p(0.7) ? L.sex : (L.sex === 'm' ? 'f' : 'm'), tr = PTR[Math.floor(c.r() * PTR.length)];
@@ -2420,8 +2485,12 @@
     kidNew: ['{w}の運動会で、声をからして応援した。', '{w}の受験に、夜食を作って付き合った。', '{w}が、はじめての給料でごちそうしてくれた。', '{w}の結婚相手が、あいさつに来た。'],
     grand: ['孫の{n}を膝に乗せて、昔話をした。', '孫の{n}が、遊びに来てくれた。', '孫の{n}に、お手玉を教えた。'],
     gp: ['{w}の昔話を、いろりのそばで聞いた。', '{w}に、薬草の見分け方を教わった。', '{w}の肩をたたいてあげた。'],
+    away: ['{w}から便りが届いた。', '{w}に宛てて、近ごろの様子を便りに書いた。', '{w}が元気にしていると、便りで知った。', '{w}からの便りを、大事にしまっておいた。'],
     friend: ['幼なじみの{n}と、日が暮れるまで遊んだ。', '近所の{n}と、山へ栗を拾いに行った。', '{n}に、悩みを打ち明けた。', '久しぶりに{n}と会い、昔の話で笑った。', '{n}の家の手伝いに行った。']
   };
+  // 名前の入った出来事の年齢の範囲（v11の直し 9）：幼い子の場面は0〜8歳、子どものころの場面は14歳まで
+  var FAM_AGE = [[/背中で|手を引かれ|背負われ|抱かれ|昔話をしてくれた|数の数え方|額を冷やして|自転車の練習/, 0, 8], [/物置の陰で泣いた|ふかした芋|小さな魚をすくった|鼻緒|運動会|宿題|金魚すくい|誕生日にケーキ/, 0, 14]];
+  function famAgeOk(t, a) { for (var i = 0; i < FAM_AGE.length; i++) if (FAM_AGE[i][0].test(t)) return a >= FAM_AGE[i][1] && a <= FAM_AGE[i][2]; return true; }
   function h32(a, b) { var h = (Math.imul(a >>> 0, 2654435761) ^ Math.imul(b + 1, 40503)) >>> 0; h ^= h >>> 15; h = Math.imul(h, 2246822519) >>> 0; h ^= h >>> 13; return h >>> 0; }
   function famWho(m, L) {
     var r = m.role === '配偶者' ? (m.sex === 'm' ? '夫' : '妻') : m.role === 'パートナー' ? 'パートナー' : m.role === '子' ? (m.sex === 'm' ? '息子' : '娘') : m.role;
@@ -2429,6 +2498,7 @@
   }
   function familyLine(L, rec, api) {
     if (!L.alive || !rec || rec.dead || rec.age < 2) return;
+    var away = api.homeLife && !api.homeLife(L); // 出家・旅・奉公・出征の間は、家族とは便りと訪ねてくることだけ（v11の直し 1）
     var y = rec.year, a = rec.age, ms = (L.members || []).filter(function (m) { return m.alive && !m.gone && !m.before && m.by <= y && m.name && !/アイヌ語/.test(m.name); });
     var names = ms.map(function (m) { return m.name; }).concat([L.name, L.story && L.story.friend]).filter(Boolean);
     var has = function (r) { return (r.events || []).some(function (e) { return names.some(function (n) { return e.t && e.t.indexOf(n) >= 0; }); }); };
@@ -2437,6 +2507,7 @@
     if (hit / yrs >= 0.34) return;
     var hh = h32(L.seed, y), newEra = y >= 1955, cands = [];
     function add(list, m, w) { list.forEach(function (t) { cands.push({ t: t, m: m, w: w }); }); }
+    if (away) ms.forEach(function (m) { if (m.role !== '友' && y - m.by >= 12) add(FAM.away, m, 1); });
     ms.forEach(function (m) {
       var ma = y - m.by;
       if (L.mode) return; // 家を離れている年は、家族との場面を出さない
@@ -2447,8 +2518,9 @@
       else if (m.role === '子' && ma <= 25) { add(FAM.kid.filter(function (t) { return ma <= 1 ? /はじめて/.test(t) : !/自分の足|「おとう」/.test(t); }), m, 1.2); if (newEra && ma >= 6) add(FAM.kidNew, m, 1); }
       else if (m.role === '孫') add(FAM.grand, m, 1);
     });
-    if (!cands.length && L.story && L.story.friend && a >= 5) add(FAM.friend, { name: L.story.friend, role: '友' }, 1);
+    if (!cands.length && !away && L.story && L.story.friend && a >= 5) add(FAM.friend, { name: L.story.friend, role: '友' }, 1);
     if (y >= 1938 && y <= 1945 && api.WAR_BAN) cands = cands.filter(function (x) { return !api.WAR_BAN.test(x.t); });
+    cands = cands.filter(function (x) { return famAgeOk(x.t, a); });
     if (!cands.length) return;
     var used = L.famUsed = L.famUsed || {};
     var free = cands.filter(function (c) { return !used[c.t + c.m.name]; });

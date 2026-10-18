@@ -992,7 +992,7 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
   rec('第3弾3 抽選で出る確率が、その年の人口・出生数の割合と一致するか', share.length === 0, share.slice(0, 4).join('、'));
   // 4 動きを減らす設定で、切り替えの動きを出さないか（ブラウザの検査で確かめる。ここでは仕組みがあるかを見る）
   const aj = fs.readFileSync(path.join(SITE, 'js', 'app.js'), 'utf8'), pj = fs.readFileSync(path.join(SITE, 'js', 'prefs.js'), 'utf8');
-  const ok4 = /if \(lessMotion\(\)\) \{[\s\S]{0,300}lt-v/.test(aj) && /if \(lessMotion\(\)\) \{ showEnd\(\); return; \}/.test(aj) && /ichioku-motion/.test(pj) && /prefers-reduced-motion/.test(pj);
+  const ok4 = /if \(lessMotion\(\)\) \{[\s\S]{0,300}lt-v/.test(aj) && /if \(lessMotion\(\)( \|\| L\.deathAge === 0)?\) \{ showEnd\(\); return; \}/.test(aj) && /ichioku-motion/.test(pj) && /prefers-reduced-motion/.test(pj);
   rec('第3弾4 動きを減らす設定で、抽選と亡くなった瞬間の切り替えの動きを出さないか', ok4, ok4 ? '' : '動きを減らす分かれがない');
 }
 
@@ -1130,6 +1130,92 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
     if (ok) ok3++; else miss3.push(L.by + '年生まれ');
   }
   rec('v8直し3 1935〜1938年生まれの町の子（' + n3 + '人）で、1944〜1945年に疎開か空襲の出来事・選択が出るか', n3 > 0 && ok3 === n3, miss3.slice(0, 4).join('、'));
+}
+
+/* ---------- v11の直し（指示書 ichioku1000-v11-fix-spec2） ---------- */
+{
+  const K = require(path.join(SITE, 'js', 'causes.js')), Rc = require(path.join(SITE, 'js', 'record.js')), CHx = require(path.join(SITE, 'js', 'choices.js'));
+  globalThis.self = globalThis.self || globalThis;
+  const Pz = require(path.join(SITE, 'js', 'polite.js'));
+  const oldLife = (by, seed) => { const b0 = O.pickBirth(C, H, by, E.makeRng(seed ^ 0x9e3779b9)); return O.newLife(C, H, P[b0.pref] || null, { year: by, seed, birth: b0 }); };
+  const newLife = (by, seed) => E.newLife(C, P[E.pickPref(C, by, E.makeRng(seed ^ 0x9e3779b9))], { year: by, seed });
+  // 1〜3 出家した人生（出家の分かれ道を必ず出し、「出家する」を選ぶ）
+  const NS = TEST ? 120 : 200, BAD = /再婚|縁談|後添え|祝言|嫁を迎|婿を迎|年貢|田植え|稲刈り|夜なべ|屋根を葺|用水|隣の田|同じ村の|言い争い|一晩じゅう看病|連れ添/;
+  let ns = 0, yrs = 0, empty = 0; const leak = [], temples = new Set();
+  for (let s0 = 1; ns < NS && s0 < 20000; s0++) {
+    const L = oldLife(1000 + (s0 * 37) % 820, s0); L.testForce = { shukke: 1 }; let g = 0;
+    while (L.alive && g++ < 130) { let r = O.step(L); while (r && r.branch) { const br = r.branch, ans = E.autoAnswer(br, null) || {}; for (const gr of br.groups || []) if (gr.id === 'shukke') ans[gr.id] = 'go'; r = O.resolve(L, br.ask ? { text: '' } : ans); } }
+    const i0 = L.log.findIndex(r => r.mode === 'shukke');
+    if (i0 < 0) continue; ns++; temples.add(L.templeName);
+    for (const r of L.log.slice(i0 + 1)) { yrs++; if (!r.events.length) empty++; for (const e of r.events) if (BAD.test(e.t) && !/知らせ|便り/.test(e.t) && !(e.cat === '健康' && /亡くなった/.test(e.t))) leak.push(L.by + '年生まれ ' + r.year + '年：' + e.t.slice(0, 30)); }
+  }
+  rec('v11直し1 出家した人生（' + ns + '人）で、出家の年より後に再婚・縁談・家族の名前の入った家の出来事・年貢や田の仕事の場面が出ないか', ns >= NS && leak.length === 0, leak.slice(0, 4).join('、'));
+  rec('v11直し2 出家した人生で、出来事が0件の年が1割以下か', yrs > 0 && empty / yrs <= 0.1, (empty / Math.max(1, yrs) * 100).toFixed(1) + '%（' + yrs + '年）');
+  rec('v11直し3 出家した人生で、寺の名前が10種類以上出るか', temples.size >= 10, temples.size + '種類');
+  // 4 20歳以上まで生きた人生の、1年あたりの選択の回数
+  let n4 = 0, ch4 = 0, y4 = 0;
+  for (let s0 = 1; n4 < (TEST ? 200 : 500) && s0 < 6000; s0++) {
+    const by = s0 % 4 === 0 ? 1975 + s0 % 26 : 1000 + (s0 * 1.668 | 0) % 975, L = by >= 1975 ? newLife(by, s0) : oldLife(by, s0), M = L.old ? O : E; let g = 0, cnt = 0;
+    while (L.alive && g++ < 130) { let r = M.step(L); while (r && r.branch) { if (!r.branch.ask) cnt++; r = M.resolve(L, r.branch.ask ? { text: '' } : E.autoAnswer(r.branch, null)); } }
+    if (L.deathAge < 20) continue; n4++; ch4 += cnt; y4 += L.deathAge + 1;
+  }
+  rec('v11直し4 20歳以上まで生きた人生（' + n4 + '人）で、1年あたりの選択の回数が0.5回以上か', ch4 / y4 >= 0.5, (ch4 / y4).toFixed(3) + '回');
+  // 5-1 1948年からの生まれに族籍を出さない
+  const zoku = [];
+  for (let s0 = 1; s0 <= 300; s0++) { const L = oldLife(1948 + s0 % 27, s0), r = O.step(L); const t = r.events.map(e => e.t + (e.ev || []).map(v => v.what || '').join('')).join('') + O.houseWord(L); if (/士族|平民|華族/.test(t)) zoku.push(L.by + '年生まれ'); }
+  rec('v11直し5-1 1948年からの生まれ（300人）の生まれの文に「士族」「平民」「華族」が出ないか', zoku.length === 0, zoku.slice(0, 4).join('、'));
+  // 5-2 進路で選んだ方向と最初の仕事
+  const DIRX = { office: ['office', 'pub'], tech: ['factory', 'build'], care: ['care'], service: ['service', 'shop'] }, DK = Object.keys(DIRX);
+  let n52 = 0, ok52 = 0, ex52 = 0;
+  for (let s0 = 1; n52 < (TEST ? 200 : 500) && s0 < 5000; s0++) {
+    const L = newLife(1975 + s0 % 26, s0); let g = 0, dir = null, first = null;
+    while (L.alive && g++ < 130 && !first) { let r = E.step(L); while (r && r.branch) { const br = r.branch; let ans = br.ask ? { text: '' } : null; if (br.id === 'job') { dir = DK[s0 % 4]; ans = Object.fromEntries(br.groups.map(gr => [gr.id, gr.options[0].k])); ans.dir = dir; } r = E.resolve(L, ans); if (dir && L.job && L.job.ind && !first) first = { k: L.job.ind, miss: L.jobMiss }; } }
+    if (!dir || !first) continue; n52++; if (DIRX[dir].includes(first.k)) ok52++; else if (first.miss) ex52++;
+  }
+  rec('v11直し5-2 就職で選んだ方向と最初の仕事が合う割合が9割以上で、合わないときは文で説明しているか（' + n52 + '人）', ok52 / n52 >= 0.9 && ok52 + ex52 === n52, Math.round(ok52 / n52 * 100) + '%が合う・説明あり ' + ex52 + '人');
+  // 5-3 寄席は1800年から、千歳飴・七五三は1700年から
+  const early = CHx.list.filter(o => o.texts.concat(o.options.map(p => p.l + (p.after || ''))).some(t => (/寄席/.test(t) && o.y[0] < 1800) || (/千歳飴|七五三/.test(t) && o.y[0] < 1700))).map(o => o.id)
+    .concat(H.scenes.filter(sc => (/寄席/.test(sc.t) && (!sc.y || sc.y[0] < 1800)) || (/千歳飴|七五三/.test(sc.t) && (!sc.y || sc.y[0] < 1700))).map(sc => sc.t.slice(0, 15)));
+  rec('v11直し5-3 1800年より前に寄席、1700年より前に千歳飴・七五三の選択や場面が出ないか', early.length === 0, early.join('、'));
+  // 5-4・7・8・9 たくさんの人生の文を見る
+  const half = [], geshi = [], shortL = [], noDot = [], young = [], kidCause = [], sameMove = [];
+  const ADULT = /癪|中風|卒中|難産|産後|^脚気$|労咳|老衰|胃の病|^梅毒$|いくさ|けんか|自害|肝硬変|がん|妊娠・出産|自殺/;
+  for (let s0 = 1; s0 <= (TEST ? 400 : 1000); s0++) {
+    const by = s0 % 3 === 0 ? 1975 + s0 % 26 : 1000 + (s0 * 1.668 | 0) % 975;
+    const L = by >= 1975 ? E.autoRun(newLife(by, s0)) : O.autoRun(oldLife(by, s0));
+    for (const r of L.log) for (const e of r.events) {
+      const t = e.t, pt = Pz.polite(t);
+      if (/[()]/.test(t)) half.push(t.slice(0, 30));
+      if (/百姓（下司）/.test(t)) geshi.push(t.slice(0, 30));
+      if (pt.length <= 20 && /ことにしました。$/.test(pt)) shortL.push(pt);
+      if (!/。$/.test(t)) noDot.push(t.slice(0, 30));
+      if (r.age >= 9 && /手を引かれて|背負われて|抱かれて/.test(t) && !/引いて|背負って|抱いて/.test(t.split(/手を引かれて|背負われて|抱かれて/)[0])) young.push(r.age + '歳：' + t.slice(0, 30));
+    }
+    if (L.deathAge < 5 && ADULT.test(Rc.causeText(L))) kidCause.push(L.deathAge + '歳：' + Rc.causeText(L));
+    if (L.old) { const bp = L.home.label, dp = O.placeLabel(L), sm = Rc.build(L, { birthPlace: bp, deathPlace: dp }).summary.join(''); const m = sm.match(/、?([^、。]+)に移り住んだ。/); if (m && m[1].replace(/（.*?）/g, '') === String(bp).replace(/（.*?）/g, '') && m[1] === bp) sameMove.push(m[1]); }
+  }
+  rec('v11直し5-4 画面に出る文に半角の「(」「)」と「百姓（下司）」が出ないか', half.length === 0 && geshi.length === 0, half.concat(geshi).slice(0, 3).join('、'));
+  // 7 5歳未満の死因（子どもの呼び方）
+  const kidW = [];
+  for (let y = 1000; y <= 1974; y += 3) for (let a = 0; a < 5; a++) for (const sx of ['m', 'f']) for (const fam of [true, false]) for (const x of K.weights(y, a, sx, { place: 'village', famine: fam })) { const n = K.show(x.n, a); if (ADULT.test(n)) kidW.push(y + '年' + a + '歳：' + n); }
+  rec('v11直し7 5歳未満で亡くなる人の死因に、癪・中風・難産など大人の死因が出ないか', kidCause.length === 0 && kidW.length === 0, kidCause.concat([...new Set(kidW)]).slice(0, 4).join('、'));
+  rec('v11直し8 「○○に移り住んだ」の○○が、生まれた土地と同じ呼び名にならないか', sameMove.length === 0, sameMove.slice(0, 3).join('、'));
+  const noAfter = CHx.list.flatMap(o => o.options.filter(p => !p.after).map(p => o.id + '|' + p.k));
+  rec('v11直し9 すべての選択肢に、何について決めたかが分かる「選んだあとの1文」があるか', noAfter.length === 0, noAfter.slice(0, 4).join('、') || CHx.list.length + 'の選択');
+  rec('v11直し9 20字以下の「〜ことにしました。」だけの行が出ないか', shortL.length === 0, [...new Set(shortL)].slice(0, 4).join('、'));
+  rec('v11直し9 9歳以上の人生の記録に「手を引かれて」「背負われて」「抱かれて」が出ないか', young.length === 0, young.slice(0, 3).join('、'));
+  rec('v11直し9 人生の記録のすべての行が「。」で終わるか', noDot.length === 0, noDot.slice(0, 3).join('、'));
+  const noAge = H.scenes.filter(sc => !sc.a).length + C.scenes.filter(sc => !sc.a).length;
+  rec('v11直し9 すべての場面に年齢の範囲があるか', noAge === 0, noAge + '件');
+  // 10 字体（Zen Kaku Gothic New をサイトの中から読み込む）
+  const fdir = path.join(SITE, 'fonts'), fcss = fs.existsSync(path.join(fdir, 'zen-kaku-gothic-new.css')) ? fs.readFileSync(path.join(fdir, 'zen-kaku-gothic-new.css'), 'utf8') : '';
+  const urls = [...fcss.matchAll(/url\(\.\/([^)]+)\)/g)].map(m => m[1]), missing = urls.filter(u => !fs.existsSync(path.join(fdir, u)));
+  const big = fs.readdirSync(fdir).filter(f => fs.statSync(path.join(fdir, f)).size > 25 * 1024 * 1024);
+  const htmls = fs.readdirSync(SITE).filter(f => f.endsWith('.html')), noLink = htmls.filter(f => !/fonts\/zen-kaku-gothic-new\.css/.test(fs.readFileSync(path.join(SITE, f), 'utf8')));
+  const css = fs.readFileSync(path.join(SITE, 'css', 'style.css'), 'utf8'), ext = htmls.concat(['css/style.css']).filter(f => /fonts\.googleapis|fonts\.gstatic/.test(fs.readFileSync(path.join(SITE, f), 'utf8')));
+  const weights = ['400', '700', '900'].filter(wt => !new RegExp('font-weight: ' + wt).test(fcss));
+  rec('v11直し10 字体 Zen Kaku Gothic New（400・700・900）をサイトの中に置き、すべてのページで読み込み、外部の字体サーバーを使わないか', fcss && urls.length > 0 && !missing.length && !big.length && !noLink.length && !ext.length && !weights.length && fs.existsSync(path.join(fdir, 'OFL.txt')) && /--f-zen/.test(css) && /\.top-title \{ font-family: var\(--f-title\)/.test(css),
+    missing.concat(big, noLink, ext, weights).slice(0, 4).join('、') || urls.length + 'ファイル');
 }
 
 /* ---------- 死因を多種多様に（作る人の指示 2026-10-18） ---------- */

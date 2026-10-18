@@ -59,8 +59,9 @@
     if (L.everMarried) {
       var sp = ms.filter(function (m) { return m.role === '配偶者' || m.role === 'パートナー'; }).slice(-1)[0];
       var end = sp && !sp.alive && sp.dy != null ? Math.min(sp.dy, L.deathYear) : L.deathYear;
+      if (L.shukkeY && L.shukkeY < end) end = L.shukkeY; // 出家した年までを連れ添った年に数える
       var yrs = L.marriedY ? Math.max(0, end - L.marriedY) : null;
-      if (sp && sp.name && yrs != null) s.push((sp.sex === 'm' ? '夫' : sp.sex === 'f' ? '妻' : '相手') + 'の' + sp.name + 'と' + (yrs || 1) + '年連れ添った' + (sp.dy != null && sp.dy <= L.deathYear && !sp.alive ? 'のち、先に見送った。' : '。'));
+      if (sp && sp.name && yrs != null) s.push((sp.sex === 'm' ? '夫' : sp.sex === 'f' ? '妻' : '相手') + 'の' + sp.name + 'と' + (yrs || 1) + '年連れ添った' + (L.shukkeY && L.shukkeY === end ? 'のち、出家した。' : sp.dy != null && sp.dy <= L.deathYear && !sp.alive ? 'のち、先に見送った。' : '。'));
       else s.push('結婚した。');
     }
     var kids = ms.filter(function (m) { return m.role === '子' && !m.gone && m.by <= L.deathYear; });
@@ -70,7 +71,7 @@
     }
     var gk = ms.filter(function (m) { return m.role === '孫' && !m.gone && m.by <= L.deathYear; }).length;
     if (gk) s.push('孫' + gk + '人に恵まれた。');
-    if (o.deathPlace && movedOf(L)) s.push(o.deathPlace + 'に移り住んだ。');
+    if (o.deathPlace && movedOf(L)) s.push(movedTo(o.birthPlace, o.deathPlace) + 'に移り住んだ。');
     s.push(a + '歳のとき、' + (L.cause === 'sui' ? '自ら命を絶った。' : causeText(L) + 'で亡くなった。'));
     return s;
   }
@@ -118,6 +119,13 @@
       return g.first + '（のちの' + (pf || g.later) + '）';
     });
   }
+  // 移った先の呼び名（v11の直し 8）：生まれた土地と呼び名が同じなら、今の町名を添える。町名もなければ「同じ○○国の別の村」
+  function movedTo(bp, dp) {
+    if (short(bp) !== short(dp)) return dp;
+    if (dp !== bp && /（/.test(dp)) return dp;
+    var m = short(dp).match(/^(.+?(?:国|道|都|府|県|蝦夷地|琉球))の?(.*)$/);
+    return m ? '同じ' + m[1] + 'の別の' + (m[2] || '土地') : '別の土地';
+  }
   // 生まれた土地から移り住んだか（呼び名ではなく場所のコードで比べる）
   function movedOf(L) {
     var ks = {};
@@ -133,7 +141,7 @@
       best: b ? { age: b.age, year: b.year, sat: b.st.sat } : null, places: pl, job: jobOf(L), edu: L.edu || null
     };
   }
-  var API = { build: build, causeText: causeText, oneLine: oneLine, rankOf: rankOf, places: places, movedOf: movedOf };
+  var API = { build: build, causeText: causeText, oneLine: oneLine, rankOf: rankOf, places: places, movedOf: movedOf, movedTo: movedTo };
   if (typeof module !== 'undefined' && module.exports) module.exports = API;
   root.IchiokuRecord = API;
 })(typeof self !== 'undefined' ? self : this);

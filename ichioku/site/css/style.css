@@ -1,11 +1,14 @@
 /* 1000分の1 画面の見た目
-   原作「80億分の1」の見た目にならう（作る人の指示 2026-10-17）：本文はゴシック体、大きな数字と見出しは明朝体、年齢は等幅。
+   原作「80億分の1」の見た目にならう（作る人の指示 2026-10-17）。字体は作る人の指示（2026-10-18）で、題字「1000分の1」だけ今までのゴシック体、
+   ほかの文字はすべて Zen Kaku Gothic New（サイトの中の fonts/ から読み込む。外部のサーバーにはつながない）。太さは本文400・見出しと強調700・大きな数字900。
    角の丸い白い面を1pxの線で囲む。グラデーション・ぼかし・下線・左側だけの色・絵文字は使わない。
    境界は1pxの線。強調色の意味は画面全体で同じにする。
    --accent：押せるもの（ボタン・リンク・出来事）　--world：その年の世の中　--warn：注意と相談先 */
 :root {
-  --f-display: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif JP", "Noto Serif CJK JP", serif;
-  --f-mono: "IBM Plex Mono", "Hiragino Sans", "Yu Gothic", "Noto Sans JP", ui-monospace, Menlo, monospace;
+  --f-zen: "Zen Kaku Gothic New", "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP", "Yu Gothic", Meiryo, sans-serif;
+  --f-title: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", "YuGothic", Meiryo, sans-serif;
+  --f-display: var(--f-zen);
+  --f-mono: var(--f-zen);
   --stamp: #0f6e68;
   --c-body: #2b7a4e;
   --c-sat: #9c7020;
@@ -158,7 +161,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", "YuGothic", Meiryo, sans-serif;
+  font-family: var(--f-zen);
   font-size: 15px;
   line-height: 1.6;
 }
@@ -198,7 +201,7 @@ button { font: inherit; cursor: pointer; border-radius: 0; }
 .life-head { display: flex; gap: 14px; align-items: center; border-bottom: 1px solid var(--line); padding-bottom: 8px; }
 .avatar { width: 96px; height: 128px; image-rendering: pixelated; image-rendering: crisp-edges; flex: none; background: var(--surface); }
 .end-head { display: flex; gap: 14px; align-items: center; }
-.age { font-size: 40px; font-weight: 700; line-height: 1; min-width: 92px; }
+.age { font-size: 40px; font-weight: 900; line-height: 1; min-width: 92px; }
 .age .unit { font-size: 16px; margin-left: 2px; }
 .when { font-size: 16px; font-weight: 700; }
 .place { font-size: 14px; font-weight: 400; color: var(--sub); }
@@ -235,7 +238,7 @@ button { font: inherit; cursor: pointer; border-radius: 0; }
 .era { display: flex; flex-direction: column; border-top: 1px solid var(--line); }
 .era li { display: flex; gap: 10px; padding: 5px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
 .era .y { min-width: 70px; flex: none; white-space: nowrap; color: var(--sub); }
-.earn-num { font-size: 28px; font-weight: 700; line-height: 1.3; }
+.earn-num { font-size: 28px; font-weight: 900; line-height: 1.3; }
 .ev-link { align-self: flex-start; background: none; border: 0; color: var(--accent); padding: 0; font-size: 13px; font-weight: 600; }
 .end-buttons { display: flex; flex-direction: column; gap: 8px; margin-top: auto; }
 
@@ -395,7 +398,7 @@ button { font: inherit; cursor: pointer; border-radius: 0; }
 .top-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 40px; }
 .top-main { display: flex; flex-direction: column; gap: 22px; min-width: 0; }
 
-.top-title { display: flex; flex-direction: column; margin-top: 18px; font-weight: 800; font-size: min(30vw, 132px); line-height: 0.98; letter-spacing: -0.035em; font-feature-settings: "palt"; color: var(--text); }
+.top-title { font-family: var(--f-title); display: flex; flex-direction: column; margin-top: 18px; font-weight: 800; font-size: min(30vw, 132px); line-height: 0.98; letter-spacing: -0.035em; font-feature-settings: "palt"; color: var(--text); }
 .tt-l1, .tt-l2 { display: block; white-space: nowrap; }
 .tt-one { color: var(--beni); margin-left: 0.04em; }
 .top-catch { font-size: 19px; font-weight: 800; letter-spacing: 0.04em; margin-top: -4px; }
@@ -403,7 +406,7 @@ button { font: inherit; cursor: pointer; border-radius: 0; }
 
 .top-count { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 20px; padding-top: 14px; border-top: 1px solid var(--rule); }
 .tc-item { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-.tc-num { font-size: 46px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.tc-num { font-size: 46px; font-weight: 900; line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
 .tc-birth .tc-num { color: var(--beni); }
 .tc-track { display: block; height: 2px; background: var(--track); position: relative; overflow: hidden; }
 .tc-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--sub); }
@@ -534,7 +537,7 @@ button { font: inherit; cursor: pointer; border-radius: 0; }
 @media (prefers-reduced-motion: no-preference) { .mini-bar span { transition: width .4s ease; } }
 
 .end-fact { display: flex; flex-direction: column; gap: 2px; }
-.big-pct { font-size: 44px; font-weight: 700; line-height: 1.1; }
+.big-pct { font-size: 44px; font-weight: 900; line-height: 1.1; }
 .big-cap { font-size: 14px; color: var(--sub); }
 
 /* ---------- 原作にならった見た目（2026-10-17） ---------- */
@@ -546,7 +549,7 @@ button { border-radius: 8px; }
 /* 上の帯 */
 .o-head { position: sticky; top: 0; z-index: 3; background: var(--bg); padding: 6px 0 10px; margin: 0 -16px; padding-left: 16px; padding-right: 16px; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; }
 .o-age { display: flex; align-items: baseline; gap: 4px; flex-wrap: wrap; }
-.o-num { font-family: var(--f-display); font-size: 40px; font-weight: 700; line-height: 1; }
+.o-num { font-family: var(--f-display); font-size: 40px; font-weight: 900; line-height: 1; }
 .o-unit { font-family: var(--f-display); font-size: 20px; margin-right: 8px; }
 .o-meta { font-size: 13px; color: var(--sub); }
 .o-head .ybar { height: 4px; background: var(--track); border-radius: 2px; overflow: hidden; }
@@ -584,7 +587,7 @@ button { border-radius: 8px; }
 /* 亡くなった瞬間 */
 .death { position: fixed; inset: 0; z-index: 50; background: #0d1316; color: #ece6dc; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 24px 20px; cursor: pointer; }
 .death-body { display: flex; flex-direction: column; gap: 14px; max-width: 420px; }
-.death-h { font-family: var(--f-display); font-size: 40px; font-weight: 700; line-height: 1.3; }
+.death-h { font-family: var(--f-display); font-size: 40px; font-weight: 900; line-height: 1.3; }
 .death-t { font-size: 18px; }
 .death-c { font-size: 15px; color: #b9c4c1; }
 .death-hint { position: absolute; bottom: 28px; left: 0; right: 0; font-size: 14px; color: #a3b2af; }
@@ -617,7 +620,7 @@ button { border-radius: 8px; }
 .lt-k { font-size: 15px; color: var(--sub); }
 .lt-board { width: 100%; max-width: 440px; }
 .lt-board svg { width: 100%; height: auto; display: block; }
-.lt-v { font-family: var(--f-display); font-size: 30px; font-weight: 700; min-height: 1.4em; }
+.lt-v { font-family: var(--f-display); font-size: 30px; font-weight: 900; min-height: 1.4em; }
 .lt-p { font-family: var(--f-display); font-size: 22px; min-height: 1.4em; }
 .bd-cell.hit { fill: var(--accent) !important; }
 /* 生まれの記録 */
@@ -637,3 +640,18 @@ button { border-radius: 8px; }
 .me-l { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--sub); flex: 1; min-width: 130px; }
 .me-l select { font: inherit; font-size: 16px; padding: 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--text); min-height: 44px; }
 .earn-num.num-text { font-size: 20px; line-height: 1.5; }
+
+/* 1歳にならずに亡くなった人生は、死亡記録を1画面にまとめる（v11の直し 6）：続きのボタンを上に、浮き沈み・稼ぎ・移動距離・家系図などは出さない */
+#screen-end.infant #rc-again, #screen-end.infant #rc-reflect-box, #screen-end.infant #rc-line-box, #screen-end.infant .block, #screen-end.infant #end-more, #screen-end.infant .end-credit { display: none; }
+#screen-end.infant .record { gap: 8px; padding: 14px 16px; }
+#screen-end.infant .rc-grid { grid-template-columns: 1fr; }
+#screen-end.infant #rc-no, #screen-end.infant #rc-grid { display: none; }
+#screen-end.infant .next-life { margin: 4px 0 10px; gap: 6px; }
+#screen-end.infant .h-next { font-size: 16px; margin: 0 0 4px; }
+#screen-end.infant .kyodai-list { gap: 6px; }
+#screen-end.infant .next-life .btn-main, #screen-end.infant .next-life .btn-sub { min-height: 48px; padding: 8px 12px; font-size: 15px; }
+#screen-end.infant .record .avatar { width: 36px; height: 48px; }
+#screen-end.infant .record .end-title { font-size: 24px; }
+#screen-end.infant .rc-sum { font-size: 14px; line-height: 1.7; }
+#screen-end.infant .rc-causebox { padding: 10px 12px; }
+#screen-end.infant .rc-cnote { font-size: 12.5px; line-height: 1.65; }

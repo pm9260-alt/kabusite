@@ -73,7 +73,9 @@
   }
   // 画面に出す呼び名
   var SHOW = { '胃腸炎（下痢腸炎）': '胃腸炎', 'ほかのがん': 'がん', '肺炎・気管支炎': '肺炎', '肺炎・かぜ': '肺炎', '心臓の病気': '心臓の病気', '自害': '自害', '赤痢・疫痢': '赤痢' };
-  function show(n) { return SHOW[n] || n; }
+  // 5歳未満は子どもの呼び方にする（v11の直し 7）。乳児脚気・先天梅毒は当時の赤ちゃんの死因として記録がある
+  var CHILD = { '脚気': '乳児脚気', '梅毒': '生まれつきの梅毒' };
+  function show(n, a) { return (a != null && a < 5 && CHILD[n]) || SHOW[n] || n; }
   var API = { pick: pick, weights: weights, show: show, refine: refine, subShare: subShare, eras: D.eras, est: function (y) { var e = eraOf(y); return !!(e && e.est); } };
   if (typeof module !== 'undefined' && module.exports) module.exports = API;
   root.IchiokuCauses = API;
