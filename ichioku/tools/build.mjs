@@ -366,7 +366,7 @@ export function build({ test = false } = {}) {
     goods: goodsOut,
     names: namesOut,
     hotline,
-    scenes: scenes.map(s => ({ ...s, what: s.what || WHAT[s.src] || (sources[s.src] || {}).name || '' }))
+    scenes: scenes.map(s => ({ ...s, what: s.what || WHAT[s.src] || (sources[s.src] || {}).name || '' })).concat((fs.existsSync(path.join(ROOT, 'data-src', 'scenes-late.json')) ? JSON.parse(fs.readFileSync(path.join(ROOT, 'data-src', 'scenes-late.json'), 'utf8')) : []).map(s => ({ ...s, what: s.what || WHAT[s.src] || (sources[s.src] || {}).name || '', late: true })))
   };
   fs.writeFileSync(path.join(OUT, 'common.json'), JSON.stringify(common));
   for (const p of list) {

@@ -293,7 +293,7 @@ const scenesAll = OLD_SCENES.map(s0 => {
   if (s.y && s.y[0] === 1800) s.y = [hit ? hit[1] : (s.y[1] <= 1879 ? 1650 : 1000), s.y[1]];
   else if (!s.y && hit) s.y = [hit[1], 2100];
   return s;
-}).concat(MED_SCENES);
+}).concat(MED_SCENES).concat((fs.existsSync(path.join(ROOT, 'data-src', 'history-scenes-late.json')) ? JSON.parse(fs.readFileSync(path.join(ROOT, 'data-src', 'history-scenes-late.json'), 'utf8')) : []).map(s => ({ ...s, late: true })));
 const erasAll = [...(S.medEras || []), ...ERAS];
 if (!S.medEras) errors.push('元号の一覧（990〜1788年）がない');
 const H = {

@@ -135,6 +135,9 @@
       prov = pick(rnd, cands, function (n) { return H.prov[n].pop1873 * H.prov[n].prefs[pref]; });
       if (H.prov[prov].parent) { sub = prov; prov = H.prov[prov].parent; }
     }
+    // 貴族（公家、明治からは華族）の生まれを5%にする（作る人の指示 2026-10-20）。貴族は都に住んでいたので、1868年までは山城国（京）、
+    // 1869〜1946年は東京に生まれる。生まれる所の抽選のあとに1回だけ引く（ほかの抽選の順番は変えない）
+    if (year <= 1946 && ['47', '01'].indexOf(pref) < 0 && rnd() < KUGE_SHARE) return year < 1869 ? { prov: '山城', sub: null, pref: '26', kuge: true } : { prov: '武蔵', sub: null, pref: '13', kuge: true };
     return { prov: prov, sub: sub || null, pref: pref };
   }
   var prefSeriesCache = {};
@@ -163,6 +166,7 @@
   }
   // 貴族は統計の割合の2倍、武士（明治からの士族）は3倍にする（作る人の判断 2026-10-17、2026-10-19：遊ぶたびに出会いやすく）
   var STATUS_MULT = { kuge: 2, bushi: 3 };
+  var KUGE_SHARE = 0.05;
   // 将軍家・大名家に生まれる（作る人の指示 2026-10-19）。武士の家のうち、将軍家は幕府の置かれた国で、大名家は戦国の世から廃藩置県までの国々で、まれに生まれる。
   // ほかの抽選の順番を変えないよう、別の乱数で決める
   var SHOGUN = [[1192, 1333, '相模', '鎌倉'], [1338, 1573, '山城', '室町'], [1603, 1867, '武蔵', '江戸']];
@@ -326,7 +330,13 @@
     };
   }
   // 親（家）のくわしい仕事（js/jobs.js）。別の乱数で選ぶ
+  // 明治からの華族の家の仕事（公家と大名の家から華族になった人々が就いた役目）
+  var KAZOKU_JOB = [['貴族院の議員', '華族として貴族院に席を持ち、法律の審議に加わる'], ['宮内省の役人', '宮中の儀式や皇室の用務を取り仕切る'], ['陸軍の将校', '士官学校を出て軍の部隊を率いる'], ['海軍の将校', '兵学校を出て軍艦に乗り組む'],
+    ['外交官', '外国の都に駐在し、国と国の交渉にあたる'], ['銀行の役員', '家の財産を元手にした銀行で経営に加わる'], ['歌道の家の当主', '和歌の家を継ぎ、宮中の歌会始に関わる'], ['研究者', '大学で歴史や植物などを研究する']];
+  // 華族の制度がなくなった1947年からの仕事
+  var KAZOKU_JOB_NEW = [['会社の役員', '家に縁のある会社で経営に加わる'], ['外交官', '外国の都に駐在し、国と国の交渉にあたる'], ['研究者', '大学で歴史や植物などを研究する'], ['宮内庁の職員', '皇室の行事や儀式の用務を受け持つ'], ['神社の宮司', '家に縁のある神社で祭祀を務める']];
   function pickParentJob(L, seed) {
+    if (L.status === 'kuge' && L.by >= 1868) { var kj = KAZOKU_JOB[(seed >>> 3) % KAZOKU_JOB.length]; return { cat: 'kuge', n: kj[0], d: kj[1] }; }
     var J = E.jobsMod && E.jobsMod();
     return J ? J.parentJob({ y: L.by, status: L.status, kind: L.kind, pref: L.pref, sex: 'm', rich: L.incPct }, seed) : null;
   }
@@ -489,7 +499,7 @@
       earn: { real: 0, years: 0, est: true }
     };
     CATS.forEach(function (c) { L.cat[c] = 0; });
-    L.status = drawStatus(L);
+    L.status = b.kuge ? 'kuge' : drawStatus(L);
     L.kind = drawKind(L);
     var mu = pickMuni(L);
     if (mu) { L.muni = mu.code; L.muniName = mu.name; }
@@ -504,6 +514,7 @@
     // 家の豊かさ（小作・自作・地主の目安）と家の名字は、ほかの抽選の順番を変えないよう別の乱数で決める
     L.rnd2 = E.makeRng((seed ^ 0x2545f491) >>> 0);
     L.incPct = L.rnd2();
+    if (L.status === 'kuge' && year >= 1868) L.incPct = 0.8 + L.incPct * 0.2; // 華族は暮らし向きのよい家
     L.surname = pickSurname(L, L.rnd2);
     L.parentJob = pickParentJob(L, seed);
     L.rank = drawRank(L, seed);
@@ -655,6 +666,7 @@
   // 時代で呼び方が変わる身分
   function stWord(L) {
     var y = L.year, st = L.status;
+    if (st === 'kuge' && y >= 1869) return '華族の家';
     if (y < 1600 && st === 'outcast') return '河原者や非人とされた家';
     if (y < 1600 && st === 'chonin') return '職人や商人の家';
     if (y < 1185 && st === 'hyakusho') return '田を耕す農民の家';
@@ -983,6 +995,11 @@
     var outW = (L.choices || []).some(function (c) { return /働きに出|町に出|村を出|都会へ|奉公に出/.test((c.l || '') + (c.after || '')) && !/残る|とどまる|やめ|断/.test(c.l || ''); });
     if (which === 0 && (outW || L.wantStudy === 'work' && L.kind !== 'village' && L.kind !== 'fish')) which = 1;
     if (which !== 2 && tiltEdu >= 3) which = 2;
+    // 華族の家：男は役所や軍・会社の勤め、娘は家で稽古ごと（田畑や工場の働き手にはしない）
+    if (st === 'kuge') {
+      if (sx === 'f') { L.job = 'home'; push(L, rec, '学歴と仕事', '華族の家の娘として、茶道や和歌、ピアノの稽古に通った。', []); return; }
+      which = 2; tiltEdu = Math.max(tiltEdu, 3);
+    }
     L.firstWorkOut = outW;
     var k2;
     if (which === 0) k2 = L.kind === 'fish' && sx === 'm' ? 'fish' : 'farm';
@@ -997,6 +1014,7 @@
       farm: '家の田畑の仕事を手伝い、働き手の一人になった', fish: '父の舟に乗り、漁師として働き始めた', silk: '製糸工場の女工になった。寄宿舎に入り、朝から晩まで繭から糸を繰った', build: '大工の親方に弟子入りした', factory: '工場で働き始めた',
       teacher: '学校の先生になった', clerk: '会社勤めを始めた', maid: 'よその家に住み込みで女中奉公に出た', office: '会社の事務員として働き始めた', store: '商店に住み込みで働き始めた'
     }[k2];
+    if (st === 'kuge') { var KJ = y >= 1946 ? KAZOKU_JOB_NEW : KAZOKU_JOB, kj2 = KJ[(L.seed >>> 5) % KJ.length]; sj2 = { cat: 'kuge', n: kj2[0], d: kj2[1] }; L.selfJob = sj2; L.lastJob = sj2.n; txt = (y >= 1947 ? '元は華族の家の者として、' : '華族の家の者として、') + sj2.n + 'の道に進んだ'; }
     if (sj2) txt += '。' + (sj2.same ? '家と同じ' + sj2.n + 'の仕事だ。' : '仕事は' + sj2.n + '（' + sj2.d + '）だ。');
     push(L, rec, '学歴と仕事', txt, evs);
   }
@@ -1232,7 +1250,8 @@
   }
   function resolveHoko(L, rec, br, answers) {
     var w = wantFrom(answers, 'hoko'), y = L.year, sx = L.sex;
-    if (L.rnd2() >= nudge(br.rate, w, 'go')) { push(L, rec, '学歴と仕事', w === 'go' ? '奉公に出たかったが、家の働き手として残ることになった' : '家に残り、家の仕事を手伝うことになった', br.ev); return; }
+    // 奉公に出るかは、ほかの抽選の並びに左右されないよう、種と年から作る専用の乱数で決める（統計の割合からずれないように）
+    if (E.makeRng((L.seed ^ 0x7f4a7c15 ^ (y * 2654435761)) >>> 0)() >= nudge(br.rate, w, 'go')) { push(L, rec, '学歴と仕事', w === 'go' ? '奉公に出たかったが、家の働き手として残ることになった' : '家に残り、家の仕事を手伝うことになった', br.ev); return; }
     L.hokoAsked.went = true;
     var home = { prov: L.prov, sub: L.sub, pref: L.pref, kind: L.kind, muni: L.muni, muniName: L.muniName };
     var dur = Math.round(clamp(13.5 + gauss(L.rnd2) * 2.5, 8, 19));
@@ -1455,7 +1474,7 @@
     if (s.flag === 'jokou' && L.job !== 'silk') return false;
     if (s.flag === 'terakoya' && L.school !== '寺子屋') return false;
     var u = L.used['s:' + L.H.scenes.indexOf(s)];
-    if (u && (s.once || L.year - u < (L.age >= 88 ? 3 : L.age >= 80 ? 5 : 12))) return false;
+    if (u) return false; // 同じ場面は1つの人生で1回だけ（作る人の指示 2026-10-20「被らないように」）
     return true;
   }
   function pickScene(L) {

@@ -1132,6 +1132,30 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
   rec('v8直し3 1935〜1938年生まれの町の子（' + n3 + '人）で、1944〜1945年に疎開か空襲の出来事・選択が出るか', n3 > 0 && ok3 === n3, miss3.slice(0, 4).join('、'));
 }
 
+/* ---------- 作る人の指示 2026-10-20（貴族5%・40代からの単調さ） ---------- */
+{
+  const oldLife = (by, seed) => { const b0 = O.pickBirth(C, H, by, E.makeRng(seed ^ 0x9e3779b9)); return O.newLife(C, H, P[b0.pref] || null, { year: by, seed, birth: b0 }); };
+  const newLife = (by, seed) => E.newLife(C, P[E.pickPref(C, by, E.makeRng(seed ^ 0x9e3779b9))], { year: by, seed });
+  let nk = 0, kk = 0; const kugeBad = [];
+  for (let s0 = 1; s0 <= (TEST ? 6000 : 20000); s0++) { const by = 1000 + s0 % 947, L = oldLife(by, s0); nk++; if (L.status === 'kuge') { kk++; if (!((by < 1869 && L.pref === '26') || (by >= 1869 && L.pref === '13'))) kugeBad.push(by + ' ' + L.pref); } }
+  rec('貴族（公家・明治からは華族）の生まれが1946年までの5%前後で、都（京・東京）に生まれるか', Math.abs(kk / nk - 0.05) <= 0.01 && kugeBad.length === 0, (kk / nk * 100).toFixed(1) + '%（' + nk + '人）' + (kugeBad.length ? '・都でない ' + kugeBad.slice(0, 3).join('、') : ''));
+  // 40代からの単調さ：同じ人生の中で同じ出来事の文（先頭14字）が2回出ないか（孫の誕生・勤め先・家族の死など、本当に何度も起きることは除く）
+  const REAL = /生まれ、孫|が生まれた|勤め先|亡くなった|知らせが届|便り/;
+  let ny = 0, nl = 0, dup = 0, empty = 0, nlife = 0; const dups = {};
+  for (let s0 = 1; nlife < (TEST ? 150 : 400) && s0 < 6000; s0++) {
+    const by = s0 % 4 === 0 ? 1975 + s0 % 26 : 1000 + (s0 * 1.668 | 0) % 975;
+    const L = by >= 1975 ? E.autoRun(newLife(by, s0)) : O.autoRun(oldLife(by, s0));
+    if (L.deathAge < 65) continue; nlife++;
+    const seen = {};
+    for (const r of L.log) { if (r.age < 40 || r.dead) continue; ny++; const own = r.events.filter(e => e.cat !== '時代' && !/亡くなった。?$/.test(e.t)); if (!own.length) empty++;
+      for (const e of own) { nl++; const k = e.t.slice(0, 14); if (seen[k] && !REAL.test(e.t) && L.mode !== 'shukke') { dup++; dups[k] = (dups[k] || 0) + 1; } seen[k] = 1; } }
+  }
+  rec('40歳からの人生（' + nlife + '人）で、同じ出来事の文が1つの人生に2回出ないか', dup === 0, Object.entries(dups).slice(0, 4).map(x => x.join('×')).join('、') || nl + '行');
+  rec('40歳からの人生で、自分の出来事が1つもない年が5%以下か', empty / ny <= 0.05, (empty / ny * 100).toFixed(1) + '%（' + ny + '年）');
+  const nLate = C.scenes.filter(s => s.late).length + H.scenes.filter(s => s.late).length, CHx = require(path.join(SITE, 'js', 'choices.js'));
+  rec('40代からの場面と選択を足したか（場面' + nLate + '・選択' + CHx.list.filter(o => /^late\./.test(o.id)).length + '）', nLate >= 300 && CHx.list.filter(o => /^late\./.test(o.id)).length >= 80, '');
+}
+
 /* ---------- 作る人の指示 2026-10-19（A〜H） ---------- */
 {
   const K = require(path.join(SITE, 'js', 'causes.js')), PM = require(path.join(SITE, 'js', 'paths.js')), Rc = require(path.join(SITE, 'js', 'record.js'));

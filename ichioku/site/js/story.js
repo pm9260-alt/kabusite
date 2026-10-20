@@ -2066,7 +2066,8 @@
     var tm = {}, all = base.filter(function (t) { return me || t.indexOf('{me}') < 0; }).map(function (t) { var f = t.replace('{prov}', prov).replace('{me}', me); tm[f] = t; return f; }), seen = c.s.seen = c.s.seen || {};
     var cand = all.filter(function (t) { return !seen[t] && !seen['tm:' + tm[t]]; });
     // 出しきったら、直近に出したもの以外からまた選ぶ
-    if (!cand.length) { var last = c.s.lastMode || []; cand = all.filter(function (t) { return last.indexOf(t) < 0; }); }
+    // 出しきったら、寺の暮らしのほかは繰り返さない（同じ文は1つの人生で1回だけ）
+    if (!cand.length && L.mode === 'shukke') { var last = c.s.lastMode || []; cand = all.filter(function (t) { return last.indexOf(t) < 0; }); }
     if (!cand.length) return;
     // 名前の入った出来事が少ない人生では、名前を呼ばれる場面を先に選ぶ（第2弾の6）
     var logs = L.log || [], named = logs.filter(function (r) { return (r.events || []).some(function (e) { return me && e.t.indexOf(me) >= 0; }); }).length;
@@ -2244,8 +2245,11 @@
       pal.next = y + 3 + Math.floor(c.r() * 5);
       if (a >= 62 && c.p(0.18)) { pal.gone = y; c.say('幼なじみの' + pal.n + 'が亡くなった。幼いころからの付き合いだった。', { tie: -4, sat: -4 }, '人間関係'); return; }
       var pool0 = a <= 14 ? PAL_EV.child.concat(c.y < 1900 && !pal.away ? PAL_EV.childOld : c.y >= 1950 && !pal.away ? PAL_EV.childNew : []) : a <= 30 ? PAL_EV.young : a <= 60 ? PAL_EV.mid : PAL_EV.old;
-      var pool = pool0.filter(function (x) { return !(L.mode && /自分の子/.test(x)) && !(y >= 1938 && y <= 1945 && c.api.WAR_BAN && c.api.WAR_BAN.test(x)); });
+      var ps = s.palSeen = s.palSeen || {};
+      var pool = pool0.filter(function (x) { return !ps[x] && !(L.mode && /自分の子/.test(x)) && !(y >= 1938 && y <= 1945 && c.api.WAR_BAN && c.api.WAR_BAN.test(x)); });
+      if (!pool.length) return; // 同じ文は1つの人生で1回だけ
       var t = pool[Math.floor(c.r() * pool.length)];
+      ps[t] = 1;
       if (/奉公に出る|引っ越して/.test(t)) pal.away = y;
       c.say(t.replace('{n}', pal.n).replace('{t}', ptr(pal.tr)[3]), { tie: 2 }, '人間関係');
       return;
@@ -2253,7 +2257,10 @@
     var w = s.wpal;
     if (w && !w.gone && working(L) && y >= w.next) {
       w.next = y + 3 + Math.floor(c.r() * 5);
-      var t2 = WORK_EV[Math.floor(c.r() * WORK_EV.length)];
+      var ws = s.palSeen = s.palSeen || {}, wp = WORK_EV.filter(function (x) { return !ws[x]; });
+      if (!wp.length) return;
+      var t2 = wp[Math.floor(c.r() * wp.length)];
+      ws[t2] = 1;
       c.say(t2.replace('{r}', w.r).replace('{n}', w.n).replace('{t}', ptr(w.tr)[3]), /言い合い/.test(t2) ? { tie: -1 } : { tie: 2 }, '人間関係');
     }
   }
@@ -2525,10 +2532,10 @@
     cands = cands.filter(function (x) { return famAgeOk(x.t, a); });
     if (!cands.length) return;
     var used = L.famUsed = L.famUsed || {};
-    var free = cands.filter(function (c) { return !used[c.t + c.m.name]; });
-    if (!free.length) free = cands;
+    var free = cands.filter(function (c) { return !used[c.t + c.m.name] && !used['t:' + c.t]; });
+    if (!free.length) return; // 同じ型の文は、相手が違っても1つの人生で1回だけ
     var c = free[hh % free.length];
-    used[c.t + c.m.name] = 1;
+    used[c.t + c.m.name] = 1; used['t:' + c.t] = 1;
     var t = c.t.replace('{w}', c.m.role === '友' ? c.m.name : famWho(c.m, L)).replace('{n}', c.m.name);
     var e = api.push(L, rec, '家庭', t, []);
     if (e) e.flavor = true;
