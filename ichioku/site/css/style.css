@@ -622,6 +622,12 @@ button { border-radius: 8px; }
 .lt-board svg { width: 100%; height: auto; display: block; }
 .lt-v { font-family: var(--f-display); font-size: 30px; font-weight: 900; min-height: 1.4em; }
 .lt-p { font-family: var(--f-display); font-size: 22px; min-height: 1.4em; }
+.lt-st { font-size: 16px; font-weight: 700; margin: 0; }
+.lt-mapbox { width: 100%; max-width: 360px; }
+.lt-map { width: 100%; height: auto; max-height: 38vh; display: block; }
+.lt-mapnote { font-size: 12px; color: var(--sub); margin: 4px 0 0; }
+.lottery.done .lt-board { display: none; }
+.lottery.done { justify-content: flex-start; overflow-y: auto; }
 .bd-cell.hit { fill: var(--accent) !important; }
 /* 生まれの記録 */
 .birth-rec .btn-main { margin-top: 4px; }

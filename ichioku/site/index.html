@@ -311,6 +311,13 @@
     <div class="lt-board" id="lt-board"></div>
     <p class="lt-v" id="lt-v"></p>
     <p class="lt-p" id="lt-p"></p>
+    <!-- 生まれが決まったら、生まれ年・身分・地図を出す（spec6 2-22） -->
+    <p class="lt-st" id="lt-st" hidden></p>
+    <div class="lt-mapbox" id="lt-mapbox" hidden>
+      <svg class="lt-map" id="lt-map" role="img" aria-label="生まれる場所の地図"></svg>
+      <p class="lt-mapnote" id="lt-mapnote"></p>
+    </div>
+    <button type="button" class="btn-main" id="lt-go" hidden>生まれる</button>
   </div>
 
   <!-- 亡くなった瞬間（第2弾の7）。押すか2秒で次へ。動きを減らす設定では出さない -->

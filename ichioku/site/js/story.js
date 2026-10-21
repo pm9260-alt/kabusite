@@ -1748,7 +1748,7 @@
       var S6 = s6Mod();
       if (S6 && S6.choices) S6.choices.forEach(function (o) {
         CH.list.push({ id: o.id, kind: o.kind, y: o.y, a: o.a, when: o.when || {}, text: o.text, texts: [].concat(o.text), s6: true,
-          options: o.options.map(function (p) { return { k: p.k, l: p.l, fx: p.fx || {}, after: p.after || null, money: p.money || null }; }) });
+          options: CH.balance ? CH.balance(o.options.map(function (p) { return { k: p.k, l: p.l, fx: Object.assign({}, p.fx || {}), after: p.after || null, money: p.money || null }; })) : o.options.map(function (p) { return { k: p.k, l: p.l, fx: p.fx || {}, after: p.after || null, money: p.money || null }; }) });
       });
     }
     return CH;
@@ -2753,7 +2753,9 @@
   (function () {
     var PM = pathsMod();
     if (!PM || !PM.list) return;
+    var CHb = choicesMod();
     PM.list.forEach(function (path) {
+      if (CHb && CHb.balance) { CHb.balance(path.opts); Object.keys(path.nodes || {}).forEach(function (nk) { if (path.nodes[nk].ask) CHb.balance(path.nodes[nk].ask.opts); }); }
       var res = {};
       path.opts.forEach(function (o) { res['start__' + o.k] = function (c) { pathClear(c, path); pathDo(c, path, o); }; });
       var nodes = {};
