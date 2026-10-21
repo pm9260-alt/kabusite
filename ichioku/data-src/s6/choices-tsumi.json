@@ -1,0 +1,182 @@
+[
+{ "id": "s6.tsumi.heian.c1", "kind": "small", "y": [1000, 1185], "a": [20, 50], "when": { "crime": true, "unmarried": true },
+  "text": ["流罪を許されて戻った{name}に、婿入りの話が来た。ところが相手の家の者が、流人だったことを聞きつけて渋りはじめた。", "{name}が流されていたことを知った相手の親が、婿入りの話を考え直したいと言ってきた。"],
+  "options": [
+    { "k": "tsugeru", "l": "罪のことを自分で話しに行く", "fx": { "tie": 2, "sat": -2 }, "after": "{name}は相手の家へ出向き、流された訳を包み隠さず話した。返事は保留のままだった。" },
+    { "k": "akirame", "l": "話を引っ込めて身を引く", "fx": { "sat": -1, "body": 1, "learn": 1 }, "money": { "f": 0.03 }, "after": "{name}は話を引っ込め、婿入りのために用意した布を市で売った。" }
+  ], "src": ["tsumi_kokushi"] },
+{ "id": "s6.tsumi.heian.c2", "kind": "small", "y": [1000, 1185], "a": [20, 60], "when": { "crime": true },
+  "text": ["国司の館で下働きを探していると聞いて{name}が出向くと、役人は「検非違使に捕らえられた者か」と帳を指でたどった。"],
+  "options": [
+    { "k": "negau", "l": "黙って働かせてくれと頼む", "fx": { "sat": 1, "tie": -1, "body": -2 }, "money": { "f": 0.05 }, "after": "{name}は国司の館の馬屋の掃除を任されたが、ほかの下人は{name}と同じ桶を使わなかった。" },
+    { "k": "kaeru", "l": "館を去って村で働く", "fx": { "tie": 1, "sat": -1 }, "money": { "f": -0.03 }, "after": "{name}は館を去り、村の寺の田植えを手伝って米を少し分けてもらった。" }
+  ], "src": ["tsumi_kokushi"] },
+{ "id": "s6.tsumi.heian.c3", "kind": "small", "y": [1000, 1185], "a": [25, 70], "when": { "crime": true },
+  "text": ["流罪から戻った{name}のもとへ、同じ島にいた流人の子が訪ねてきた。父が島で亡くなり、身寄りがないという。"],
+  "options": [
+    { "k": "hikitoru", "l": "家に引き取る", "fx": { "tie": 3, "sat": 1, "body": -1 }, "money": { "f": -0.05 }, "after": "{name}はその子を家に引き取り、田の仕事を教えた。家の米は一人分減った。" },
+    { "k": "tera", "l": "寺へ預ける", "fx": { "sat": -1, "learn": 1 }, "money": { "f": 0.01 }, "after": "{name}はその子を村の寺へ連れて行き、稚児として預けた。" }
+  ], "src": ["tsumi_kokushi"] },
+{ "id": "s6.tsumi.heian.c4", "kind": "small", "y": [1000, 1185], "a": [20, 70], "when": { "hasSib": true },
+  "text": ["{sibYounger}が市で盗みを働いたとして検非違使の放免に捕らえられた。獄の前で、差し入れの粥を持って行けば顔を覚えられると近所の者が言う。"],
+  "options": [
+    { "k": "kayu", "l": "毎日粥を届ける", "fx": { "tie": 3, "sat": -2 }, "money": { "f": -0.05 }, "after": "{name}は毎朝獄の門へ粥を届け、門番に顔を覚えられた。近所の者は{name}の家を避けはじめた。" },
+    { "k": "tooku", "l": "かかわらずにおく", "fx": { "tie": -3, "sat": 1, "body": 1 }, "after": "{name}は獄に近寄らず、市での商いを続けた。{sibYounger}は流罪と決まり、別れも言えなかった。" }
+  ], "src": ["tsumi_kokushi"] },
+{ "id": "s6.tsumi.heian.c5", "kind": "small", "y": [1000, 1185], "a": [20, 70], "when": { "kind": ["village"] },
+  "text": ["秋の取り入れの夜、{name}の家の稲架から稲束が盗まれた。足跡は川向こうの家の方へ続いている。"],
+  "options": [
+    { "k": "uttae", "l": "郡司に訴え出る", "fx": { "sat": 1, "tie": -2 }, "money": { "f": 0.02 }, "after": "{name}は郡司に訴え出た。川向こうの家は稲を返したが、それきり口をきかなくなった。" },
+    { "k": "damaru", "l": "黙って見逃す", "fx": { "tie": 1, "sat": -1 }, "money": { "f": -0.05 }, "after": "{name}は黙っていた。冬、川向こうの家の者が薪を一束、戸口に置いていった。" }
+  ], "src": ["tsumi_kokushi"] },
+{ "id": "s6.tsumi.kama.c1", "kind": "small", "y": [1185, 1333], "a": [20, 50], "when": { "crime": true, "unmarried": true },
+  "text": ["所領を没収されたことのある{name}に、隣の郷の地頭の娘との縁談が持ち込まれた。仲立ちの者は、咎のことは伏せておけと言う。"],
+  "options": [
+    { "k": "fuseru", "l": "伏せたまま話を進める", "fx": { "sat": 2, "tie": 1, "learn": -1 }, "money": { "f": -0.03 }, "after": "{name}は咎を伏せたまま祝言を挙げた。嫁の親に会うたび、本当のことが喉まで出かかった。" },
+    { "k": "akasu", "l": "咎を明かして話を進める", "fx": { "tie": 2, "sat": -2 }, "after": "{name}が咎を明かすと、地頭は縁談を断ってきた。仲立ちの者は「正直者め」と笑った。" }
+  ], "src": ["tsumi_chusei_hosei1"] },
+{ "id": "s6.tsumi.kama.c2", "kind": "small", "y": [1185, 1333], "a": [22, 65], "when": { "crime": true, "status": ["bushi"] },
+  "text": ["京の大番役の人数が足りず、所領を失った{name}にも一族の惣領から供として加われと声がかかった。咎を受けた身で列に並べば、口さがない者もいる。"],
+  "options": [
+    { "k": "kuwawaru", "l": "大番役の供に加わる", "fx": { "learn": 2, "tie": 1, "body": -2 }, "money": { "f": -0.05 }, "after": "{name}は惣領の供として京へ上り、内裏の門の警固に立った。" },
+    { "k": "nokoru", "l": "一族の館の留守を預かる", "fx": { "tie": 2, "learn": -1 }, "money": { "f": 0.02 }, "after": "{name}は館に残り、惣領の留守の田と馬の世話を引き受けた。" }
+  ], "src": ["tsumi_chusei_hosei1"] },
+{ "id": "s6.tsumi.kama.c3", "kind": "small", "y": [1185, 1333], "a": [25, 70], "when": { "crime": true },
+  "text": ["流罪から戻った{name}を、村の念仏の集まりに誘う聖がいた。罪を負った者こそ救われると説いているという。"],
+  "options": [
+    { "k": "iku", "l": "念仏の集まりに通う", "fx": { "sat": 2, "tie": 2, "body": -1 }, "money": { "f": -0.02 }, "after": "{name}は聖の念仏の集まりに通い、そこで初めて流された日のことを人に話した。" },
+    { "k": "hataraku", "l": "田に出て働く", "fx": { "body": 1, "sat": -1 }, "money": { "f": 0.03 }, "after": "{name}は誘いを断り、夜明けから田に出た。聖の念仏の声は畦まで聞こえた。" }
+  ], "src": ["tsumi_kokushi"] },
+{ "id": "s6.tsumi.kama.c4", "kind": "small", "y": [1185, 1333], "a": [20, 70], "when": {},
+  "text": ["親しくしていた{friend}が悪党の一味に加わったと聞いた。夜更け、{friend}が{name}の家の戸をたたき、一晩かくまってくれと言った。"],
+  "options": [
+    { "k": "kakumau", "l": "納屋にかくまう", "fx": { "tie": 3, "sat": -1, "body": -1 }, "after": "{name}は{friend}を納屋に泊め、夜明け前に握り飯を持たせて送り出した。" },
+    { "k": "kotowaru", "l": "戸を開けずに断る", "fx": { "tie": -3, "sat": 1 }, "money": { "f": 0.01 }, "after": "{name}は戸を開けなかった。翌月、{friend}が捕らえられて流されたと聞いた。" }
+  ], "src": ["tsumi_akuto"] },
+{ "id": "s6.tsumi.kama.c5", "kind": "small", "y": [1185, 1333], "a": [20, 70], "when": { "kind": ["village", "town"] },
+  "text": ["市で{name}が売った馬の代金の銭の中に、穴の欠けた悪銭が混じっていた。買い手の商人はもう次の市へ発っていた。"],
+  "options": [
+    { "k": "oikakeru", "l": "次の市まで追いかける", "fx": { "sat": 1, "body": -2 }, "money": { "f": 0.03 }, "after": "{name}は二日歩いて次の市へ行き、商人に良い銭と取り替えさせた。" },
+    { "k": "akirame", "l": "あきらめて田に戻る", "fx": { "body": 1, "sat": -1 }, "money": { "f": -0.03 }, "after": "{name}は悪銭を神棚の下にしまい、田植えの支度に戻った。" }
+  ], "src": ["tsumi_kokushi"] },
+{ "id": "s6.tsumi.muro.c1", "kind": "small", "y": [1333, 1600], "a": [20, 50], "when": { "crime": true, "unmarried": true },
+  "text": ["村の掟で罰を受けたことのある{name}に、隣村から嫁取りの話が来た。だが相手の村の乙名が「掟を破った者の家とは縁を結ばぬ」と言い出した。"],
+  "options": [
+    { "k": "wabiru", "l": "乙名に詫びに行く", "fx": { "tie": 2, "sat": -1 }, "money": { "f": -0.05 }, "after": "{name}は酒を一樽持って相手の村の乙名に詫びに行き、縁談は半年待ちとなった。" },
+    { "k": "yameru", "l": "縁談を見送る", "fx": { "sat": -2, "learn": 1 }, "money": { "f": 0.03 }, "after": "{name}は縁談を見送り、その秋は稲刈りの手伝いを人の倍引き受けた。" }
+  ], "src": ["tsumi_fujiki_saho"] },
+{ "id": "s6.tsumi.muro.c2", "kind": "small", "y": [1333, 1600], "a": [20, 65], "when": { "crime": true },
+  "text": ["惣の寄合で、宮座の当番を誰に回すかが話し合われた。{name}の名が出ると、掟破りに神事を任せてよいのかと声が上がった。"],
+  "options": [
+    { "k": "hikiukeru", "l": "当番を引き受ける", "fx": { "tie": 3, "body": -1 }, "money": { "f": -0.05 }, "after": "{name}は宮座の当番を引き受け、祭りの餅と酒を自分の蔵から出した。" },
+    { "k": "jitai", "l": "当番を辞退する", "fx": { "tie": -2, "sat": 1 }, "money": { "f": 0.02 }, "after": "{name}は当番を辞退し、祭りの日は鳥居の外から神輿を見送った。" }
+  ], "src": ["tsumi_fujiki_saho"] },
+{ "id": "s6.tsumi.muro.c3", "kind": "small", "y": [1467, 1600], "a": [20, 50], "when": { "crime": true, "sex": "m" },
+  "text": ["近くの国衆が足軽を集めている。村の掟で罰を受けた{name}にも、陣に加われば前のことは問わないと誘いが来た。"],
+  "options": [
+    { "k": "jin", "l": "足軽として陣に加わる", "fx": { "sat": 1, "learn": 1, "body": -3 }, "money": { "f": 0.05 }, "after": "{name}は槍を担いで陣に加わり、帰ってきたときには村の若衆に頼られる顔になっていた。" },
+    { "k": "mura", "l": "村に残って田を守る", "fx": { "tie": 2, "sat": -1 }, "after": "{name}は村に残り、陣に出た家の田植えを代わりに引き受けた。" }
+  ], "src": ["tsumi_fujiki_saho"] },
+{ "id": "s6.tsumi.muro.c4", "kind": "small", "y": [1333, 1600], "a": [20, 70], "when": { "hasChild": true },
+  "text": ["{child}が隣村の若衆と喧嘩をして相手に傷を負わせた。乙名たちは村の掟で{child}を差し出すか、償いの銭で済ませるかを{name}に問うた。"],
+  "options": [
+    { "k": "tsugunai", "l": "償いの銭を出す", "fx": { "tie": 2, "sat": -1 }, "money": { "f": -0.2 }, "after": "{name}は蔵の銭をはたいて償いを出し、{child}は村に残ることを許された。" },
+    { "k": "sashidasu", "l": "掟に従わせる", "fx": { "tie": -2, "learn": 1 }, "money": { "f": 0.01 }, "after": "{child}は村の掟で一年のあいだ村を追われた。{name}は毎月、隣の郷の縁者へ米を送った。" }
+  ], "src": ["tsumi_kenka", "tsumi_fujiki_saho"] },
+{ "id": "s6.tsumi.muro.c5", "kind": "small", "y": [1333, 1600], "a": [20, 70], "when": { "kind": ["town", "village"] },
+  "text": ["市で{name}は、唐物の茶碗だと言う商人から器を買った。持ち帰って見せると、寺の僧は「これは近くの窯の品だ」と言った。"],
+  "options": [
+    { "k": "torikaeshi", "l": "市で商人を探す", "fx": { "sat": 1, "body": -1, "tie": -1 }, "money": { "f": 0.03 }, "after": "{name}は次の市で商人を見つけ、市の目代の前で銭の半分を返させた。" },
+    { "k": "tsukau", "l": "そのまま使う", "fx": { "sat": 1, "learn": 1 }, "money": { "f": -0.05 }, "after": "{name}は器をそのまま使い、だまされた話を客への笑い話にした。" }
+  ], "src": ["tsumi_kokushi"] },
+{ "id": "s6.tsumi.edo.c1", "kind": "small", "y": [1600, 1868], "a": [20, 45], "when": { "crime": true, "unmarried": true },
+  "text": ["仲人が{name}に縁談を持ってきた。数日後、仲人が困った顔で来て、先方が{name}の前科を聞きつけたと言った。", "縁談の相手の親が、{name}が奉行所の御仕置を受けたことを知り、話を待ってくれと言ってきた。"],
+  "options": [
+    { "k": "aini", "l": "先方の親に会いに行く", "fx": { "tie": 2, "sat": -1, "body": -1 }, "after": "{name}は先方の親に会いに行き、刑の後の働きぶりを見てほしいと頭を下げた。" },
+    { "k": "kotowaru", "l": "こちらから断る", "fx": { "sat": -2, "learn": 1 }, "money": { "f": 0.03 }, "after": "{name}はこちらから縁談を断り、仲人に礼の菓子折りを届けた。" }
+  ], "src": ["tsumi_ishii_keibatsu"] },
+{ "id": "s6.tsumi.edo.c2", "kind": "small", "y": [1600, 1868], "a": [20, 60], "when": { "crime": true, "kind": ["town", "city"] },
+  "text": ["口入屋に奉公先を頼んだ{name}は、袖の下の入墨を見せろと言われた。入墨のある者は、大店は雇わないという。"],
+  "options": [
+    { "k": "misu", "l": "隠さず見せる", "fx": { "learn": 1, "sat": -2 }, "money": { "f": 0.02 }, "after": "{name}は袖をまくって見せた。口入屋は少し考え、裏長屋の湯屋の釜焚きの口を回した。" },
+    { "k": "yamatoi", "l": "日雇いでしのぐ", "fx": { "sat": 1, "body": -2 }, "money": { "f": -0.03 }, "after": "{name}は口入屋を出て、河岸の荷揚げの日雇いに並んだ。" }
+  ], "src": ["tsumi_ishii_keibatsu"] },
+{ "id": "s6.tsumi.edo.c3", "kind": "small", "y": [1600, 1868], "a": [25, 70], "when": { "crime": true },
+  "text": ["遠島から戻った者の噂が町に流れた。名主が{name}を呼び、身元を引き受ける請人がいれば人別帳に載せたままにしてやると言った。"],
+  "options": [
+    { "k": "tanomu", "l": "昔の親方に請人を頼む", "fx": { "tie": 2, "sat": 1, "learn": -1 }, "money": { "f": -0.05 }, "after": "{name}が昔の親方に頭を下げると、親方は黙って請人の判を押した。" },
+    { "k": "hitori", "l": "誰にも頼らず出ていく", "fx": { "sat": -1, "learn": 2, "tie": -2 }, "after": "{name}は誰にも頼らず、荷をまとめて隣の宿場町へ移った。" }
+  ], "src": ["tsumi_ishii_keibatsu", "tsumi_hiramatsu"] },
+{ "id": "s6.tsumi.edo.c4", "kind": "small", "y": [1600, 1868], "a": [20, 70], "when": {},
+  "text": ["幼なじみの{friend}が賭場の手入れで捕まり、敲きの刑のあと長屋へ戻ってきた。大家は{friend}を追い出したがっている。"],
+  "options": [
+    { "k": "kabau", "l": "大家にとりなす", "fx": { "tie": 3, "sat": -1 }, "money": { "f": -0.03 }, "after": "{name}は大家に酒を持っていき、{friend}の店賃が遅れたら自分が払うと請け合った。" },
+    { "k": "kakawaranu", "l": "かかわらない", "fx": { "tie": -3, "sat": 1 }, "money": { "f": 0.01 }, "after": "{name}は口をつぐんだ。{friend}は長屋を出て、どこかの宿場へ流れていった。" }
+  ], "src": ["tsumi_ishii_keibatsu"] },
+{ "id": "s6.tsumi.edo.c5", "kind": "small", "y": [1600, 1868], "a": [20, 70], "when": { "kind": ["town", "city"] },
+  "text": ["{name}の店の売り溜めの銭箱が、夜のうちに盗まれた。番屋の者は、近くの無宿の若者があやしいと言う。"],
+  "options": [
+    { "k": "todokeru", "l": "番屋に届けて詮議を頼む", "fx": { "sat": 1, "tie": -1 }, "money": { "f": 0.03 }, "after": "{name}は番屋に届けた。若者は捕らえられ、銭の半分が戻った。" },
+    { "k": "yatou", "l": "若者を店で雇ってみる", "fx": { "tie": 2, "sat": -1 }, "money": { "f": -0.08 }, "after": "{name}は銭をあきらめ、その若者に店の水汲みをさせてみた。若者はひと冬、黙って働いた。" }
+  ], "src": ["tsumi_ishii_keibatsu"] },
+{ "id": "s6.tsumi.meiji.c1", "kind": "small", "y": [1868, 1945], "a": [20, 45], "when": { "crime": true, "unmarried": true },
+  "text": ["親戚が{name}に縁談を持ってきた。ところが先方は興信所に調べさせ、監獄にいたことが知れて、話は宙に浮いた。"],
+  "options": [
+    { "k": "tegami", "l": "先方に手紙を書く", "fx": { "learn": 1, "tie": 1, "sat": -2 }, "after": "{name}は罪を犯した訳と出獄してからの暮らしを手紙に書き、先方へ送った。" },
+    { "k": "miokuru", "l": "黙って身を引く", "fx": { "sat": -1, "body": 1 }, "money": { "f": 0.02 }, "after": "{name}は黙って身を引き、親戚には仕事が忙しいと言った。" }
+  ], "src": ["tsumi_hakusho"] },
+{ "id": "s6.tsumi.meiji.c2", "kind": "small", "y": [1880, 1945], "a": [20, 60], "when": { "crime": true },
+  "text": ["役場の吏員の採用に応じようとした{name}は、履歴書の賞罰の欄で手が止まった。書けば落とされ、書かなければ偽りになる。"],
+  "options": [
+    { "k": "kaku", "l": "前科を書いて出す", "fx": { "sat": -2, "learn": 1 }, "after": "{name}は賞罰の欄に前科を書いて出した。採用の通知は来なかった。" },
+    { "k": "yameru", "l": "応募をやめて家業を手伝う", "fx": { "tie": 2, "learn": -1 }, "money": { "f": 0.02 }, "after": "{name}は履歴書を破り、兄の営む豆腐屋の朝の仕込みを手伝いはじめた。" }
+  ], "src": ["tsumi_hakusho"] },
+{ "id": "s6.tsumi.meiji.c3", "kind": "small", "y": [1888, 1945], "a": [25, 70], "when": { "crime": true },
+  "text": ["出獄人を世話する保護会の人が、{name}に仕事を世話したいと訪ねてきた。紹介先は遠い北海道の開墾地だという。"],
+  "options": [
+    { "k": "hokkaido", "l": "開墾地へ渡る", "fx": { "learn": 2, "tie": -2, "body": -1 }, "money": { "f": 0.05 }, "after": "{name}は船で北海道へ渡り、開墾地の小屋に住みついた。" },
+    { "k": "nokoru", "l": "今の町で職を探す", "fx": { "tie": 2, "sat": -1 }, "money": { "f": -0.03 }, "after": "{name}は礼を言って断り、町の人力車夫の組合に頭を下げて車を借りた。" }
+  ], "src": ["tsumi_hakusho"] },
+{ "id": "s6.tsumi.meiji.c4", "kind": "small", "y": [1868, 1945], "a": [25, 70], "when": { "hasChild": true },
+  "text": ["{child}が勤め先の店の金を持ち出したとして警察に引かれた。店の主人は、親が弁償すれば訴えを取り下げると言っている。"],
+  "options": [
+    { "k": "bensho", "l": "借金をして弁償する", "fx": { "tie": 3, "sat": -1 }, "money": { "f": -0.25 }, "after": "{name}は質屋と親戚から金を集めて弁償し、{child}を連れて主人に詫びに行った。" },
+    { "k": "tsugunawaseru", "l": "子に罪を償わせる", "fx": { "learn": 1, "tie": -3 }, "money": { "f": 0.01 }, "after": "{name}は弁償を断った。{child}は裁判で懲役を言い渡され、監獄へ送られた。" }
+  ], "src": ["tsumi_keiho1907"] },
+{ "id": "s6.tsumi.meiji.c5", "kind": "small", "y": [1880, 1945], "a": [20, 70], "when": {},
+  "text": ["{name}の家に「必ず倍になる」という頼母子講の誘いが来た。世話人は役場の者の名を出したが、近所で似た話に乗った家が夜逃げしたと聞く。"],
+  "options": [
+    { "k": "noru", "l": "掛け金を出す", "fx": { "sat": 1, "tie": 1, "learn": -1 }, "money": { "f": -0.1 }, "after": "{name}は掛け金を出した。三月後、世話人は姿を消し、警察が詐欺として調べはじめた。" },
+    { "k": "kotowaru", "l": "断って郵便貯金にする", "fx": { "learn": 1, "tie": -1 }, "money": { "f": 0.02 }, "after": "{name}は誘いを断り、その金を郵便局で貯金した。世話人とは道で会っても挨拶しなくなった。" }
+  ], "src": ["tsumi_keiho1907"] },
+{ "id": "s6.tsumi.sengo.c1", "kind": "small", "y": [1946, 2090], "a": [22, 50], "when": { "crime": true, "unmarried": true },
+  "text": ["見合いの話が進み、相手の親との顔合わせが決まった。前に有罪の判決を受けたことを、先に伝えるかどうか{name}は迷った。"],
+  "options": [
+    { "k": "tsutaeru", "l": "顔合わせの前に伝える", "fx": { "tie": 2, "sat": -2 }, "after": "{name}は仲人を通して先に伝えた。顔合わせは延びたが、相手は自分で会いに来ると言った。" },
+    { "k": "damaru", "l": "伝えずに顔合わせに行く", "fx": { "sat": 2, "learn": -1, "tie": -1 }, "after": "{name}は伝えずに顔合わせに行った。料亭の帰り道、言いそびれたことが胸に残った。" }
+  ], "src": ["tsumi_hakusho"] },
+{ "id": "s6.tsumi.sengo.c2", "kind": "small", "y": [1955, 2090], "a": [22, 60], "when": { "crime": true },
+  "text": ["新しい職場で、{name}の昔の事件が噂になり、休憩室の話し声が止まるようになった。"],
+  "options": [
+    { "k": "hanasu", "l": "上司に自分から話す", "fx": { "tie": 2, "sat": -1 }, "after": "{name}は上司に昔のことを自分から話した。上司は「今の仕事ぶりで見る」とだけ言った。" },
+    { "k": "yameru", "l": "辞めて別の職場を探す", "fx": { "sat": 1, "tie": -1 }, "money": { "f": -0.08 }, "after": "{name}は職場を辞め、職業安定所で別の職場を探した。" }
+  ], "src": ["tsumi_hakusho", "tsumi_hogoshi"] },
+{ "id": "s6.tsumi.sengo.c3", "kind": "small", "y": [1955, 2090], "a": [30, 75], "when": { "crime": true },
+  "text": ["昔{name}の担当だった保護司が、今度は{name}に保護司をやってみないかと声をかけてきた。罪を犯したことがある者だからこそ分かることがある、と言う。"],
+  "options": [
+    { "k": "ukeru", "l": "引き受ける", "fx": { "tie": 3, "learn": 1, "body": -1 }, "money": { "f": -0.02 }, "after": "{name}は研修を受け、刑務所を出たばかりの若者と月に二度、喫茶店で会うようになった。" },
+    { "k": "kotowaru", "l": "自分にはまだ早いと断る", "fx": { "sat": 1, "tie": -1 }, "after": "{name}は断ったが、保護司会の清掃の集まりには年に一度顔を出した。" }
+  ], "src": ["tsumi_hogoshi"] },
+{ "id": "s6.tsumi.sengo.c4", "kind": "small", "y": [1960, 2090], "a": [30, 80], "when": { "hasChild": true },
+  "text": ["{child}が酒を飲んで車を運転し、警察に捕まったと連絡が来た。けが人は出なかったが、職場に知られれば辞めることになるかもしれない。"],
+  "options": [
+    { "k": "bengoshi", "l": "弁護士を頼んで支える", "fx": { "tie": 2, "sat": -1 }, "money": { "f": -0.1 }, "after": "{name}は貯金を崩して弁護士を頼み、{child}と一緒に裁判所へ通った。" },
+    { "k": "shikaru", "l": "自分で始末させる", "fx": { "learn": 1, "tie": -2 }, "money": { "f": 0.01 }, "after": "{name}は手を貸さず、{child}が自分で罰金を払い、職場に報告するのを見届けた。" }
+  ], "src": ["tsumi_doko"] },
+{ "id": "s6.tsumi.sengo.c5", "kind": "small", "y": [1975, 2090], "a": [55, 95], "when": {},
+  "text": ["{name}の家に、息子を名乗る男から「会社の金をなくした、今日中に要る」と電話が来た。声が少し違う気もするが、泣いていて聞き取りにくい。", "{name}の家に、孫を名乗る者から「事故を起こした、示談の金が要る」と電話が来た。"],
+  "options": [
+    { "k": "kakuninn", "l": "電話を切って家族に確かめる", "fx": { "learn": 1, "sat": -1 }, "money": { "f": 0.01 }, "after": "{name}は電話を切り、家族に掛け直した。電話の男は詐欺だった。後で、信じなかった自分が少し寂しかった。" },
+    { "k": "furikomu", "l": "言われた口座に振り込む", "fx": { "tie": 1, "sat": -3 }, "money": { "f": -0.3 }, "after": "{name}は銀行で金を振り込んだ。夜、本当の家族と話して詐欺と分かり、警察に届けた。" }
+  ], "src": ["tsumi_hakusho"] }
+]

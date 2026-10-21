@@ -188,7 +188,7 @@
   var STORY_API = {
     WAR_BAN: WAR_BAN, homeLife: function (L) { return homeLife(L); },
     surv5: function (L) { var l = 1; for (var a = 0; a < 5; a++) l *= 1 - deathProb(L.C, L.P, L.sex, a, L.by + a); return l; },
-    makeRng: makeRng, gauss: gauss, eraWords: function (t, y) { return eraWords(t, y); }, push: function (L, rec, cat, t, evs) { return push(L, rec, cat, t, evs); }, nameFor: storyName, move: storyMove,
+    makeRng: makeRng, gauss: gauss, eraWords: function (t, y, L) { return eraWords(t, y, L); }, push: function (L, rec, cat, t, evs) { return push(L, rec, cat, t, evs); }, nameFor: storyName, move: storyMove,
     job: function (L, label, pay, reg, ind) { L.job = { ind: IND[ind] ? ind : (L.job && L.job.ind) || 'service', reg: !!reg, since: L.year, pay: pay, label: label }; L.lastJob = label; L.lastInd = L.job.ind; L.stage = 'work'; },
     noJob: function (L) { if (L.job) { L.job = null; L.stage = 'jobless'; } },
     marryBoost: function (L, k) { L.marryMult = (L.marryMult || 1) * k; }
@@ -413,7 +413,16 @@
     familyAtBirth(L);
     L.sm = drawMinority(L);
     L.out = null;
+    L.surname = modernSurname(L);
     return L;
+  }
+  // 名字（spec6 2-27：1875年からは全員が名乗る）。その土地に多い名字と全国に多い名字から、別の乱数で引く
+  var SURN = ['佐藤', '鈴木', '高橋', '田中', '伊藤', '渡辺', '山本', '中村', '小林', '加藤', '吉田', '山田', '佐々木', '山口', '松本', '井上', '木村', '林', '斎藤', '清水', '山崎', '森', '池田', '橋本', '阿部', '石川', '山下', '中島', '石井', '小川', '前田', '岡田', '長谷川', '藤田', '後藤', '近藤', '村上', '遠藤', '青木', '坂本'];
+  var SURN_LOCAL = { '47': ['比嘉', '金城', '大城', '宮城', '新垣', '玉城', '上原', '島袋', '平良', '山城'], '02': ['工藤', '佐藤', '成田', '木村', '中村'], '03': ['佐藤', '高橋', '千葉', '菊地', '佐々木'], '04': ['佐藤', '高橋', '千葉', '阿部', '菅原'], '05': ['佐藤', '高橋', '佐々木', '伊藤', '斎藤'], '06': ['佐藤', '高橋', '鈴木', '斎藤', '渡部'], '07': ['佐藤', '鈴木', '渡辺', '遠藤', '斎藤'], '15': ['佐藤', '渡辺', '小林', '高橋', '五十嵐'], '20': ['小林', '田中', '中村', '丸山', '宮沢'], '40': ['田中', '中村', '古賀', '井上', '吉田'], '41': ['山口', '古賀', '田中', '松尾', '中島'], '42': ['山口', '田中', '松尾', '中村', '松本'], '43': ['田中', '中村', '松本', '村上', '坂本'], '45': ['黒木', '甲斐', '河野', '日高', '佐藤'], '46': ['中村', '浜田', '山下', '前田', '川畑'] };
+  function modernSurname(L) {
+    var r = makeRng(((L.seed ^ 0x3c6ef372) >>> 0) || 1), x = r(), loc = SURN_LOCAL[String(L.home.pref)];
+    if (loc && (L.home.pref === '47' ? x < 0.85 : x < 0.4)) return loc[Math.floor(r() * loc.length)];
+    return SURN[Math.floor(r() * SURN.length)];
   }
 
   // 性的少数者かどうか（国の委託調査の出現率をもとに抽選。null は該当しない）
@@ -563,11 +572,18 @@
   }
 
   // 時代で呼び方が変わる役職（庄屋は江戸の呼び方。それより前は名主、明治5年からは戸長、明治22年からは村長）
-  function eraWords(t, y) {
-    if (!t || t.indexOf('庄屋') < 0) return t;
-    if (y < 1600) return t.replace(/庄屋/g, '名主');
-    if (y >= 1889) return t.replace(/庄屋/g, '村長');
-    if (y >= 1872) return t.replace(/庄屋/g, '戸長');
+  // 時代と土地で言い方を変える表（spec6 1-7）：祝言は明治のおわりまで、縁談は戦前まで（戦後は見合いの話）。市街地や戦後の町では「村の年寄り」を親戚に
+  function eraWords(t, y, L) {
+    if (!t) return t;
+    if (t.indexOf('庄屋') >= 0) {
+      if (y < 1600) t = t.replace(/庄屋/g, '名主');
+      else if (y >= 1889) t = t.replace(/庄屋/g, '村長');
+      else if (y >= 1872) t = t.replace(/庄屋/g, '戸長');
+    }
+    if (y >= 1913 && t.indexOf('祝言') >= 0) t = t.replace(/祝言をあげ/g, '結婚式を挙げ').replace(/祝言/g, '結婚式');
+    if (y >= 1946 && t.indexOf('縁談') >= 0) t = t.replace(/縁談が持ち込まれた/g, '見合いの話が来た').replace(/縁談が来た/g, '見合いの話が来た').replace(/縁談/g, '見合いの話');
+    var city = L && (L.old ? L.kind === 'city' : ((L.place || {}).kind === '大都市' || (L.place || {}).kind === '都市'));
+    if ((city || y >= 1946) && t.indexOf('村の年寄り') >= 0) t = t.replace(/村の年寄り/g, '親戚');
     return t;
   }
   // 家を離れている年（出家・旅・奉公・出征）に家族が亡くなったときは、知らせが届いた形で書く
@@ -589,7 +605,7 @@
     return t.replace(/(が|、)([^。]*?)亡くなった。/, function (m0, a, b) { return a + b + '亡くなったと、知らせが届いた。'; });
   }
   function push(L, rec, cat, text, evs, extra) {
-    text = eraWords(text, rec && rec.year != null ? rec.year : L.year);
+    text = eraWords(text, rec && rec.year != null ? rec.year : L.year, L);
     text = awayWords(L, cat, text);
     // 人生の記録の文は、すべて「。」で終える（v11の直し 9）
     if (text && !/。$/.test(text)) text += '。';
@@ -761,7 +777,7 @@
     if (!L.married && !L.divorced && a >= 18 && a <= 55) marryYear(L, rec);
     if (L.married) childYear(L, rec);
     if (L.married && L.marriedY && y - L.marriedY <= 20 && rnd() < (typeof C.nat.divorce === 'number' ? C.nat.divorce : val(C.nat.divorce, y))) {
-      L.married = false; L.divorced = true;
+      L.married = false; L.divorced = true; L.everDivorced = y;
       var sp = L.members.filter(function (m) { return m.role === '配偶者' && !m.gone; })[0];
       if (sp) sp.gone = true;
       push(L, rec, '家庭', '話し合いのすえ、離婚した。', [ev(C, 'vital', y, '離婚件数', '')]);
@@ -1282,6 +1298,13 @@
     var C = L.C, y = L.year, a = L.age, rnd = L.rnd;
     earnYear(L, rec);
     if (!L.alive) return advance(L, rec);
+    // 物語の結末で亡くなる（spec6：遭難・戦・災害など。死因は物語の呼び名）
+    if (L.storyDeath && !protectedYear(L)) {
+      var sd = L.storyDeath; L.storyDeath = null;
+      L.alive = false; L.deathAge = a; L.deathYear = y; L.cause = sd.kind || 'acc'; L.causeName = sd.n; L.causeShare = null; rec.dead = true;
+      push(L, rec, '健康', sd.t, [ev(C, 'vital', y, '物語の結末（死因：' + sd.n + '）', '', { est: true })]);
+      return advance(L, rec);
+    }
     {
       var dp = clamp(deathProb(C, L.P, L.sex, a, y) * bodyMult(L, a), 0, 1);
       if (a >= MAX_AGE) dp = 1;

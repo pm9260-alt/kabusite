@@ -138,6 +138,9 @@
     // 貴族（公家、明治からは華族）の生まれを5%にする（作る人の指示 2026-10-20）。貴族は都に住んでいたので、1868年までは山城国（京）、
     // 1869〜1946年は東京に生まれる。生まれる所の抽選のあとに1回だけ引く（ほかの抽選の順番は変えない）
     if (year <= 1946 && ['47', '01'].indexOf(pref) < 0 && rnd() < KUGE_SHARE) return year < 1869 ? { prov: '山城', sub: null, pref: '26', kuge: true } : { prov: '武蔵', sub: null, pref: '13', kuge: true };
+    // 将軍家の生まれを0.5%にする（spec6 2-18）。幕府のある土地（鎌倉・京・江戸）に生まれる。貴族と同じく、生まれる所の抽選のあとに引く
+    var sg = SHOGUN.filter(function (x) { return year >= x[0] && year <= x[1]; })[0];
+    if (sg && rnd() < SHOGUN_SHARE) return { prov: sg[2], sub: null, pref: sg[4], shogun: true };
     return { prov: prov, sub: sub || null, pref: pref };
   }
   var prefSeriesCache = {};
@@ -164,19 +167,60 @@
     if (prov !== '山城') w.kuge = 0;
     return w;
   }
-  // 貴族は統計の割合の2倍、武士（明治からの士族）は3倍にする（作る人の判断 2026-10-17、2026-10-19：遊ぶたびに出会いやすく）
-  var STATUS_MULT = { kuge: 2, bushi: 3 };
-  var KUGE_SHARE = 0.05;
-  // 将軍家・大名家に生まれる（作る人の指示 2026-10-19）。武士の家のうち、将軍家は幕府の置かれた国で、大名家は戦国の世から廃藩置県までの国々で、まれに生まれる。
-  // ほかの抽選の順番を変えないよう、別の乱数で決める
-  var SHOGUN = [[1192, 1333, '相模', '鎌倉'], [1338, 1573, '山城', '室町'], [1603, 1867, '武蔵', '江戸']];
+  // 身分の割合（spec6 2-18）：貴族2%（1946年まで）・将軍家0.5%・大名家1%（1467〜1871年）・武士7%（1185〜1871年。将軍家と大名家を含む）・士族7%（1872〜1947年）。
+  // 平安の武士（3.5%）は今のまま。武士と士族は、土地の差を残したまま、時代ごとの掛け算で全国の合計を合わせる（tools/check.mjs で2万件ずつ数えて確かめる）
+  var BUSHI_X = [[1000, 3], [1185, 2.39], [1333, 2.44], [1467, 1.27], [1600, 1.146], [1872, 1.41]];
+  function bushiX(y) { var x = 3; for (var i = 0; i < BUSHI_X.length; i++) if (y >= BUSHI_X[i][0]) x = BUSHI_X[i][1]; return x; }
+  function statusMult(k, y) { return k === 'bushi' ? bushiX(y) : k === 'kuge' ? 0 : 1; }
+  var KUGE_SHARE = 0.0202, SHOGUN_SHARE = 0.0058, DAIMYO_OF_BUSHI = 0.154;
+  // 将軍家は幕府の置かれた土地に生まれる（生まれる所の抽選のあとに引く）。大名家は、戦国の世から廃藩置県までの武士の家から、別の乱数で決める
+  var SHOGUN = [[1192, 1333, '相模', '鎌倉', '14'], [1338, 1573, '山城', '室町', '26'], [1603, 1867, '武蔵', '江戸', '13']];
   function drawRank(L, seed) {
     if (L.status !== 'bushi') return null;
+    if (L.shogunBirth) return 'shogun';
     var r = E.makeRng((seed ^ 0x6b43a9b5) >>> 0)(), y = L.by;
-    var sg = SHOGUN.filter(function (x) { return y >= x[0] && y <= x[1] && L.prov === x[2]; })[0];
-    if (sg && r < 0.03) return 'shogun';
-    if (y >= 1467 && y <= 1867 && r < 0.03) return 'daimyo';
+    if (y >= 1467 && y <= 1871 && r < DAIMYO_OF_BUSHI) return 'daimyo';
     return null;
+  }
+  /* ---------- 貴族の格と武士の位（spec6 2-1・2-9） ----------
+     貴族：平安〜鎌倉のはじめは位（公卿・殿上人・受領・地下）、鎌倉〜江戸は家格、明治〜1947年は爵位。
+     家格の割合は江戸の堂上家の家の数（摂家5・清華家9・大臣家3・羽林家66・名家28・半家26。橋本政宣編『公家事典』）の比に、地下官人の家を3割として合わせた目安。
+     爵位は1884年の最初の授爵（公爵11・侯爵24・伯爵76・子爵324・男爵74）の比。武士の位は目安（江戸の武士は足軽・中間が多い）。別の乱数で決める */
+  var KAKAKU_W = [
+    [1000, 1220, { kugyo: 8, tenjo: 25, zuryo: 33, jige: 34 }],
+    [1221, 1868, { sekke: 5 * 0.7 / 137 * 100, seiga: 9 * 0.7 / 137 * 100, daijin: 3 * 0.7 / 137 * 100, urin: 66 * 0.7 / 137 * 100, meika: 28 * 0.7 / 137 * 100, hanke: 26 * 0.7 / 137 * 100, jigekan: 30 }],
+    [1869, 1947, { koshaku: 11, koshaku2: 24, hakushaku: 76, shishaku: 324, danshaku: 74 }]
+  ];
+  var KAKAKU_NAME = { kugyo: '公卿', tenjo: '殿上人', zuryo: '受領', jige: '地下', sekke: '摂家', seiga: '清華家', daijin: '大臣家', urin: '羽林家', meika: '名家', hanke: '半家', jigekan: '地下官人', koshaku: '公爵', koshaku2: '侯爵', hakushaku: '伯爵', shishaku: '子爵', danshaku: '男爵' };
+  var KAKAKU_NEXT = { kugyo: 'seiga', tenjo: 'urin', zuryo: 'meika', jige: 'jigekan', sekke: 'koshaku', seiga: 'koshaku2', daijin: 'hakushaku', urin: 'shishaku', meika: 'shishaku', hanke: 'shishaku', jigekan: null };
+  var GRADE_W = { ashigaru: 45, kachi: 20, hirazamurai: 22, monogashira: 8, karo: 3 };
+  var GRADE_EDO = { hatamoto: 30, gokenin: 70 };
+  var GRADE_NAME = { ashigaru: '足軽', kachi: '徒士', hirazamurai: '平士', monogashira: '物頭', karo: '家老', hatamoto: '旗本', gokenin: '御家人', shizoku_jo: '上級の士族', shizoku_ka: '下級の士族',
+    hei: '兵', kashi: '下士官', junshi: '准士官', ikan: '尉官', sakan: '佐官', shokan: '将官', jsdf_shi: '士', jsdf_so: '曹', jsdf_i: '尉', jsdf_sa: '佐', jsdf_sho: '将' };
+  function drawKakaku(by, r) {
+    var t = KAKAKU_W.filter(function (x) { return by >= x[0] && by <= x[1]; })[0];
+    return t ? pick(r, Object.keys(t[2]), function (k) { return t[2][k]; }) : null;
+  }
+  function kakakuAt(k, by) {
+    var guard = 0;
+    while (k && guard++ < 3) {
+      var t = KAKAKU_W.filter(function (x) { return by >= x[0] && by <= x[1]; })[0];
+      if (!t || t[2][k] != null) return t ? k : null;
+      k = KAKAKU_NEXT[k];
+    }
+    return k || null;
+  }
+  function drawGrade(L, r) {
+    var y = L.by;
+    if (L.status === 'shizoku') return r() < 0.3 ? 'shizoku_jo' : 'shizoku_ka';
+    if (L.status !== 'bushi' || L.rank || y < 1600) return null;
+    if (L.prov === '武蔵' && r() < 0.6) return pick(r, Object.keys(GRADE_EDO), function (k) { return GRADE_EDO[k]; });
+    return pick(r, Object.keys(GRADE_W), function (k) { return GRADE_W[k]; });
+  }
+  function gradeAt(g, by) {
+    if (!g) return null;
+    if (by >= 1872 && by <= 1947) return /^(karo|monogashira|hatamoto|hirazamurai|shizoku_jo)$/.test(g) ? 'shizoku_jo' : 'shizoku_ka';
+    return by < 1872 ? g : null;
   }
   function drawStatus(L) {
     var H = L.H, y = L.by, rnd = L.rnd, p = H.prov[L.prov];
@@ -188,14 +232,16 @@
     if (L.pref === '47' && y < 1912) return rnd() < lin(H.ryukyuShi, Math.min(1852, y)) ? 'ryukyuShi' : 'ryukyuHyakusho';
     if (y < 1600) {
       var mw = medStatusW(H, L.prov, y);
-      if (mw) return pick(rnd, Object.keys(mw), function (k) { return mw[k] * (STATUS_MULT[k] || 1); });
+      if (mw) return pick(rnd, Object.keys(mw), function (k) { return mw[k] * statusMult(k, y); });
     }
     var st = (p && p.status) || { bushi: 0.06, priest: 0.01, hyakusho: 0.8, chonin: 0.12, outcast: 0.009 };
     var w = { bushi: st.bushi, priest: st.priest, hyakusho: st.hyakusho, chonin: st.chonin, outcast: st.outcast };
     // 江戸には武士が多く住んでいた（1873年の数は東京から武士が去ったあとのため、江戸時代は多めにする目安）
     if (L.prov === '武蔵' && y < 1868 && y >= 1603) w.bushi = 0.2;
-    var s = pick(rnd, Object.keys(w), function (k) { return w[k] * (STATUS_MULT[k] || 1); });
+    var s = pick(rnd, Object.keys(w), function (k) { return w[k] * statusMult(k, y); });
     if (y >= 1872) s = s === 'bushi' ? 'shizoku' : s === 'outcast' ? 'buraku' : s === 'priest' ? 'priest' : 'heimin';
+    // 1948年からの生まれは族籍がない（spec6 1-9）。武士の家だったことは家の記録（先祖）として残す
+    if (y >= 1948 && s === 'shizoku') { L.ancestry = 'bushi'; s = 'heimin'; }
     return s;
   }
   // 北海道の人口（1873年は12万人、1920年からは国勢調査）
@@ -324,7 +370,7 @@
     return {
       old: true, seed: L.seed0 || L.seed, deathYear: L.deathYear, deathAge: L.deathAge, cause: L.cause,
       prev: { name: L.name, sex: L.sex, by: L.by, heir: !!L.heir, surname: L.surname || null },
-      members: mem, status: L.status, rank: L.rank || null, parentJobH: L.rank ? L.parentJob : null, ainu: L.ainu, ryukyu: L.ryukyu, home: home, goods: L.goods || {}, incPct: L.incPct, surname: L.surnameOld || L.surname || null,
+      members: mem, status: L.status, kakaku: L.kakakuBirth || L.kakaku || null, grade: L.gradeBirth || null, ancestry: L.ancestry || null, uji: L.uji || null, rank: L.rank || null, parentJobH: L.rank ? L.parentJob : null, ainu: L.ainu, ryukyu: L.ryukyu, home: home, goods: L.goods || {}, incPct: L.incPct, surname: L.surnameOld || L.surname || null,
       jobs: { parent: L.parentJob || null, self: L.selfJob || null },
       chain: (chain || []).slice(), story: L.story ? { toxic: !!L.story.f.toxic, bigwig: !!L.story.f.bigwig, prosper: L.story.f.prosper || L.story.f.prosperHouse || 0 } : null
     };
@@ -400,8 +446,13 @@
       edu: null, school: null, job: null, married: false, everMarried: false, abroad: null,
       stats: { school: false, mid: false, to5: false, to60: false, events: 0 },
       earn: { real: 0, years: 0, est: true },
-      status: h.status, rank: h.rank || null, ainu: h.ainu, ryukyu: h.ryukyu, goods: {}, inherited: true
+      status: me.by >= 1948 && (h.status === 'shizoku' || h.status === 'kuge') ? 'heimin' : h.status, ancestry: me.by >= 1948 && (h.status === 'shizoku' || h.status === 'kuge') ? (h.status === 'kuge' ? 'kuge' : 'bushi') : h.ancestry || null,
+      rank: h.rank || null, ainu: h.ainu, ryukyu: h.ryukyu, goods: {}, inherited: true
     };
+    // 家の格と位を受け継ぐ（時代が変わったら、その時代の格に読みかえる。spec6 2-1・2-6）
+    if (L.status === 'kuge') { L.kakaku = kakakuAt(h.kakaku, me.by); if (!L.kakaku) L.status = me.by >= 1872 ? 'heimin' : L.status; }
+    if (L.status === 'bushi' || L.status === 'shizoku') L.grade = gradeAt(h.grade, me.by);
+    L.kakakuBirth = L.kakaku || null; L.gradeBirth = L.grade || null;
     CATS.forEach(function (c) { L.cat[c] = 0; });
     L.house = { deathYear: h.deathYear, prevName: h.prev.name, prevSex: h.prev.sex, prevBy: h.prev.by, prevAge: h.deathAge, prevHeir: h.prev.heir, chain: h.chain, story: h.gen === 'child' ? (h.story && h.story.prosper ? { prosper: h.story.prosper } : null) : h.story };
     var maxId = 0;
@@ -437,6 +488,7 @@
     L.rnd2 = E.makeRng((seed ^ 0x2545f491) >>> 0);
     L.incPct = h.incPct != null ? h.incPct : L.rnd2();
     L.surname = h.surname || pickSurname(L, L.rnd2);
+    { var su0 = L.surname; nameParts(L, seed); if (h.surname) L.surname = h.surname; if (h.uji) L.uji = h.uji; if (su0 && !L.surname) L.surname = su0; }
     // 家の仕事：きょうだいなら同じ親の仕事、子なら亡くなった人（父）の仕事
     var hj = h.jobs || {};
     L.parentJob = kidGen ? (h.prev.sex === 'm' && hj.self ? hj.self : pickParentJob(L, seed)) : (hj.parent || pickParentJob(L, seed));
@@ -499,7 +551,8 @@
       earn: { real: 0, years: 0, est: true }
     };
     CATS.forEach(function (c) { L.cat[c] = 0; });
-    L.status = b.kuge ? 'kuge' : drawStatus(L);
+    L.shogunBirth = !!b.shogun;
+    L.status = b.kuge ? 'kuge' : b.shogun ? 'bushi' : drawStatus(L);
     L.kind = drawKind(L);
     var mu = pickMuni(L);
     if (mu) { L.muni = mu.code; L.muniName = mu.name; }
@@ -518,6 +571,8 @@
     L.surname = pickSurname(L, L.rnd2);
     L.parentJob = pickParentJob(L, seed);
     L.rank = drawRank(L, seed);
+    { var rk = E.makeRng((seed ^ 0x5a17c3e9) >>> 0); if (L.status === 'kuge') L.kakaku = drawKakaku(year, rk); L.grade = drawGrade(L, rk); L.kakakuBirth = L.kakaku || null; L.gradeBirth = L.grade || null; }
+    nameParts(L, seed);
     if (L.rank) {
       L.incPct = 0.995; L.kind = 'city';
       var sgE = SHOGUN.filter(function (x) { return year >= x[0] && year <= x[1]; })[0];
@@ -603,7 +658,7 @@
   }
 
   function push(L, rec, cat, text, evs, extra) {
-    text = E.eraWords(text, rec && rec.year != null ? rec.year : L.year);
+    text = E.eraWords(text, rec && rec.year != null ? rec.year : L.year, L);
     text = E.awayWords(L, cat, text);
     // 人生の記録の文は、すべて「。」で終える（v11の直し 9）
     if (text && !/。$/.test(text)) text += '。';
@@ -619,7 +674,7 @@
   var STORY_API = {
     WAR_BAN: E.WAR_BAN, homeLife: function (L) { return E.homeLife(L); },
     surv5: function (L) { var l = 1, v = Object.create(L); for (var a = 0; a < 5; a++) l *= 1 - dp(L, L.sex, a, L.by + a); return l; },
-    makeRng: E.makeRng, eraWords: function (t, y) { return E.eraWords(t, y); }, gauss: function (r) { var u = 1 - r(), v = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); },
+    makeRng: E.makeRng, eraWords: function (t, y, L) { return E.eraWords(t, y, L); }, gauss: function (r) { var u = 1 - r(), v = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); },
     push: function (L, rec, cat, t, evs) { return push(L, rec, cat, t, evs); },
     // まわりの人・縁談の相手の名前も、その人の生まれ年と身分の一覧から引く（物語の乱数で）
     nameFor: function (L, sex, by) { return nameFor(L, sex, by, L.status, L.story ? L.story.r : L.rnd2); },
@@ -666,7 +721,9 @@
   // 時代で呼び方が変わる身分
   function stWord(L) {
     var y = L.year, st = L.status;
+    if (st === 'kuge' && L.kakaku && KAKAKU_NAME[L.kakaku]) return (y >= 1869 ? '華族' : y < 1221 ? '貴族' : '公家') + '（' + KAKAKU_NAME[L.kakaku] + '）の家';
     if (st === 'kuge' && y >= 1869) return '華族の家';
+    if ((st === 'bushi' || st === 'shizoku') && L.grade && GRADE_NAME[L.grade] && !L.rank) return (st === 'bushi' ? '武士' : '士族') + '（' + GRADE_NAME[L.grade] + '）の家';
     if (y < 1600 && st === 'outcast') return '河原者や非人とされた家';
     if (y < 1600 && st === 'chonin') return '職人や商人の家';
     if (y < 1185 && st === 'hyakusho') return '田を耕す農民の家';
@@ -1089,8 +1146,8 @@
     var y = L.year, a = L.age, rnd = L.rnd, H = L.H;
     if (L.married) {
       if (L.spouse && L.spouse.alive && rnd() < lin(H.nat.divorce, y) && E.homeLife(L)) {
-        L.married = false; L.spouse.gone = true; L.divorced = y;
-        push(L, rec, '人間関係', who(L.spouse) + 'と別れた（離縁）', [ev(L, 'ipss', near(H.nat.divorce, y), '夫婦1組が1年のうちに離婚する割合（人口千人あたりの離婚率から推計）', pct(lin(H.nat.divorce, y)), { est: true })]);
+        L.married = false; L.spouse.gone = true; L.divorced = y; L.everDivorced = y;
+        push(L, rec, '人間関係', who(L.spouse) + 'と離縁した。', [ev(L, 'ipss', near(H.nat.divorce, y), '夫婦1組が1年のうちに離婚する割合（人口千人あたりの離婚率から推計）', pct(lin(H.nat.divorce, y)), { est: true })]);
       }
       return;
     }
@@ -1113,7 +1170,7 @@
     }
     var SMs = E.storyMod(), su = SMs && L.story && a >= L.marryAt && a < 55 ? SMs.suitor(L, 'marry') : null;
     if (su) { (L.suitors = L.suitors || []).push(su); su.name = nameFor(L, L.sex === 'm' ? 'f' : 'm', su.by, su.st || L.status, L.story ? L.story.r : L.rnd2); }
-    if (a >= L.marryAt && a < 55) L.queue.push({ title: '縁談', kind: 'marry', suitor: su, groups: [{ id: 'marry', q: su ? E.eraWords(SMs.suitorText(L, su, su.name), L.year) : '縁談が持ち込まれた。受ける？', options: offerOpts(L, 'marry') }],
+    if (a >= L.marryAt && a < 55) L.queue.push({ title: '縁談', kind: 'marry', suitor: su, groups: [{ id: 'marry', q: su ? E.eraWords(SMs.suitorText(L, su, su.name), L.year, L) : '縁談が持ち込まれた。受ける？', options: offerOpts(L, 'marry') }],
       ev: [ev(L, 'ipss', near(H.nat.marriage[L.sex], y), '平均初婚年齢（' + (L.sex === 'm' ? '夫' : '妻') + '。1898年以前は村の研究の目安）', lin(H.nat.marriage[L.sex], y).toFixed(1) + '歳', { est: y < 1899 }), ev(L, 'ipss', near(H.nat.neverMarried[L.sex], y), '50歳まで一度も結婚しない人の割合', pct(lin(H.nat.neverMarried[L.sex], y)))] });
   }
   function resolveMarry(L, rec, br, answers) {
@@ -1122,7 +1179,8 @@
     L.refused = (L.refused || 0) + 1;
     L.marryAt = L.age + 1 + Math.floor(L.rnd() * 3);
     if (L.refused >= 3 && L.rnd() < 0.5) L.never = true;
-    push(L, rec, '人間関係', '縁談を断った', br.ev);
+    var SMr = E.storyMod();
+    push(L, rec, '人間関係', SMr && SMr.refuseText ? SMr.refuseText(L, br.suitor) : '縁談を断った', br.ev);
   }
   function doMarry(L, rec, again, evs, su) {
     var rnd = L.rnd, y = L.year, H = L.H;
@@ -1139,13 +1197,14 @@
     var t = y + 1 + Math.floor(rnd() * 2);
     for (var i = 0; i < total; i++) { if (t - wifeBy > 44) break; L.kidPlan.push(t); t += 2 + Math.floor(rnd() * 2); }
     var spn = /アイヌ語/.test(sp.name) ? '同じコタンの相手' : sp.name;
-    var txt = again ? '再婚した。相手は' + spn + '。' : (y < 1947 ? '親が決めた縁談で、' : '') + spn + 'と結婚した。' + (L.sex === 'f' && (y < 1947) ? (L.heirF ? '跡取りの男子がいない家のため、婿を迎えた（婿養子）。' + spn + 'が家に入り、家の名字を名乗った。' : '嫁いで相手の家に入った。') : '');
+    var txt = again ? spn + 'と再婚した。' : (y < 1947 ? '親が決めた縁談で、' : '') + spn + 'と結婚した。' + (L.sex === 'f' && (y < 1947) ? (L.heirF ? '跡取りの男子がいない家のため、婿を迎えた（婿養子）。' + spn + 'が家に入り、家の名字を名乗った。' : '嫁いで相手の家に入った。') : '');
     L.heirFAtMarry = !!(L.sex === 'f' && y < 1947 && L.heirF && !again);
     if (L.sex === 'f' && y < 1947 && L.heirF) { L.tookMuko = true; sp.muko = true; }
-    if (L.sex === 'f' && L.job && L.job !== 'farm' && y < 1960) L.job = L.kind === 'village' || L.kind === 'fish' ? 'farm' : 'home';
+    if (L.sex === 'f' && L.job && L.job !== 'farm' && L.job !== 'story' && y < 1960) L.job = L.kind === 'village' || L.kind === 'fish' ? 'farm' : 'home';
     var SMd = E.storyMod();
-    if (su) txt += '相手は' + su.house + 'の' + su.order + '、' + (y - sp.by) + '歳。' + su.job + '、' + su.trait + '人。';
+    if (su) txt += (y - sp.by) + '歳、' + su.house + 'の' + su.order + 'で、' + su.trait + '人だった。';
     else if (SMd && L.story && !/アイヌ語/.test(sp.name)) txt += SMd.spouseDesc(L, sp, y);
+    sp.house = su ? su.house + 'の' + su.order : sp.house;
     push(L, rec, '家庭', txt, evs || [ev(L, LIFE_SRC, y, '再婚', '', { est: true })]);
     if (y >= 1948) E.wifeNameYear(L, rec);
   }
@@ -1155,8 +1214,71 @@
   var SURNAMES = ['佐藤', '鈴木', '高橋', '田中', '伊藤', '渡辺', '山本', '中村', '小林', '加藤', '吉田', '山田', '佐々木', '山口', '松本', '井上', '木村', '林', '斎藤', '清水', '山崎', '森', '池田', '橋本', '阿部', '石川', '山下', '中島', '石井', '小川', '前田', '岡田', '長谷川', '藤田', '後藤', '近藤', '村上', '遠藤', '青木', '坂本', '福田', '太田', '西村', '藤井', '岡本', '藤原', '中野', '三浦', '原田', '松田'];
   // 家の名字（江戸時代の百姓・町人は公には名乗れなかったため、家の呼び名として持たせる）。アイヌ・琉球・中世より前の家には持たせない
   function pickSurname(L, r) {
+    var x = r(); // 乱数を引く数は前と同じ1回
     if (L.status === 'ainu' || L.status === 'satsumon' || L.ryukyu || L.by < 1600) return null;
-    return SURNAMES[Math.floor(r() * SURNAMES.length)];
+    return localSurname(L, x);
+  }
+  /* ---------- 苗字と氏（spec6 2-27） ----------
+     平安の貴族と武士は氏（藤原・源・平…）で呼ぶ。鎌倉からの公家は家の名（近衛・九条…）、武士は名字と氏の両方を持つ。
+     中世の名主など村の有力な家は名字を持つことがある。江戸の百姓・町人の名字は家の呼び名で、公には名乗れない（苗字帯刀を許された家を除く）。
+     1870年に平民も苗字を名乗ってよくなり、1875年に全員が名乗ることになった。名字はその土地に多い名字から引く */
+  var UJI = ['藤原', '藤原', '藤原', '藤原', '源', '源', '源', '平', '平', '平', '橘', '菅原', '大江', '清原', '中原', '紀', '小野', '安倍', '惟宗', '三善'];
+  var KUGE_HOUSE = {
+    sekke: [['近衛', '藤原'], ['九条', '藤原'], ['二条', '藤原'], ['一条', '藤原'], ['鷹司', '藤原']],
+    seiga: [['西園寺', '藤原'], ['三条', '藤原'], ['徳大寺', '藤原'], ['久我', '源'], ['花山院', '藤原'], ['大炊御門', '藤原'], ['今出川', '藤原'], ['広幡', '源'], ['醍醐', '藤原']],
+    daijin: [['正親町三条', '藤原'], ['三条西', '藤原'], ['中院', '源']],
+    urin: [['飛鳥井', '藤原'], ['冷泉', '藤原'], ['持明院', '藤原'], ['山科', '藤原'], ['四条', '藤原'], ['中山', '藤原'], ['難波', '藤原'], ['姉小路', '藤原'], ['園', '藤原'], ['庭田', '源'], ['綾小路', '源'], ['六条', '源']],
+    meika: [['日野', '藤原'], ['広橋', '藤原'], ['烏丸', '藤原'], ['柳原', '藤原'], ['勧修寺', '藤原'], ['万里小路', '藤原'], ['甘露寺', '藤原'], ['葉室', '藤原'], ['坊城', '藤原'], ['中御門', '藤原']],
+    hanke: [['土御門', '安倍'], ['吉田', '卜部'], ['錦小路', '丹波'], ['舟橋', '清原'], ['伏原', '清原'], ['高倉', '藤原'], ['五条', '菅原'], ['唐橋', '菅原'], ['竹屋', '藤原']]
+  };
+  var SURNAME_REGION = {
+    tohoku: { prefs: ['02', '03', '04', '05', '06', '07'], list: ['佐藤', '高橋', '鈴木', '阿部', '菅原', '千葉', '伊藤', '斎藤', '佐々木', '工藤', '小野寺', '遠藤', '渡部', '三浦', '菊地'] },
+    kanto: { prefs: ['08', '09', '10', '11', '12', '13', '14'], list: ['鈴木', '佐藤', '高橋', '渡辺', '小林', '田中', '斎藤', '石井', '関口', '新井', '飯田', '小島', '関根', '大塚', '吉田'] },
+    hokuriku: { prefs: ['15', '16', '17', '18', '19', '20'], list: ['小林', '山本', '中村', '田中', '林', '山田', '吉田', '佐藤', '高橋', '丸山', '宮沢', '五十嵐', '本間', '吉川', '北村'] },
+    tokai: { prefs: ['21', '22', '23', '24'], list: ['鈴木', '加藤', '伊藤', '山田', '水野', '近藤', '杉山', '望月', '服部', '後藤', '河合', '中村', '渡辺', '小川', '太田'] },
+    kinki: { prefs: ['25', '26', '27', '28', '29', '30'], list: ['田中', '山本', '中村', '井上', '吉田', '松本', '山田', '西村', '辻', '奥田', '北川', '前田', '谷口', '岡田', '藤原'] },
+    chugoku: { prefs: ['31', '32', '33', '34', '35'], list: ['山本', '藤井', '田中', '原田', '岡田', '小林', '三宅', '佐藤', '中村', '藤原', '村上', '石田', '大田', '河野', '福田'] },
+    shikoku: { prefs: ['36', '37', '38', '39'], list: ['山本', '高橋', '大西', '近藤', '村上', '渡辺', '矢野', '森', '佐藤', '松本', '岡田', '山崎', '宮本', '曽我部', '浜田'] },
+    kyushu: { prefs: ['40', '41', '42', '43', '44', '45', '46'], list: ['中村', '田中', '松尾', '山口', '古賀', '井上', '吉田', '松本', '山下', '坂本', '中島', '前田', '黒木', '甲斐', '浜崎'] },
+    okinawa: { prefs: ['47'], list: ['比嘉', '金城', '大城', '宮城', '新垣', '玉城', '上原', '島袋', '平良', '山城'] },
+    hokkaido: { prefs: ['01'], list: ['佐藤', '高橋', '佐々木', '鈴木', '伊藤', '工藤', '斎藤', '中村', '渡辺', '小林'] }
+  };
+  function localSurname(L, x) {
+    var pf = String(L.pref || ''), reg = null;
+    for (var k in SURNAME_REGION) if (SURNAME_REGION[k].prefs.indexOf(pf) >= 0) reg = SURNAME_REGION[k];
+    // 半分は全国に多い名字、半分はその土地に多い名字
+    if (reg && x < 0.5) return reg.list[Math.floor(x * 2 * reg.list.length)];
+    return SURNAMES[Math.floor((reg ? (x - 0.5) * 2 : x) * SURNAMES.length)];
+  }
+  // 生まれたときに、氏・名字と、名字を公に名乗れるかを決める（別の乱数）
+  function nameParts(L, seed) {
+    var r = E.makeRng((seed ^ 0x3c6ef372) >>> 0), y = L.by, st = L.status;
+    L.uji = null; L.surnameShow = false; L.surnamePrivate = false;
+    if (st === 'ainu' || st === 'satsumon' || L.ryukyu && y < 1879) return;
+    if (st === 'kuge') {
+      var hs = y >= 1221 && L.kakaku && KUGE_HOUSE[L.kakaku] ? KUGE_HOUSE[L.kakaku] : null;
+      if (L.kakaku && /shaku/.test(L.kakaku)) hs = KUGE_HOUSE[{ koshaku: 'sekke', koshaku2: 'seiga', hakushaku: 'daijin', shishaku: 'urin', danshaku: 'meika' }[L.kakaku]];
+      if (hs) { var hh = hs[Math.floor(r() * hs.length)]; L.surname = hh[0]; L.uji = hh[1]; L.surnameShow = true; }
+      else { L.uji = UJI[Math.floor(r() * UJI.length)]; L.surname = null; }
+      return;
+    }
+    if (st === 'bushi' && y < 1185) { L.uji = UJI[Math.floor(r() * UJI.length)]; L.surname = null; return; }
+    if (st === 'bushi' || st === 'shizoku') {
+      L.uji = ['源', '源', '平', '平', '藤原', '藤原', '藤原', '橘', '菅原', '大江'][Math.floor(r() * 10)];
+      // 土地の名を名字にする（中世の武士）
+      var mn = String(L.muniName || '').replace(/(市|町|村|区|郡)$/, '');
+      if (y < 1600 && /^[\u4e00-\u9fff]{2,3}$/.test(mn) && r() < 0.35) L.surname = mn;
+      else if (!L.surname) L.surname = localSurname(L, r());
+      L.surnameShow = !L.rank || L.rank === 'daimyo';
+      if (L.rank === 'shogun') L.surnameShow = false; // 将軍家は名字を付けずに呼ぶ（実在の家と重ねない）
+      return;
+    }
+    if (y < 1600) { if (y >= 1185 && (st === 'hyakusho' || st === 'chonin') && L.incPct > 0.8) { L.surname = localSurname(L, r()); L.surnameShow = true; } return; }
+    if (!L.surname) L.surname = localSurname(L, r());
+    if (y >= 1870) { L.surnameShow = true; return; }
+    // 江戸の百姓・町人：家の名字はあるが公には名乗れない（苗字帯刀を許された豊かな家を除く）。1875年からは名乗る
+    if (st === 'hyakusho' || st === 'chonin' || st === 'heimin' || st === 'priest') { if (L.incPct > 0.97) { L.surnameShow = true; L.taito = true; } else L.surnamePrivate = true; return; }
+    L.surnamePrivate = true;
   }
   function otherSurname(L) { var s0 = L.surname; for (var i = 0; i < 20; i++) { var t = SURNAMES[Math.floor(L.rnd2() * SURNAMES.length)]; if (t !== s0) return t; } return '中川'; }
   function tier(L) { return L.incPct < 0.4 ? 0 : L.incPct < 0.8 ? 1 : 2; }
@@ -1337,7 +1459,27 @@
     push(L, rec, '家庭', nw + '家の養子に入り、家督を継ぐことになった。' + (old ? '名字が' + nw + 'に変わった（旧姓 ' + old + '）' : '名字は' + nw + 'になった'), br.ev);
   }
   // 名字を添えた名前（婿養子・養子に入った人だけ、旧姓を添える）
-  function displayName(L) { return L.surnameOld ? L.surname + L.name + '（旧姓 ' + L.surnameOld + '）' : L.name; }
+  // 記録に出す名前（spec6 2-27）：「藤原 道房」「佐々木 盛綱（源氏）」「九条 経実（藤原氏）」。江戸の百姓・町人は1875年まで名字を付けない
+  function shownSurname(L) {
+    if (!L.surname) return L.uji && L.status !== 'heimin' ? L.uji : null;
+    if (L.surnameShow || L.year >= 1875 || (L.surnamePrivate && L.year >= 1870 && L.sex === 'm' && L.age >= 15)) return L.surname;
+    return null;
+  }
+  function displayName(L) {
+    if (L.surnameOld) return L.surname + L.name + '（旧姓 ' + L.surnameOld + '）';
+    var sn = shownSurname(L);
+    if (!sn) return L.name;
+    var uj = L.uji && L.surname && sn === L.surname && L.year < 1872 && (L.status === 'bushi' || L.status === 'kuge') ? '（' + L.uji + (L.uji === '源' || L.uji === '平' ? '氏' : '氏') + '）' : '';
+    return sn + ' ' + L.name + uj;
+  }
+  // 記録の「家」の欄（江戸の百姓・町人の名字は公には名乗れない）
+  function surnameNote(L) {
+    if (L.surnamePrivate && L.by < 1870) return '家の名字：' + L.surname + '（公には名乗れない）';
+    if (L.taito) return '家の名字：' + L.surname + '（苗字帯刀を許された家）';
+    if (L.uji && L.surname && L.by < 1872) return '家の名字：' + L.surname + '（' + L.uji + '氏）';
+    if (L.uji && !L.surname) return '氏：' + L.uji;
+    return L.surname ? '家の名字：' + L.surname : null;
+  }
 
   /* 召集（戦争） */
   function warYear(L, rec) {
@@ -1460,6 +1602,8 @@
     // 河原者・非人やえた・ひにんとされた人は、村の祭りに加わることを許されなかった
     if (!s.st && /祭り/.test(s.t) && (L.status === 'outcast' || (L.status === 'buraku' && y < 1946))) return false;
     if (s.wk && s.wk.indexOf(L.job) < 0) return false;
+    // 筋で就いた仕事の人には、家の田畑や漁の場面を出さない（spec6 1-6）
+    if (L.pathJob && L.job === 'story' && s.cat !== '時代' && /田|畑|年貢|稲|耕|網|漁|家業|家の仕事|家の手伝い/.test(s.t)) return false;
     if (s.edu && s.edu.indexOf(L.edu) < 0) return false;
     if (s.sex && s.sex !== L.sex) return false;
     if (s.prefs && s.prefs.indexOf(L.pref) < 0) return false;
@@ -1563,6 +1707,14 @@
   function finishYear0(L, rec) {
     if (!L.alive) { L.log.push(rec); return; }
     var y = L.year, a = L.age;
+    // 物語の結末で亡くなる（spec6：遭難・戦・災害など。死因は物語の呼び名）
+    if (L.storyDeath && !protectedYear(L)) {
+      var sd = L.storyDeath; L.storyDeath = null;
+      L.causeName = sd.n; L.causeShare = null;
+      dieBy(L, rec, sd.kind || 'acc', sd.t, [ev(L, LIFE_SRC, y, '物語の結末（死因：' + sd.n + '）', '', { est: true })]);
+      L.log.push(rec);
+      return;
+    }
     if (a >= 5) L.stats.to5 = true;
     if (a >= 60) L.stats.to60 = true;
     var q = clamp(dp(L, L.sex, a, y) * E.bodyMult(L, a), 0, 1);
@@ -1684,7 +1836,7 @@
     return { share: lin(prefSeries(H, L.pref), y), where: H.prefNames[L.pref] };
   }
   return {
-    houseOf: houseOf, heirCandidates: heirCandidates, childCandidates: childCandidates, childHouse: childHouse, heirOf: heirOf, displayName: displayName, heirlessRates: heirlessRates,
+    houseOf: houseOf, surnameNote: surnameNote, shownSurname: shownSurname, heirCandidates: heirCandidates, childCandidates: childCandidates, childHouse: childHouse, heirOf: heirOf, displayName: displayName, heirlessRates: heirlessRates,
     eraLabel: eraLabel, pickBirth: pickBirth, newLife: newLife, step: step, resolve: resolve, autoRun: autoRun,
     cohort: cohort, majorTimeline: majorTimeline, familyList: familyList, endText: endText, houseWord: stWordJob, placeLabel: placeLabel, deathProb: dp, birthShare: birthShare
   };

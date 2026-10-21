@@ -197,7 +197,7 @@
     return r;
   }
   // 婿養子・養子に入った人は新しい名字と旧姓を添える
-  function dispName(Lx) { Lx = Lx || L; return Lx && Lx.old && O.displayName ? O.displayName(Lx) : Lx.name; }
+  function dispName(Lx) { Lx = Lx || L; return Lx && Lx.old && O.displayName ? O.displayName(Lx) : Lx && Lx.surname && !/アイヌ語/.test(Lx.name || '') ? Lx.surname + ' ' + Lx.name : Lx.name; }
   function lifeSummary(Lx, k, first) {
     var rel = '';
     if (k > 0) { var sg = G.house.chain[k - 1]; rel = sg.rel || ''; if (!rel && first) { var m = first.members.filter(function (x) { return x.id === sg.memberId; })[0]; if (m) rel = m.role; } }

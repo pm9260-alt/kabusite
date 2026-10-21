@@ -1,0 +1,561 @@
+[
+{
+  "id": "gn_kosshu_taisho", "title": "甲種合格の再役", "group": "gun",
+  "y": [1916, 1920], "a": [20, 20], "st": ["hyakusho", "heimin"], "sex": "m", "kind": ["village", "fish"], "p": 0.03,
+  "src": ["gn_kato1996", "gn_hata2005", "gn_yoshida2002"],
+  "text": "{name}は徴兵検査で甲種合格となり、二等卒として郷里の連隊に入った。満期が近づくと、中隊長が再役して下士官を目指さぬかと声をかけた。どうする？",
+  "opts": [
+    { "k": "go", "l": "再役して下士官に", "f": ["earn"], "w": 1,
+      "say": "{name}は再役を願い出て、伍長の階級章を襟に付けた。",
+      "fx": { "sat": 2, "learn": 3, "tie": -2, "body": -1 }, "gradeSet": "kashi",
+      "job": { "n": "陸軍伍長", "pay": 300, "cat": "clerk" }, "away": true,
+      "next": { "in": [6, 6], "node": "socho" } },
+    { "k": "stay", "l": "満期で村へ帰る", "f": ["family"], "w": 1,
+      "say": "{name}は満期除隊となり、背嚢を下ろして{place}の田へ戻った。",
+      "fx": { "sat": 1, "learn": -1, "tie": 3, "body": 1 },
+      "next": { "in": [6, 10], "node": "kison" } }
+  ],
+  "nodes": {
+    "socho": {
+      "say": "{name}は曹長に進み、中隊の兵の名前と郷里を一人残らず覚えていた。",
+      "fx": { "sat": 2, "learn": 2, "tie": -1, "body": -1 },
+      "job": { "n": "陸軍曹長", "pay": 450, "cat": "clerk" },
+      "ask": { "title": "少尉候補者の試験", "text": "大隊長が、下士官から将校になれる少尉候補者の試験を勧めた。受かれば士官学校で学び直すことになる。どうする？",
+        "opts": [
+          { "k": "go", "l": "試験を受ける", "f": ["study"], "w": 1,
+            "say": "{name}は消灯後の下士官室で典範令を写し続け、少尉候補者に選ばれた。",
+            "fx": { "sat": 3, "learn": 4, "tie": -2, "body": -2 },
+            "next": { "in": [3, 3], "node": "shoi" } },
+          { "k": "stay", "l": "曹長のまま勤める", "f": ["family"], "w": 1,
+            "say": "{name}は試験を見送り、曹長として新兵の教育に力を注いだ。",
+            "fx": { "sat": 1, "learn": -1, "tie": 2, "body": 0 },
+            "next": { "in": [8, 12], "node": "kyoiku" } }
+        ] }
+    },
+    "shoi": {
+      "say": "士官学校での学びを終えた{name}は少尉に任官し、村から出た初めての将校となった。",
+      "fx": { "sat": 4, "learn": 3, "tie": -1, "body": -1 }, "gradeSet": "ikan",
+      "job": { "n": "陸軍少尉", "pay": 850, "cat": "clerk" },
+      "next": { "in": [12, 12], "node": "taii" }
+    },
+    "taii": {
+      "say": "{name}は大尉となって中隊を預かり、たたき上げの中隊長として兵に慕われた。",
+      "fx": { "sat": 3, "learn": 1, "tie": -1, "body": -1 },
+      "job": { "n": "陸軍大尉", "pay": 1500, "cat": "clerk" },
+      "ask": { "title": "動員の命令", "text": "大陸での戦が広がり、連隊に動員の命令が下った。年かさの{name}には、予備役に入って村へ帰る道もあった。どうする？",
+        "opts": [
+          { "k": "go", "l": "中隊を率いて出征", "f": ["earn"], "w": 1,
+            "say": "{name}は中隊の先頭に立ち、輸送船で大陸へ渡った。",
+            "fx": { "sat": 3, "learn": 1, "tie": -3, "body": -2 }, "abroad": "中華民国",
+            "next": { "in": [1, 2], "node": "senshi" } },
+          { "k": "stay", "l": "予備役に入る", "f": ["family"], "w": 1,
+            "say": "{name}は予備役に入り、中隊を若い将校に託して{place}へ帰った。",
+            "fx": { "sat": -1, "learn": 0, "tie": 4, "body": 1 }, "move": "home",
+            "next": { "in": [2, 4], "node": "bunkai" } }
+        ] }
+    },
+    "senshi": {
+      "say": "{name}の中隊は華中の戦線で、クリークを渡る攻撃の先頭に立った。",
+      "fx": { "sat": 1, "learn": 0, "tie": -2, "body": -5 },
+      "die": { "n": "戦死", "t": "{name}は部下をかばって撃たれ、大陸の土となった。村では村葬が営まれた。" }
+    },
+    "kyoiku": { "say": "曹長の{name}に鍛えられた兵たちは、除隊したあとも盆と正月に便りをよこした。",
+      "fx": { "sat": 3, "learn": 1, "tie": 2, "body": -1 } },
+    "kison": { "say": "{name}は村の青年団を束ね、水路の普請で鍬を振るう先頭に立った。",
+      "fx": { "sat": 3, "learn": 1, "tie": 3, "body": -1 } },
+    "bunkai": { "say": "{name}は在郷軍人会の分会長となり、出征した家の田植えに人手を回す段取りをした。",
+      "fx": { "sat": 3, "learn": 1, "tie": 3, "body": 0 } }
+  }
+},
+{
+  "id": "gn_kosshu_showa", "title": "内務班から南方へ", "group": "gun",
+  "y": [1936, 1938], "a": [20, 20], "st": ["hyakusho", "heimin"], "sex": "m", "kind": ["village", "fish"], "p": 0.04,
+  "src": ["gn_yoshida2017", "gn_ichinose2009", "gn_hata2005"],
+  "text": "{name}は徴兵検査で甲種合格となり、二等兵として入営した。古参兵の目が光る内務班で、{name}は銃の手入れを誰よりも早く覚えた。班長が下士官候補者の試験を勧めた。どうする？",
+  "opts": [
+    { "k": "go", "l": "下士官候補者になる", "f": ["earn"], "w": 1,
+      "say": "{name}は教導学校を出て伍長に任じられ、分隊の兵を束ねる身になった。",
+      "fx": { "sat": 3, "learn": 3, "tie": -2, "body": -1 }, "gradeSet": "kashi",
+      "job": { "n": "陸軍伍長", "pay": 300, "cat": "clerk" }, "away": true,
+      "next": { "in": [5, 5], "node": "gunso" } },
+    { "k": "stay", "l": "満期を待って帰る", "f": ["family"], "w": 1,
+      "say": "{name}は上等兵で満期除隊となり、慰問袋をくれた村の婦人会に礼を言って回った。",
+      "fx": { "sat": -1, "learn": 0, "tie": 3, "body": 1 }, "gradeSet": "hei",
+      "next": { "in": [2, 4], "node": "kison" } }
+  ],
+  "nodes": {
+    "gunso": {
+      "say": "軍曹となった{name}は分隊を率い、大陸の戦線を転々とした。",
+      "fx": { "sat": 2, "learn": 2, "tie": -2, "body": -2 }, "abroad": "中華民国",
+      "job": { "n": "陸軍軍曹", "pay": 380, "cat": "clerk" },
+      "ask": { "title": "南方への転進", "text": "部隊に南方の島への転進の命令が下った。内地の教育隊へ移り、新兵を鍛える役に回る話もあった。どうする？",
+        "opts": [
+          { "k": "go", "l": "分隊と南方へ", "f": ["earn"], "w": 1,
+            "say": "{name}は分隊の兵と輸送船に乗り、南の島へ向かった。",
+            "fx": { "sat": 2, "learn": 1, "tie": -3, "body": -2 },
+            "next": { "in": [1, 2], "node": "nanpo" } },
+          { "k": "stay", "l": "内地の教育隊へ", "f": ["family"], "w": 1,
+            "say": "{name}は内地へ戻り、教育隊で入営したばかりの兵に銃の扱いを教えた。",
+            "fx": { "sat": -2, "learn": 1, "tie": 2, "body": 1 }, "move": "home",
+            "next": { "in": [4, 4], "node": "fukuin" } }
+        ] }
+    },
+    "nanpo": {
+      "say": "{name}の部隊は補給の途絶えた密林で、芋の葉をかじりながら持ち場を守った。",
+      "fx": { "sat": -2, "learn": 0, "tie": -2, "body": -6 },
+      "die": { "n": "戦死", "t": "{name}は南方の島で戦死した。村に届いた白木の箱には、名を書いた紙が一枚入っていた。" }
+    },
+    "fukuin": { "say": "{name}は兵営で敗戦を迎え、復員して{place}の田に戻った。教え子の兵の家を一軒ずつ訪ねて歩いた。",
+      "fx": { "sat": 1, "learn": 1, "tie": 3, "body": 0 }, "quit": true },
+    "kison": { "say": "{name}は{place}で炭焼きと田の仕事を続け、冬の夜は子に兵営の話を聞かせた。",
+      "fx": { "sat": 3, "learn": 0, "tie": 4, "body": 0 } }
+  }
+},
+{
+  "id": "gn_nisshin", "title": "平壌の一番乗り", "group": "gun",
+  "y": [1894, 1895], "a": [21, 27], "st": ["hyakusho", "heimin"], "sex": "m", "kind": ["village", "fish"], "p": 0.04,
+  "src": ["gn_ohe1981", "gn_shokunkyoku1978", "gn_hata2005"],
+  "text": "清との戦がはじまり、{name}は予備役から召集されて朝鮮へ渡った。平壌の城を攻める前の晩、小隊に敵の陣地へ一番に駆けこむ役が回ってきた。どうする？",
+  "opts": [
+    { "k": "go", "l": "先頭で駆けこむ", "f": ["earn"], "w": 1,
+      "say": "{name}は先頭に立って陣地へ駆けこみ、小隊の突破口を開いた。",
+      "fx": { "sat": 4, "learn": 1, "tie": -1, "body": -3 }, "gradeSet": "hei", "abroad": "朝鮮",
+      "next": { "in": [1, 1], "node": "kinshi" } },
+    { "k": "stay", "l": "仲間と後に続く", "f": ["family"], "w": 1,
+      "say": "{name}は仲間と息を合わせて進み、隊の誰も欠けずに戦いを終えた。",
+      "fx": { "sat": -1, "learn": 0, "tie": 2, "body": 1 }, "gradeSet": "hei", "abroad": "朝鮮",
+      "next": { "in": [1, 2], "node": "kikan" } }
+  ],
+  "nodes": {
+    "kinshi": {
+      "say": "凱旋した{name}に、功七級金鵄勲章と、毎年支払われる年金が与えられた。",
+      "fx": { "sat": 5, "learn": 0, "tie": 2, "body": 0 }, "move": "home",
+      "honor": { "t": "功七級金鵄勲章", "k": "kunsho" },
+      "ask": { "title": "年金の使い道", "text": "金鵄勲章の年金が毎年届くようになった。質に入れた田を買い戻すか、再役して下士官を目指すか。どうする？",
+        "opts": [
+          { "k": "go", "l": "再役して残る", "f": ["earn"], "w": 1,
+            "say": "{name}は再役して伍長となり、新兵に平壌の戦いを語って聞かせた。",
+            "fx": { "sat": 2, "learn": 2, "tie": -3, "body": -1 }, "gradeSet": "kashi", "away": true,
+            "job": { "n": "陸軍伍長", "pay": 250, "cat": "clerk" },
+            "next": { "in": [9, 10], "node": "ryojun" } },
+          { "k": "stay", "l": "田を買い戻す", "f": ["save", "family"], "w": 1,
+            "say": "{name}は年金をためて質の田を買い戻し、{dad}の代の借金を返した。",
+            "fx": { "sat": 3, "learn": -1, "tie": 4, "body": 0 }, "debt": -100,
+            "next": { "in": [3, 6], "node": "eiyu" } }
+        ] }
+    },
+    "ryojun": {
+      "say": "ロシアとの戦で、軍曹の{name}は旅順の要塞を攻める隊に加わった。",
+      "fx": { "sat": 1, "learn": 0, "tie": -2, "body": -5 },
+      "die": { "n": "戦死", "t": "{name}は旅順の堡塁を攻める戦いで戦死した。金鵄勲章は遺族のもとに残った。" }
+    },
+    "eiyu": { "say": "村の英雄と呼ばれた{name}は、祭りの寄合でいつも上座に招かれた。",
+      "fx": { "sat": 4, "learn": 0, "tie": 3, "body": 0 } },
+    "kikan": { "say": "帰国した{name}は、杉の葉で飾った凱旋門をくぐって{place}へ帰り、{mom}と泣いて喜んだ。",
+      "fx": { "sat": 3, "learn": 0, "tie": 4, "body": 0 }, "move": "home" }
+  }
+},
+{
+  "id": "gn_nichiro", "title": "旅順の決死隊", "group": "gun",
+  "y": [1904, 1905], "a": [21, 32], "st": ["hyakusho", "heimin"], "sex": "m", "kind": ["village", "fish"], "p": 0.04,
+  "src": ["gn_ohe1981", "gn_shokunkyoku1978", "gn_shokeikan"],
+  "text": "ロシアとの戦で召集された{name}は、上等兵として旅順を囲む部隊に加わった。夜明けの総攻撃を前に、決死隊を募る声がかかった。どうする？",
+  "opts": [
+    { "k": "go", "l": "決死隊に加わる", "f": ["earn"], "w": 1,
+      "say": "{name}は白だすきを掛け、決死隊の一人として堡塁へ向かった。",
+      "fx": { "sat": 4, "learn": 0, "tie": -2, "body": -3 }, "gradeSet": "hei", "abroad": "清",
+      "next": { "in": [0, 1], "node": "kesshi" } },
+    { "k": "stay", "l": "分隊に残る", "f": ["family"], "w": 1,
+      "say": "{name}は自分の分隊にとどまり、塹壕を掘り進める役を続けた。",
+      "fx": { "sat": -2, "learn": 1, "tie": 1, "body": 1 }, "gradeSet": "hei", "abroad": "清",
+      "next": { "in": [1, 2], "node": "kaeru" } }
+  ],
+  "nodes": {
+    "kesshi": {
+      "say": "決死隊は堡塁の一角を奪い、生き残った{name}に功七級金鵄勲章が与えられた。",
+      "fx": { "sat": 4, "learn": 0, "tie": 1, "body": -2 },
+      "honor": { "t": "功七級金鵄勲章", "k": "kunsho" },
+      "next": { "in": [1, 1], "node": "kizu" }
+    },
+    "kizu": {
+      "say": "その戦いで脚に弾を受けた{name}は、杖を手放せない体で{place}へ帰った。",
+      "fx": { "sat": -2, "learn": 0, "tie": 2, "body": -6 }, "move": "home",
+      "job": { "n": "傷痍軍人", "pay": 120, "cat": "farm" },
+      "next": { "in": [3, 6], "node": "mura" }
+    },
+    "mura": { "say": "{name}は勲章の年金と恩給で暮らしを支え、田仕事は弟と雇い人に任せた。",
+      "fx": { "sat": 1, "learn": 1, "tie": 2, "body": -1 } },
+    "kaeru": { "say": "講和ののち、{name}は無事に{place}へ帰り、戦地で覚えた土木の腕で村の橋を架け直した。",
+      "fx": { "sat": 3, "learn": 1, "tie": 4, "body": 0 }, "move": "home" }
+  }
+},
+{
+  "id": "gn_rikushi", "title": "陸軍士官学校", "group": "gun",
+  "y": [1930, 1932], "a": [16, 18], "st": ["hyakusho", "heimin"], "sex": "m", "kind": ["village", "fish"], "p": 0.03,
+  "src": ["gn_hirota1997", "gn_masuda1996", "gn_soumu_onkyu"],
+  "text": "成績のよい{name}に、小学校の先生が学費のいらない陸軍士官学校を受けてみよと勧めた。地主が座敷を貸し、夜ごと勉強を見てくれるという。どうする？",
+  "opts": [
+    { "k": "go", "l": "士官学校を受ける", "f": ["study"], "w": 1,
+      "say": "{name}は地主の座敷で代数を解き続け、士官学校の合格の電報を受けた。",
+      "fx": { "sat": 3, "learn": 5, "tie": -2, "body": -1 }, "away": true,
+      "next": { "in": [3, 3], "node": "shoi" } },
+    { "k": "stay", "l": "家の田を継ぐ", "f": ["family"], "w": 1,
+      "say": "{name}は礼を言って辞し、{dad}と田の畦を塗る春に戻った。",
+      "fx": { "sat": -1, "learn": -1, "tie": 4, "body": 1 },
+      "next": { "in": [8, 12], "node": "nomin" } }
+  ],
+  "nodes": {
+    "shoi": {
+      "say": "少尉に任官した{name}が帰省すると、地主が門の外まで出て迎えた。家の格が村で一つ上がった。",
+      "fx": { "sat": 4, "learn": 2, "tie": 1, "body": 0 }, "gradeSet": "ikan",
+      "job": { "n": "陸軍少尉", "pay": 850, "cat": "clerk" },
+      "next": { "in": [6, 6], "node": "taii" }
+    },
+    "taii": {
+      "say": "大尉に進んだ{name}は、戦死した部下の家族に宛てて、一人ずつ長い手紙を書いた。",
+      "fx": { "sat": 1, "learn": 2, "tie": -2, "body": -2 },
+      "job": { "n": "陸軍大尉", "pay": 1500, "cat": "clerk" },
+      "ask": { "title": "陸軍大学校", "text": "連隊長が、陸軍大学校を受けて参謀の道へ進めと勧めた。中隊の兵たちは、隊長に残ってほしいと口々に言った。どうする？",
+        "opts": [
+          { "k": "go", "l": "陸軍大学校を受ける", "f": ["study"], "w": 1,
+            "say": "{name}は陸軍大学校に入り、地図と兵棋の前で夜を明かした。",
+            "fx": { "sat": 3, "learn": 4, "tie": -3, "body": -1 },
+            "next": { "in": [3, 3], "node": "sanbo" } },
+          { "k": "stay", "l": "中隊に残る", "f": ["family"], "w": 1,
+            "say": "{name}は受験を見送り、中隊の兵とともに南方の島の守りについた。",
+            "fx": { "sat": 2, "learn": -1, "tie": 1, "body": -2 },
+            "next": { "in": [3, 3], "node": "senshi" } }
+        ] }
+    },
+    "sanbo": {
+      "say": "少佐となった{name}は参謀として作戦を練り、上の命令と前線の兵の命の間で眠れぬ夜を過ごした。",
+      "fx": { "sat": 2, "learn": 3, "tie": -2, "body": -3 }, "gradeSet": "sakan",
+      "job": { "n": "陸軍少佐", "pay": 2300, "cat": "clerk" },
+      "next": { "in": [4, 4], "node": "tsuiho" }
+    },
+    "senshi": {
+      "say": "中隊長の{name}は、島の守備隊とともに最後まで持ち場を離れなかった。",
+      "fx": { "sat": 0, "learn": 0, "tie": -2, "body": -6 },
+      "die": { "n": "戦死", "t": "{name}は南方の島で戦死した。遺された{mom}は遺族として扶助料を受けて暮らした。" }
+    },
+    "tsuiho": {
+      "say": "敗戦ののち、職業軍人だった{name}は公職追放となり、軍人恩給も止められた。{name}は郷里で鍬を握った。",
+      "fx": { "sat": -4, "learn": 0, "tie": 2, "body": 0 }, "quit": true, "move": "home",
+      "next": { "in": [7, 7], "node": "onkyu" }
+    },
+    "onkyu": { "say": "法が改められ、{name}の軍人恩給は一部が戻った。{name}は戦死した部下の墓参りを毎年続けた。",
+      "fx": { "sat": 1, "learn": 0, "tie": 2, "body": -1 } },
+    "nomin": { "say": "{name}は品評会で米の出来をほめられ、村の農事実行組合の組合長を任された。",
+      "fx": { "sat": 3, "learn": 1, "tie": 3, "body": 0 } }
+  }
+},
+{
+  "id": "gn_heigakko", "title": "海軍兵学校", "group": "gun",
+  "y": [1900, 1912], "a": [16, 18], "st": ["hyakusho", "heimin"], "sex": "m", "kind": ["village", "fish"], "p": 0.02,
+  "src": ["gn_hata2005", "gn_hirota1997"],
+  "text": "学費のいらない海軍兵学校が、江田島で生徒を募っていた。中学へ通わせてくれた網元の主人が、{name}に受けてみよと言った。どうする？",
+  "opts": [
+    { "k": "go", "l": "兵学校を受ける", "f": ["study"], "w": 1,
+      "say": "{name}は江田島の兵学校に入り、短艇の櫂を握って手の皮を何度もむいた。",
+      "fx": { "sat": 3, "learn": 5, "tie": -3, "body": -1 }, "away": true,
+      "next": { "in": [4, 5], "node": "shoi" } },
+    { "k": "stay", "l": "浜に残る", "f": ["family"], "w": 1,
+      "say": "{name}は網元の帳場に入り、浜の漁の勘定を任された。",
+      "fx": { "sat": 1, "learn": -1, "tie": 3, "body": 0 },
+      "job": { "n": "網元の帳場", "pay": 300, "cat": "fish" },
+      "next": { "in": [10, 15], "node": "hama" } }
+  ],
+  "nodes": {
+    "shoi": {
+      "say": "{name}は海軍少尉に任官し、巡洋艦の分隊士として遠洋の航海に出た。",
+      "fx": { "sat": 4, "learn": 3, "tie": -2, "body": -1 }, "gradeSet": "ikan",
+      "job": { "n": "海軍少尉", "pay": 850, "cat": "clerk" },
+      "next": { "in": [14, 16], "node": "kancho" }
+    },
+    "kancho": {
+      "say": "中佐となった{name}は駆逐艦の艦長を務め、正六位に叙せられた。",
+      "fx": { "sat": 4, "learn": 2, "tie": -2, "body": -1 }, "gradeSet": "sakan",
+      "job": { "n": "駆逐艦長", "pay": 3000, "cat": "clerk" },
+      "honor": { "t": "正六位", "k": "ikai" },
+      "ask": { "title": "この先の勤め", "text": "人事の係から、軍令部の勤めに移るか、艦に残るか、予備役に入るかを問われた。どうする？",
+        "opts": [
+          { "k": "go", "l": "軍令部へ移る", "f": ["earn"], "w": 1,
+            "say": "{name}は軍令部に移り、艦隊の燃料と石炭の手配を一手に引き受けた。",
+            "fx": { "sat": 3, "learn": 3, "tie": -2, "body": -1 },
+            "next": { "in": [4, 6], "node": "taisa" } },
+          { "k": "sea", "l": "艦に残る", "f": ["body"], "w": 1,
+            "say": "{name}は艦橋に立ち続けることを選び、夜間の演習で艦隊の先頭を走った。",
+            "fx": { "sat": 3, "learn": 1, "tie": -2, "body": -2 },
+            "next": { "in": [1, 3], "node": "jiko" } },
+          { "k": "stay", "l": "予備役に入る", "f": ["family"], "w": 1,
+            "say": "{name}は予備役に入り、二十年ぶりに{place}の浜で暮らしはじめた。",
+            "fx": { "sat": -1, "learn": 0, "tie": 4, "body": 1 }, "move": "home",
+            "next": { "in": [3, 6], "node": "kyori" } }
+        ] }
+    },
+    "taisa": { "say": "{name}は大佐に進み、浜の網元の子が海軍の大佐になったと郷里で語り草になった。",
+      "fx": { "sat": 4, "learn": 1, "tie": -1, "body": -1 },
+      "job": { "n": "海軍大佐", "pay": 3700, "cat": "clerk" } },
+    "jiko": {
+      "say": "灯火を消して走る夜間演習で、{name}の艦は僚艦とぶつかった。",
+      "fx": { "sat": -2, "learn": 0, "tie": -2, "body": -6 },
+      "die": { "n": "殉職", "t": "{name}は沈む艦から部下を先に逃がし、艦とともに海に消えた。" }
+    },
+    "kyori": { "say": "{name}は浜の漁業組合の組合長となり、海図の引き方を若い漁師に教えた。",
+      "fx": { "sat": 3, "learn": 1, "tie": 3, "body": 0 } },
+    "hama": { "say": "{name}は網元の娘婿に迎えられ、鰯の大漁の年には浜じゅうに酒を振る舞った。",
+      "fx": { "sat": 4, "learn": 0, "tie": 4, "body": 0 } }
+  }
+},
+{
+  "id": "gn_suihei", "title": "機関兵のたたき上げ", "group": "gun",
+  "y": [1906, 1912], "a": [17, 20], "st": ["hyakusho", "heimin"], "sex": "m", "kind": ["fish", "village"], "p": 0.03,
+  "src": ["gn_hata2005", "gn_shokunkyoku1978"],
+  "text": "海軍の志願兵の募集が、浜の役場の掲示板に張り出された。漁の舟の焼玉の機関をいじるのが好きな{name}は、足を止めた。どうする？",
+  "opts": [
+    { "k": "go", "l": "機関兵を志願する", "f": ["earn"], "w": 1,
+      "say": "{name}は海兵団に入り、石炭をくべる火夫の仕事から海軍の暮らしを始めた。",
+      "fx": { "sat": 2, "learn": 3, "tie": -2, "body": -2 }, "gradeSet": "hei", "away": true,
+      "job": { "n": "海軍の機関兵", "pay": 120, "cat": "clerk" },
+      "next": { "in": [6, 6], "node": "heiso" } },
+    { "k": "stay", "l": "浜で漁を続ける", "f": ["family"], "w": 1,
+      "say": "{name}は掲示板の前を通り過ぎ、{dad}と夜明け前の舟に乗った。",
+      "fx": { "sat": -1, "learn": 0, "tie": 3, "body": 1 },
+      "next": { "in": [6, 10], "node": "hama" } }
+  ],
+  "nodes": {
+    "heiso": {
+      "say": "{name}は二等機関兵曹に進み、罐の圧の上げ下げを耳で聞き分けられるようになった。",
+      "fx": { "sat": 2, "learn": 3, "tie": -1, "body": -1 }, "gradeSet": "kashi",
+      "job": { "n": "海軍の機関兵曹", "pay": 300, "cat": "clerk" },
+      "ask": { "title": "満期か再役か", "text": "満期が来た。浜では{mom}が嫁の話を用意して待っていた。分隊長は、再役すれば兵曹長も夢ではないと言った。どうする？",
+        "opts": [
+          { "k": "go", "l": "再役して艦に残る", "f": ["earn"], "w": 1,
+            "say": "{name}は再役の書類に判を押し、{mom}には詫びの手紙を書いた。",
+            "fx": { "sat": 2, "learn": 2, "tie": -3, "body": -1 },
+            "next": { "in": [8, 8], "node": "heisocho" } },
+          { "k": "stay", "l": "満期で浜へ帰る", "f": ["family"], "w": 1,
+            "say": "{name}は満期で除隊し、{place}の浜へ帰った。",
+            "fx": { "sat": -1, "learn": 0, "tie": 4, "body": 1 }, "move": "home", "quit": true,
+            "next": { "in": [2, 4], "node": "hatsudoki" } }
+        ] }
+    },
+    "heisocho": {
+      "say": "{name}は准士官の機関兵曹長となり、艦の機関室を預かる身になった。",
+      "fx": { "sat": 3, "learn": 2, "tie": -1, "body": -1 }, "gradeSet": "junshi",
+      "job": { "n": "海軍の機関兵曹長", "pay": 650, "cat": "clerk" },
+      "next": { "in": [4, 4], "node": "tokumu" }
+    },
+    "tokumu": {
+      "say": "{name}は特務少尉に任じられ、勲六等瑞宝章を受けた。兵学校出の若い将校も、機関のことは{name}に尋ねた。",
+      "fx": { "sat": 4, "learn": 2, "tie": -1, "body": -1 }, "gradeSet": "ikan",
+      "job": { "n": "海軍の特務少尉", "pay": 900, "cat": "clerk" },
+      "honor": { "t": "勲六等瑞宝章", "k": "kunsho" }
+    },
+    "hatsudoki": { "say": "{name}は浜でただ一人の発動機の直し手となり、漁船の機関の修理を一手に引き受けた。",
+      "fx": { "sat": 3, "learn": 1, "tie": 3, "body": 0 } },
+    "hama": { "say": "{name}は鰹船の船頭となり、群れを見つける勘の確かさで浜に名を知られた。",
+      "fx": { "sat": 4, "learn": 1, "tie": 3, "body": -1 } }
+  }
+},
+{
+  "id": "gn_kaigun_taiheiyo", "title": "志願して艦へ", "group": "gun",
+  "y": [1938, 1940], "a": [17, 20], "st": ["hyakusho", "heimin"], "sex": "m", "kind": ["fish", "village"], "p": 0.03,
+  "src": ["gn_yoshida2017", "gn_hata2005"],
+  "text": "海軍の志願兵になれば、白い水兵服で故郷へ帰れる。浜の青年学校の教官が、{name}に志願を勧めた。どうする？",
+  "opts": [
+    { "k": "go", "l": "海軍を志願する", "f": ["earn"], "w": 1,
+      "say": "{name}は海兵団で手旗と結索を覚え、駆逐艦の砲員として乗り組んだ。",
+      "fx": { "sat": 3, "learn": 3, "tie": -2, "body": -1 }, "gradeSet": "hei", "away": true,
+      "job": { "n": "海軍の水兵", "pay": 120, "cat": "clerk" },
+      "next": { "in": [3, 3], "node": "heiso" } },
+    { "k": "stay", "l": "浜の舟を継ぐ", "f": ["family"], "w": 1,
+      "say": "{name}は志願を見送り、{dad}の舟で沖へ出る毎日を続けた。",
+      "fx": { "sat": -1, "learn": 0, "tie": 3, "body": 1 },
+      "next": { "in": [8, 12], "node": "hama" } }
+  ],
+  "nodes": {
+    "heiso": {
+      "say": "{name}は二等兵曹に進み、砲塔の一つを預かる下士官になった。",
+      "fx": { "sat": 2, "learn": 2, "tie": -1, "body": -1 }, "gradeSet": "kashi",
+      "job": { "n": "海軍の兵曹", "pay": 300, "cat": "clerk" },
+      "ask": { "title": "艦か陸か", "text": "英米との戦が続くなか、{name}に陸上の砲術学校の教員に回る話が来た。乗っている艦は、まもなく南の海へ出るという。どうする？",
+        "opts": [
+          { "k": "go", "l": "艦に残る", "f": ["earn"], "w": 1,
+            "say": "{name}は艦に残り、仲間と南の海へ出撃した。",
+            "fx": { "sat": 2, "learn": 1, "tie": -3, "body": -2 },
+            "next": { "in": [1, 2], "node": "chinbotsu" } },
+          { "k": "stay", "l": "砲術学校の教員に", "f": ["family"], "w": 1,
+            "say": "{name}は陸に上がり、砲術学校で志願したばかりの少年兵に照準の合わせ方を教えた。",
+            "fx": { "sat": -2, "learn": 2, "tie": 1, "body": 1 },
+            "next": { "in": [4, 4], "node": "fukuin" } }
+        ] }
+    },
+    "chinbotsu": {
+      "say": "{name}の乗った駆逐艦は、輸送船を守る途中で魚雷を受けた。",
+      "fx": { "sat": -2, "learn": 0, "tie": -2, "body": -6 },
+      "die": { "n": "戦死", "t": "{name}は艦とともに南の海に沈んだ。浜では{mom}が毎朝、沖に手を合わせた。" }
+    },
+    "fukuin": { "say": "{name}は敗戦で復員して浜へ帰り、艦で覚えた機関の腕で漁船の発動機を直して回った。",
+      "fx": { "sat": 2, "learn": 1, "tie": 3, "body": 0 }, "move": "home", "quit": true },
+    "hama": { "say": "{name}は浜の漁業協同組合で理事に選ばれ、冷蔵庫付きの共同の荷揚げ場を作った。",
+      "fx": { "sat": 4, "learn": 1, "tie": 3, "body": 0 } }
+  }
+},
+{
+  "id": "gn_manshu", "title": "北満の連隊", "group": "gun",
+  "y": [1932, 1934], "a": [20, 22], "st": ["hyakusho", "heimin"], "sex": "m", "kind": ["village", "fish"], "p": 0.03,
+  "src": ["gn_kato2007", "gn_kosei1977", "gn_hata2005"],
+  "text": "{name}の連隊に満州への派遣の命令が下った。北満の冬は、吐く息でまつげが凍るほどだった。上等兵になった{name}に、中隊長が再役して下士官にならぬかと言った。どうする？",
+  "opts": [
+    { "k": "go", "l": "再役して残る", "f": ["earn"], "w": 1,
+      "say": "{name}は再役して伍長となり、凍った川沿いの警備を受け持った。",
+      "fx": { "sat": 2, "learn": 2, "tie": -2, "body": -2 }, "gradeSet": "kashi", "abroad": "満州", "away": true,
+      "job": { "n": "陸軍伍長", "pay": 300, "cat": "clerk" },
+      "next": { "in": [5, 5], "node": "socho" } },
+    { "k": "stay", "l": "満期で帰国する", "f": ["family"], "w": 1,
+      "say": "{name}は満期で除隊し、大連から船に乗って{place}へ帰った。",
+      "fx": { "sat": -1, "learn": 1, "tie": 3, "body": 1 }, "gradeSet": "hei",
+      "next": { "in": [3, 6], "node": "naichi" } }
+  ],
+  "nodes": {
+    "socho": {
+      "say": "曹長となった{name}は、国境の近くの町で中隊の物資の出し入れを預かった。",
+      "fx": { "sat": 2, "learn": 2, "tie": -2, "body": -1 },
+      "job": { "n": "陸軍曹長", "pay": 450, "cat": "clerk" },
+      "ask": { "title": "国境の守り", "text": "ソ連との国境の守備隊が、経験のある下士官を求めていた。内地の連隊へ戻って教育係になる道もあった。どうする？",
+        "opts": [
+          { "k": "go", "l": "国境の守備隊へ", "f": ["earn"], "w": 1,
+            "say": "{name}は国境の守備隊に移り、トーチカの並ぶ丘で冬を越した。",
+            "fx": { "sat": 2, "learn": 1, "tie": -3, "body": -2 },
+            "next": { "in": [9, 9], "node": "yokuryu" } },
+          { "k": "stay", "l": "内地の連隊へ戻る", "f": ["family"], "w": 1,
+            "say": "{name}は内地の連隊へ戻り、新兵の教育係を務めた。",
+            "fx": { "sat": -1, "learn": 1, "tie": 2, "body": 1 }, "move": "home",
+            "next": { "in": [3, 5], "node": "heiji" } }
+        ] }
+    },
+    "yokuryu": {
+      "say": "敗戦ののち、{name}はシベリアへ送られ、凍った森で木を切る作業に追われた。",
+      "fx": { "sat": -4, "learn": 0, "tie": -3, "body": -6 },
+      "next": { "in": [2, 3], "node": "maizuru" }
+    },
+    "maizuru": { "say": "引揚船で舞鶴の港に着いた{name}は、迎えの人波のなかに{mom}の姿を見つけた。",
+      "fx": { "sat": 2, "learn": 0, "tie": 3, "body": -2 }, "move": "home", "quit": true },
+    "heiji": { "say": "曹長で除隊した{name}は村役場の兵事係となり、出征する家の事情を一軒ずつ聞いて回った。",
+      "fx": { "sat": 2, "learn": 1, "tie": 3, "body": 0 } },
+    "naichi": { "say": "{name}は{place}で田を耕し、囲炉裏ばたで子らに北満の冬の寒さを語った。",
+      "fx": { "sat": 3, "learn": 0, "tie": 4, "body": 0 } }
+  }
+},
+{
+  "id": "gn_zaigo", "title": "在郷軍人会の分会長", "group": "gun",
+  "y": [1912, 1935], "a": [23, 26], "st": ["hyakusho", "heimin"], "sex": "m", "kind": ["village", "fish"], "p": 0.02,
+  "src": ["gn_fujii2009", "gn_ohe1981"],
+  "text": "上等兵で除隊して{place}へ戻った{name}に、在郷軍人会の分会長を引き受けてくれと村の古老たちが頼みに来た。どうする？",
+  "opts": [
+    { "k": "go", "l": "分会長を引き受ける", "f": ["earn"], "w": 1,
+      "say": "{name}は分会長となり、簡閲点呼の日には分会の者を率いて町の連隊区へ出向いた。",
+      "fx": { "sat": 3, "learn": 1, "tie": -1, "body": -1 }, "gradeSet": "hei",
+      "next": { "in": [4, 6], "node": "senkyo" } },
+    { "k": "stay", "l": "田の仕事に専念", "f": ["family"], "w": 1,
+      "say": "{name}は役を年上の者に譲り、桑畑を広げて蚕を飼いはじめた。",
+      "fx": { "sat": -1, "learn": 0, "tie": 3, "body": 1 }, "gradeSet": "hei",
+      "next": { "in": [6, 10], "node": "kaiko" } }
+  ],
+  "nodes": {
+    "senkyo": {
+      "say": "{name}は分会の若者を連れて、水害の後片づけや出征した家の稲刈りに走り回った。",
+      "fx": { "sat": 2, "learn": 1, "tie": 2, "body": -1 },
+      "ask": { "title": "村会議員の選挙", "text": "村会議員の選挙が近づき、分会の者たちが{name}を推したいと言ってきた。地主の家の当主も名乗りを上げていた。どうする？",
+        "opts": [
+          { "k": "go", "l": "選挙に出る", "f": ["earn"], "w": 1,
+            "say": "{name}は小作の家々を回って票を集め、村会議員に当選した。",
+            "fx": { "sat": 4, "learn": 2, "tie": -2, "body": -1 }, "debt": 50,
+            "job": { "n": "村会議員", "pay": 200, "cat": "office" },
+            "next": { "in": [6, 10], "node": "giin" } },
+          { "k": "stay", "l": "推されても断る", "f": ["family"], "w": 1,
+            "say": "{name}は地主の家の当主に席を譲り、分会の世話役を続けた。",
+            "fx": { "sat": -1, "learn": 0, "tie": 3, "body": 1 },
+            "next": { "in": [5, 8], "node": "sewa" } }
+        ] }
+    },
+    "giin": { "say": "{name}は村会で小作料の引き下げを訴え、村の道を荷車の通れる幅に広げさせた。",
+      "fx": { "sat": 4, "learn": 1, "tie": 1, "body": -1 } },
+    "sewa": { "say": "{name}は分会の世話役として、戦死した家の墓碑に刻む文字を寺の和尚と相談して決めた。",
+      "fx": { "sat": 2, "learn": 1, "tie": 3, "body": 0 } },
+    "kaiko": { "say": "{name}の家の繭は品評会で一等を取り、その金で茅葺きの屋根を葺き替えた。",
+      "fx": { "sat": 4, "learn": 1, "tie": 3, "body": -1 } }
+  }
+},
+{
+  "id": "gn_bc", "title": "捕虜収容所の監視", "group": "gun",
+  "y": [1941, 1943], "a": [22, 30], "st": ["hyakusho", "heimin"], "sex": "m", "kind": ["village", "fish"], "p": 0.02,
+  "src": ["gn_hayashi2005", "gn_yoshida2017"],
+  "text": "召集された{name}は伍長として南方へ送られ、捕虜収容所の監視の役を命じられた。食べ物も薬も足りず、病気の捕虜が日ごとに増えた。上からは作業の人数を減らすなと言われていた。どうする？",
+  "opts": [
+    { "k": "go", "l": "命令どおり作業に出す", "f": ["earn"], "w": 1,
+      "say": "{name}は命令に従い、病人も数に入れて鉄道の工事へ送り出した。",
+      "fx": { "sat": 1, "learn": 0, "tie": -2, "body": -1 }, "gradeSet": "kashi", "abroad": "南方",
+      "job": { "n": "陸軍伍長", "pay": 300, "cat": "clerk" },
+      "next": { "in": [5, 5], "node": "saiban" } },
+    { "k": "stay", "l": "病人を休ませる", "f": ["family"], "w": 1,
+      "say": "{name}は上官に掛け合い、病人を小屋で休ませた。代わりに上官から何度も殴られた。",
+      "fx": { "sat": 2, "learn": 1, "tie": 1, "body": -3 }, "gradeSet": "kashi", "abroad": "南方",
+      "job": { "n": "陸軍伍長", "pay": 300, "cat": "clerk" },
+      "next": { "in": [4, 5], "node": "kaeru" } }
+  ],
+  "nodes": {
+    "saiban": {
+      "say": "戦後、{name}は捕虜を虐げた罪に問われ、シンガポールの戦争裁判にかけられた。",
+      "fx": { "sat": -5, "learn": 0, "tie": -3, "body": -2 },
+      "crime": { "t": "捕虜の虐待", "pun": "禁錮十年" },
+      "next": { "in": [6, 7], "node": "shakuho" }
+    },
+    "shakuho": { "say": "{name}は巣鴨の刑務所に移されたのち仮釈放となり、十年ぶりに{place}の土を踏んだ。",
+      "fx": { "sat": 1, "learn": 1, "tie": 2, "body": -1 }, "free": true, "move": "home", "quit": true },
+    "kaeru": { "say": "復員した{name}のもとに、元の捕虜から礼を述べた英語の手紙が届いた。{name}は字引を引いて、ゆっくり一行ずつ訳した。",
+      "fx": { "sat": 3, "learn": 2, "tie": 3, "body": 0 }, "move": "home", "quit": true }
+  }
+},
+{
+  "id": "gn_shoi_kizu", "title": "白衣の傷痍軍人", "group": "gun",
+  "y": [1937, 1940], "a": [20, 21], "st": ["hyakusho", "heimin"], "sex": "m", "kind": ["village", "fish"], "p": 0.03,
+  "src": ["gn_shokeikan", "gn_ichinose2009"],
+  "text": "入営して半年、{name}の部隊は大陸へ渡った。一等兵の{name}に、分隊長が渡河の攻撃で先頭を行く役を任せたいと言った。どうする？",
+  "opts": [
+    { "k": "go", "l": "先頭を引き受ける", "f": ["earn"], "w": 1,
+      "say": "{name}は舟の舳先に立ち、銃を掲げて対岸へ渡った。",
+      "fx": { "sat": 3, "learn": 1, "tie": -1, "body": -3 }, "gradeSet": "hei", "abroad": "中華民国",
+      "next": { "in": [0, 1], "node": "fusho" } },
+    { "k": "stay", "l": "後ろを固める", "f": ["family"], "w": 1,
+      "say": "{name}は先頭を古参の兵に譲り、舟の後ろで弾薬箱を守った。",
+      "fx": { "sat": -2, "learn": 0, "tie": 1, "body": 1 }, "gradeSet": "hei", "abroad": "中華民国",
+      "next": { "in": [2, 3], "node": "kaeru" } }
+  ],
+  "nodes": {
+    "fusho": {
+      "say": "{name}は対岸で右腕に深い傷を負い、内地の陸軍病院へ送られた。腕は肘から先を失った。",
+      "fx": { "sat": -3, "learn": 0, "tie": 1, "body": -7 }, "move": "home",
+      "ask": { "title": "白衣のあとで", "text": "白衣で病院の庭を歩く{name}に、傷痍軍人の職業補導所で左手の字と算盤を習う道が示された。村へ帰って家の手伝いをする道もあった。どうする？",
+        "opts": [
+          { "k": "go", "l": "補導所で習う", "f": ["study"], "w": 1,
+            "say": "{name}は補導所で左手の字を一から習い、帳簿の付け方を覚えた。",
+            "fx": { "sat": 2, "learn": 4, "tie": -2, "body": -1 },
+            "next": { "in": [2, 3], "node": "yakuba" } },
+          { "k": "stay", "l": "村へ帰る", "f": ["family"], "w": 1,
+            "say": "{name}は{place}へ帰り、片手でもできる蚕の世話を{mom}から教わった。",
+            "fx": { "sat": 1, "learn": -1, "tie": 4, "body": -1 },
+            "next": { "in": [5, 8], "node": "mura" } }
+        ] }
+    },
+    "yakuba": { "say": "{name}は村役場の書記に雇われ、左手で兵事の帳簿をつけて出征する家の手続きを受け持った。",
+      "fx": { "sat": 2, "learn": 2, "tie": 2, "body": -1 },
+      "job": { "n": "村役場の書記", "pay": 400, "cat": "office" } },
+    "mura": { "say": "{name}は片手で桑の枝を束ねる工夫を重ね、村の養蚕の講習で手本を見せた。",
+      "fx": { "sat": 3, "learn": 1, "tie": 3, "body": -1 } },
+    "kaeru": { "say": "満期で除隊した{name}は{place}に戻り、{en}と結ばれて茅葺きの家を建て直した。",
+      "fx": { "sat": 3, "learn": 0, "tie": 4, "body": 0 }, "move": "home" }
+  }
+}
+]
