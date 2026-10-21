@@ -1602,6 +1602,9 @@
     // 河原者・非人やえた・ひにんとされた人は、村の祭りに加わることを許されなかった
     if (!s.st && /祭り/.test(s.t) && (L.status === 'outcast' || (L.status === 'buraku' && y < 1946))) return false;
     if (s.wk && s.wk.indexOf(L.job) < 0) return false;
+    // 長屋・路地・表通りは町と市街地だけ。生まれた土地を離れていない人に、離れた人向けの文を出さない（spec6 1-3）
+    if (L.kind !== 'town' && L.kind !== 'city' && /長屋|路地|表通り/.test(s.t)) return false;
+    if (!L.moved && !L.abroad && /町の暮らしに|ふるさとからの便り|故郷からの便り/.test(s.t)) return false;
     // 筋で就いた仕事の人には、家の田畑や漁の場面を出さない（spec6 1-6）
     if (L.pathJob && L.job === 'story' && s.cat !== '時代' && /田|畑|年貢|稲|耕|網|漁|家業|家の仕事|家の手伝い/.test(s.t)) return false;
     if (s.edu && s.edu.indexOf(L.edu) < 0) return false;

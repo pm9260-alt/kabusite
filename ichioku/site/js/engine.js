@@ -351,7 +351,7 @@
     L.ownHome = h.ownHome; L.threeGen = h.threeGen; L.income = h.income;
     L.ab.study += (L.parentEdu.dad === '大学' || L.parentEdu.mom === '大学') ? 0.25 : 0;
     for (var g in h.goods) if (h.goods[g] <= L.by) L.goods[g] = h.goods[g];
-    C.goods.forEach(function (gg) { if (!L.goods[gg.id] && val(gg.diff, L.by) / 100 >= L.adoptU) L.goods[gg.id] = L.by; });
+    C.goods.forEach(function (gg) { if (!L.goods[gg.id] && goodsOk(gg, L.by) && val(gg.diff, L.by) / 100 >= L.adoptU) L.goods[gg.id] = L.by; });
     L.protectUntil = h.deathYear;
     L.sm = drawMinority(L);
     L.out = null;
@@ -392,6 +392,9 @@
   }
   function protectedYear(L) { return L.protectUntil != null && L.year <= L.protectUntil; }
 
+  // 品物が家庭に広まり始める年（spec6 1-2）。統計の数字がそれより前にあっても、家族が持つ文は出さない（携帯電話は自動車電話・肩掛けの時代を除く）
+  var GOODS_FROM = { mobile: 1995, net: 1995, smart: 2008, pc: 1980 };
+  function goodsOk(g, y) { return !(GOODS_FROM[g.id] && y < GOODS_FROM[g.id]); }
   function newLife(C, P, opts) {
     if (opts.house) return inheritLife(C, P, opts);
     var year = opts.year, seed = (opts.seed >>> 0) || 1;
@@ -503,7 +506,7 @@
     L.ab.study += (L.parentEdu.dad === '大学' || L.parentEdu.mom === '大学') ? 0.25 : 0;
     // 家に物が来る時期（年収の高い家庭・都市部ほど早い）
     L.adoptU = clamp(L.adoptU + 0.25 * (0.5 - L.incPct) + ({ '大都市': -0.06, '都市': 0, '町村': 0.07 })[L.place.kind], 0.002, 0.998);
-    C.goods.forEach(function (g) { if (val(g.diff, y) / 100 >= L.adoptU) L.goods[g.id] = y; });
+    C.goods.forEach(function (g) { if (goodsOk(g, y) && val(g.diff, y) / 100 >= L.adoptU) L.goods[g.id] = y; });
     L.fAge = fAge; L.mAge = mAge; L.dad = dad; L.mom = mom;
   }
   function eduDraw(L, sex, by) {
@@ -785,7 +788,7 @@
     if (future) return;
     // 時代：家に物が来る
     C.goods.forEach(function (g) {
-      if (L.goods[g.id]) return;
+      if (L.goods[g.id] || !goodsOk(g, y)) return;
       var d = val(g.diff, y) / 100;
       if (d >= L.adoptU) {
         L.goods[g.id] = y;

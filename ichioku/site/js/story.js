@@ -61,6 +61,7 @@
         opts.forEach(function (o) { br.w[o.k] = typeof o.w === 'number' ? o.w : 1; });
         L.queue.push(br);
         s.asked = L.year; s.nBig = (s.nBig || 0) + 1;
+        var dk2 = Math.floor(L.age / 10) * 10; (s.decC = s.decC || {})[dk2] = (s.decC[dk2] || 0) + 1;
       },
       job: function (label, pay, reg, ind) { api.job(L, label, pay, reg, ind); },
       noJob: function () { api.noJob(L); },
@@ -1813,9 +1814,13 @@
     if (/疫病|コレラ|はやり病|疱瘡がはやり|かぜが流行|スペインかぜ|新型コロナ/.test(t)) return 'epidemic';
     return null;
   }
+  var AWAY_ONLY = /町の暮らし|長屋|ふるさと|故郷|便り|訛り|町の人|町の祭り|町の灯|都会/, TOWN_ONLY = /長屋|路地|表通り/;
   var AWAY_BAN = /年貢|田植|稲刈|麦刈|用水|隣の田|同じ村|五人組|寄り合い|寄合|村の|村人|家の田|田畑|代官所|名主|庄屋|囲炉裏|家業/;
   // 家を出て落ち着いた人（spec6 1-1）：出家・旅・出征は除く
+  // 家を出たことになっていても、生まれた土地に住んだままの人（筋で「家を出る」答えのあと土地を移っていない人）
+  function awayHome(L) { return L.mode === 'away' && !(L.old ? (L.moved || L.abroad) : (L.place && L.place.away)); }
   function settled(L) {
+    if (awayHome(L)) return true;
     if (L.mode === 'away') return L.year - (L.modeSince || L.year) >= 2;
     if (L.mode === 'hoko') return L.age >= 30;
     return false;
@@ -1868,6 +1873,7 @@
     options.forEach(function (p, i) { br.w[p.k] = 1 + (i === 0 ? 0.3 : -0.3) * (c.s.tr.adv || 0) + (p.fx && p.fx.tie > 0 ? 0.3 * (c.s.tr.warm || 0) : 0); });
     c.L.queue.push(br);
     c.s.asked = c.y; c.s.nChoice = (c.s.nChoice || 0) + 1;
+    var dk = Math.floor(c.a / 10) * 10; (c.s.decC = c.s.decC || {})[dk] = (c.s.decC[dk] || 0) + 1;
   }
   function CHint(fx) { var CHm = choicesMod(); return CHm ? CHm.hint(fx) : ''; }
   // 毎年の小さな選択（出る年はおよそ6割強。大きな決断が出る年は出さない）
@@ -1888,12 +1894,14 @@
     // 1944〜1945年の町の国民学校の子には、学童疎開の選択を必ず出す（v8の直し 3）
     var sokaiKid = c.y >= 1944 && c.y <= 1945 && a >= 6 && a <= 12 && (c.kind === 'city' || c.kind === 'town') && !s.sokaiSeen;
     var DBG = typeof globalThis !== 'undefined' && globalThis.__ICH_DBG;
-    if (!sokaiKid && !c.p(a <= 5 ? 0.5 : a >= 40 ? 0.85 : 0.75)) { if (DBG) DBG('p', c); return; } // 大人の年の選択を1年に0.5回以上に（v11の直し 4）
+    // 40歳から先は、どの10年にも3回以上の選択を出す（spec6 1-1）：その10年の残りの年が足りなくなったら必ず出す
+    var dec = Math.floor(a / 10) * 10, decN = (s.decC = s.decC || {})[dec] || 0, must = a >= 40 && dec + 10 - a <= 4 - decN;
+    if (!sokaiKid && !must && !c.p(a <= 5 ? 0.5 : a >= 40 ? 0.9 : 0.75)) { if (DBG) DBG('p', c); return; } // 大人の年の選択を1年に0.5回以上に（v11の直し 4）
     c.ev = bigEv(c); c.ind = indOf(c);
     s.labUse = s.labUse || {}; s.nC = s.nC || 0; s.nU = s.nU || 0;
     var pref = String(c.L.old ? c.L.pref : (c.L.place || {}).pref), elite = ['bushi', 'kuge', 'priest'].indexOf(c.st) >= 0;
     var CHk = CHm;
-    var list = CHm.list.filter(function (o) { return eligible(c, o) && !(s.cool[o.id] && c.y - s.cool[o.id] < (o.cool || 8)); });
+    var list = CHm.list.filter(function (o) { return !/^s6\.fb\./.test(o.id) && eligible(c, o) && !(s.cool[o.id] && c.y - s.cool[o.id] < (o.cool || 8)); });
     // 同じ答えの文は、1つの人生で2回まで（v8の直し 13）
     list = list.filter(function (o) { return !o.options.some(function (p) { return (s.labUse[p.l] || 0) >= 2; }); });
     // 時代を問わない選択は、選択の3割まで（v8の直し 2）
@@ -1906,10 +1914,13 @@
       if (CHk.eraOk && (!CHk.eraOk(all, c.y, elite) || !CHk.placeOk(all, pref))) return;
       if (c.y >= 1938 && c.y <= 1945 && c.api.WAR_BAN && c.api.WAR_BAN.test(all)) return;
       // 家を出て落ち着いた人には村の暮らしの文を出さない。市街地の人生に「村」を出さない（spec6 1-1・1-7）
-      if (c.L.mode && AWAY_BAN.test(all)) return;
+      if (c.L.mode && !awayHome(c.L) && AWAY_BAN.test(all)) return;
       if (c.kind === 'city' && /村/.test(all)) return;
+      if (c.kind !== 'town' && c.kind !== 'city' && TOWN_ONLY.test(all)) return;
       cand.push({ o: o, t: ft, i: i });
     }); });
+    // 40歳から先で候補を使い切ったときは、どこでも出せる選択の書き分け（5通りずつ）から引く（spec6 1-1）
+    if (!cand.length && a >= 40) CHm.list.forEach(function (o) { if (!/^s6\.fb\./.test(o.id) || c.y < o.y[0] || c.y > o.y[1] || a < o.a[0]) return; o.texts.forEach(function (t, i) { var ft = fillT(t, P); if (ft && !s.seen[ft]) cand.push({ o: o, t: ft, i: i }); }); });
     if (!cand.length) { if (DBG) DBG('empty', c, list.length); return; }
     // 大きな出来事の年は、その出来事の選択を先に。ふだんは時代と土地で絞った選択を多めに
     var evc = cand.filter(function (x) { return (x.o.when || {}).ev; }), loc = cand.filter(function (x) { return !(x.o.when || {}).u; });
@@ -1922,7 +1933,7 @@
     s.seen[pk.t] = 1; s.cool[o.id] = c.y;
     if (o.kind !== 'parent') { s.nC++; if ((o.when || {}).u) s.nU++; }
     o.options.forEach(function (p) { s.labUse[p.l] = (s.labUse[p.l] || 0) + 1; });
-    makeChoiceBranch(c, o.kind === 'parent' ? '親の選択' : '小さな選択', pk.t, opts, { cid: o.id, kind: o.kind, u: !!(o.when || {}).u, ev: (o.when || {}).ev || null, ind: c.ind, k: c.kind });
+    makeChoiceBranch(c, o.kind === 'parent' ? '親の選択' : '小さな選択', pk.t, opts, { cid: o.id, ti: pk.i, kind: o.kind, u: !!(o.when || {}).u, ev: (o.when || {}).ev || null, ind: c.ind, k: c.kind });
   }
   function nameChoice(c, P) {
     var L = c.L;
@@ -1977,7 +1988,7 @@
     if (op0 && op0.money) c.money(op0.money);
     var after = o ? fillT((op0 || {}).after, P) : null;
     // 答えだけの「〜ことにした。」は出さない（v11の直し 9）。after がない選択肢は、問いの最初の文を添えて、何について決めたかが分かる文にする
-    var q1 = fillT(String((o && (o.texts || [o.text])[0]) || '').split('。')[0], P).replace(/(かどうか|か)?(迷っている|考えている|悩んでいる)$/, '').replace(/[？?]$/, '');
+    var q1 = (fillT(String((o && (o.texts || [o.text])[d.ti || 0]) || '').split('。')[0], P) || '').replace(/(かどうか|か)?(迷っている|考えている|悩んでいる)$/, '').replace(/[？?]$/, '');
     var t = after || (q1 ? q1 + '。' + (d.kind === 'parent' ? '親は考えた末、' : '考えた末、') + opt.l + 'ことにした。' : (d.kind === 'parent' ? '親は、' : '') + opt.l + 'ことにした。');
     c.say(t, fx || {}, d.kind === 'parent' ? '家庭' : '人間関係');
   }
@@ -2105,6 +2116,8 @@
     var prov = L.old && L.H && L.H.prov[L.prov] ? L.H.prov[L.prov].kuni : '旅先';
     var famine = /飢饉|凶作|飢え/.test(rec.events.map(function (e) { return e.t; }).join('') + ((rec.world && rec.world.items) || []).map(function (i) { return i.t; }).join(''));
     var base = L.mode === 'shukke' ? templeLines(c, famine) : L.mode === 'away' && c.y >= 1946 ? AWAY_NEW : MODE_LINES[L.mode].concat(MODE_MORE[L.mode] || []);
+    // 生まれた土地を離れていない人に、離れた人向けの文（町の暮らし・長屋・ふるさとの便り）を出さない。長屋・路地・表通りは町と市街地だけ（spec6 1-3）
+    if (L.mode === 'away') { var movedAw = c.away(); base = base.filter(function (t) { return (movedAw || !AWAY_ONLY.test(t)) && (c.kind === 'town' || c.kind === 'city' || !TOWN_ONLY.test(t)); }); }
     var me = String(L.name || '').replace(/（.*?）/g, '');
     // 同じ型の文は、国の名前が違っても1回だけ（出しきるまで）
     var tm = {}, all = base.filter(function (t) { return me || t.indexOf('{me}') < 0; }).map(function (t) { var f = t.replace('{prov}', prov).replace('{me}', me); tm[f] = t; return f; }), seen = c.s.seen = c.s.seen || {};
@@ -2127,7 +2140,7 @@
     if (!L.alive) return;
     var s = L.story || init(L, api), y = L.year;
     // 1年に出す選択は、大きな決断も含めて1つまで
-    if (L.queue.some(function (b) { return !b.ask && b.id !== 'ask' && b.kind !== 'ask'; })) s.asked = y;
+    if (L.queue.some(function (b) { return !b.ask && b.id !== 'ask' && b.kind !== 'ask'; })) { s.asked = y; var dk0 = Math.floor(L.age / 10) * 10; (s.decC = s.decC || {})[dk0] = (s.decC[dk0] || 0) + 1; }
     if (L.age < 1) { personaYear(ctxOf(L, rec, api)); if (s.asked !== y) choiceYear(ctxOf(L, rec, api), people(ctxOf(L, rec, api))); return; }
     // 決めてあった出来事（その年の分）
     var due = s.at.filter(function (x) { return x.y <= y; });
@@ -2155,6 +2168,30 @@
       if (o.start(c)) { s.done[o.id] = y; s.last = y; break; }
     }
     if (s.asked !== y) choiceYear(c, people(c));
+    lineYear(c);
+  }
+  // 第6版の場面の一文（js/s6.js の lines）：格・位・仕事・罪など、その人だけに出る場面を、1年に1つまで、1つの人生で同じ文は1回だけ
+  function lineYear(c) {
+    var S6 = s6Mod(), L = c.L, s = c.s;
+    if (!S6 || !S6.lines || !S6.lines.length || !c.p(0.35)) return;
+    s.seen = s.seen || {};
+    var P = people(c), pref = String(L.old ? L.pref : (L.place || {}).pref), cand = [];
+    S6.lines.forEach(function (o) {
+      if (!eligible(c, o)) return;
+      [].concat(o.t).forEach(function (t) {
+        var ft = fillT(t, P);
+        if (!ft || s.seen[ft]) return;
+        var CHk = choicesMod();
+        if (CHk && CHk.eraOk && (!CHk.eraOk(ft, c.y, false) || !CHk.placeOk(ft, pref))) return;
+        if (L.mode && !awayHome(L) && AWAY_BAN.test(ft)) return;
+        if (c.kind === 'city' && /村/.test(ft)) return;
+        cand.push({ o: o, t: ft });
+      });
+    });
+    if (!cand.length) return;
+    var pk = cand[Math.floor(c.r() * cand.length)];
+    s.seen[pk.t] = 1;
+    c.say(pk.t, null, pk.o.cat || '人間関係');
   }
   // 分かれ道の答え。answers が null のときは、その人の気質で選ぶ
   function resolve(L, rec, br, answers, api) {
@@ -2271,6 +2308,22 @@
     ['tanki', '気が短い', 'すぐかっとなるが、根に持たない', '昔と同じように、ささいなことで声を荒らげ、すぐに笑った。']
   ];
   function ptr(k) { return PTR.filter(function (t) { return t[0] === k; })[0] || PTR[0]; }
+  // 人柄の一文を、出来事の種類（会う・言い合う・助けてもらう・病気）ごとに書き分ける。同じ一文は1つの人生で1回まで（spec6 1-5）
+  var PTR_T = {
+    sewa: { meet: '相変わらず、こちらの暮らしの心配ばかりしていた。', fight: 'それでも別れぎわには、風邪をひくなと言い添えた。', help: '頼んでもいないのに、あれこれと段取りまで整えてくれた。', sick: '毎日のように顔を出しては、粥を置いていった。' },
+    quiet: { meet: '多くは語らなかったが、帰りぎわに「また来い」とだけ言った。', fight: '黙りこんだまま、最後まで目を合わせなかった。', help: '黙って手を貸し、礼を言う前に帰っていった。', sick: '何も言わずに枕元に座り、しばらくして帰っていった。' },
+    mie: { meet: '羽振りのよさを話してばかりいたが、目は笑っていなかった。', fight: '人前で言い負かされたのが、よほど悔しかったらしい。', help: '手伝ったことを、あとで村じゅうに言いふらした。', sick: '見舞いの品だけは、誰よりも立派なものを届けてきた。' },
+    yoki: { meet: '会うなり大声で笑い、まわりまで明るくなった。', fight: '翌日には、何もなかったような顔で声をかけてきた。', help: '笑いながら手を動かし、仕事はすぐに片づいた。', sick: '見舞いに来ては冗談を言い、少し気が晴れた。' },
+    tanki: { meet: '昔と同じように、ささいなことで声を荒らげ、すぐに笑った。', fight: '顔を真っ赤にして怒鳴り、戸を強く閉めて帰っていった。', help: '文句を言いながらも、最後まで手を貸してくれた。', sick: 'じっとしていられない様子で、薬を探しに走り回った。' }
+  };
+  function ptrLine(c, k, t) {
+    var type = /言い合い|けんか|喧嘩|口論|もめ|ぶつか/.test(t) ? 'fight' : /助け|手伝|手を貸|貸して|世話|教えて/.test(t) ? 'help' : /病|寝込|見舞/.test(t) ? 'sick' : 'meet';
+    var line = (PTR_T[k] || PTR_T.sewa)[type], used = c.s.ptrUsed = c.s.ptrUsed || {};
+    if (used[line]) return '';
+    used[line] = 1;
+    return line;
+  }
+  function fillPtr(c, t, k) { var l = ptrLine(c, k, t); return t.replace('{t}', l).replace(/。\s*$/, '。'); }
   function workRole(c) {
     var L = c.L, y = c.y, j = L.old ? L.job : (L.job && L.job.ind);
     if (y < 1868) return j === 'shop' ? '奉公先の番頭の' : j === 'craft' ? '兄弟子の' : j === 'samurai' || j === 'bushiMed' ? '同じ役目の' : j === 'fish' ? '同じ網の' : j === 'temple' ? '同じ寺の' : '隣の田の';
@@ -2318,7 +2371,7 @@
       var t = pool[Math.floor(c.r() * pool.length)];
       ps[t] = 1;
       if (/奉公に出る|引っ越して/.test(t)) pal.away = y;
-      c.say(t.replace('{n}', pal.n).replace('{t}', ptr(pal.tr)[3]), { tie: 2 }, '人間関係');
+      c.say(fillPtr(c, t.replace('{n}', pal.n), pal.tr), { tie: 2 }, '人間関係');
       return;
     }
     var w = s.wpal;
@@ -2328,7 +2381,7 @@
       if (!wp.length) return;
       var t2 = wp[Math.floor(c.r() * wp.length)];
       ws[t2] = 1;
-      c.say(t2.replace('{r}', w.r).replace('{n}', w.n).replace('{t}', ptr(w.tr)[3]), /言い合い/.test(t2) ? { tie: -1 } : { tie: 2 }, '人間関係');
+      c.say(fillPtr(c, t2.replace('{r}', w.r).replace('{n}', w.n), w.tr), /言い合い/.test(t2) ? { tie: -1 } : { tie: 2 }, '人間関係');
     }
   }
   function spouseOf(L) { return (L.members || []).filter(function (m) { return (m.role === '配偶者' || m.role === 'パートナー') && m.alive && !m.gone; })[0]; }
