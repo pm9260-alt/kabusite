@@ -21,8 +21,8 @@
   function evText(e) { return pol(e.t); }
   function clear(node) { while (node.firstChild) node.removeChild(node.firstChild); }
   function show(name) {
-    ['top', 'birth', 'life', 'end'].forEach(function (s) { $('screen-' + s).hidden = s !== name; });
-    $('life-top').hidden = name === 'top' || name === 'birth';
+    ['top', 'birth', 'life', 'end', 'jp'].forEach(function (s) { $('screen-' + s).hidden = s !== name; });
+    $('life-top').hidden = name === 'top' || name === 'birth' || name === 'jp';
     var pv = store('ichioku-prev');
     $('back-top').hidden = !(pv && pv.seed);
     window.scrollTo(0, 0);
@@ -204,7 +204,10 @@
     return { name: dispName(Lx), by: Lx.by, age: Lx.deathAge, heir: !!(Lx.heir || Lx.toshu), rel: rel };
   }
   // 亡くなった人から、きょうだい（memberId）へ引き継ぐ
-  function inheritFrom(Lp, memberId, gen) {
+  function inheritFrom(Lp, memberId, gen, sg) {
+    if (gen === 'desc') return descendFrom(Lp, sg);
+    if (gen === 'member') return memberFrom(Lp, sg);
+    if (gen === 'rechild') return rechildFrom(Lp, sg);
     var MM = Lp.old ? O : E, h = gen === 'child' ? MM.childHouse(Lp, memberId, []) : MM.houseOf(Lp, []);
     return getPref(Lp.old ? h.home.pref : (h.pref || Lp.P.code)).then(function (p) {
       P = p; M = MM;
@@ -213,6 +216,19 @@
       L.marks = {};
       comps = [];
       preRun(Math.max(h.deathYear, L.by));
+      return L;
+    });
+  }
+  // 何代か後の子孫として生まれる（spec6 2-6）。家の記録（名字・格・土地・家宝・家訓）を受け継ぐ。種は家の種と代の数から決める
+  function descendFrom(Lp, sg) {
+    var S = window.IchiokuStory, rec = S.houseRec(Lp), by = Lp.deathYear + sg.gap, seed = lifeSeedOf(G, 900 + sg.gap);
+    return getPref(rec.pref).then(function (p) {
+      P = p;
+      if (by >= 1975) { M = E; L = E.newLife(C, P, { year: by, seed: seed }); }
+      else { M = O; L = O.newLife(C, H, P, { year: by, seed: seed, birth: { prov: rec.prov || O.pickBirth(C, H, by, E.makeRng(seed)).prov, sub: rec.sub || null, pref: rec.pref, kuge: rec.status === 'kuge' && by <= 1946 } }); }
+      S.applyDescend(L, rec);
+      L.marks = {};
+      comps = [];
       return L;
     });
   }
@@ -230,7 +246,7 @@
           playFull(sg);
           houseLives.push(lifeSummary(L, k, firstLife));
           k++;
-          return inheritFrom(L, segs[k].memberId, segs[k].gen).then(next);
+          return inheritFrom(L, segs[k].memberId, segs[k].gen, segs[k]).then(next);
         }
         return untilYear == null ? playFull(sg) : replayTo(sg, untilYear);
       }
@@ -737,12 +753,19 @@
     // 人
     all.forEach(function (n) {
       var fill = n.self ? acc : bg, fg = n.self ? onAcc : n.dead ? dead : text, fg2 = n.self ? onAcc : n.dead ? dead : sub;
-      g.appendChild(svg('rect', { x: n.x, y: n.y, width: NW, height: NH, fill: fill }));
+      // 家系図の人を押すと、その人の札を出す（spec6 2-21）。四角は縦46・横88で、指で押しやすい大きさ
+      if (n.m && !n.self) {
+        var hit = svg('rect', { x: n.x, y: n.y, width: NW, height: NH, fill: 'transparent', role: 'button', tabindex: '0', 'aria-label': n.label + ' ' + (n.name || '') + 'の札を開く', 'class': 'tree-hit' });
+        (function (nn) { hit.onclick = function () { openPersonCard(nn); }; hit.onkeydown = function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openPersonCard(nn); } }; })(n);
+        g.appendChild(svg('rect', { x: n.x, y: n.y, width: NW, height: NH, fill: fill }));
+        g._hits = (g._hits || []).concat([hit]);
+      } else g.appendChild(svg('rect', { x: n.x, y: n.y, width: NW, height: NH, fill: fill }));
       if (n.hero) g.appendChild(svg('rect', { x: n.x + 0.5, y: n.y + 0.5, width: NW - 1, height: NH - 1, fill: 'none', stroke: acc, 'stroke-width': 1 }));
       treeText(g, n.x + NW / 2, n.y + 13, n.label, 10, 8, NW - 8, fg2);
       treeText(g, n.x + NW / 2, n.y + 27, String(n.name || '（名前なし）').replace(/（.*?）/g, ''), 12, 9, NW - 8, fg, 700);
       treeText(g, n.x + NW / 2, n.y + 40, n.sub, 10, 8, NW - 6, fg2);
     });
+    (g._hits || []).forEach(function (h) { g.appendChild(h); });
     box.appendChild(g);
     // 自分が見える位置へ
     box.scrollLeft = Math.max(0, selfN.x - minX - box.clientWidth / 2 + NW / 2);
@@ -1452,6 +1475,10 @@
     if (baby) { $('rc-reflect-box').hidden = true; $('rc-again').onclick = null; return; }
     item('最終学歴', r.edu || (L.deathAge < 6 ? '—' : '学校には通わなかった'));
     item('最後の仕事', r.job || '—');
+    // 位階・勲章（spec6 2-10）：受けた人生だけ
+    var S0 = window.IchiokuStory, hs0 = S0 && S0.finalHonors ? S0.finalHonors(L) : [];
+    if (hs0.length) item('位階・勲章', hs0.map(function (h) { return S0.honorText(h); }).join('、'));
+    if (L.old && O.surnameNote) { var sn0 = O.surnameNote(L); if (sn0 && /公には|苗字帯刀|氏/.test(sn0)) item('家', sn0); }
     var sp = L.members.filter(function (m) { return m.role === '配偶者' || m.role === 'パートナー'; }).slice(-1)[0];
     var kids = L.members.filter(function (m) { return m.role === '子' && !m.gone && m.by <= L.deathYear; }).length;
     var gk = L.members.filter(function (m) { return m.role === '孫' && !m.gone && m.by <= L.deathYear; }).length;
@@ -1518,6 +1545,9 @@
     $('end-title').textContent = dispName();
     $('end-sub').textContent = L.by + ' – ' + L.deathYear + ' · ' + L.deathAge + '歳没 · ' + String(deathPlace()).replace(/（今の(.*?)）/, ' $1');
     renderRecord();
+    renderParentDiff();
+    var JP = window.IchiokuJapapedia;
+    $('end-jp').hidden = !(JP && JP.eligible(L));
     var nl = $('next-life'), rcb = $('record');
     var lnb = $('rc-line-box');
     if (L.deathAge < 5) { if (nl.nextElementSibling !== rcb) rcb.parentNode.insertBefore(nl, rcb); }
@@ -1592,6 +1622,16 @@
     sa.hidden = !(L.deathAge === 0 && !cands.length);
     sa.textContent = '同じ年に、同じ' + (L.old ? '国' : '都道府県') + 'でもう一度生まれる';
     $('again').className = sa.hidden ? 'btn-main' : 'btn-sub';
+    // 何代か後の子孫を生きる（spec6 2-6）：2代・3代・5代あと（1代を約27年とみた目安。2000年生まれまで）
+    [2, 3, 5].forEach(function (gN) {
+      var gap = gN * 27, by = L.deathYear + gap;
+      if (by > 2000 || L.deathAge < 15) return;
+      var b = el('button', 'btn-sub kyodai-btn desc', gN + '代あとの子孫として生きる（' + by + '年に生まれる）');
+      b.type = 'button';
+      b.onclick = function () { liveAsDescendant(gN, gap); };
+      cl.appendChild(b);
+    });
+    $('kyodai-block').hidden = !cl.childNodes.length && !cands.length;
     cands.forEach(function (c) {
       var b = el('button', 'btn-sub kyodai-btn' + (c.child ? ' kid' : ''), c.later ? c.role + '（' + c.later + '年後に生まれる）として生きる' : (c.child ? '子の' : '') + c.role + ' ' + c.name + '（' + c.age + '歳・' + doing(c) + '）として生きる');
       b.type = 'button';
@@ -1608,6 +1648,136 @@
     if (a < 19) return old ? '一人前に働いている' : y < 1950 ? '働いている' : '高校に通うか働いている';
     if (a < 60) return '働き盛り';
     return '隠居の身';
+  }
+  /* ---------- 家系図の人の札と「この人の人生を送る」（spec6 2-21）・親の人生をさかのぼる（spec6 2-16） ---------- */
+  function openPersonCard(n) {
+    var m = n.m;
+    openSheet(n.label + '　' + String(n.name || '').replace(/（.*?）/g, ''), function (c) {
+      var by = m.by, dy = !m.alive && m.dy != null ? m.dy : null;
+      c.appendChild(el('p', null, '続柄：' + n.label));
+      c.appendChild(el('p', null, (by != null ? by + '年生まれ' : '') + (dy != null ? '・' + dy + '年没' : '')));
+      if (m.job || m.jobN) c.appendChild(el('p', null, '仕事：' + (m.jobN || m.job)));
+      var b = el('button', 'btn-main person-live');
+      b.type = 'button';
+      if (n.hero) { b.textContent = 'この人の記録を見る'; b.onclick = function () { closeSheet(); var hb = $('house-block'); if (hb && !hb.hidden) hb.scrollIntoView({ block: 'start' }); }; }
+      else if (L && L.alive) { b.textContent = 'この人の人生を送る（この人生が終わったら選べます）'; b.disabled = true; }
+      else if (m.by > 2000 || m.by < 1000) { b.textContent = 'この人の人生は選べません（生まれ年が1000〜2000年の外）'; b.disabled = true; }
+      else { b.textContent = 'この人の人生を送る'; b.onclick = function () { closeSheetQuiet(); liveAsMember(m); }; }
+      c.appendChild(b);
+    });
+  }
+  var PARENT_ROLES = { '父': 1, '母': 1, '祖父': 1, '祖母': 1 };
+  function liveAsMember(m) {
+    if (!G || !L) return;
+    G.house = G.house || { chain: [] };
+    houseLives.push(lifeSummary(L, houseLives.length, firstLife));
+    var sg = { memberId: m.id, gen: 'member', rel: m.role, member: { id: m.id, by: m.by, sex: m.sex, name: m.name, role: m.role, st: m.st || null }, answers: [], marks: [], focus: [] };
+    // 親や祖父母を選んだときは、今の人（子）が生まれる年の親の暮らしを書き留め、あとで比べる
+    if (PARENT_ROLES[m.role]) sg.parentOf = { name: L.name, sex: L.sex, by: L.by, seed: L.seed, orig: childCond(L) };
+    G.house.chain.push(sg);
+    G.done = false;
+    memberFrom(L, sg).then(function () { cur = null; paused = false; setPauseLabel(); show('life'); saveCurrent(); nextYear(); });
+  }
+  function childCond(Lx) {
+    var pv = Lx.old && Lx.H && Lx.H.prov[Lx.prov] ? Lx.H.prov[Lx.prov].kuni : '';
+    return { place: String(birthPlace ? (Lx === L ? birthPlace() : '') : '') || pv, pref: String(Lx.old ? Lx.pref : Lx.home.pref), status: birthStatusText(Lx), inc: Lx.incPct, sibs: (Lx.members || []).filter(function (x) { return x.sib && x.by < Lx.by; }).length, job: Lx.old ? (Lx.parentJob ? Lx.parentJob.n : '') : (Lx.dadJobD ? Lx.dadJobD.n : '') };
+  }
+  // 家の人の生まれから生きる。種は家の種と家族の番号から決める
+  function memberFrom(Lp, sg) {
+    var S = window.IchiokuStory, rec = S.houseRec(Lp), mm = sg.member, by = mm.by, seed = lifeSeedOf(G, 300 + mm.id);
+    var pc = rec.pref;
+    return getPref(pc).then(function (p) {
+      P = p;
+      if (by >= 1975) { M = E; L = E.newLife(C, P, { year: by, seed: seed }); }
+      else { M = O; L = O.newLife(C, H, P, { year: by, seed: seed, birth: { prov: rec.prov || O.pickBirth(C, H, by, E.makeRng(seed)).prov, sub: rec.sub || null, pref: pc, kuge: rec.status === 'kuge' && by <= 1946 } }); }
+      if (mm.role !== '配偶者' && mm.role !== 'パートナー') S.applyDescend(L, rec);
+      L.descendLine = '';
+      L.sex = mm.sex; if (mm.name) L.name = mm.name;
+      if (sg.parentOf) L.watchYear = sg.parentOf.by;
+      L.marks = {};
+      comps = [];
+      return L;
+    });
+  }
+  // 親の人生のあとで、もとの子をもう一度生きる。子の運（病気や出会いの乱数）は前と同じ種にする
+  function rechildFrom(Lp, sg) {
+    var po = sg.po, snap = po.snap;
+    return getPref(snap.pref).then(function (p) {
+      P = p;
+      if (po.by >= 1975) { M = E; L = E.newLife(C, P, { year: po.by, seed: po.seed }); }
+      else { M = O; L = O.newLife(C, H, P, { year: po.by, seed: po.seed, birth: { prov: snap.prov || O.pickBirth(C, H, po.by, E.makeRng(po.seed)).prov, sub: snap.sub || null, pref: snap.pref } }); if (snap.status) L.status = snap.status; if (snap.kakaku) L.kakaku = snap.kakaku; }
+      L.sex = po.sex; L.name = po.name; L.incPct = snap.incPct;
+      L.marks = {};
+      comps = [];
+      return L;
+    });
+  }
+  // 親の人生が終わったら「前の人生とのちがい」を出す
+  function renderParentDiff() {
+    var box = $('pdiff-block'); if (!box) return;
+    var segs = G && G.house && G.house.chain || [], sg = segs[segs.length - 1];
+    box.hidden = !(sg && sg.parentOf && L && !L.alive);
+    if (box.hidden) return;
+    var po = sg.parentOf, snap = L.snapAt, born = !!(snap && snap.married && !(snap.mode === 'shukke'));
+    var t = $('pdiff-table'); clear(t);
+    $('pdiff-note').textContent = born ? '' : 'この人生では、' + po.name + 'は生まれませんでした。';
+    if (snap) {
+      var now = { place: snap.place || '', pref: snap.pref, status: '', inc: snap.incPct, sibs: snap.kids, job: snap.job || '' };
+      var L2 = { old: true, status: snap.status, kakaku: snap.kakaku, by: po.by, year: po.by, rank: null, parentJob: null, H: H, prov: snap.prov };
+      try { now.status = O.houseWord ? O.houseWord(L2) || '' : ''; } catch (e) { now.status = ''; }
+      var rich = function (v) { return v == null ? '—' : RICH.filter(function (r) { return v < r[0]; })[0][1]; };
+      [['生まれた土地', po.orig.place || po.orig.pref, now.place || now.pref], ['家の身分', po.orig.status, now.status], ['暮らし向き', rich(po.orig.inc), rich(now.inc)], ['きょうだいの数', po.orig.sibs + '人', now.sibs + '人'], ['親の仕事', po.orig.job || '—', now.job || '—']].forEach(function (r) {
+        var tr = el('tr'); tr.appendChild(el('th', null, r[0])); tr.appendChild(el('td', null, r[1] || '—')); tr.appendChild(el('td', null, r[2] || '—')); t.appendChild(tr);
+      });
+    }
+    var b = $('pdiff-go');
+    b.hidden = !born;
+    b.textContent = po.name + 'の人生をもう一度生きる';
+    b.onclick = function () {
+      houseLives.push(lifeSummary(L, houseLives.length, firstLife));
+      var ns = { memberId: 0, gen: 'rechild', rel: '子（' + po.name + '）', po: { name: po.name, sex: po.sex, by: po.by, seed: po.seed, snap: snap }, answers: [], marks: [], focus: [] };
+      G.house.chain.push(ns); G.done = false;
+      rechildFrom(L, ns).then(function () { cur = null; paused = false; setPauseLabel(); show('life'); saveCurrent(); nextYear(); });
+    };
+  }
+  // Japapedia の画面（spec6 2-12・2-24）
+  var jpArt = null;
+  function openJapapedia() {
+    var JP = window.IchiokuJapapedia; if (!JP || !L) return;
+    jpArt = JP.build(L, { name: dispName(), houseWord: L.old ? O.houseWord(L) : birthStatusText(L), place: String(birthPlace()).replace(/（今の(.*?)）/, ' $1'), deathPlace: String(deathPlace()).replace(/（今の(.*?)）/, ' $1') });
+    show('jp');
+    JP.render($('jp-art'), jpArt, drawAvatar);
+    clear($('jp-imgs')); $('jp-imgs').hidden = true;
+  }
+  function jpImages() {
+    var JP = window.IchiokuJapapedia; if (!JP || !jpArt) return;
+    $('jp-img').disabled = true;
+    var avs = [0, 1, 2].map(function (i) { return $('jp-av-' + i); });
+    JP.toImages(jpArt, avs).then(function (urls) {
+      var box = $('jp-imgs'); clear(box); box.hidden = false;
+      urls.forEach(function (u, i) {
+        var a = el('a'); a.href = u; a.download = 'japapedia-' + jpArt.title + '-' + (i + 1) + '.png';
+        var im = el('img'); im.src = u; im.alt = 'Japapedia の画像 ' + (i + 1) + '/' + urls.length;
+        a.appendChild(im); box.appendChild(a);
+      });
+      box.appendChild(el('p', 'note', '画像を押すと保存できます（長押しでも保存できます）'));
+      $('jp-img').disabled = false;
+      box.scrollIntoView({ block: 'start' });
+    });
+  }
+  function liveAsDescendant(gN, gap) {
+    if (!G || !L) return;
+    G.house = G.house || { chain: [] };
+    houseLives.push(lifeSummary(L, houseLives.length, firstLife));
+    G.house.chain.push({ memberId: 0, gen: 'desc', gap: gap, rel: gN + '代あとの子孫', answers: [], marks: [], focus: [] });
+    G.done = false;
+    descendFrom(L, { gap: gap }).then(function () {
+      cur = null;
+      paused = false; setPauseLabel();
+      show('life');
+      saveCurrent();
+      nextYear();
+    });
   }
   function liveAsSibling(c) {
     if (!G || !L) return;
@@ -1671,6 +1841,9 @@
         if (cur.branch) showBranch(cur.branch); else { $('branch').hidden = true; schedule(); }
       }
     };
+    $('end-jp').onclick = openJapapedia;
+    $('jp-back').onclick = function () { show('end'); };
+    $('jp-img').onclick = jpImages;
     $('num-income-box').onclick = openMoney;
     $('num-sav-box').onclick = openMoney;
     $('end-log').onclick = openLog;

@@ -1751,6 +1751,8 @@
           options: CH.balance ? CH.balance(o.options.map(function (p) { return { k: p.k, l: p.l, fx: Object.assign({}, p.fx || {}), after: p.after || null, money: p.money || null }; })) : o.options.map(function (p) { return { k: p.k, l: p.l, fx: p.fx || {}, after: p.after || null, money: p.money || null }; }) });
       });
     }
+    // どちらの答えにも得るものと失うものを（spec6 2-15）。全部そろったあとに一度だけ
+    if (CH && CH.balance && !CH._bal) { CH._bal = true; CH.list.forEach(function (o) { CH.balance(o.options); }); }
     return CH;
   }
   function s6Mod() {
@@ -2139,6 +2141,9 @@
   function year(L, rec, api) {
     if (!L.alive) return;
     var s = L.story || init(L, api), y = L.year;
+    // 親の人生を生きているとき：もとの子が生まれる年の親の暮らしを書き留める（spec6 2-16）
+    if (L.watchYear === y && !L.snapAt) L.snapAt = { y: y, pref: curPref(L), prov: L.prov || null, sub: L.sub || null, kind: L.kind || null, status: L.status || null, kakaku: L.kakaku || null, incPct: L.incPct, married: !!L.married,
+      spouse: (spouseOf(L) || {}).name || null, mode: L.mode || null, kids: (L.members || []).filter(function (m) { return m.role === '子' && m.by < y; }).length, job: curJob(L), place: rec && rec.place };
     // 1年に出す選択は、大きな決断も含めて1つまで
     if (L.queue.some(function (b) { return !b.ask && b.id !== 'ask' && b.kind !== 'ask'; })) { s.asked = y; var dk0 = Math.floor(L.age / 10) * 10; (s.decC = s.decC || {})[dk0] = (s.decC[dk0] || 0) + 1; }
     if (L.age < 1) { personaYear(ctxOf(L, rec, api)); if (s.asked !== y) choiceYear(ctxOf(L, rec, api), people(ctxOf(L, rec, api))); return; }
@@ -2660,6 +2665,76 @@
     var e = api.push(L, rec, '家庭', t, []);
     if (e) e.flavor = true;
   }
+  /* ---------- 戦後の財産と貴族院（spec6 2-7） ----------
+     農地改革：GHQ の指令（1945年12月）を受け、1946年の自作農創設特別措置法で、不在地主の小作地と、在村地主の小作地のうち決まった広さを超える分を国が買い上げ、小作人に売り渡した。
+     買い上げの値段は戦前の賃貸価格をもとにしたため、物価の上がった戦後には、受け取ったお金の値打ちはすぐに小さくなった（「わずかな代金で買い上げられた」と書く）。
+     山林・宅地・町の土地は買い上げの外。財産税（1946年）は、財産の大きい家ほど高い割合で納めた */
+  function landlord(L) { var k = (L.home0 || {}).kind || L.kind; return L.old && (L.incPct || 0) > 0.8 && (k === 'village' || k === 'fish' || L.status === 'kuge') && !L.abroad; }
+  arc({ id: 'nochi', once: true, start: function (c) {
+    var L = c.L;
+    if (c.s.done.nochi || !landlord(L) || c.y < 1947 || c.y > 1950) return false;
+    if (c.s.asked === c.y && c.y < 1950 && c.a >= 18) return false; // ほかの分かれ道が出た年は翌年に回す
+    L.landReform = c.y; (L.houseLand = L.houseLand || {}).nochi = c.y;
+    if (c.a < 18 || c.s.asked === c.y || L.mode) { c.say('農地改革で、家が小作に出していた田畑が、わずかな代金で国に買い上げられた。' + (c.a < 18 ? '大人たちが夜遅くまで話しこんでいた。' : ''), { sat: -2 }, '時代'); return true; }
+    c.ask('nochi', '農地改革', '農地改革の買い上げの令書が届いた。家が小作に出していた田畑は、戦前の値段をもとにした代金で国に買い上げられ、耕していた家に売り渡される。どうする？', [
+      { k: 'ukeru', l: '受け入れる', w: 1.2, f: ['family'] },
+      { k: 'igi', l: '農地委員会に異議を申し立てる', w: 0.6, f: ['save'] }
+    ]);
+    return true;
+  }, res: {
+    ukeru: function (c) {
+      c.say('農地改革の令書を受け入れた。田を耕していた家の主が頭を下げに来て、長い付き合いの礼を言った。', { tie: 3, sat: -3 }, '時代');
+      c.ask('nochi2', '買い上げの代金', '国から買い上げの代金が届いた。物の値段は日ごとに上がっている。代金をどうする？', [
+        { k: 'mono', l: 'すぐに品物や道具に替える', w: 1, f: ['earn'] }, { k: 'azuke', l: 'ひとまず預けておく', w: 1, f: ['save'] }], null, 'nochi');
+    },
+    igi: function (c) { c.money({ f: -0.03 }); c.say('農地改革の買い上げに、農地委員会へ異議を申し立てたが、決まりは変わらず、田畑は買い上げられた。村に気まずさが残った。', { tie: -4, sat: -2, learn: 1 }, '時代'); },
+    mono: function (c) { c.money({ f: 0.02 }); c.say('代金はすぐに農具や家財に替えた。手元に物が残ったことに、少しほっとした。', { sat: 1, tie: -1 }, '時代'); },
+    azuke: function (c) { c.money({ f: -0.05 }); c.say('代金を預けておいたが、物の値段が上がるにつれ、その値打ちはみるみる小さくなった。', { sat: -2, learn: 1 }, '時代'); }
+  } });
+  arc({ id: 'zaisanzei', start: function (c) {
+    var L = c.L;
+    if (c.s.done.zaisanzei || !c.O || c.y < 1946 || c.y > 1947 || c.a < 20 || !((L.incPct || 0) > 0.95 || L.status === 'kuge')) return false;
+    c.ask('zaisanzei', '財産税', '財産税で、家の財産の大きな部分を税として納めることになった。屋敷・美術品・株のどれを手放すか、決めなければならない。', [
+      { k: 'yashiki', l: '屋敷を売る', w: 1, f: ['save'] }, { k: 'bijutsu', l: '美術品と株を売る', w: 1, f: ['family'] }, { k: 'mise', l: '屋敷の一部で商売を始める', w: 0.7, f: ['earn'] }]);
+    return true;
+  }, res: {
+    yashiki: function (c) { c.money({ f: -0.4 }); (c.L.houseLand = c.L.houseLand || {}).yashiki = 'sold'; c.say('先祖から受け継いだ屋敷を売った。屋敷はのちにホテルになり、家族は小さな家に移った。', { sat: -4, tie: 1 }, '時代'); },
+    bijutsu: function (c) { c.money({ f: -0.35 }); c.say('掛け軸や茶道具、株を売って税を納めた。屋敷だけは手元に残した。', { sat: -2, tie: 2, learn: -1 }, '時代'); },
+    mise: function (c) { c.money({ f: -0.25 }); c.say('屋敷の表の間を貸し、そこで商売を始めた。家の体面より、暮らしを選んだ。', { sat: 1, tie: -2, learn: 2 }, '時代'); }
+  } });
+  arc({ id: 'tsuiho', start: function (c) {
+    var L = c.L;
+    if (c.s.done.tsuiho || c.y < 1946 || c.y > 1948 || c.a < 25 || !(/^(sakan|shokan)$/.test(L.grade) || (L.posts || []).length)) return false;
+    c.ask('tsuiho', '公職追放', '戦前に軍や政府の要職にあった者として、公職から退かされることになった。軍人の恩給も止まった。', [
+      { k: 'matsu', l: '追放が解かれるのを待つ', w: 1, f: ['save'] }, { k: 'betsu', l: '別の道を探す', w: 1, f: ['earn'] }]);
+    return true;
+  }, res: {
+    matsu: function (c) { c.say('畑を耕しながら、追放が解かれる日を待った。1950年代のはじめ、ようやく追放が解かれた。', { sat: -2, body: 1 }, '時代'); },
+    betsu: function (c) { c.money({ f: -0.05 }); c.say('昔の肩書きを捨て、知り合いの小さな会社で帳簿をつける仕事に就いた。', { sat: 1, tie: -1, learn: 2 }, '時代'); }
+  } });
+  // 貴族院（1890〜1947年）：公爵・侯爵は満30歳で自動で議員（spec のとおり30歳より前は議員にしない）。伯爵・子爵・男爵は同じ爵位どうしの選挙。
+  // 平民は、勅選（国に功績のあった人）と、多額納税者議員（その府県の多額の直接国税を納める人どうしの選挙）だけ
+  arc({ id: 'kizokuin', start: function (c) {
+    var L = c.L, y = c.y, a = c.a;
+    if (c.s.done.kizokuin || !c.O || L.sex !== 'm' || y < 1890 || y > 1946) return false;
+    if (L.status === 'kuge' && /^koshaku2?$/.test(L.kakaku) && a === 30) {
+      (L.posts = L.posts || []).push({ y: y, t: '貴族院議員', how: '爵位' });
+      c.say('満30歳になり、貴族院の議員になった。議場の前の方の席に座った。', { sat: 2, learn: 2, tie: -1 }, '時代');
+      return true;
+    }
+    var kind = L.status === 'kuge' && /^(hakushaku|shishaku|danshaku)$/.test(L.kakaku) && a >= 30 && a <= 65 && c.p(0.06) ? 'goshi'
+      : (L.feats || []).length && a >= 40 && c.p(0.25) ? 'chokusen'
+      : L.status !== 'kuge' && (L.incPct || 0) > 0.97 && a >= 40 && a <= 70 && c.p(0.015) ? 'tagaku' : null;
+    if (!kind) return false;
+    c.s.kizoku = kind;
+    c.ask('kizokuin', '貴族院', kind === 'goshi' ? '同じ爵位の者どうしの選挙で、貴族院の議員に推そうという話が出た。会派の根回しもいる。どうする？' : kind === 'chokusen' ? 'これまでの功績が認められ、貴族院の勅選議員に推されることになった。受けるか？' : '県で多額の直接国税を納める者どうしの選挙で、貴族院の議員に推された。どうする？', [
+      { k: 'deru', l: '受けて議員になる', w: 1, f: ['earn'] }, { k: 'jitai', l: '辞退する', w: 1, f: ['family'] }]);
+    return true;
+  }, res: {
+    deru: function (c) { var k = c.s.kizoku; (c.L.posts = c.L.posts || []).push({ y: c.y, t: '貴族院議員', how: k }); c.money({ f: -0.05 }); c.say(k === 'goshi' ? '会派の根回しを重ね、同じ爵位の者どうしの選挙で貴族院の議員に選ばれた。' : k === 'chokusen' ? '勅選議員として貴族院に入った。終身の務めだった。' : '多額納税者議員として貴族院に入った。地元の頼みごとが増えた。', { sat: 3, learn: 2, tie: -2 }, '時代'); },
+    jitai: function (c) { c.say('議員の話は辞退し、家と地元のことに力を注いだ。', { tie: 2, sat: -1 }, '時代'); }
+  } });
+
   /* ---------- 人生の筋（js/paths.js。作る人の指示 2026-10-19）----------
      珍しい仕事への道・売られた子や預けられた子の人生・ちょっとしたきっかけで都や幕府・国の役所で働く道・将軍家や大名家の人生。
      どの分かれ道にも地元に残る答えがあり、その答えにも地元で幸せに暮らす続きがある（誘導しない） */
@@ -2707,11 +2782,12 @@
       c.job(o.job.n, o.job.pay || 1500, o.job.reg !== false, c.O ? o.job.cat : (PATH_IND[o.job.cat] || 'service')); // 筋で就く仕事は、書いていなければ正規の勤め（非正規の割合の統計を崩さない）
       L.selfJob = { cat: o.job.cat || 'craft', n: o.job.n, d: o.job.d || '' }; L.lastJob = o.job.n;
       L.pathJob = { n: o.job.n, cat: o.job.cat || 'craft', pay: o.job.pay || 1500, y: c.y, path: path.id }; // 筋で就いた仕事は、辞める場面を経ない限り家の仕事に戻さない
+      if (/議員|村長|町長|市長|知事|大臣|名主|乙名|庄屋/.test(o.job.n)) (L.posts = L.posts || []).push({ y: c.y, t: o.job.n, path: path.id });
     }
     if (o.quit) { L.pathJob = null; }
     if (o.money) c.money(o.money);
     if (o.debt) L.debt = Math.max(0, (L.debt || 0) + o.debt);
-    if (o.honor) (L.honors = L.honors || []).push({ y: c.y, age: c.a, t: o.honor.t, k: o.honor.k, path: path.id });
+    if (o.honor) { var hh = { y: c.y, age: c.a, t: o.honor.t, k: o.honor.k, path: path.id }; if (honorOk(hh)) (L.honors = L.honors || []).push(hh); else if (o.honor.k === 'kunsho') (L.honors = L.honors || []).push({ y: c.y, age: c.a, t: '従五位', k: 'ikai', posthumous: true, path: path.id }); }
     if (o.crime) (L.crimes = L.crimes || []).push({ y: c.y, t: o.crime.t, pun: o.crime.pun, path: path.id });
     if (o.free) L.crimeFree = c.y;
     if (o.feat) (L.feats = L.feats || []).push({ y: c.y, path: path.id, group: path.group || null, t: path.title });
@@ -2785,7 +2861,111 @@
     });
   })();
 
-  var API = { init: init, year: year, familyLine: familyLine, resolve: resolve, autoAnswer: autoAnswer, spouseDesc: spouseDesc, refuseText: refuseText, enLabel: enLabel, hintFor: hintFor, suitor: suitor, suitorText: suitorText, hokoTo: hokoTo, mukoHouse: mukoHouse, yoshiHouse: yoshiHouse, arcs: A, nodes: N };
+  /* ---------- 位階と勲章（spec6 2-10・2-25） ----------
+     一定以上の役職に就いた人と、偉業を成しとげた人には、必ず位階か勲章を付ける。時代の制度に合わせる：
+     明治より前は朝廷の位（官位相当）と、明治以後の贈位。1946〜1963年は生きている人への勲章を出さない（文化勲章は除く）。
+     春秋の叙勲は1964年から、原則70歳以上。2002年からは「勲一等」などの数字の呼び方をやめた */
+  var POST_RANK = [
+    [/摂政|関白/, '従一位'], [/太政大臣|左大臣|右大臣|内大臣/, '正二位'], [/大納言/, '正三位'], [/中納言/, '従三位'], [/参議|近衛大将/, '正四位下'],
+    [/蔵人頭/, '正四位下'], [/弁官|国司|受領|国守/, '従五位下'], [/将軍/, '従一位'], [/執権|管領/, '従四位下'], [/大名|藩主|老中|若年寄/, '従五位下']
+  ];
+  var POST_MODERN = /大臣|次官|知事|将官|少将|中将|大将|帝国大学の教授|貴族院|衆議院議員|国会議員|市長|最高裁|大学の学長|学長/;
+  function honorOk(h) {
+    if (h.k === 'kunsho' && h.y >= 1946 && h.y <= 1963 && !/文化勲章/.test(h.t) && !h.posthumous) return false;
+    if (h.y >= 2002 && /勲[一二三四五六七八]等/.test(h.t)) return false;
+    if (h.y < 1937 && /文化勲章/.test(h.t)) return false;
+    if (h.y < 1955 && /紫綬褒章/.test(h.t)) return false;
+    if (h.y < 1977 && /国民栄誉賞/.test(h.t)) return false;
+    if (h.y < 1890 && /金鵄勲章/.test(h.t) || h.y > 1947 && /金鵄勲章/.test(h.t)) return false;
+    if (h.y < 1875 && (h.k === 'kunsho' || h.k === 'hosho')) return false;
+    return true;
+  }
+  function jobsOf(L) {
+    var js = [];
+    if (L.selfJob && L.selfJob.n) js.push(L.selfJob.n);
+    if (L.lastJob) js.push(L.lastJob);
+    if (L.pathJob && L.pathJob.n) js.push(L.pathJob.n);
+    if (L.rank === 'shogun') js.push('将軍'); if (L.rank === 'daimyo') js.push('大名');
+    if (L.grade === 'shokan') js.push('将官');
+    return js.join('・');
+  }
+  // 亡くなったときに一度だけ呼ぶ（何度呼んでも同じ）。足りない栄典を、時代の制度に合わせて付ける
+  function finalHonors(L) {
+    if (!L || L.alive || L.honorsFinal) return L && L.honors || [];
+    L.honorsFinal = true;
+    var hs = (L.honors || []).filter(honorOk), dy = L.deathYear, jb = jobsOf(L), age = L.deathAge;
+    var has = function () { return hs.length > 0; };
+    if (dy < 1868) {
+      for (var i = 0; i < POST_RANK.length; i++) if (POST_RANK[i][0].test(jb)) { if (!has()) hs.push({ y: dy, age: age, t: POST_RANK[i][1], k: 'ikai', why: '役職' }); break; }
+    } else if (POST_MODERN.test(jb) && !has()) {
+      if (dy < 1946) hs.push({ y: dy, age: age, t: '正四位', k: 'ikai', posthumous: true, why: '役職' }, { y: dy, age: age, t: '勲三等瑞宝章', k: 'kunsho', posthumous: true, why: '役職' });
+      else if (dy >= 1964 && age >= 70) hs.push({ y: Math.max(1964, dy - 1), age: age - 1, t: dy >= 2003 ? '旭日中綬章' : '勲三等旭日中綬章', k: 'kunsho', why: '役職' }, { y: dy, age: age, t: '従四位', k: 'ikai', posthumous: true, why: '役職' });
+      else hs.push({ y: dy, age: age, t: '従四位', k: 'ikai', posthumous: true, why: '役職' });
+    }
+    // 偉業の人：時代に合う栄典（明治より前は明治以後の贈位）
+    if ((L.feats || []).some(function (f) { return f.group === 'ijou'; }) && !hs.some(function (h) { return h.k !== 'hobi'; })) {
+      if (dy < 1868) hs.push({ y: dy, age: age, t: '従四位', k: 'zoui', note: '明治以後、その功により贈られた', why: '偉業' });
+      else hs.push({ y: dy, age: age, t: '正五位', k: 'ikai', posthumous: true, why: '偉業' });
+    }
+    L.honors = hs;
+    return hs;
+  }
+  // 記録に出す言い方：「1980年　勲三等旭日中綬章」「明治以後、従四位を贈られた」
+  function honorText(h) {
+    if (h.k === 'zoui') return '明治以後、その功により' + h.t + 'を贈られた';
+    return h.y + '年　' + h.t + (h.posthumous ? '（亡くなったときに）' : '');
+  }
+  /* ---------- 家の記録と、何代か後の子孫（spec6 2-6） ----------
+     家ごとに、名字・氏・家の格・土地・家業・家宝・家訓・地元での立場を持たせ、子孫へ受け継ぐ。
+     土地：農地改革（1946年〜）で、小作に出していた田畑は買い上げられた。山林・宅地・町の土地は買い上げの外だったので、その家は今も地元の大地主でいられる */
+  var TREASURE = { kuge: ['先祖の書き継いだ家の日記', '家に伝わる琵琶', '古い和歌の巻物'], bushi: ['先祖の刀', '戦で受けた感状', '家紋の入った鎧'], shizoku: ['先祖の刀', '藩から受けた感状'],
+    hyakusho: ['村の古い絵図', '先祖の書いた日記', '名主の家の古文書'], chonin: ['先祖の大福帳', '色あせたのれん', '家に伝わる茶道具'], priest: ['寺の古い過去帳'], heimin: ['古い帳面', '先祖の写真'], other: ['先祖の書いた日記'] };
+  var MOTTO = ['分を守り、家を守れ', '人の恩を忘れるな', '質素を旨とせよ', '学びを怠るな', '土地を手放すな', '約束は命より重く守れ'];
+  var ERA_NAME = function (y) { return y < 1185 ? '平安' : y < 1333 ? '鎌倉' : y < 1467 ? '室町' : y < 1600 ? '戦国' : y < 1868 ? '江戸' : y < 1912 ? '明治' : y < 1926 ? '大正' : y < 1989 ? '昭和' : '平成'; };
+  var POS_WORD = { kuge: '公家の', bushi: '武士の', shizoku: '士族の', hyakusho: '百姓の', chonin: '町人の', priest: '寺の' };
+  function houseRec(L) {
+    var h = L.house6 || {}, r = (L.story && L.story.r) || Math.random, st = L.status || 'heimin';
+    var landBig = (L.incPct || 0) > 0.8, kind = (L.home0 || {}).kind || L.kind || ((L.place || {}).kind === '町村' ? 'village' : 'town');
+    var land = h.land || { ta: landBig && (kind === 'village' || kind === 'fish') ? '大' : (L.incPct || 0) > 0.4 ? '中' : '小', yama: landBig && kind === 'village' && r() < 0.5, machi: landBig && (kind === 'town' || kind === 'city') };
+    if (L.landReform || (L.houseLand || {}).nochi) land.nochi = L.landReform || L.houseLand.nochi;
+    var tr = h.treasure || (TREASURE[st] || TREASURE.other)[Math.floor(r() * (TREASURE[st] || TREASURE.other).length)];
+    return {
+      surname: L.surname || h.surname || null, uji: L.uji || h.uji || null, status: st, kakaku: L.kakaku || null, grade: L.grade || null, rank: L.rank || null,
+      prov: L.old ? (L.home0 || {}).prov || L.prov : null, sub: L.old ? (L.home0 || {}).sub || L.sub : null, pref: String(L.old ? (L.home0 || {}).pref || L.pref : L.home.pref), kind: kind,
+      land: land, biz: h.biz || (L.parentJob && L.parentJob.n) || (L.dadJobD && L.dadJobD.n) || null, treasure: tr, motto: h.motto || MOTTO[Math.floor(r() * MOTTO.length)],
+      pos: h.pos || ((L.posts || []).length ? L.posts[L.posts.length - 1].t : null), since: h.since || L.by, ancestor: h.ancestor || L.name, gens: (h.gens || 0) + 1,
+      incPct: L.incPct, lastDy: L.deathYear
+    };
+  }
+  // 子孫の人生に家の記録を受け継がせる（生まれた直後に呼ぶ）
+  function applyDescend(L, rec) {
+    var by = L.by, st = rec.status;
+    if (L.old) {
+      if (rec.rank === 'shogun' || rec.rank === 'daimyo') st = by < 1869 ? 'bushi' : by <= 1947 ? 'kuge' : 'heimin';
+      if (st === 'bushi' && by >= 1872) st = by <= 1947 ? 'shizoku' : 'heimin';
+      if (st === 'shizoku' && by >= 1948) st = 'heimin';
+      if ((st === 'hyakusho' || st === 'chonin') && by >= 1872) st = 'heimin';
+      if (st === 'kuge' && by >= 1948) st = 'heimin';
+      L.status = st;
+      if (rec.rank && by < 1869) L.rank = rec.rank;
+      if (st === 'kuge') L.kakaku = rec.rank === 'shogun' ? 'koshaku' : rec.rank === 'daimyo' ? 'shishaku' : rec.kakaku;
+    }
+    L.surname = rec.surname || L.surname; if (rec.uji) L.uji = rec.uji;
+    if (by >= 1870) L.surnameShow = true;
+    // 暮らし向き：家の豊かさを受け継ぐ。農地改革の前に小作地を貸していた家は、1950年からの生まれでは田畑の多くを手放している
+    var inc = rec.incPct == null ? 0.5 : rec.incPct, note = '';
+    if (rec.land && rec.land.ta === '大' && by >= 1950) {
+      if (rec.land.yama || rec.land.machi) { inc = Math.max(0.75, inc - 0.1); note = '農地改革で田畑の多くを手放したが、' + (rec.land.yama ? '山林' : '町の土地') + 'は残り、今も地元では大地主の家と呼ばれていた。'; }
+      else { inc = Math.min(inc, 0.55); note = '農地改革で、小作に出していた田畑の多くを手放していた。'; }
+      L.houseLand = { nochi: rec.land.nochi || 1947, before: by };
+    }
+    L.incPct = inc;
+    L.house6 = rec;
+    var place = L.old ? (L.H.prov[rec.prov] ? L.H.prov[rec.prov].kuni : '') : '';
+    L.descendLine = '家は' + ERA_NAME(rec.since) + 'のころから' + (place ? place + 'の' : 'この土地の') + (rec.pos ? rec.pos + 'を出した' : (POS_WORD[rec.status] || '') ) + '家で、' + (rec.treasure ? '蔵には' + rec.treasure + 'が残っていた。' : '') + (rec.motto ? '家訓は「' + rec.motto + '」だった。' : '') + note;
+    return L;
+  }
+  var API = { init: init, year: year, houseRec: houseRec, applyDescend: applyDescend, finalHonors: finalHonors, honorText: honorText, honorOk: honorOk, familyLine: familyLine, resolve: resolve, autoAnswer: autoAnswer, spouseDesc: spouseDesc, refuseText: refuseText, enLabel: enLabel, hintFor: hintFor, suitor: suitor, suitorText: suitorText, hokoTo: hokoTo, mukoHouse: mukoHouse, yoshiHouse: yoshiHouse, arcs: A, nodes: N };
   if (typeof module !== 'undefined' && module.exports) module.exports = API;
   root.IchiokuStory = API;
 })(typeof self !== 'undefined' ? self : this);

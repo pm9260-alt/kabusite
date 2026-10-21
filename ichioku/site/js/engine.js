@@ -644,6 +644,7 @@
     s += '父は' + L.fAge + '歳で' + (L.dadJobD ? L.dadJobD.n + '（' + L.dadJobD.d + '）' : IND[L.dadJob].job) + '、母は' + L.mAge + '歳で' + (L.momJob ? (L.momJobD ? L.momJobD.n : IND[L.momJob].job) + 'をしている' : '家で家事をしている') + '。';
     if (sibs.length) s += sibs.map(function (m) { return m.role + 'の' + m.name; }).join('、') + 'がいる。';
     else if (!L.members.some(function (m) { return m.sib && m.by < y; })) s += 'はじめての子どもだった。';
+    if (L.descendLine) s += L.descendLine;
     if (L.house && L.by > L.house.deathYear) {
       var pm = L.members.filter(function (m) { return m.prevLife; })[0];
       if (pm) s += relWord(L, pm) + 'の' + pm.name + 'が亡くなって' + (L.by - L.house.deathYear) + '年後に生まれた。';

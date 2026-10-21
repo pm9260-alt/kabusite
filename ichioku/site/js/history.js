@@ -748,6 +748,7 @@
     var sibs = L.members.filter(function (m) { return m.sib && m.by < y; });
     var s = rec.place + 'で、' + stWordJob(L) + 'に' + (L.sex === 'm' ? '男の子' : '女の子') + 'として生まれた。' + (st === 'satsumon' ? '名前は土地の言葉で付けられた。' : /アイヌ語/.test(L.name) ? '名前はアイヌ語で付けられた。' : '名前は' + L.name + '。');
     s += '父は' + L.fAge + '歳、母は' + L.mAge + '歳。';
+    if (L.descendLine) s += L.descendLine;
     var J = E.jobsMod && E.jobsMod();
     if (L.parentJob && J) s += '家の仕事は' + L.parentJob.n + '（' + L.parentJob.d + '）だ。';
     var alive = sibs.filter(function (m) { return !m.before; }), dead = sibs.filter(function (m) { return m.before; });
@@ -1461,7 +1462,7 @@
   // 名字を添えた名前（婿養子・養子に入った人だけ、旧姓を添える）
   // 記録に出す名前（spec6 2-27）：「藤原 道房」「佐々木 盛綱（源氏）」「九条 経実（藤原氏）」。江戸の百姓・町人は1875年まで名字を付けない
   function shownSurname(L) {
-    if (!L.surname) return L.uji && L.status !== 'heimin' ? L.uji : null;
+    if (!L.surname) return L.uji && (L.status === 'bushi' || L.status === 'kuge') ? L.uji : null;
     if (L.surnameShow || L.year >= 1875 || (L.surnamePrivate && L.year >= 1870 && L.sex === 'm' && L.age >= 15)) return L.surname;
     return null;
   }

@@ -205,6 +205,16 @@
     </div>
   </section>
 
+  <!-- Japapedia（spec6 2-12・2-24）：貴族とすぐれた功績の人生だけの事典の項目 -->
+  <section id="screen-jp" class="screen jp" hidden aria-labelledby="jp-head">
+    <div class="jp-bar">
+      <button type="button" class="btn-sub" id="jp-back">死亡の記録へ戻る</button>
+      <button type="button" class="btn-sub" id="jp-img">画像で保存</button>
+    </div>
+    <h2 class="jp-brand" id="jp-head">Japapedia</h2>
+    <article class="jp-art" id="jp-art"></article>
+    <div class="jp-imgs" id="jp-imgs" hidden></div>
+  </section>
   <section id="screen-end" class="screen" hidden aria-labelledby="end-title">
     <!-- 死亡記録（原作「80億分の1」の死亡記録の並べ方にならう：見出し・要約・死因と数字・項目・最後の瞬間・振り返って） -->
     <section class="o-card record" id="record">
@@ -237,7 +247,15 @@
       <div class="end-buttons">
         <button type="button" class="btn-sub" id="card-end">最期のカード</button>
         <button type="button" class="btn-sub" id="end-log">一生をふり返る</button>
+        <button type="button" class="btn-sub" id="end-jp" hidden>Japapedia で見る</button>
       </div>
+    </section>
+    <!-- 親の人生のあとの「前の人生とのちがい」（spec6 2-16） -->
+    <section class="o-card pdiff" id="pdiff-block" hidden>
+      <h2>前の人生とのちがい</h2>
+      <p class="pdiff-note" id="pdiff-note"></p>
+      <table class="pdiff-table"><thead><tr><th></th><th>前</th><th>今</th></tr></thead><tbody id="pdiff-table"></tbody></table>
+      <button type="button" class="btn-main" id="pdiff-go" hidden></button>
     </section>
     <!-- 次の人生：この家の続き（きょうだい・子として生きる）と、別の時代 -->
     <div class="next-life" id="next-life">
@@ -345,6 +363,7 @@
 <script src="js/names.js"></script>
 <script src="js/choices.js"></script>
 <script src="js/paths.js"></script>
+<script src="js/s6.js"></script>
 <script src="js/story.js"></script>
 <script src="js/engine.js"></script>
 <script src="js/history.js"></script>
@@ -356,6 +375,7 @@
 <script src="js/jobs.js"></script>
 <script src="js/causes.js"></script>
 <script src="js/card.js"></script>
+<script src="js/japapedia.js"></script>
 <script src="js/curve.js"></script>
 <script src="js/app.js"></script>
 <script src="js/top.js"></script>

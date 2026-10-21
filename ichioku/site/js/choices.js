@@ -959,13 +959,31 @@ c('h5.ev.corona.mid', 'small', [2020, 2022], [30, 59], w({ kind: ['town', 'city'
   function bvec(o) { var f = o.fx || {}; return FXK.map(function (k) { return f[k] || 0; }).concat([(o.money && o.money.f) || 0, -(o.debt || 0), o.die ? -99 : 0]); }
   function balance(opts) {
     if (!opts || opts.length < 2) return opts;
+    for (var round = 0; round < 6; round++) { sides(opts); if (!undom(opts)) break; }
+    sides(opts);
+    // まだ負けている答えがあれば、お金で差をつける（負けている方は少し貯金が増え、勝っている方は少し減る）
+    for (var i = 0; i < opts.length; i++) for (var j = 0; j < opts.length; j++) {
+      if (i === j) continue;
+      var a = bvec(opts[i]), b = bvec(opts[j]);
+      if (a.every(function (x, n) { return x >= b[n]; })) {
+        opts[i].money = { f: ((opts[i].money && opts[i].money.f) || 0) - 0.02 };
+        opts[j].money = { f: ((opts[j].money && opts[j].money.f) || 0) + 0.02 };
+      }
+    }
+    return opts;
+  }
+  function sides(opts) {
     opts.forEach(function (o, i) {
       o.fx = o.fx || {};
       var v = bvec(o);
       if (!v.some(function (x) { return x > 0; })) o.fx[FXK[i % 4]] = (o.fx[FXK[i % 4]] || 0) + 1;
       v = bvec(o);
-      if (!v.some(function (x) { return x < 0; })) { var z = FXK.filter(function (k) { return !o.fx[k]; }); var kk = z.length ? z[(i + 1) % z.length] : FXK[(i + 2) % 4]; o.fx[kk] = (o.fx[kk] || 0) - 1; }
+      if (!v.some(function (x) { return x < 0; })) { var z = FXK.filter(function (k) { return !o.fx[k]; }); var kk = z.length ? z[(i + 1) % z.length] : FXK.filter(function (k) { return o.fx[k] > 0; }).sort(function (a, b) { return o.fx[a] - o.fx[b]; })[0] || FXK[(i + 2) % 4]; if (o.fx[kk] > 0 && FXK.filter(function (k) { return o.fx[k] > 0; }).length < 2) { var z2 = FXK.filter(function (k) { return k !== kk; }); kk = z2[i % z2.length]; } o.fx[kk] = (o.fx[kk] || 0) - 1; if (o.fx[kk] === 0) o.fx[kk] = -1; }
     });
+  }
+  // 負けている答えがあれば直して true（直すものがなければ false）
+  function undom(opts) {
+    var fixed = false;
     for (var g = 0; g < 12; g++) {
       var hit = null;
       for (var i = 0; i < opts.length && !hit; i++) for (var j = 0; j < opts.length && !hit; j++) {
@@ -977,9 +995,9 @@ c('h5.ev.corona.mid', 'small', [2020, 2022], [30, 59], w({ kind: ['town', 'city'
       // 負けている答え j に、勝っている答え i より上の数を1つ作る（差がいちばん小さい数）
       var jj = opts[hit[1]], best = 0, bd = 1e9;
       for (var k = 0; k < 4; k++) { var d = hit[2][k] - hit[3][k]; if (d < bd) { bd = d; best = k; } }
-      jj.fx[FXK[best]] = hit[2][best] + 1;
+      jj.fx[FXK[best]] = hit[2][best] + 1; fixed = true;
     }
-    return opts;
+    return fixed;
   }
   X.forEach(function (o) { balance(o.options); });
   var API = { list: X, balance: balance, hint: hint, FXN: FXN, era: era, ageBand: ageBand, ERA_WORDS: ERA_WORDS, PLACE_WORDS: PLACE_WORDS, eraOk: eraOk, placeOk: placeOk };

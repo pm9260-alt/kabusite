@@ -661,3 +661,33 @@ button { border-radius: 8px; }
 #screen-end.infant .rc-sum { font-size: 14px; line-height: 1.7; }
 #screen-end.infant .rc-causebox { padding: 10px 12px; }
 #screen-end.infant .rc-cnote { font-size: 12.5px; line-height: 1.65; }
+
+/* 前の人生とのちがい（spec6 2-16）・家系図の札（spec6 2-21） */
+.pdiff-table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 8px 0 12px; }
+.pdiff-table th, .pdiff-table td { border-bottom: 1px solid var(--line); padding: 6px 4px; text-align: left; vertical-align: top; }
+.pdiff-note { font-weight: 700; }
+.tree-hit { cursor: pointer; }
+.tree-hit:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.person-live { margin-top: 12px; width: 100%; min-height: 44px; }
+
+/* Japapedia（spec6 2-12）：事典の項目の並べ方だけにならう。境目は1pxの線、影やぼかしは使わない */
+.jp { padding-bottom: 40px; }
+.jp-bar { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+.jp-brand { font-size: 14px; color: var(--sub); margin: 8px 0 0; font-weight: 700; }
+.jp-art { font-size: 15px; line-height: 1.8; overflow-wrap: anywhere; }
+.jp-note { font-size: 12px; color: var(--sub); margin: 4px 0; }
+.jp-title { font-size: 24px; font-weight: 700; margin: 4px 0 8px; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+.jp-years { font-size: 15px; font-weight: 400; margin-left: 6px; color: var(--sub); }
+.jp-info { width: 100%; max-width: 360px; border: 1px solid var(--line); border-collapse: collapse; margin: 0 0 12px; font-size: 13px; }
+.jp-info caption { font-weight: 700; padding: 6px; }
+.jp-info th, .jp-info td { border-top: 1px solid var(--line); padding: 4px 6px; text-align: left; vertical-align: top; }
+.jp-info th { width: 7em; color: var(--sub); font-weight: 400; }
+.jp-portraits { text-align: center; }
+.jp-av { width: 48px; height: 64px; image-rendering: pixelated; margin: 0 6px; }
+.jp-toc { border: 1px solid var(--line); padding: 6px 12px; display: inline-block; margin: 8px 0; font-size: 14px; }
+.jp-toc-h { font-weight: 700; margin: 0; }
+.jp-toc ol { margin: 4px 0; padding-left: 1.4em; }
+.jp-h2 { font-size: 19px; border-bottom: 1px solid var(--line); margin: 18px 0 6px; padding-bottom: 2px; }
+.jp-h3 { font-size: 16px; margin: 10px 0 2px; }
+.jp-src { font-size: 12px; color: var(--sub); }
+.jp-imgs img { width: 100%; height: auto; display: block; border: 1px solid var(--line); margin: 8px 0; }
