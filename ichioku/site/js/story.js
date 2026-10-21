@@ -48,7 +48,12 @@
       st: L.old ? L.status : 'modern',
       // 土地の種類：村・浜の村・町・市街地（今の進め方は 町村・都市・大都市 を読みかえる）
       kind: L.old ? (L.kind === 'kotan' ? 'village' : L.kind) : ({ '町村': 'village', '都市': 'town', '大都市': 'city' })[(L.place || {}).kind] || 'town',
-      say: function (t, st, cat) { var e = api.push(L, rec, cat || '人間関係', t, []); e.story = true; if (st) e.st = st; return e; },
+      say: function (t, st, cat) {
+        // 同じ文は1つの人生で1回だけ。2回目からは回数で書き分ける（spec6 1-4）
+        var sn = s.saidN = s.saidN || {}; sn[t] = (sn[t] || 0) + 1;
+        if (sn[t] === 2) t = 'また、' + t; else if (sn[t] > 2) t = 'これで' + (KAZU[sn[t]] || sn[t]) + '度目だった。' + t;
+        var e = api.push(L, rec, cat || '人間関係', t, []); e.story = true; if (st) e.st = st; return e;
+      },
       later: function (dy, id, data) { s.at.push({ y: L.year + dy, id: id, d: data || {} }); },
       ask: function (id, title, q, opts, data, resArc) {
         // 1年に出す物語の分かれ道は1つまで。すでに出した年は、この場面を翌年に回す
@@ -379,7 +384,7 @@
       if (!single(L)) return;
       if (c.p(0.5)) {
         c.s.f.jilted = c.y;
-        c.say('5年付き合った' + c.s.loverName + 'に、ほかに好きな人がいると打ち明けられた。結婚の話もしていたのに。部屋の荷物を片づけるのに、1か月かかった。', { sat: -12, tie: -8 });
+        c.say('5年付き合った' + c.s.loverName + 'に、ほかに好きな人がいると打ち明けられた。結婚の話もしていたのだった。部屋の荷物を片づけるのに、1か月かかった。', { sat: -12, tie: -8 });
         if (L.age <= 30) c.later(Math.max(1, 30 - L.age), 'love5.reunion');
         // 別れたあと連絡をやめられないか（まれ）
         if (c.s.tr.warm > 1 && c.s.tr.grit > 0.8 && c.s.tr.soc < -0.5 && c.p(0.25)) c.later(1, 'stalk.start');
@@ -1816,6 +1821,7 @@
     if (/疫病|コレラ|はやり病|疱瘡がはやり|かぜが流行|スペインかぜ|新型コロナ/.test(t)) return 'epidemic';
     return null;
   }
+  var AWAY_WORDS = /町の暮らしに|同じ長屋の人と|ふるさとからの便り|故郷からの便り/;
   var AWAY_ONLY = /町の暮らし|長屋|ふるさと|故郷|便り|訛り|町の人|町の祭り|町の灯|都会/, TOWN_ONLY = /長屋|路地|表通り/;
   var AWAY_BAN = /年貢|田植|稲刈|麦刈|用水|隣の田|同じ村|五人組|寄り合い|寄合|村の|村人|家の田|田畑|代官所|名主|庄屋|囲炉裏|家業/;
   // 家を出て落ち着いた人（spec6 1-1）：出家・旅・出征は除く
@@ -1919,6 +1925,7 @@
       if (c.L.mode && !awayHome(c.L) && AWAY_BAN.test(all)) return;
       if (c.kind === 'city' && /村/.test(all)) return;
       if (c.kind !== 'town' && c.kind !== 'city' && TOWN_ONLY.test(all)) return;
+      if (!c.away() && AWAY_WORDS.test(all)) return;
       cand.push({ o: o, t: ft, i: i });
     }); });
     // 40歳から先で候補を使い切ったときは、どこでも出せる選択の書き分け（5通りずつ）から引く（spec6 1-1）
@@ -1992,6 +1999,9 @@
     // 答えだけの「〜ことにした。」は出さない（v11の直し 9）。after がない選択肢は、問いの最初の文を添えて、何について決めたかが分かる文にする
     var q1 = (fillT(String((o && (o.texts || [o.text])[d.ti || 0]) || '').split('。')[0], P) || '').replace(/(かどうか|か)?(迷っている|考えている|悩んでいる)$/, '').replace(/[？?]$/, '');
     var t = after || (q1 ? q1 + '。' + (d.kind === 'parent' ? '親は考えた末、' : '考えた末、') + opt.l + 'ことにした。' : (d.kind === 'parent' ? '親は、' : '') + opt.l + 'ことにした。');
+    // 同じ選んだ中身の文は、回数で書き分ける（spec6 1-4：「また」「これで三度目だった」）
+    var an = c.s.afterN = c.s.afterN || {}; an[t] = (an[t] || 0) + 1;
+    if (an[t] === 2) t = 'また、' + t; else if (an[t] > 2) t = 'これで' + (KAZU[an[t]] || an[t]) + '度目だった。' + t;
     c.say(t, fx || {}, d.kind === 'parent' ? '家庭' : '人間関係');
   }
 
@@ -2126,7 +2136,7 @@
     var cand = all.filter(function (t) { return !seen[t] && !seen['tm:' + tm[t]]; });
     // 出しきったら、直近に出したもの以外からまた選ぶ
     // 出しきったら、寺の暮らしのほかは繰り返さない（同じ文は1つの人生で1回だけ）
-    if (!cand.length && L.mode === 'shukke') { var last = c.s.lastMode || []; cand = all.filter(function (t) { return last.indexOf(t) < 0; }); }
+    // （同じ文は1つの人生で1回だけ。spec6 1-4：寺の暮らしも繰り返さない）
     if (!cand.length) return;
     // 名前の入った出来事が少ない人生では、名前を呼ばれる場面を先に選ぶ（第2弾の6）
     var logs = L.log || [], named = logs.filter(function (r) { return (r.events || []).some(function (e) { return me && e.t.indexOf(me) >= 0; }); }).length;
@@ -2160,6 +2170,8 @@
     var c = ctxOf(L, rec, api);
     // 出来事の年と土地に結びついた筋（spec6 2-13・2-17）は、ほかの筋より先に確かめる
     for (var j = 0; j < A.length; j++) { var oj = A[j]; if (oj.once && !s.done[oj.id] && oj.start(c)) { s.done[oj.id] = y; s.last = y; break; } }
+    // 出世の筋（spec6 2-3）も、ほかの筋より先に確かめる（ちょっとしたきっかけは、出会えなければ意味がない）
+    if (s.asked !== y && !(L.mode && !awayHome(L))) for (var j2 = 0; j2 < A.length; j2++) { var o2 = A[j2]; if (o2.pri && !s.done[o2.id] && o2.start(c)) { s.done[o2.id] = y; s.last = y; break; } }
     weddingNote(c, rec);
     modeYear(c, rec);
     palYear(c);
@@ -2189,6 +2201,8 @@
         var CHk = choicesMod();
         if (CHk && CHk.eraOk && (!CHk.eraOk(ft, c.y, false) || !CHk.placeOk(ft, pref))) return;
         if (L.mode && !awayHome(L) && AWAY_BAN.test(ft)) return;
+        if (c.kind !== 'town' && c.kind !== 'city' && TOWN_ONLY.test(ft)) return;
+        if (!c.away() && AWAY_WORDS.test(ft)) return;
         if (c.kind === 'city' && /村/.test(ft)) return;
         cand.push({ o: o, t: ft });
       });
@@ -2810,6 +2824,8 @@
   }
   // 筋の種類ごとの数の決まり：出来事・仕事・格・位の筋は「1つの人生に2本まで」の数に入れない。出世の筋は2本まで（spec6 2-3）
   var PATH_FREE = { jiken: 1, shoku: 1, kakaku: 1, kurai: 1 };
+  // 筋の種類ごとの出会いやすさ（spec6 の「確かめ方」の割合に合わせる）
+  var PATH_GX = { kaigai: 1.3, shusse: 2, gun: 12 }, PATH_CAP = { shusse: 0.06, gun: 0.12 };
   function pathOk(c, path) {
     var L = c.L, y = c.y, a = c.a, df = c.s.pathDefer && c.s.pathDefer[path.id];
     if (y < path.y[0] || y > (df ? Math.max(path.y[1], df + 2) : path.y[1]) || a < path.a[0] || a > path.a[1] + (df ? 2 : 0)) return false;
@@ -2844,7 +2860,7 @@
         };
         if (nd.ask) nd.ask.opts.forEach(function (o) { res[nk + '__' + o.k] = function (c) { pathClear(c, path); pathDo(c, path, o); }; });
       });
-      arc({ id: path.id, path: true, group: path.group || null, once: !!path.once, modeOk: path.group === 'kaigai' || path.group === 'shoku' || !!path.modeOk, start: function (c) {
+      arc({ id: path.id, path: true, group: path.group || null, once: !!path.once, pri: path.group === 'shusse', modeOk: path.group === 'kaigai' || path.group === 'shoku' || !!path.modeOk, start: function (c) {
         var s = c.s, free = PATH_FREE[path.group];
         // 出来事の筋は、ほかの分かれ道が出た年なら翌年に回す（出来事の年から2年まで）
         if (path.once && s.asked === c.y) { if (pathOk(c, path)) { s.pathDefer = s.pathDefer || {}; s.pathDefer[path.id] = s.pathDefer[path.id] || c.y; } return false; }
@@ -2852,7 +2868,7 @@
         if (path.group === 'shusse' && (s.shusseN || 0) >= 2) return false;
         if (!pathOk(c, path)) return false;
         if (path.once) { s.pathOnce = s.pathOnce || {}; if (s.pathOnce[path.id]) return false; s.pathOnce[path.id] = c.y; if (!c.p(path.p || 0.4)) return false; }
-        else if (!c.p(Math.min(free ? 0.4 : 0.06, (path.p || 0.01) * PATH_X))) return false;
+        else if (!c.p(Math.min(free ? 0.4 : PATH_CAP[path.group] || 0.06, (path.p || 0.01) * (PATH_GX[path.group] || PATH_X)))) return false;
         if (!free) s.pathN = (s.pathN || 0) + 1;
         if (path.group === 'shusse') s.shusseN = (s.shusseN || 0) + 1;
         pathAsk(c, path, 'start', path.title, path.text, path.opts);

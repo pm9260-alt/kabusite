@@ -17,7 +17,9 @@
     return false;
   }
   function eraName(y) { return y < 1185 ? '平安時代' : y < 1333 ? '鎌倉時代' : y < 1392 ? '南北朝時代' : y < 1467 ? '室町時代' : y < 1600 ? '戦国時代' : y < 1868 ? '江戸時代' : y < 1912 ? '明治時代' : y < 1926 ? '大正時代' : y < 1989 ? '昭和時代' : y < 2019 ? '平成時代' : '令和時代'; }
-  function part(y) { var a = y % 100; return a < 34 ? '前期' : a < 67 ? '中期' : '後期'; }
+  var ERA_B = [[1000, 1184], [1185, 1332], [1333, 1391], [1392, 1466], [1467, 1599], [1600, 1867], [1868, 1911], [1912, 1925], [1926, 1988], [1989, 2018], [2019, 2100]];
+  // 時代の中での位置（前期・中期・後期）
+  function part(y) { var b = ERA_B.filter(function (x) { return y >= x[0] && y <= x[1]; })[0] || [y, y + 1]; var t = (y - b[0]) / (b[1] - b[0] + 1); return t < 1 / 3 ? '前期' : t < 2 / 3 ? '中期' : '後期'; }
   function clean(t) { return String(t || '').replace(/\s+/g, ''); }
   // 事典の項目を組み立てる。ctx：{ name, houseWord, place, deathPlace, cause }
   function build(L, ctx) {
@@ -54,7 +56,7 @@
       ['配偶者', spouse], ['子', kids], ['出身校', L.edu || '']
     ].filter(function (x) { return x[1]; });
     return {
-      title: plain, years: '（' + y0 + '年 - ' + y1 + '年）', lead: lead, info: info, life: life, anec: anec, fam: fam,
+      title: String(name).replace(/（.*?）/g, ''), years: '（' + y0 + '年 - ' + y1 + '年）', lead: lead, info: info, life: life, anec: anec, fam: fam,
       honors: hs.map(function (h) { return { y: h.y, t: h.k === 'zoui' ? h.t + '（明治以後の贈位）' : h.t + (h.posthumous ? '（没時）' : '') }; }),
       timeline: timeline, srcs: Object.keys(srcs).slice(0, 30), by: y0, dy: y1, ages: [Math.min(10, L.deathAge), Math.min(35, L.deathAge), L.deathAge]
     };

@@ -640,7 +640,7 @@
     var C = L.C, P = L.P, y = L.year;
     var share = val(L.place.muniObj.share, y);
     var sibs = L.members.filter(function (m) { return m.sib && m.by < y && m.alive; });
-    var s = L.place.prefName + L.place.muniName + 'で、' + (L.sex === 'm' ? '男の子' : '女の子') + 'として生まれた。名前は' + L.name + '。';
+    var s = L.place.prefName + L.place.muniName + 'で、' + (L.sex === 'm' ? '男の子' : '女の子') + 'として生まれた。名前は' + L.name + 'と名付けられた。';
     s += '父は' + L.fAge + '歳で' + (L.dadJobD ? L.dadJobD.n + '（' + L.dadJobD.d + '）' : IND[L.dadJob].job) + '、母は' + L.mAge + '歳で' + (L.momJob ? (L.momJobD ? L.momJobD.n : IND[L.momJob].job) + 'をしている' : '家で家事をしている') + '。';
     if (sibs.length) s += sibs.map(function (m) { return m.role + 'の' + m.name; }).join('、') + 'がいる。';
     else if (!L.members.some(function (m) { return m.sib && m.by < y; })) s += 'はじめての子どもだった。';
@@ -2062,7 +2062,7 @@
     pickPref: pickPref, newLife: newLife, step: step, resolve: resolve, autoRun: autoRun,
     cohort: cohort, majorTimeline: majorTimeline, familyList: familyList, fill: fill, sceneOk: sceneOk,
     pickCause: pickCause, deathStory: deathStory, COURSE: COURSE, ev: ev, askFor: askFor, answerAsk: answerAsk, ASK_AGES: ASK_AGES,
-    storyMod: storyMod, jobsMod: jobsMod, eraWords: eraWords, awayWords: awayWords, asDecided: asDecided, WORK_RE: WORK_RE, STUDY_RE: STUDY_RE, homeLife: homeLife, HOME_RE: HOME_RE, WAR_BAN: WAR_BAN, storyName: storyName, namesMod: namesMod, withPool: withPool,
+    storyMod: storyMod, jobsMod: jobsMod, goodsOk: goodsOk, eraWords: eraWords, awayWords: awayWords, asDecided: asDecided, WORK_RE: WORK_RE, STUDY_RE: STUDY_RE, homeLife: homeLife, HOME_RE: HOME_RE, WAR_BAN: WAR_BAN, storyName: storyName, namesMod: namesMod, withPool: withPool,
     statusYear: statusYear, bodyMult: bodyMult, moneyYear: moneyYear, autoAnswer: autoAnswer, FOCUS: FOCUS, yearKind: yearKind, MAP_KINDS: MAP_KINDS, ST_KEYS: ST_KEYS, ST_NAMES: ST_NAMES
   };
 });

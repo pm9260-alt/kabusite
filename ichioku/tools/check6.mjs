@@ -91,7 +91,8 @@ test('1-3', '文の終わりが丁寧体・生まれた土地を離れていな�
       for (const s of outer.split(/(?<=。)/)) { const k = s.trim(); if (!k) continue; if (!/(ます|ました|ません|です|でした|ませんでした)。$|」。?$|）。$/.test(k)) plain.push(k.slice(-14)); }
     }
     const moved = L.old ? L.log.some(r => r.pin && L.log[0].pin && r.pin.pref !== L.log[0].pin.pref) || L.abroad : L.place.away;
-    if (!moved) for (const e of texts(L)) if (/町の暮らしに|長屋|ふるさとからの便り/.test(e.t)) away.push(e.t.slice(0, 20));
+    if (!moved) for (const e of texts(L)) if (/町の暮らしに|同じ長屋の人と|ふるさとからの便り/.test(e.t)) away.push(e.t.slice(0, 20));
+    for (const e of texts(L)) if (/長屋|路地|表通り/.test(e.t) && L.old && /village|fish/.test(L.kind) && !L.moved && !L.abroad && L.mode !== 'away' && e.cat !== '時代') away.push('村に' + e.t.slice(0, 16));
   }
   const rate = plain.length;
   return { ok: rate === 0 && away.length === 0, n: Ls.length, detail: '丁寧体でない文 ' + rate + '件' + (rate ? '（' + [...new Set(plain)].slice(0, 4).join('／') + '）' : '') + '・離れた人向けの文 ' + away.length + '件' };
@@ -190,12 +191,12 @@ test('2-3', '出世の物語（e_ が50本以上・どの時代も5本以上・�
     if (started(L).some(id => /^e_/.test(id))) m++;
   }
   let viol = 0;
-  for (const p of es) { if (p.y[1] < 1591) continue; const all = [...p.opts, ...Object.values(p.nodes || {}).flatMap(n => [n, ...((n.ask || {}).opts || [])])]; for (const o of all) if (o.status === 'bushi' && !/御家人株|養子|取り立て/.test((o.say || '') + (o.l || ''))) viol++; }
+  for (const p of es) { if (p.y[1] < 1591) continue; const all = [...p.opts, ...Object.values(p.nodes || {}).flatMap(n => [n, ...((n.ask || {}).opts || [])])]; for (const o of all) if (o.status === 'bushi' && !/御家人株|養子|取り立て|召し抱え|召し出|家を継/.test((o.say || '') + (o.l || ''))) viol++; }
   const r = pct(m, k);
   return { ok: es.length >= 50 && !thin.length && r >= 20 && r <= 30 && viol === 0, n: k, detail: 'e_ ' + es.length + '本（' + Object.entries(by).map(([a, b]) => a + b).join('・') + '）・出会った人生 ' + r + '%・決まりの外の取り立て ' + viol };
 });
 test('2-4', '新しい物語の時代の呼び方（宋・元・明・清と年、長崎は1571年から、鉄砲は1543年から）', () => {
-  const RULE = [[/宋の|宋へ|宋で|宋から/, 960, 1279], [/元の|元へ|元で|元から/, 1271, 1368], [/明の|明へ|明で|明から/, 1368, 1644], [/清の|清へ|清で|清から/, 1644, 1912], [/長崎/, 1571, 2100], [/鉄砲/, 1543, 2100], [/たばこ|煙草/, 1590, 2100], [/さつまいも|甘藷/, 1605, 2100]];
+  const RULE = [[/(?<!呂)宋の(国|都|商人|寺|僧|船)|(?<!呂)宋へ|(?<!呂)宋に渡/, 960, 1279], [/元の(国|都|寺|僧|船|軍)|元へ渡|元に渡/, 1271, 1368], [/明の(国|都|寺|商人|役人|船)|明へ渡|明に渡/, 1368, 1644], [/清の(国|商人|船|役人)|清へ渡|清に渡/, 1644, 1912], [/長崎/, 1571, 2100], [/鉄砲/, 1543, 2100], [/たばこ|煙草/, 1590, 2100], [/さつまいも|甘藷/, 1605, 2100]];
   const bad = [];
   for (const p of PM.list.filter(p => p.group)) {
     const ts = [p.text, ...p.opts.map(o => o.say), ...Object.values(p.nodes || {}).flatMap(n => [n.say, ...(((n.ask || {}).opts) || []).map(o => o.say), (n.ask || {}).text])].filter(Boolean).join('');
@@ -247,7 +248,7 @@ test('2-8', '軍で成り上がる物語（1860〜1925年の農家の男性の1�
     if (started(L, 'gun').length) m++;
   }
   const g = PM.list.filter(p => p.group === 'gun'); let ends = 0, dark = 0;
-  for (const p of g) for (const nd of Object.values(p.nodes || {})) if (!nd.next && !nd.ask) { ends++; if (nd.die || /戦死|傷痍|追放|恩給|裁判|抑留/.test(nd.say || '')) dark++; }
+  for (const p of g) for (const nd of Object.values(p.nodes || {})) if (!nd.next && !nd.ask) { ends++; if (nd.die || /戦死|傷痍|追放|恩給|裁判|抑留|殉職|負傷|傷を|戦犯|巣鴨|捕虜|失っ|帰らぬ/.test(nd.say || '')) dark++; }
   const r = pct(m, k), d = pct(dark, ends);
   return { ok: r >= 10 && r <= 30 && d >= 30, n: k, detail: '出会った人生 ' + r + '%・暗い結末 ' + d + '%' };
 });

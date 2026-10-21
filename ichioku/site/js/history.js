@@ -746,8 +746,8 @@
   function birthEvent(L, rec) {
     var H = L.H, y = L.year, st = L.status;
     var sibs = L.members.filter(function (m) { return m.sib && m.by < y; });
-    var s = rec.place + 'で、' + stWordJob(L) + 'に' + (L.sex === 'm' ? '男の子' : '女の子') + 'として生まれた。' + (st === 'satsumon' ? '名前は土地の言葉で付けられた。' : /アイヌ語/.test(L.name) ? '名前はアイヌ語で付けられた。' : '名前は' + L.name + '。');
-    s += '父は' + L.fAge + '歳、母は' + L.mAge + '歳。';
+    var s = rec.place + 'で、' + stWordJob(L) + 'に' + (L.sex === 'm' ? '男の子' : '女の子') + 'として生まれた。' + (st === 'satsumon' ? '名前は土地の言葉で付けられた。' : /アイヌ語/.test(L.name) ? '名前はアイヌ語で付けられた。' : '名前は' + L.name + 'と名付けられた。');
+    s += '父は' + L.fAge + '歳、母は' + L.mAge + '歳だった。';
     if (L.descendLine) s += L.descendLine;
     var J = E.jobsMod && E.jobsMod();
     if (L.parentJob && J) s += '家の仕事は' + L.parentJob.n + '（' + L.parentJob.d + '）だ。';
@@ -1571,7 +1571,7 @@
     if (L.abroad || y < 1957 || y >= FUTURE_FROM || !C.goods) return;
     L.goods = L.goods || {};
     C.goods.forEach(function (g) {
-      if (L.goods[g.id]) return;
+      if (L.goods[g.id] || (E.goodsOk && !E.goodsOk(g, y))) return;
       var d = E.val(g.diff, y) / 100;
       if (d > 0 && d >= L.adoptU) { L.goods[g.id] = y; push(L, rec, '時代', g.home, [ev(L, g.src, near(g.diff, y), g.name + 'の普及率', Math.round(d * 100) + '%')]); }
     });
