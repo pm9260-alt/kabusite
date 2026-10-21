@@ -360,7 +360,11 @@ test('2-19', '時代ごとの仕事を30ずつ（210）・年の外で出ない�
 test('2-20', '時代ごとの細かい死因（35）が決めた年・土地・年齢の外で出ない', () => {
   const R = JSON.parse(fs.readFileSync(path.join(ROOT, 'data-src', 'causes-rare.json'), 'utf8')).filter(r => r.s6);
   const Ls = lives(2000, 1000, 2000, 73); let out = 0; const seen = {};
-  for (const L of Ls) { const r = R.find(x => x.n === L.causeName); if (!r) continue; seen[r.n] = 1; const y = L.deathYear, a = L.deathAge; if (y < r.y[0] || y > r.y[1] || a < r.age[0] || a > r.age[1]) out++; }
+  // 物語の結末で亡くなった人（同じ呼び名を使う）は、物語の年と土地で出るので数えない
+  const byStory = L => L.log.some(r => r.events.some(e => (e.ev || []).some(v => /物語の結末/.test(v.what || ''))));
+  // 1975年からの人生は、人口動態統計の死因（新型コロナウイルス感染症など）からも選ぶので、統計にある呼び名は数えない
+  const CS = JSON.stringify(C.nat || {});
+  for (const L of Ls) { const r = R.find(x => x.n === L.causeName); if (!r || byStory(L) || (!L.old && CS.includes(r.n))) continue; seen[r.n] = 1; const y = L.deathYear, a = L.deathAge; if (y < r.y[0] || y > r.y[1] || a < r.age[0] || a > r.age[1]) out++; }
   return { ok: R.length >= 35 && out === 0, n: Ls.length, detail: '死因 ' + R.length + '・条件の外 ' + out + '・2000件の中で出た死因 ' + Object.keys(seen).length };
 });
 test('2-23', '国や海をまたぐ仕事（140）と、仕事ごとの物語2つ以上', () => {

@@ -2867,7 +2867,7 @@
         if (!free && (s.pathN || 0) >= 3) return false;
         if (path.group === 'shusse' && (s.shusseN || 0) >= 2) return false;
         if (!pathOk(c, path)) return false;
-        if (path.once) { s.pathOnce = s.pathOnce || {}; if (s.pathOnce[path.id]) return false; s.pathOnce[path.id] = c.y; if (!c.p(path.p || 0.4)) return false; }
+        if (path.once) { s.pathOnce = s.pathOnce || {}; if (s.pathOnce[path.id]) return false; s.pathOnce[path.id] = c.y; if (!c.p(Math.min(0.6, (path.p || 0.4) * 1.15))) return false; } // ほかの分かれ道の年に回る分を見こんで少し多めに（住む人の3〜5割が出会う）
         else if (!c.p(Math.min(free ? 0.4 : PATH_CAP[path.group] || 0.06, (path.p || 0.01) * (PATH_GX[path.group] || PATH_X)))) return false;
         if (!free) s.pathN = (s.pathN || 0) + 1;
         if (path.group === 'shusse') s.shusseN = (s.shusseN || 0) + 1;
@@ -2883,7 +2883,7 @@
      春秋の叙勲は1964年から、原則70歳以上。2002年からは「勲一等」などの数字の呼び方をやめた */
   var POST_RANK = [
     [/摂政|関白/, '従一位'], [/太政大臣|左大臣|右大臣|内大臣/, '正二位'], [/大納言/, '正三位'], [/中納言/, '従三位'], [/参議|近衛大将/, '正四位下'],
-    [/蔵人頭/, '正四位下'], [/弁官|国司|受領|国守/, '従五位下'], [/将軍/, '従一位'], [/執権|管領/, '従四位下'], [/大名|藩主|老中|若年寄/, '従五位下']
+    [/蔵人頭/, '正四位下'], [/近衛の将官|中将|少将/, '従四位下'], [/弁官|国司|受領|国守/, '従五位下'], [/将軍/, '従一位'], [/執権|管領/, '従四位下'], [/大名|藩主|老中|若年寄/, '従五位下']
   ];
   var POST_MODERN = /大臣|次官|知事|将官|少将|中将|大将|帝国大学の教授|貴族院|衆議院議員|国会議員|市長|最高裁|大学の学長|学長/;
   function honorOk(h) {
@@ -2911,9 +2911,12 @@
     L.honorsFinal = true;
     var hs = (L.honors || []).filter(honorOk), dy = L.deathYear, jb = jobsOf(L), age = L.deathAge;
     var has = function () { return hs.length > 0; };
-    if (dy < 1868) {
-      for (var i = 0; i < POST_RANK.length; i++) if (POST_RANK[i][0].test(jb)) { if (!has()) hs.push({ y: dy, age: age, t: POST_RANK[i][1], k: 'ikai', why: '役職' }); break; }
-    } else if (POST_MODERN.test(jb) && !has()) {
+    // 明治より前の役職（将軍・大名・公卿など）は、明治より後に亡くなった人でも、その役に就いていた年の位として付ける
+    var preJob = L.by < 1868 && !POST_MODERN.test(jb.replace(/近衛の将官|将軍|中将|少将/g, ''));
+    if (dy < 1868 || preJob) {
+      for (var i = 0; i < POST_RANK.length; i++) if (POST_RANK[i][0].test(jb)) { if (!has()) hs.push({ y: Math.min(dy, 1867), age: age - Math.max(0, dy - 1867), t: POST_RANK[i][1], k: 'ikai', why: '役職' }); break; }
+    }
+    if (dy >= 1868 && POST_MODERN.test(jb) && !has()) {
       if (dy < 1946) hs.push({ y: dy, age: age, t: '正四位', k: 'ikai', posthumous: true, why: '役職' }, { y: dy, age: age, t: '勲三等瑞宝章', k: 'kunsho', posthumous: true, why: '役職' });
       else if (dy >= 1964 && age >= 70) hs.push({ y: Math.max(1964, dy - 1), age: age - 1, t: dy >= 2003 ? '旭日中綬章' : '勲三等旭日中綬章', k: 'kunsho', why: '役職' }, { y: dy, age: age, t: '従四位', k: 'ikai', posthumous: true, why: '役職' });
       else hs.push({ y: dy, age: age, t: '従四位', k: 'ikai', posthumous: true, why: '役職' });
