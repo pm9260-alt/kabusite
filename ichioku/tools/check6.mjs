@@ -302,6 +302,7 @@ test('2-13', '出来事の物語（年と土地の外で出ない・住む人の
       const L = O.newLife(C, H, P[b0.pref] || null, { year: Math.max(1000, y), seed: i * 17 + 3, birth: b0 });
       let g = 0; while (L.alive && L.year <= p.y[1] + 2 && g++ < 130) { let r = O.step(L); while (r && r.branch) r = O.resolve(L, r.branch.ask ? { text: '' } : null); }
       if (!L.alive && L.deathYear < p.y[0]) continue;
+      const ageAt = p.y[0] - L.by; if (ageAt < p.a[0] || ageAt > p.a[1]) continue; // 出来事の年に、その物語に出会う年ごろの人だけ
       if (!(p.st || []).length || p.st.includes(L.status)) { if ((p.kind || []).length && !p.kind.includes(L.kind)) continue; if (p.sex && p.sex !== L.sex) continue; k++; if (L.story && L.story.done[p.id]) m++; }
     }
     rates.push(p.id + ' ' + pct(m, k) + '%');
@@ -364,7 +365,7 @@ test('2-20', '時代ごとの細かい死因（35）が決めた年・土地・�
   const byStory = L => L.log.some(r => r.events.some(e => (e.ev || []).some(v => /物語の結末/.test(v.what || ''))));
   // 1975年からの人生は、人口動態統計の死因（新型コロナウイルス感染症など）からも選ぶので、統計にある呼び名は数えない
   const CS = JSON.stringify(C.nat || {});
-  for (const L of Ls) { const r = R.find(x => x.n === L.causeName); if (!r || byStory(L) || (!L.old && CS.includes(r.n))) continue; seen[r.n] = 1; const y = L.deathYear, a = L.deathAge; if (y < r.y[0] || y > r.y[1] || a < r.age[0] || a > r.age[1]) out++; }
+  for (const L of Ls) { const r = R.find(x => x.n === L.causeName); if (!r || byStory(L) || (L.deathYear >= 1975 && CS.includes(r.n))) continue; seen[r.n] = 1; const y = L.deathYear, a = L.deathAge; if (y < r.y[0] || y > r.y[1] || a < r.age[0] || a > r.age[1]) out++; }
   return { ok: R.length >= 35 && out === 0, n: Ls.length, detail: '死因 ' + R.length + '・条件の外 ' + out + '・2000件の中で出た死因 ' + Object.keys(seen).length };
 });
 test('2-23', '国や海をまたぐ仕事（140）と、仕事ごとの物語2つ以上', () => {

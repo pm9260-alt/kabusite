@@ -1720,7 +1720,8 @@
     if (box.hidden) return;
     var po = sg.parentOf, snap = L.snapAt, born = !!(snap && snap.married && !(snap.mode === 'shukke'));
     var t = $('pdiff-table'); clear(t);
-    $('pdiff-note').textContent = born ? '' : 'この人生では、' + po.name + 'は生まれませんでした。';
+    var alt = (L.members || []).filter(function (m) { return m.role === '子' && !m.before; }).map(function (m) { return m.name + '（' + m.by + '年生まれ）'; });
+    $('pdiff-note').textContent = born ? '' : 'この人生では、' + po.name + 'は生まれませんでした。' + (alt.length ? '代わりに生まれた子：' + alt.join('、') + '。下の「この家の続きを生きる」から、その子の人生を生きられます。' : '子は生まれませんでした。');
     if (snap) {
       var now = { place: snap.place || '', pref: snap.pref, status: '', inc: snap.incPct, sibs: snap.kids, job: snap.job || '' };
       var L2 = { old: true, status: snap.status, kakaku: snap.kakaku, by: po.by, year: po.by, rank: null, parentJob: null, H: H, prov: snap.prov };

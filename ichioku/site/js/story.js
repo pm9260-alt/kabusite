@@ -2825,7 +2825,7 @@
   // 筋の種類ごとの数の決まり：出来事・仕事・格・位の筋は「1つの人生に2本まで」の数に入れない。出世の筋は2本まで（spec6 2-3）
   var PATH_FREE = { jiken: 1, shoku: 1, kakaku: 1, kurai: 1 };
   // 筋の種類ごとの出会いやすさ（spec6 の「確かめ方」の割合に合わせる）
-  var PATH_GX = { kaigai: 1.3, shusse: 2, gun: 12 }, PATH_CAP = { shusse: 0.06, gun: 0.12 };
+  var PATH_GX = { kaigai: 1.3, shusse: 2, gun: 12, gaiseki: 10 }, PATH_CAP = { shusse: 0.06, gun: 0.12, gaiseki: 0.25 };
   function pathOk(c, path) {
     var L = c.L, y = c.y, a = c.a, df = c.s.pathDefer && c.s.pathDefer[path.id];
     if (y < path.y[0] || y > (df ? Math.max(path.y[1], df + 2) : path.y[1]) || a < path.a[0] || a > path.a[1] + (df ? 2 : 0)) return false;
@@ -2860,7 +2860,7 @@
         };
         if (nd.ask) nd.ask.opts.forEach(function (o) { res[nk + '__' + o.k] = function (c) { pathClear(c, path); pathDo(c, path, o); }; });
       });
-      arc({ id: path.id, path: true, group: path.group || null, once: !!path.once, pri: path.group === 'shusse', modeOk: path.group === 'kaigai' || path.group === 'shoku' || !!path.modeOk, start: function (c) {
+      arc({ id: path.id, path: true, group: path.group || null, once: !!path.once, pri: path.group === 'shusse' || path.group === 'gaiseki', modeOk: path.group === 'kaigai' || path.group === 'shoku' || !!path.modeOk, start: function (c) {
         var s = c.s, free = PATH_FREE[path.group];
         // 出来事の筋は、ほかの分かれ道が出た年なら翌年に回す（出来事の年から2年まで）
         if (path.once && s.asked === c.y) { if (pathOk(c, path)) { s.pathDefer = s.pathDefer || {}; s.pathDefer[path.id] = s.pathDefer[path.id] || c.y; } return false; }

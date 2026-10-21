@@ -1449,7 +1449,7 @@
     L.surnameOld = old; L.surname = nw; L.muko = true; L.mukoY = L.year;
     doMarry(L, rec, false, br.ev);
     L.spouse.mukoWife = true;
-    var lastE = rec.events[rec.events.length - 1], desc = (lastE.t.match(/相手は.*$/) || [''])[0];
+    var lastE = rec.events[rec.events.length - 1], desc = (lastE.t.split('と結婚した。')[1] || '').replace(/^(嫁いで相手の家に入った。|跡取りの男子がいない家のため[^。]*。[^。]*。)/, '');
     lastE.t = nw + '家の婿養子に入り、' + L.spouse.name + 'と結婚した。' + (old ? '名字が' + nw + 'に変わった（旧姓 ' + old + '）。' : '') + desc;
   }
   function resolveYoshi(L, rec, br, answers) {
