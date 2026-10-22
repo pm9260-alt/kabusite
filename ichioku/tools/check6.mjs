@@ -19,6 +19,8 @@ const S6 = require(path.join(SITE, 'js', 's6.js'));
 const JB = require(path.join(SITE, 'js', 'jobs.js'));
 const PO = require(path.join(SITE, 'js', 'polite.js'));
 const JP = require(path.join(SITE, 'js', 'japapedia.js'));
+const TG = require(path.join(SITE, 'js', 'tsunagari.js'));
+const CMP = require(path.join(SITE, 'js', 'compare.js'));
 const C = JSON.parse(fs.readFileSync(path.join(SITE, 'data', 'common.json'), 'utf8'));
 const H = JSON.parse(fs.readFileSync(path.join(SITE, 'data', 'history.json'), 'utf8'));
 const P = {};
@@ -403,7 +405,7 @@ test('2-28', '外戚争いと政略結婚（摂家・清華家・大臣家の8�
 });
 test('2-29', '縁談・見合い・再婚の文に相手の年齢と家柄がある', () => {
   const Ls = lives(800, 1000, 2000, 97); let n = 0, bad = 0, ex = '';
-  for (const L of Ls) for (const e of texts(L)) if (/縁談|見合い|再婚した|と結婚した/.test(e.t) && /^[^。]*[ぁ-んァ-ン一-龥]+(との縁談|と再婚|と結婚)/.test(e.t)) { n++; if (!/\d+歳/.test(e.t)) { bad++; if (!ex) ex = e.t.slice(0, 30); } }
+  for (const L of Ls) for (const e of texts(L)) if (/縁談|見合い|再婚した|と結婚した/.test(e.t) && /^[^。]*[ぁ-んァ-ン一-龥]+(との縁談|と再婚|と結婚)/.test(e.t) && !/の縁談は/.test(e.t)) { /* 子の縁談（いとの縁談は…）は本人の結婚ではない */ n++; if (!/\d+歳/.test(e.t)) { bad++; if (!ex) ex = e.t.slice(0, 30); } }
   return { ok: bad === 0, n, detail: '年齢のない文 ' + bad + (ex ? '（' + ex + '）' : '') };
 });
 test('2-30', '罪の物語（20歳以上の5〜10%・罪と罰の時代・立ち直りの続き）', () => {
@@ -413,6 +415,79 @@ test('2-30', '罪の物語（20歳以上の5〜10%・罪と罰の時代・立ち
   for (const p of PM.list.filter(p => p.group === 'tsumi')) { const all = Object.values(p.nodes || {}); const hasFree = JSON.stringify(p).includes('"free":true'); if (!hasFree) noRec++; }
   const r = pct(m, k);
   return { ok: r >= 5 && r <= 10 && noRec === 0, n: k, detail: '出会った人生 ' + r + '%・立ち直りのない筋 ' + noRec };
+});
+
+/* ---------- v17 あなたとのつながり（tsunagari-spec1） ---------- */
+const NOWY = 2026;
+const tctx = { C, H, E, O, S, P: c => P[c] || null, pol: t => PO.polite(t) };
+test('7-1', 'あなたとのつながり（代の数・先祖の数・人口の目安と出典・結びの一文。15年以内の人に先祖の文0件）', () => {
+  let n = 0, miss = 0, near = 0, nearBad = 0, ex = '', dan = 0;
+  for (let i = 0; n < 500 && i < 3000; i++) {
+    const by = 1000 + (i * 37) % 1001, L = play(birth(by, i * 7919 + 701)), meY = 1950 + (i * 13) % 61;
+    const c = TG.connect(H, L, { y: meY, pref: '13' }, NOWY); n++;
+    const all = c.lines.join('') + c.close;
+    if (/先祖です/.test(all)) dan++;
+    if (meY - L.by < 15) { near++; if (/先祖/.test(all) || c.kind !== 'near') nearBad++; continue; }
+    if (meY - L.by <= 60) { if (c.kind !== 'parent') { miss++; ex = ex || 'parent ' + L.by; } continue; }
+    const ok = /約\d+代/.test(c.lines[0] || '') && /計算上およそ/.test(c.lines[1] || '') && /人口は、およそ.*（.+）/.test(c.lines[2] || '') && c.pop && c.pop.src && H.sources[c.pop.src] && /見こみ|かもしれません/.test(c.close);
+    if (!ok) { miss++; ex = ex || L.by + ' ' + all.slice(0, 60); }
+  }
+  return { ok: miss === 0 && nearBad === 0 && dan === 0 && near > 0, n, detail: '欠けた人生 ' + miss + '・15年以内の人 ' + near + '（先祖の文 ' + nearBad + '）・言い切り ' + dan + (ex ? '（' + ex + '）' : '') };
+});
+test('7-2', 'この家をあなたまでたどる（200件：最後の子があなたの生まれ年と都道府県・代の差16〜45年・名字と家宝を受け継ぐか理由の文）', () => {
+  let n = 0, born = 0, gone = 0, wrong = 0, gapBad = 0, inhBad = 0, ex = '';
+  const prefs = C.prefs.map(p => p.code);
+  for (let i = 0; n < 200 && i < 2000; i++) {
+    const by = 1000 + (i * 53) % 900, L = play(birth(by, i * 7919 + 702)), me = { y: 1960 + (i * 7) % 66, pref: prefs[(i * 11) % prefs.length] };
+    if (me.y - L.by <= 60) continue;
+    n++;
+    const st = TG.traceAll(tctx, TG.traceStart(tctx, L, me, i * 31 + 7));
+    if (!st.done) { wrong++; ex = ex || '終わらない ' + by; continue; }
+    if (st.end.kind === 'gone') { gone++; continue; }
+    born++;
+    const t = TG.endText(H, st);
+    if (st.end.y !== me.y || st.end.pref !== me.pref || t.indexOf(me.y + '年、' + H.prefNames[me.pref] + 'で') !== 0) { wrong++; ex = ex || t; }
+    const ys = [L.by].concat(st.gens.map(g => g.by), [me.y]);
+    for (let k = 1; k < ys.length; k++) { const d = ys[k] - ys[k - 1]; if (d < 16 || d > 45) { gapBad++; ex = ex || '差 ' + d + '（' + ys[k - 1] + '→' + ys[k] + '）'; break; } }
+    const last = st.gens[st.gens.length - 1];
+    if (last && last.pref !== me.pref && st.gens.length >= 1) { const k3 = st.gens.slice(-2).some(g => g.pref === me.pref); if (!k3) { wrong++; ex = ex || '最後の代まで移り住まない'; } }
+    let prev = st.keep;
+    for (const g of st.gens) { if (prev.surname && g.surname && g.surname !== prev.surname && !g.why) { inhBad++; ex = ex || '名字 ' + prev.surname + '→' + g.surname; } if (g.treasure !== prev.treasure && !g.why) { inhBad++; ex = ex || '家宝 ' + prev.treasure + '→' + g.treasure; } }
+  }
+  return { ok: wrong === 0 && gapBad === 0 && inhBad === 0 && born > 0, n, detail: '最後の子まで ' + born + '・家が絶えた ' + gone + '・年か都道府県の違い ' + wrong + '・代の差の外 ' + gapBad + '・受け継ぎの抜け ' + inhBad + (ex ? '（' + ex + '）' : '') };
+});
+test('7-3', '今に残るもの（500件：表にない寺社・街道・祭りの名前0件・表の全項目に出典）', () => {
+  const IM = H.imani; let n = 0, lines = 0, bad = 0, ex = '', noSrc = 0;
+  for (const [k, r] of Object.entries(IM.prov)) for (const x of [...r.ichinomiya, ...(r.kokubunji ? [r.kokubunji] : []), ...r.kaido, ...r.matsuri]) if (!(x.src || []).length || x.src.some(s => !H.sources[s])) noSrc++;
+  for (let i = 0; n < 500 && i < 3000; i++) {
+    const by = 1000 + (i * 37) % 975, L = play(birth(by, i * 7919 + 703)); n++;
+    const row = IM.prov[(L.home0 || {}).prov || L.prov] || { ichinomiya: [], kaido: [], matsuri: [] };
+    for (const t of TG.imani(H, L, '東京都千代田区')) {
+      lines++;
+      const m1 = t.match(/一宮の(.+?)は/); if (m1 && !row.ichinomiya.some(x => x.name === m1[1])) { bad++; ex = ex || t; }
+      const m2 = t.match(/通っていた(.+?)は/); if (m2 && m2[1].split('・').some(nm => !row.kaido.some(x => x.name === nm))) { bad++; ex = ex || t; }
+      const m3 = t.match(/見たかもしれない(.+?)は/); if (m3 && !row.matsuri.some(x => x.name === m3[1] && x.since <= L.deathYear)) { bad++; ex = ex || t; }
+      if (/国分寺/.test(t) && !row.kokubunji) { bad++; ex = ex || t; }
+      if (/今もあり|今もある/.test(t) && /堤|用水|防塁/.test(t)) { bad++; ex = ex || t; }
+    }
+  }
+  return { ok: bad === 0 && noSrc === 0 && lines > 0, n, detail: '文 ' + lines + '・表にない名前 ' + bad + '・出典のない項目 ' + noSrc + (ex ? '（' + ex + '）' : '') };
+});
+test('7-4', '同じ年齢のあなた（500件：生きた人生の全件に特別な行・生きられなかった全件に最期の一文・compare.js の「だ。」0件）', () => {
+  let n = 0, lived = 0, rowMiss = 0, died = 0, endMiss = 0, ex = '';
+  for (let i = 0; n < 500 && i < 3000; i++) {
+    const by = 1000 + (i * 37) % 1001, L = play(birth(by, i * 7919 + 704)), me = { y: 1960 + (i * 7) % 60, pref: '13' }, a = NOWY - me.y; n++;
+    if (L.deathAge >= a) { lived++; const r = L.log.find(x => x.age === a); const t = r && TG.sameAgeRow(L, r, me, NOWY, PO.polite); if (!t || t.indexOf('あなたと同じ' + a + '歳') < 0) { rowMiss++; ex = ex || by + ' ' + a; } }
+    else { died++; const t = TG.shortLived(C, H, L, me, NOWY, CMP); if (!t || !/生きられませんでした.*約\d+%|1%未満/.test(t)) { endMiss++; ex = ex || String(t); } }
+  }
+  const src = fs.readFileSync(path.join(SITE, 'js', 'compare.js'), 'utf8'), da = (src.match(/だ。'/g) || []).length;
+  return { ok: rowMiss === 0 && endMiss === 0 && da === 0 && lived > 0 && died > 0, n, detail: '生きた ' + lived + '（行なし ' + rowMiss + '）・生きられなかった ' + died + '（一文なし ' + endMiss + '）・compare.js の「だ。」 ' + da + (ex ? '（' + ex + '）' : '') };
+});
+test('7-5', '共有の画像の「あなたまで約○代」は生まれた年を入れた人だけ・トップと入力の場所の一文', () => {
+  const app = fs.readFileSync(path.join(SITE, 'js', 'app.js'), 'utf8'), card = fs.readFileSync(path.join(SITE, 'js', 'card.js'), 'utf8'), html = fs.readFileSync(path.join(SITE, 'index.html'), 'utf8');
+  const a = /var tc = TG\(\) && meInfo\(\)/.test(app) && /if \(o\.gens\)/.test(card) && /あなたまで約' \+ o\.gens \+ '代/.test(card);
+  const b = /あなたの先祖の一人かもしれません/.test(html), c2 = /入れると、主人公とあなたのつながりが出ます/.test(html);
+  return { ok: a && b && c2, n: 3, detail: '画像の行 ' + (a ? 'あり（生まれた年を入れた人だけ）' : 'なし') + '・トップの一文 ' + (b ? 'あり' : 'なし') + '・入力の場所の一文 ' + (c2 ? 'あり' : 'なし') + '（390×844 で2行以内かはブラウザの検査で確かめる）' };
 });
 
 /* ---------- 動かす ---------- */

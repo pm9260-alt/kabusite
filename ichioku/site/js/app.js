@@ -208,6 +208,7 @@
     if (gen === 'desc') return descendFrom(Lp, sg);
     if (gen === 'member') return memberFrom(Lp, sg);
     if (gen === 'rechild') return rechildFrom(Lp, sg);
+    if (gen === 'trace') return traceFrom(sg);
     var MM = Lp.old ? O : E, h = gen === 'child' ? MM.childHouse(Lp, memberId, []) : MM.houseOf(Lp, []);
     return getPref(Lp.old ? h.home.pref : (h.pref || Lp.P.code)).then(function (p) {
       P = p; M = MM;
@@ -356,6 +357,9 @@
   }
   /* ---------- 遊ぶ人自身と比べる（第3弾の8） ---------- */
   function meInfo() { var m = store('ichioku-me'); return m && m.y ? m : null; }
+  function meFull() { var m = store('ichioku-me'); return m && m.y && m.pref ? m : null; }
+  function thisYear() { return new Date().getFullYear(); }
+  function TG() { return window.IchiokuTsunagari || null; }
   function cmpLine(kind) {
     var K = window.IchiokuCompare, m = meInfo();
     if (!K || !m || !L || !H) return null;
@@ -804,6 +808,9 @@
       var best = null;
       lifeCurveData().pts.forEach(function (p) { if (p.label && (!best || p.sat > best.sat)) best = p; });
       var co = { L: L, name: dispName(), from: from, to: to, line: best ? 'いちばん良かった年　' + best.age + '歳　' + best.label : '', sat: sat };
+      // あなたまで約○代（生まれた年を入れている人だけ。v17 5）
+      var tc = TG() && meInfo() ? TG().connect(H, L, meInfo(), thisYear()) : null;
+      if (tc && tc.kind === 'anc') co.gens = tc.gens;
       K.end(cv, co);
       // 字体（Zen Kaku Gothic New）が読み込まれてから描き直す
       if (K.ready) K.ready(co).then(function () { K.end(cv, co); });
@@ -825,6 +832,9 @@
     autoResolve();
     render(cur);
     saveCurrent();
+    // あなたの今の年齢になった年は、1年の進みを一度だけ止める（v17 4）
+    var mi = meInfo();
+    if (mi && cur.age === thisYear() - mi.y && L.sameAgeStop !== cur.year && !cur.branch) { L.sameAgeStop = cur.year; paused = true; setPauseLabel(); ybar(0); return; }
     if (cur.branch) showBranch(cur.branch);
     else schedule();
   }
@@ -941,6 +951,9 @@
       var cl = cmpLine(r.age === 0 ? 'birth' : r.age);
       if (cl) { var li0 = el('li'), b0 = el('button', 'feed-row cmp'); b0.type = 'button'; b0.disabled = true; b0.appendChild(el('span', 'fa', 'あなた')); b0.appendChild(el('span', 'ft', pol(cl))); li0.appendChild(b0); if (ol.firstChild) ol.insertBefore(li0, ol.firstChild.nextSibling); else ol.appendChild(li0); }
     }
+    // あなたの今の年齢になった年（v17 4）：同じ形の行を一回り大きく
+    var sa = TG() && TG().sameAgeRow(L, r, meInfo(), thisYear(), pol);
+    if (sa) { var li1 = el('li'), b1 = el('button', 'feed-row cmp same-age'); b1.type = 'button'; b1.disabled = true; b1.appendChild(el('span', 'fa', 'あなた')); b1.appendChild(el('span', 'ft', sa)); li1.appendChild(b1); if (ol.firstChild) ol.insertBefore(li1, ol.firstChild.nextSibling); else ol.appendChild(li1); }
     $('now-more').hidden = logs.length < 2 && r.events.length + r.world.items.length < 2;
     $('now-more').onclick = function () { if (logs.length < 2) openYear(r, true); else openLog(); };
     $('now-more').textContent = logs.length < 2 ? 'この年の出来事をすべて見る' : 'これまでをすべて見る';
@@ -1496,8 +1509,16 @@
     if (sav != null || L.boughtHome) item('遺した財産', (sav != null ? money(sav) : '') + (L.boughtHome ? (sav != null ? '・' : '') + L.boughtHome + '年に買った家' : ''), sav != null ? '今の物価に直した貯金（推計）' : null);
     var tf = timeGiven();
     if (tf) item('大人になってから時間を注いだこと', tf);
-    var dc = cmpLine('death');
-    if (dc) { var dv = el('div', 'rc-item rc-wide'); dv.appendChild(el('dt', null, 'あなたと比べると')); dv.appendChild(el('dd', null, pol(dc))); g.appendChild(dv); }
+    var dc = cmpLine('death'), mi0 = meInfo(), T0 = TG();
+    if (dc || (mi0 && T0)) {
+      var dv = el('div', 'rc-item rc-wide'); dv.appendChild(el('dt', null, 'あなたと比べると')); if (dc) dv.appendChild(el('dd', null, pol(dc)));
+      // あなたの今の年齢のとき（v17 4）
+      var meA = mi0 ? thisYear() - mi0.y : -1, ra = meA > 0 ? L.log.filter(function (x) { return x.age === meA; })[0] : null;
+      if (ra) { var ev0 = mainEvent(ra); dv.appendChild(el('dd', null, 'あなたの今の年齢のとき、この人は' + ra.year + '年、' + String(ra.place || birthPlace()).replace(/（今の(.*?)）/, '（$1）') + 'で暮らしていました。' + (ev0 && ev0.t ? 'この年、' + ev0.t : ''))); }
+      var sl = T0 && T0.shortLived(C, H, L, mi0, thisYear(), window.IchiokuCompare);
+      if (sl) dv.appendChild(el('dd', null, sl));
+      if (dv.childNodes.length > 1) g.appendChild(dv);
+    }
     $('rc-reflect-box').hidden = !r.reflect;
     $('rc-reflect').textContent = r.reflect ? pol(r.reflect) : '';
     $('rc-again').onclick = function () { showDeath(function () { window.scrollTo(0, 0); }); };
@@ -1545,6 +1566,7 @@
     $('end-title').textContent = dispName();
     $('end-sub').textContent = L.by + ' – ' + L.deathYear + ' · ' + L.deathAge + '歳没 · ' + String(deathPlace()).replace(/（今の(.*?)）/, ' $1');
     renderRecord();
+    renderTsunagari();
     renderParentDiff();
     var JP = window.IchiokuJapapedia;
     $('end-jp').hidden = !(JP && JP.eligible(L));
@@ -1764,6 +1786,114 @@
       box.appendChild(el('p', 'note', '画像を押すと保存できます（長押しでも保存できます）'));
       $('jp-img').disabled = false;
       box.scrollIntoView({ block: 'start' });
+    });
+  }
+  /* ---------- あなたとのつながり・今に残るもの・この家をあなたまでたどる（v17） ---------- */
+  function tgCtx() { return { C: C, H: H, E: E, O: O, S: window.IchiokuStory, P: function (c) { return prefCache[c] || null; }, pol: pol }; }
+  function renderTsunagari() {
+    var T = TG(), box = $('tg-box');
+    if (!T || !box) return;
+    var me = meInfo(), c = T.connect(H, L, me, thisYear());
+    box.hidden = false;
+    $('tg-big').hidden = !c.lines.length;
+    $('tg-big').textContent = c.lines[0] || '';
+    var tl = $('tg-lines'); clear(tl);
+    c.lines.slice(1).forEach(function (t) { tl.appendChild(el('p', null, t)); });
+    $('tg-close').textContent = c.close;
+    $('tg-more').hidden = c.kind !== 'anc';
+    $('tg-explain').textContent = T.EXPLAIN;
+    $('tg-guide').hidden = !!me;
+    $('tg-guide').onclick = goMeBox;
+    // 今に残るもの
+    var muni = L.old ? (String(birthPlace()).match(/（今の(.*?)）/) || [])[1] : (L.home.prefName + L.home.muniName);
+    if (muni) muni = muni.replace(/のあたり$/, '');
+    var im = c.kind === 'near' ? [] : T.imani(H, L, muni || null);
+    $('im-wrap').hidden = !im.length;
+    var il = $('im-lines'); clear(il);
+    im.forEach(function (t) { il.appendChild(el('p', null, t)); });
+    $('im-note').textContent = H && H.imani ? '一宮・国分寺・街道・祭りは、出典のある表から引いています（出典は「このサイトについて」の一覧に）。この人が参ったか、見たかは記録にありません。' : '';
+    // この家をあなたまでたどる：生まれた年と都道府県を入れた人だけ。60年より前の生まれ（親や祖父母の世代より前）の人
+    var full = meFull(), can = L.old && L.deathAge >= 0 && c.kind === 'anc';
+    $('tr-wrap').hidden = !can;
+    clear($('tr-list')); $('tr-born').hidden = true; $('tr-years-box').hidden = true; $('tr-prog').hidden = true;
+    $('tr-go').hidden = !full;
+    $('tr-go').disabled = false;
+    $('tr-note').textContent = full ? (T.kidsOf(L).length ? '主人公の子' : '主人公のきょうだいの子') + 'から1代ずつ、名字・家の格・家宝・家訓を受け継いで下り、' + full.y + '年に' + ((H && H.prefNames && H.prefNames[full.pref]) || '') + 'で生まれる子までたどります。各代の行を押すと、その代の一生を遊び直せます。' : '生まれた年と都道府県を入れると、この家をあなたの生まれ年までたどれます。';
+    if (!full) { var gb = el('button', 'btn-sub tg-guide', '生まれた年と都道府県を入れる'); gb.type = 'button'; gb.onclick = goMeBox; clear($('tr-list')); $('tr-list').appendChild(el('li', null)).appendChild(gb); }
+    $('tr-go').onclick = function () { runTrace(full); };
+    if (L.tracePrefix && full) runTrace(full); // 遊び直した代のあとは、続きをそのまま作り直して見せる
+  }
+  // トップの「あなたが生まれた年と都道府県」へ
+  function goMeBox() {
+    clearTimeout(timer);
+    show('top');
+    var b = $('me-box'); if (b) { b.open = true; b.scrollIntoView({ block: 'start' }); var y = $('me-year'); if (y) y.focus(); }
+  }
+  var traceRun = 0;
+  function runTrace(me) {
+    var T = TG(); if (!T || !G) return;
+    var run = ++traceRun, Lstart = L, k0 = (L.tracePrefix && L.tracePrefix.gens || []).length;
+    $('tr-go').disabled = true; $('tr-go').hidden = true;
+    $('tr-prog').hidden = false; $('tr-prog').textContent = 'たどっています…';
+    var codes = [String(L.old ? (L.home0 || {}).pref || L.pref : L.home.pref), String(me.pref)];
+    Promise.all(codes.map(function (c) { return getPref(c); })).then(function () {
+      var ctx = tgCtx(), st = T.traceStart(ctx, Lstart, me, G.seed ^ 0x7a3c, Lstart.tracePrefix || null);
+      if (Lstart.tracePrefix) T.addSelf(ctx, st, Lstart);
+      (function step() {
+        if (run !== traceRun || L !== Lstart) return;
+        try { T.traceStep(ctx, st); } catch (e) { $('tr-prog').textContent = 'たどる途中で止まりました'; return; }
+        $('tr-prog').textContent = 'たどっています（' + st.gens.length + '代目・' + (st.L ? st.L.by : '') + '年生まれまで）';
+        if (!st.done) { setTimeout(step, 0); return; }
+        showTrace(st, me);
+      })();
+    });
+  }
+  function showTrace(st, me) {
+    var T = TG(), ol = $('tr-list');
+    clear(ol);
+    $('tr-prog').hidden = true;
+    if (st.headNote) ol.appendChild(el('li', 'tr-head', st.head.by + '年 ' + st.head.name + '（この人）　' + st.headNote));
+    st.gens.forEach(function (g, i) {
+      var li = el('li'), b = el('button', 'feed-row tr-row'); b.type = 'button';
+      b.appendChild(el('span', 'fa', g.k + '代目'));
+      b.appendChild(el('span', 'ft', g.lines.join('')));
+      b.onclick = function () { liveAsTraceGen(st, i); };
+      li.appendChild(b); ol.appendChild(li);
+    });
+    var bt = $('tr-born');
+    bt.hidden = false;
+    bt.textContent = T.endText(H, st);
+    var yb = $('tr-years'); clear(yb);
+    $('tr-years-box').hidden = !st.end || st.end.kind !== 'born';
+    if (st.end && st.end.kind === 'born') {
+      $('tr-years-h').textContent = 'この家の' + st.end.years + '年';
+      yb.appendChild(el('li', null, st.head.by + '年　' + st.head.name));
+      st.gens.forEach(function (g) { yb.appendChild(el('li', null, g.by + '年　' + g.name)); });
+      yb.appendChild(el('li', null, st.end.y + '年　一人の子（あなたと同じ年に生まれた子）'));
+    }
+  }
+  // たどった代の一生を、自分で選んで遊び直す（後の代は作り直す）
+  function liveAsTraceGen(st, i) {
+    if (!G || !L) return;
+    var g = st.gens[i];
+    G.house = G.house || { chain: [] };
+    houseLives.push(lifeSummary(L, houseLives.length, firstLife));
+    G.house.chain.push({ memberId: 0, gen: 'trace', tr: g.p, prefix: { head: st.head, keep: st.keep, headNote: st.headNote || '', gens: st.gens.slice(0, i) }, rel: g.k + '代目の子孫', answers: [], marks: [], focus: [] });
+    G.done = false;
+    traceFrom(G.house.chain[G.house.chain.length - 1]).then(function () {
+      cur = null; paused = false; setPauseLabel(); show('life'); window.scrollTo(0, 0); saveCurrent(); nextYear();
+    });
+  }
+  function traceFrom(sg) {
+    var T = TG();
+    return Promise.all([getPref(sg.tr.pref), getHistory()]).then(function (a) {
+      P = a[0];
+      L = T.makeGen(tgCtx(), sg.tr);
+      M = L.old ? O : E;
+      L.tracePrefix = sg.prefix;
+      L.marks = {};
+      comps = [];
+      return L;
     });
   }
   function liveAsDescendant(gN, gap) {

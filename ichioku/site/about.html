@@ -75,6 +75,19 @@ window.IchiokuPrefs && window.IchiokuPrefs.mount(document.getElementById('settin
       li.textContent = s.name + '（' + s.org + '）' + (s.year ? '　' + s.year + '年公表' : '');
       ul.appendChild(li);
     });
+    // 昔の時代の出典（人口の目安・一宮と国分寺・街道・祭りの表など。history.json）
+    return fetch('data/history.json').then(function (r) { return r.json(); }).then(function (h) {
+      var seen = {};
+      Object.keys(c.sources).forEach(function (k) { seen[c.sources[k].name] = 1; });
+      Object.keys(h.sources || {}).forEach(function (k) {
+        var s = h.sources[k];
+        if (!s || seen[s.name]) return;
+        seen[s.name] = 1;
+        var li = document.createElement('li');
+        li.textContent = s.name + '（' + s.org + '）';
+        ul.appendChild(li);
+      });
+    });
   }).catch(function () {
     var li = document.createElement('li');
     li.textContent = '統計の一覧を取り出せませんでした';

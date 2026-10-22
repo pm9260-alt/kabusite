@@ -14,7 +14,7 @@
   function ready(o) {
     var d = root.document;
     if (!d || !d.fonts || !d.fonts.load) return Promise.resolve();
-    var t = FIXED + [o && o.name, o && o.from, o && o.to, o && o.line].join('');
+    var t = FIXED + [o && o.name, o && o.from, o && o.to, o && o.line, 'あなたまで約代0123456789'].join('');
     return Promise.all(['400', '700'].map(function (w) { return d.fonts.load(w + ' 20px "Zen Kaku Gothic New"', t); })).catch(function () { /* 読み込めないときは予備の字体で描く */ });
   }
   // 幅に収まるまで文字を小さくする（最小 minSize）。それでも入らなければ末尾を「…」にする
@@ -81,6 +81,7 @@
       ctx.stroke();
     }
     font(ctx, 16, false); ctx.fillStyle = SUB; ctx.fillText('一生の浮き沈み', gx, gy + gh + 26);
+    if (o.gens) { font(ctx, 26, true); ctx.fillStyle = TEXT; ctx.textAlign = 'right'; ctx.fillText('あなたまで約' + o.gens + '代', W - 48, gy + gh + 30); ctx.textAlign = 'left'; }
     fit(ctx, '原作「80億分の1」（1in8b.life）の作者の許可を得て制作', 48, 604, W - 96, 16, false, SUB, 12);
   }
 

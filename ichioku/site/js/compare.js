@@ -37,23 +37,23 @@
     return n >= 1 ? '1,000人に' + n + '人' : '1,000人に1人より少ない';
   }
   function pc(v) { return v > 0 && v < 0.01 ? '1%未満' : '約' + Math.round(v * 100) + '%'; }
-  // 比べの文（普通体）。me = { y: 生まれ年, pref: '13' }。入れていなければ null
+  // 比べの文（です・ます）。me = { y: 生まれ年, pref: '13' }。入れていなければ null
   function line(C, H, L, me, kind) {
     if (!me || !me.y) return null;
     var sex = L.sex, by = L.by, py = +me.y;
-    if (kind === 'birth') return 'この子が生まれた' + by + '年、0歳で亡くなる子は' + per(q(C, H, sex, 0, by)) + '。あなたが生まれた' + py + '年は' + per(q(C, H, sex, 0, py)) + 'だ。';
-    if (kind === 'death') { var a = L.deathAge; return '同じ年に生まれた人のうち、' + a + '歳まで生きたのは' + pc(surv(C, H, by, sex, a)) + '。あなたの生まれ年では' + pc(surv(C, H, py, sex, a)) + 'だ。'; }
+    if (kind === 'birth') return 'この子が生まれた' + by + '年、0歳で亡くなる子は' + per(q(C, H, sex, 0, by)) + 'でした。あなたが生まれた' + py + '年は' + per(q(C, H, sex, 0, py)) + 'です。';
+    if (kind === 'death') { var a = L.deathAge; return '同じ年に生まれた人のうち、' + a + '歳まで生きたのは' + pc(surv(C, H, by, sex, a)) + 'でした。あなたの生まれ年では' + pc(surv(C, H, py, sex, a)) + 'です。'; }
     var age = kind;
     if (age === 15) {
       var h1 = hsRate(H, sex, by + 15), h2 = hsRate(H, sex, py + 15);
-      if (h2 != null && h1 != null) return '15歳の春に高校へ進んだ人は、この子の年は' + pc(h1) + '、あなたの年は' + pc(h2) + 'だ。';
-      if (h2 != null && by + 15 < 1948) return '15歳になった' + (by + 15) + '年、上の学校へ進む人はわずかだった。あなたが15歳の年は、' + pc(h2) + 'が高校へ進んだ。';
+      if (h2 != null && h1 != null) return '15歳の春に高校へ進んだ人は、この子の年は' + pc(h1) + '、あなたの年は' + pc(h2) + 'です。';
+      if (h2 != null && by + 15 < 1948) return '15歳になった' + (by + 15) + '年、上の学校へ進む人はわずかでした。あなたが15歳の年は、' + pc(h2) + 'が高校へ進みました。';
     }
     if (age === 30) {
       var m1 = marryAge(H, sex, by + 25), m2 = marryAge(H, sex, py + 25);
-      if (m1 != null && m2 != null) return 'はじめて結婚する年齢の平均は、この子の時代で' + m1.toFixed(1) + '歳、あなたの時代で' + m2.toFixed(1) + '歳だ。';
+      if (m1 != null && m2 != null) return 'はじめて結婚する年齢の平均は、この子の時代で' + m1.toFixed(1) + '歳、あなたの時代で' + m2.toFixed(1) + '歳です。';
     }
-    return '同じ年に生まれた人のうち、' + age + '歳まで生きているのは' + pc(surv(C, H, by, sex, age)) + '。あなたの生まれ年では' + pc(surv(C, H, py, sex, age)) + 'だ。';
+    return '同じ年に生まれた人のうち、' + age + '歳まで生きているのは' + pc(surv(C, H, by, sex, age)) + 'でした。あなたの生まれ年では' + pc(surv(C, H, py, sex, age)) + 'です。';
   }
   // 抽選で出す「その年にその国・都道府県で生まれる確率」（その年の人口・出生数の割合）
   function birthShare(C, L) {

@@ -640,6 +640,22 @@ button { border-radius: 8px; }
 /* あなたとの比べ */
 .feed-row.cmp .fa { color: var(--stamp); font-weight: 700; }
 .feed-row.cmp .ft { color: var(--stamp); font-size: 15px; font-weight: 400; }
+/* あなたの今の年齢になった年（v17）：同じ形のまま一回り大きく */
+.feed-row.cmp.same-age .fa { font-size: 15px; }
+.feed-row.cmp.same-age .ft { font-size: 17.5px; line-height: 1.7; }
+/* あなたとのつながり・今に残るもの・この家をあなたまでたどる（v17） */
+.tg h2 + .tg-big { margin-top: -2px; }
+.tg-big { font-size: 26px; font-weight: 700; line-height: 1.3; }
+.tg p { line-height: 1.8; }
+.tg-close { font-weight: 700; }
+.tg-guide { align-self: flex-start; }
+.tg-more summary { font-size: 14px; }
+.tg #im-wrap h2, .tg #tr-wrap h2 { margin-top: 10px; }
+.tr-list { display: flex; flex-direction: column; gap: 4px; }
+.tr-row .ft { font-size: 14.5px; line-height: 1.7; }
+.tr-head { font-size: 14px; color: var(--sub); line-height: 1.7; }
+.tr-born { font-size: 18px; font-weight: 700; line-height: 1.7; }
+.tr-years li { font-size: 14px; line-height: 1.8; }
 .me-box { padding: 10px 14px; }
 .me-box summary { cursor: pointer; font-size: 14px; font-weight: 700; color: var(--text); }
 .me-row { display: flex; gap: 10px; margin: 10px 0 6px; flex-wrap: wrap; }

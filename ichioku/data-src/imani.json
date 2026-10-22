@@ -1,0 +1,3522 @@
+{
+ "sources": {
+  "wp_ichinomiya": {
+   "name": "「一宮」諸国一宮一覧・全国一の宮会加盟社一覧（底本『中世諸国一宮制の基礎的研究』岩田書院2000年）",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/一宮"
+  },
+  "wp_kokubunji": {
+   "name": "「国分寺」国分寺の一覧（『国史大辞典』国分寺一覧表に基づく）",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/国分寺"
+  },
+  "wp_gokishichido": {
+   "name": "「五畿七道」（七道の駅路と所属国）",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/五畿七道"
+  },
+  "wp_ugo": {
+   "name": "「羽後国」（飽海郡が羽後国に属すること）",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/羽後国"
+  },
+  "ndl_gion": {
+   "name": "錦絵でたのしむ江戸の名所「祇園祭」コラム",
+   "org": "国立国会図書館",
+   "url": "https://www.ndl.go.jp/imagebank/column/gion"
+  },
+  "wp_road_東海道": {
+   "name": "「東海道」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/東海道"
+  },
+  "wp_road_中山道": {
+   "name": "「中山道」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/中山道"
+  },
+  "wp_road_日光街道": {
+   "name": "「日光街道」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/日光街道"
+  },
+  "wp_road_奥州街道": {
+   "name": "「奥州街道」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/奥州街道"
+  },
+  "wp_road_甲州街道": {
+   "name": "「甲州街道」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/甲州街道"
+  },
+  "wp_road_水戸街道": {
+   "name": "「水戸街道」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/水戸街道"
+  },
+  "wp_road_北国街道_(信越)": {
+   "name": "「北国街道 (信越)」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/北国街道_(信越)"
+  },
+  "wp_road_三国街道": {
+   "name": "「三国街道」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/三国街道"
+  },
+  "wp_road_西国街道": {
+   "name": "「西国街道」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/西国街道"
+  },
+  "wp_road_山陰街道": {
+   "name": "「山陰街道」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/山陰街道"
+  },
+  "wp_road_長崎街道": {
+   "name": "「長崎街道」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/長崎街道"
+  },
+  "wp_road_薩摩街道": {
+   "name": "「薩摩街道」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/薩摩街道"
+  },
+  "wp_road_羽州街道": {
+   "name": "「羽州街道」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/羽州街道"
+  },
+  "wp_road_京街道_(大坂街道)": {
+   "name": "「京街道 (大坂街道)」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/京街道_(大坂街道)"
+  },
+  "wp_road_伊勢参宮街道": {
+   "name": "「伊勢参宮街道」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/伊勢参宮街道"
+  },
+  "wp_road_紀州街道": {
+   "name": "「紀州街道」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/紀州街道"
+  },
+  "wp_road_熊野古道": {
+   "name": "「熊野古道」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/熊野古道"
+  },
+  "wp_road_高野街道": {
+   "name": "「高野街道」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/高野街道"
+  },
+  "wp_road_陸前浜街道": {
+   "name": "「陸前浜街道」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/陸前浜街道"
+  },
+  "wp_road_佐倉街道": {
+   "name": "「佐倉街道」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/佐倉街道"
+  },
+  "wp_road_房総往還": {
+   "name": "「房総往還」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/房総往還"
+  },
+  "wp_road_美濃路": {
+   "name": "「美濃路」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/美濃路"
+  },
+  "wp_road_飛騨街道": {
+   "name": "「飛騨街道」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/飛騨街道"
+  },
+  "wp_road_竹内街道": {
+   "name": "「竹内街道」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/竹内街道"
+  },
+  "wp_road_熊野街道": {
+   "name": "「熊野街道」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/熊野街道"
+  },
+  "wp_road_伊賀街道": {
+   "name": "「伊賀街道」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/伊賀街道"
+  },
+  "wp_road_姫街道": {
+   "name": "「姫街道」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/姫街道"
+  },
+  "wp_road_日光例幣使街道": {
+   "name": "「日光例幣使街道」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/日光例幣使街道"
+  },
+  "wp_road_会津西街道": {
+   "name": "「会津西街道」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/会津西街道"
+  },
+  "wp_road_白河街道": {
+   "name": "「白河街道」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/白河街道"
+  },
+  "wp_road_鹿角街道": {
+   "name": "「鹿角街道」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/鹿角街道"
+  },
+  "wp_road_奈良街道": {
+   "name": "「奈良街道」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/奈良街道"
+  },
+  "wp_road_五街道": {
+   "name": "「五街道」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/五街道"
+  },
+  "wp_m_祇園祭": {
+   "name": "「祇園祭」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/祇園祭"
+  },
+  "wp_m_葵祭": {
+   "name": "「葵祭」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/葵祭"
+  },
+  "wp_m_時代祭": {
+   "name": "「時代祭」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/時代祭"
+  },
+  "wp_m_春日若宮おん祭": {
+   "name": "「春日若宮おん祭」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/春日若宮おん祭"
+  },
+  "wp_m_天神祭": {
+   "name": "「天神祭」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/天神祭"
+  },
+  "wp_m_岸和田だんじり祭": {
+   "name": "「岸和田だんじり祭」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/岸和田だんじり祭"
+  },
+  "wp_m_三社祭": {
+   "name": "「三社祭」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/三社祭"
+  },
+  "wp_m_日立風流物": {
+   "name": "「日立風流物」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/日立風流物"
+  },
+  "wp_m_常陸大津の御船祭": {
+   "name": "「常陸大津の御船祭」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/常陸大津の御船祭"
+  },
+  "wp_m_犬山祭": {
+   "name": "「犬山祭」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/犬山祭"
+  },
+  "wp_m_島田大祭": {
+   "name": "「島田大祭」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/島田大祭"
+  },
+  "wp_m_信玄公祭り": {
+   "name": "「信玄公祭り」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/信玄公祭り"
+  },
+  "wp_m_大垣祭": {
+   "name": "「大垣祭」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/大垣祭"
+  },
+  "wp_m_高山祭": {
+   "name": "「高山祭」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/高山祭"
+  },
+  "wp_m_桐生八木節まつり": {
+   "name": "「桐生八木節まつり」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/桐生八木節まつり"
+  },
+  "wp_m_塩竈みなと祭": {
+   "name": "「塩竈みなと祭」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/塩竈みなと祭"
+  },
+  "wp_m_花笠まつり": {
+   "name": "「花笠まつり」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/花笠まつり"
+  },
+  "wp_m_新庄まつり": {
+   "name": "「新庄まつり」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/新庄まつり"
+  },
+  "wp_m_土崎神明社祭の曳山行事": {
+   "name": "「土崎神明社祭の曳山行事」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/土崎神明社祭の曳山行事"
+  },
+  "wp_m_角館のお祭り": {
+   "name": "「角館のお祭り」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/角館のお祭り"
+  },
+  "wp_m_長岡まつり": {
+   "name": "「長岡まつり」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/長岡まつり"
+  },
+  "wp_m_放生津曳山祭": {
+   "name": "「放生津曳山祭」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/放生津曳山祭"
+  },
+  "wp_m_金沢百万石まつり": {
+   "name": "「金沢百万石まつり」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/金沢百万石まつり"
+  },
+  "wp_m_青柏祭": {
+   "name": "「青柏祭」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/青柏祭"
+  },
+  "wp_m_紀州東照宮": {
+   "name": "「紀州東照宮」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/紀州東照宮"
+  },
+  "wp_m_西大寺_(岡山市)": {
+   "name": "「西大寺 (岡山市)」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/西大寺_(岡山市)"
+  },
+  "wp_m_山口祇園祭": {
+   "name": "「山口祇園祭」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/山口祇園祭"
+  },
+  "wp_m_よさこい祭り": {
+   "name": "「よさこい祭り」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/よさこい祭り"
+  },
+  "wp_m_博多祇園山笠": {
+   "name": "「博多祇園山笠」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/博多祇園山笠"
+  },
+  "wp_m_博多どんたく": {
+   "name": "「博多どんたく」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/博多どんたく"
+  },
+  "wp_m_小倉祇園太鼓": {
+   "name": "「小倉祇園太鼓」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/小倉祇園太鼓"
+  },
+  "wp_m_長崎くんち": {
+   "name": "「長崎くんち」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/長崎くんち"
+  },
+  "wp_m_宮崎神宮大祭": {
+   "name": "「宮崎神宮大祭」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/宮崎神宮大祭"
+  },
+  "wp_m_おはら祭": {
+   "name": "「おはら祭」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/おはら祭"
+  },
+  "wp_m_さっぽろ雪まつり": {
+   "name": "「さっぽろ雪まつり」",
+   "org": "Wikipedia日本語版",
+   "url": "https://ja.wikipedia.org/wiki/さっぽろ雪まつり"
+  }
+ },
+ "prov": {
+  "山城": {
+   "ichinomiya": [
+    {
+     "name": "賀茂別雷神社",
+     "place": "京都府京都市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    },
+    {
+     "name": "賀茂御祖神社",
+     "place": "京都府京都市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "京都府木津川市",
+    "now": true,
+    "shiseki": true,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "東海道",
+     "from": 1601,
+     "src": [
+      "wp_road_東海道"
+     ]
+    },
+    {
+     "name": "西国街道",
+     "from": null,
+     "src": [
+      "wp_road_西国街道"
+     ]
+    },
+    {
+     "name": "山陰街道",
+     "from": null,
+     "src": [
+      "wp_road_山陰街道"
+     ]
+    }
+   ],
+   "matsuri": [
+    {
+     "name": "祇園祭",
+     "since": 869,
+     "place": "京都府京都市",
+     "src": [
+      "wp_m_祇園祭",
+      "ndl_gion"
+     ]
+    },
+    {
+     "name": "葵祭（賀茂祭）",
+     "since": 567,
+     "place": "京都府京都市",
+     "src": [
+      "wp_m_葵祭"
+     ]
+    },
+    {
+     "name": "時代祭",
+     "since": 1895,
+     "place": "京都府京都市",
+     "src": [
+      "wp_m_時代祭"
+     ]
+    }
+   ]
+  },
+  "大和": {
+   "ichinomiya": [
+    {
+     "name": "大神神社",
+     "place": "奈良県桜井市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "奈良県奈良市",
+    "now": true,
+    "shiseki": true,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "竹内街道",
+     "from": null,
+     "src": [
+      "wp_road_竹内街道"
+     ]
+    },
+    {
+     "name": "奈良街道",
+     "from": null,
+     "src": [
+      "wp_road_奈良街道"
+     ]
+    }
+   ],
+   "matsuri": [
+    {
+     "name": "春日若宮おん祭",
+     "since": 1136,
+     "place": "奈良県奈良市",
+     "src": [
+      "wp_m_春日若宮おん祭"
+     ]
+    }
+   ]
+  },
+  "河内": {
+   "ichinomiya": [
+    {
+     "name": "枚岡神社",
+     "place": "大阪府東大阪市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "大阪府柏原市",
+    "now": true,
+    "shiseki": false,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "竹内街道",
+     "from": null,
+     "src": [
+      "wp_road_竹内街道"
+     ]
+    },
+    {
+     "name": "京街道（大坂街道）",
+     "from": null,
+     "src": [
+      "wp_road_京街道_(大坂街道)"
+     ]
+    },
+    {
+     "name": "高野街道",
+     "from": null,
+     "src": [
+      "wp_road_高野街道"
+     ]
+    }
+   ]
+  },
+  "和泉": {
+   "ichinomiya": [
+    {
+     "name": "大鳥大社",
+     "place": "大阪府堺市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "大阪府和泉市",
+    "now": true,
+    "shiseki": false,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "紀州街道",
+     "from": null,
+     "src": [
+      "wp_road_紀州街道"
+     ]
+    },
+    {
+     "name": "熊野街道",
+     "from": null,
+     "src": [
+      "wp_road_熊野街道"
+     ]
+    }
+   ],
+   "matsuri": [
+    {
+     "name": "岸和田だんじり祭",
+     "since": 1703,
+     "place": "大阪府岸和田市",
+     "src": [
+      "wp_m_岸和田だんじり祭"
+     ]
+    }
+   ]
+  },
+  "摂津": {
+   "ichinomiya": [
+    {
+     "name": "住吉大社",
+     "place": "大阪府大阪市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    },
+    {
+     "name": "坐摩神社",
+     "place": "大阪府大阪市",
+     "note": "全国一の宮会加盟（歴史的一宮の論社以外）",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "大阪府大阪市",
+    "now": true,
+    "shiseki": false,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "西国街道",
+     "from": null,
+     "src": [
+      "wp_road_西国街道"
+     ]
+    },
+    {
+     "name": "京街道（大坂街道）",
+     "from": null,
+     "src": [
+      "wp_road_京街道_(大坂街道)"
+     ]
+    },
+    {
+     "name": "熊野街道",
+     "from": null,
+     "src": [
+      "wp_road_熊野街道"
+     ]
+    }
+   ],
+   "matsuri": [
+    {
+     "name": "天神祭",
+     "since": 951,
+     "place": "大阪府大阪市",
+     "src": [
+      "wp_m_天神祭"
+     ]
+    }
+   ]
+  },
+  "伊賀": {
+   "ichinomiya": [
+    {
+     "name": "敢国神社",
+     "place": "三重県伊賀市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "三重県伊賀市",
+    "now": true,
+    "shiseki": true,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "東海道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    },
+    {
+     "name": "伊賀街道",
+     "from": null,
+     "src": [
+      "wp_road_伊賀街道"
+     ]
+    }
+   ]
+  },
+  "伊勢": {
+   "ichinomiya": [
+    {
+     "name": "椿大神社",
+     "place": "三重県鈴鹿市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    },
+    {
+     "name": "都波岐神社",
+     "place": "三重県鈴鹿市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "三重県鈴鹿市",
+    "now": true,
+    "shiseki": true,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "東海道",
+     "from": 1601,
+     "src": [
+      "wp_road_東海道"
+     ]
+    },
+    {
+     "name": "伊勢参宮街道",
+     "from": null,
+     "src": [
+      "wp_road_伊勢参宮街道"
+     ]
+    },
+    {
+     "name": "熊野古道",
+     "from": null,
+     "src": [
+      "wp_road_熊野古道"
+     ]
+    }
+   ]
+  },
+  "志摩": {
+   "ichinomiya": [
+    {
+     "name": "伊雑宮",
+     "place": "三重県志摩市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    },
+    {
+     "name": "伊射波神社",
+     "place": "三重県鳥羽市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "三重県志摩市",
+    "now": true,
+    "shiseki": false,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "東海道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ]
+  },
+  "尾張": {
+   "ichinomiya": [
+    {
+     "name": "真清田神社",
+     "place": "愛知県一宮市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    },
+    {
+     "name": "大神神社",
+     "place": "愛知県一宮市",
+     "note": "全国一の宮会加盟（歴史的一宮の論社以外）",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "愛知県稲沢市",
+    "now": true,
+    "shiseki": true,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "東海道",
+     "from": 1601,
+     "src": [
+      "wp_road_東海道"
+     ]
+    },
+    {
+     "name": "美濃路",
+     "from": null,
+     "src": [
+      "wp_road_美濃路"
+     ]
+    },
+    {
+     "name": "東海道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ],
+   "matsuri": [
+    {
+     "name": "犬山祭",
+     "since": 1635,
+     "place": "愛知県犬山市",
+     "src": [
+      "wp_m_犬山祭"
+     ]
+    }
+   ]
+  },
+  "三河": {
+   "ichinomiya": [
+    {
+     "name": "砥鹿神社",
+     "place": "愛知県豊川市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "愛知県豊川市",
+    "now": true,
+    "shiseki": true,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "東海道",
+     "from": 1601,
+     "src": [
+      "wp_road_東海道"
+     ]
+    },
+    {
+     "name": "姫街道（本坂通）",
+     "from": null,
+     "src": [
+      "wp_road_姫街道"
+     ]
+    },
+    {
+     "name": "東海道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ]
+  },
+  "遠江": {
+   "ichinomiya": [
+    {
+     "name": "小国神社",
+     "place": "静岡県森町",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    },
+    {
+     "name": "事任八幡宮",
+     "place": "静岡県掛川市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "静岡県磐田市",
+    "now": true,
+    "shiseki": true,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "東海道",
+     "from": 1601,
+     "src": [
+      "wp_road_東海道"
+     ]
+    },
+    {
+     "name": "姫街道（本坂通）",
+     "from": null,
+     "src": [
+      "wp_road_姫街道"
+     ]
+    },
+    {
+     "name": "東海道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ]
+  },
+  "駿河": {
+   "ichinomiya": [
+    {
+     "name": "富士山本宮浅間大社",
+     "place": "静岡県富士宮市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "静岡県静岡市",
+    "now": true,
+    "shiseki": true,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "東海道",
+     "from": 1601,
+     "src": [
+      "wp_road_東海道"
+     ]
+    },
+    {
+     "name": "東海道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ],
+   "matsuri": [
+    {
+     "name": "島田大祭",
+     "since": 1695,
+     "place": "静岡県島田市",
+     "src": [
+      "wp_m_島田大祭"
+     ]
+    }
+   ]
+  },
+  "甲斐": {
+   "ichinomiya": [
+    {
+     "name": "浅間神社",
+     "place": "山梨県笛吹市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "山梨県笛吹市",
+    "now": true,
+    "shiseki": true,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "甲州街道",
+     "from": 1602,
+     "src": [
+      "wp_road_甲州街道"
+     ]
+    },
+    {
+     "name": "東海道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ],
+   "matsuri": [
+    {
+     "name": "信玄公祭り",
+     "since": 1970,
+     "place": "山梨県甲府市",
+     "src": [
+      "wp_m_信玄公祭り"
+     ]
+    }
+   ]
+  },
+  "伊豆": {
+   "ichinomiya": [
+    {
+     "name": "三嶋大社",
+     "place": "静岡県三島市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "静岡県三島市",
+    "now": true,
+    "shiseki": true,
+    "src": [
+     "wp_kokubunji"
+    ],
+    "note": "国の史跡は塔跡"
+   },
+   "kaido": [
+    {
+     "name": "東海道",
+     "from": 1601,
+     "src": [
+      "wp_road_東海道"
+     ]
+    },
+    {
+     "name": "東海道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ]
+  },
+  "相模": {
+   "ichinomiya": [
+    {
+     "name": "寒川神社",
+     "place": "神奈川県寒川町",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    },
+    {
+     "name": "鶴岡八幡宮",
+     "place": "神奈川県鎌倉市",
+     "note": "全国一の宮会加盟（歴史的一宮の論社以外）",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "神奈川県海老名市",
+    "now": true,
+    "shiseki": true,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "東海道",
+     "from": 1601,
+     "src": [
+      "wp_road_東海道"
+     ]
+    },
+    {
+     "name": "東海道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ]
+  },
+  "武蔵": {
+   "ichinomiya": [
+    {
+     "name": "小野神社",
+     "place": "東京都多摩市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    },
+    {
+     "name": "氷川神社",
+     "place": "埼玉県さいたま市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    },
+    {
+     "name": "氷川女体神社",
+     "place": "埼玉県さいたま市",
+     "note": "全国一の宮会加盟（歴史的一宮の論社以外）",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "東京都国分寺市",
+    "now": true,
+    "shiseki": true,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "東海道",
+     "from": 1601,
+     "src": [
+      "wp_road_東海道"
+     ]
+    },
+    {
+     "name": "中山道",
+     "from": 1601,
+     "src": [
+      "wp_road_中山道"
+     ]
+    },
+    {
+     "name": "甲州街道",
+     "from": 1602,
+     "src": [
+      "wp_road_甲州街道"
+     ]
+    }
+   ],
+   "matsuri": [
+    {
+     "name": "三社祭",
+     "since": 1312,
+     "place": "東京都台東区",
+     "src": [
+      "wp_m_三社祭"
+     ]
+    }
+   ]
+  },
+  "安房": {
+   "ichinomiya": [
+    {
+     "name": "安房神社",
+     "place": "千葉県館山市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    },
+    {
+     "name": "洲崎神社",
+     "place": "千葉県館山市",
+     "note": "全国一の宮会加盟（歴史的一宮の論社以外）",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "千葉県館山市",
+    "now": true,
+    "shiseki": false,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "房総往還",
+     "from": null,
+     "src": [
+      "wp_road_房総往還"
+     ]
+    },
+    {
+     "name": "東海道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ]
+  },
+  "上総": {
+   "ichinomiya": [
+    {
+     "name": "玉前神社",
+     "place": "千葉県一宮町",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "千葉県市原市",
+    "now": true,
+    "shiseki": true,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "房総往還",
+     "from": null,
+     "src": [
+      "wp_road_房総往還"
+     ]
+    },
+    {
+     "name": "東海道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ]
+  },
+  "下総": {
+   "ichinomiya": [
+    {
+     "name": "香取神宮",
+     "place": "千葉県香取市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "千葉県市川市",
+    "now": true,
+    "shiseki": true,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "水戸街道",
+     "from": null,
+     "src": [
+      "wp_road_水戸街道"
+     ]
+    },
+    {
+     "name": "日光街道",
+     "from": 1636,
+     "src": [
+      "wp_road_日光街道"
+     ]
+    },
+    {
+     "name": "佐倉街道",
+     "from": null,
+     "src": [
+      "wp_road_佐倉街道"
+     ]
+    }
+   ]
+  },
+  "常陸": {
+   "ichinomiya": [
+    {
+     "name": "鹿島神宮",
+     "place": "茨城県鹿嶋市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "茨城県石岡市",
+    "now": true,
+    "shiseki": true,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "水戸街道",
+     "from": null,
+     "src": [
+      "wp_road_水戸街道"
+     ]
+    },
+    {
+     "name": "陸前浜街道",
+     "from": null,
+     "src": [
+      "wp_road_陸前浜街道"
+     ]
+    },
+    {
+     "name": "東海道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ],
+   "matsuri": [
+    {
+     "name": "日立風流物（神峰神社大祭礼）",
+     "since": 1695,
+     "place": "茨城県日立市",
+     "src": [
+      "wp_m_日立風流物"
+     ]
+    },
+    {
+     "name": "常陸大津の御船祭",
+     "since": 1726,
+     "place": "茨城県北茨城市",
+     "src": [
+      "wp_m_常陸大津の御船祭"
+     ]
+    }
+   ]
+  },
+  "近江": {
+   "ichinomiya": [
+    {
+     "name": "建部大社",
+     "place": "滋賀県大津市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kaido": [
+    {
+     "name": "東海道",
+     "from": 1601,
+     "src": [
+      "wp_road_東海道"
+     ]
+    },
+    {
+     "name": "中山道",
+     "from": 1601,
+     "src": [
+      "wp_road_中山道"
+     ]
+    },
+    {
+     "name": "東山道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ]
+  },
+  "美濃": {
+   "ichinomiya": [
+    {
+     "name": "南宮大社",
+     "place": "岐阜県垂井町",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "岐阜県大垣市",
+    "now": true,
+    "shiseki": true,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "中山道",
+     "from": 1601,
+     "src": [
+      "wp_road_中山道"
+     ]
+    },
+    {
+     "name": "美濃路",
+     "from": null,
+     "src": [
+      "wp_road_美濃路"
+     ]
+    },
+    {
+     "name": "東山道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ],
+   "matsuri": [
+    {
+     "name": "大垣祭",
+     "since": 1648,
+     "place": "岐阜県大垣市",
+     "src": [
+      "wp_m_大垣祭"
+     ]
+    }
+   ]
+  },
+  "飛騨": {
+   "ichinomiya": [
+    {
+     "name": "飛騨一宮水無神社",
+     "place": "岐阜県高山市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "岐阜県高山市",
+    "now": true,
+    "shiseki": true,
+    "src": [
+     "wp_kokubunji"
+    ],
+    "note": "国の史跡は塔跡"
+   },
+   "kaido": [
+    {
+     "name": "飛騨街道",
+     "from": null,
+     "src": [
+      "wp_road_飛騨街道"
+     ]
+    },
+    {
+     "name": "東山道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ],
+   "matsuri": [
+    {
+     "name": "秋の高山祭（八幡祭）",
+     "since": 1716,
+     "place": "岐阜県高山市",
+     "src": [
+      "wp_m_高山祭"
+     ]
+    }
+   ]
+  },
+  "信濃": {
+   "ichinomiya": [
+    {
+     "name": "諏訪大社",
+     "place": "長野県諏訪市・茅野市・下諏訪町",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "長野県上田市",
+    "now": true,
+    "shiseki": true,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "中山道",
+     "from": 1601,
+     "src": [
+      "wp_road_中山道"
+     ]
+    },
+    {
+     "name": "甲州街道",
+     "from": 1602,
+     "src": [
+      "wp_road_甲州街道"
+     ]
+    },
+    {
+     "name": "北国街道（信越）",
+     "from": null,
+     "src": [
+      "wp_road_北国街道_(信越)"
+     ]
+    }
+   ]
+  },
+  "上野": {
+   "ichinomiya": [
+    {
+     "name": "一之宮貫前神社",
+     "place": "群馬県富岡市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "群馬県高崎市",
+    "now": true,
+    "shiseki": true,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "中山道",
+     "from": 1601,
+     "src": [
+      "wp_road_中山道"
+     ]
+    },
+    {
+     "name": "三国街道",
+     "from": 1605,
+     "src": [
+      "wp_road_三国街道"
+     ]
+    },
+    {
+     "name": "日光例幣使街道",
+     "from": null,
+     "src": [
+      "wp_road_日光例幣使街道"
+     ]
+    }
+   ],
+   "matsuri": [
+    {
+     "name": "桐生八木節まつり（桐生祇園祭）",
+     "since": 1656,
+     "place": "群馬県桐生市",
+     "src": [
+      "wp_m_桐生八木節まつり"
+     ]
+    }
+   ]
+  },
+  "下野": {
+   "ichinomiya": [
+    {
+     "name": "二荒山神社（宇都宮二荒山神社）",
+     "place": "栃木県宇都宮市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    },
+    {
+     "name": "二荒山神社（日光二荒山神社）",
+     "place": "栃木県日光市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "栃木県下野市",
+    "now": true,
+    "shiseki": true,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "日光街道",
+     "from": 1636,
+     "src": [
+      "wp_road_日光街道"
+     ]
+    },
+    {
+     "name": "奥州街道",
+     "from": null,
+     "src": [
+      "wp_road_奥州街道"
+     ]
+    },
+    {
+     "name": "日光例幣使街道",
+     "from": null,
+     "src": [
+      "wp_road_日光例幣使街道"
+     ]
+    }
+   ]
+  },
+  "陸奥": {
+   "ichinomiya": [
+    {
+     "name": "鹽竈神社",
+     "place": "宮城県塩竈市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    },
+    {
+     "name": "都都古和氣神社",
+     "place": "福島県棚倉町",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    },
+    {
+     "name": "都々古別神社",
+     "place": "福島県棚倉町",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    },
+    {
+     "name": "石都々古和気神社",
+     "place": "福島県石川町",
+     "note": "全国一の宮会加盟（歴史的一宮の論社以外）",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "宮城県仙台市",
+    "now": true,
+    "shiseki": true,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "奥州街道",
+     "from": null,
+     "src": [
+      "wp_road_奥州街道"
+     ]
+    },
+    {
+     "name": "羽州街道",
+     "from": null,
+     "src": [
+      "wp_road_羽州街道"
+     ]
+    },
+    {
+     "name": "東山道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ],
+   "matsuri": [
+    {
+     "name": "塩竈みなと祭",
+     "since": 1948,
+     "place": "宮城県塩竈市",
+     "src": [
+      "wp_m_塩竈みなと祭"
+     ]
+    }
+   ]
+  },
+  "磐城": {
+   "ichinomiya": [
+    {
+     "name": "都都古和氣神社",
+     "place": "福島県棚倉町",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    },
+    {
+     "name": "都々古別神社",
+     "place": "福島県棚倉町",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    },
+    {
+     "name": "石都々古和気神社",
+     "place": "福島県石川町",
+     "note": "全国一の宮会加盟（歴史的一宮の論社以外）",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kaido": [
+    {
+     "name": "奥州街道",
+     "from": null,
+     "src": [
+      "wp_road_奥州街道"
+     ]
+    },
+    {
+     "name": "陸前浜街道",
+     "from": null,
+     "src": [
+      "wp_road_陸前浜街道"
+     ]
+    },
+    {
+     "name": "白河街道",
+     "from": null,
+     "src": [
+      "wp_road_白河街道"
+     ]
+    }
+   ]
+  },
+  "岩代": {
+   "ichinomiya": [
+    {
+     "name": "伊佐須美神社",
+     "place": "福島県会津美里町",
+     "note": "新一の宮（全国一の宮会）",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kaido": [
+    {
+     "name": "奥州街道",
+     "from": null,
+     "src": [
+      "wp_road_奥州街道"
+     ]
+    },
+    {
+     "name": "会津西街道",
+     "from": null,
+     "src": [
+      "wp_road_会津西街道"
+     ]
+    },
+    {
+     "name": "白河街道",
+     "from": null,
+     "src": [
+      "wp_road_白河街道"
+     ]
+    }
+   ]
+  },
+  "陸前": {
+   "ichinomiya": [
+    {
+     "name": "鹽竈神社",
+     "place": "宮城県塩竈市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "宮城県仙台市",
+    "now": true,
+    "shiseki": true,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "奥州街道",
+     "from": null,
+     "src": [
+      "wp_road_奥州街道"
+     ]
+    },
+    {
+     "name": "陸前浜街道",
+     "from": null,
+     "src": [
+      "wp_road_陸前浜街道"
+     ]
+    }
+   ],
+   "matsuri": [
+    {
+     "name": "塩竈みなと祭",
+     "since": 1948,
+     "place": "宮城県塩竈市",
+     "src": [
+      "wp_m_塩竈みなと祭"
+     ]
+    }
+   ]
+  },
+  "陸中": {
+   "ichinomiya": [
+    {
+     "name": "駒形神社",
+     "place": "岩手県奥州市",
+     "note": "新一の宮（全国一の宮会）",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kaido": [
+    {
+     "name": "奥州街道",
+     "from": null,
+     "src": [
+      "wp_road_奥州街道"
+     ]
+    },
+    {
+     "name": "鹿角街道",
+     "from": null,
+     "src": [
+      "wp_road_鹿角街道"
+     ]
+    }
+   ]
+  },
+  "陸奥（明治）": {
+   "ichinomiya": [
+    {
+     "name": "岩木山神社",
+     "place": "青森県弘前市",
+     "note": "新一の宮（全国一の宮会、津軽国）",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kaido": [
+    {
+     "name": "奥州街道",
+     "from": null,
+     "src": [
+      "wp_road_奥州街道"
+     ]
+    },
+    {
+     "name": "羽州街道",
+     "from": null,
+     "src": [
+      "wp_road_羽州街道"
+     ]
+    }
+   ]
+  },
+  "出羽": {
+   "ichinomiya": [
+    {
+     "name": "鳥海山大物忌神社",
+     "place": "山形県遊佐町",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kaido": [
+    {
+     "name": "羽州街道",
+     "from": null,
+     "src": [
+      "wp_road_羽州街道"
+     ]
+    },
+    {
+     "name": "東山道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ]
+  },
+  "羽前": {
+   "kaido": [
+    {
+     "name": "羽州街道",
+     "from": null,
+     "src": [
+      "wp_road_羽州街道"
+     ]
+    }
+   ],
+   "matsuri": [
+    {
+     "name": "山形花笠まつり",
+     "since": 1963,
+     "place": "山形県山形市",
+     "src": [
+      "wp_m_花笠まつり"
+     ]
+    },
+    {
+     "name": "新庄まつり",
+     "since": 1756,
+     "place": "山形県新庄市",
+     "src": [
+      "wp_m_新庄まつり"
+     ]
+    }
+   ]
+  },
+  "羽後": {
+   "ichinomiya": [
+    {
+     "name": "鳥海山大物忌神社",
+     "place": "山形県遊佐町",
+     "src": [
+      "wp_ichinomiya",
+      "wp_ugo"
+     ]
+    }
+   ],
+   "kaido": [
+    {
+     "name": "羽州街道",
+     "from": null,
+     "src": [
+      "wp_road_羽州街道"
+     ]
+    }
+   ],
+   "matsuri": [
+    {
+     "name": "土崎神明社祭の曳山行事（記録の初出）",
+     "since": 1789,
+     "place": "秋田県秋田市",
+     "src": [
+      "wp_m_土崎神明社祭の曳山行事"
+     ]
+    },
+    {
+     "name": "角館のお祭り（記録の初出）",
+     "since": 1694,
+     "place": "秋田県仙北市",
+     "src": [
+      "wp_m_角館のお祭り"
+     ]
+    }
+   ]
+  },
+  "若狭": {
+   "ichinomiya": [
+    {
+     "name": "若狭彦神社",
+     "place": "福井県小浜市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    },
+    {
+     "name": "若狭姫神社",
+     "place": "福井県小浜市",
+     "note": "全国一の宮会加盟（歴史的一宮の論社以外）",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "福井県小浜市",
+    "now": true,
+    "shiseki": true,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "北陸道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ]
+  },
+  "越前": {
+   "ichinomiya": [
+    {
+     "name": "氣比神宮",
+     "place": "福井県敦賀市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kaido": [
+    {
+     "name": "北陸道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ]
+  },
+  "加賀": {
+   "ichinomiya": [
+    {
+     "name": "白山比咩神社",
+     "place": "石川県白山市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    },
+    {
+     "name": "石部神社",
+     "place": "石川県小松市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kaido": [
+    {
+     "name": "北陸道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ],
+   "matsuri": [
+    {
+     "name": "金沢百万石まつり（金沢市祭として）",
+     "since": 1923,
+     "place": "石川県金沢市",
+     "src": [
+      "wp_m_金沢百万石まつり"
+     ]
+    }
+   ]
+  },
+  "能登": {
+   "ichinomiya": [
+    {
+     "name": "氣多大社",
+     "place": "石川県羽咋市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "石川県七尾市",
+    "now": false,
+    "shiseki": true,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "北陸道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ],
+   "matsuri": [
+    {
+     "name": "青柏祭",
+     "since": 981,
+     "place": "石川県七尾市",
+     "src": [
+      "wp_m_青柏祭"
+     ]
+    }
+   ]
+  },
+  "越中": {
+   "ichinomiya": [
+    {
+     "name": "気多神社",
+     "place": "富山県高岡市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    },
+    {
+     "name": "高瀬神社",
+     "place": "富山県南砺市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    },
+    {
+     "name": "射水神社",
+     "place": "富山県高岡市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    },
+    {
+     "name": "雄山神社",
+     "place": "富山県立山町",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "富山県高岡市",
+    "now": true,
+    "shiseki": false,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "飛騨街道",
+     "from": null,
+     "src": [
+      "wp_road_飛騨街道"
+     ]
+    },
+    {
+     "name": "北陸道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ],
+   "matsuri": [
+    {
+     "name": "放生津曳山祭",
+     "since": 1650,
+     "place": "富山県射水市",
+     "src": [
+      "wp_m_放生津曳山祭"
+     ]
+    }
+   ]
+  },
+  "越後": {
+   "ichinomiya": [
+    {
+     "name": "彌彦神社",
+     "place": "新潟県弥彦村",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    },
+    {
+     "name": "居多神社",
+     "place": "新潟県上越市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    },
+    {
+     "name": "天津神社",
+     "place": "新潟県糸魚川市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kaido": [
+    {
+     "name": "三国街道",
+     "from": 1605,
+     "src": [
+      "wp_road_三国街道"
+     ]
+    },
+    {
+     "name": "北国街道（信越）",
+     "from": null,
+     "src": [
+      "wp_road_北国街道_(信越)"
+     ]
+    },
+    {
+     "name": "北陸道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ],
+   "matsuri": [
+    {
+     "name": "長岡まつり",
+     "since": 1946,
+     "place": "新潟県長岡市",
+     "src": [
+      "wp_m_長岡まつり"
+     ]
+    }
+   ]
+  },
+  "佐渡": {
+   "ichinomiya": [
+    {
+     "name": "度津神社",
+     "place": "新潟県佐渡市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "新潟県佐渡市",
+    "now": true,
+    "shiseki": true,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "北陸道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ]
+  },
+  "丹波": {
+   "ichinomiya": [
+    {
+     "name": "出雲大神宮",
+     "place": "京都府亀岡市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "京都府亀岡市",
+    "now": true,
+    "shiseki": true,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "山陰街道",
+     "from": null,
+     "src": [
+      "wp_road_山陰街道"
+     ]
+    },
+    {
+     "name": "山陰道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ]
+  },
+  "丹後": {
+   "ichinomiya": [
+    {
+     "name": "籠神社",
+     "place": "京都府宮津市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "京都府宮津市",
+    "now": true,
+    "shiseki": true,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "山陰道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ]
+  },
+  "但馬": {
+   "ichinomiya": [
+    {
+     "name": "出石神社",
+     "place": "兵庫県豊岡市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    },
+    {
+     "name": "粟鹿神社",
+     "place": "兵庫県朝来市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "兵庫県豊岡市",
+    "now": true,
+    "shiseki": true,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "山陰道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ]
+  },
+  "因幡": {
+   "ichinomiya": [
+    {
+     "name": "宇倍神社",
+     "place": "鳥取県鳥取市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "鳥取県鳥取市",
+    "now": true,
+    "shiseki": false,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "山陰道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ]
+  },
+  "伯耆": {
+   "ichinomiya": [
+    {
+     "name": "倭文神社",
+     "place": "鳥取県湯梨浜町",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "鳥取県倉吉市",
+    "now": true,
+    "shiseki": true,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "山陰道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ]
+  },
+  "出雲": {
+   "ichinomiya": [
+    {
+     "name": "出雲大社",
+     "place": "島根県出雲市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    },
+    {
+     "name": "熊野大社",
+     "place": "島根県松江市",
+     "note": "全国一の宮会加盟（歴史的一宮の論社以外）",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "島根県松江市",
+    "now": false,
+    "shiseki": true,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "山陰道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ]
+  },
+  "石見": {
+   "ichinomiya": [
+    {
+     "name": "物部神社",
+     "place": "島根県大田市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "島根県浜田市",
+    "now": true,
+    "shiseki": true,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "山陰道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ]
+  },
+  "隠岐": {
+   "ichinomiya": [
+    {
+     "name": "水若酢神社",
+     "place": "島根県隠岐の島町",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    },
+    {
+     "name": "由良比女神社",
+     "place": "島根県西ノ島町",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "島根県隠岐の島町",
+    "now": true,
+    "shiseki": true,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "山陰道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ]
+  },
+  "播磨": {
+   "ichinomiya": [
+    {
+     "name": "伊和神社",
+     "place": "兵庫県宍粟市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "兵庫県姫路市",
+    "now": true,
+    "shiseki": true,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "西国街道",
+     "from": null,
+     "src": [
+      "wp_road_西国街道"
+     ]
+    },
+    {
+     "name": "山陽道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ]
+  },
+  "美作": {
+   "ichinomiya": [
+    {
+     "name": "中山神社",
+     "place": "岡山県津山市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "岡山県津山市",
+    "now": true,
+    "shiseki": true,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "山陽道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ]
+  },
+  "備前": {
+   "ichinomiya": [
+    {
+     "name": "吉備津彦神社",
+     "place": "岡山県岡山市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    },
+    {
+     "name": "石上布都魂神社",
+     "place": "岡山県赤磐市",
+     "note": "全国一の宮会加盟（歴史的一宮の論社以外）",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "岡山県赤磐市",
+    "now": true,
+    "shiseki": true,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "西国街道",
+     "from": null,
+     "src": [
+      "wp_road_西国街道"
+     ]
+    },
+    {
+     "name": "山陽道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ],
+   "matsuri": [
+    {
+     "name": "西大寺会陽（今の形）",
+     "since": 1510,
+     "place": "岡山県岡山市",
+     "src": [
+      "wp_m_西大寺_(岡山市)"
+     ]
+    }
+   ]
+  },
+  "備中": {
+   "ichinomiya": [
+    {
+     "name": "吉備津神社",
+     "place": "岡山県岡山市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "岡山県総社市",
+    "now": true,
+    "shiseki": true,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "西国街道",
+     "from": null,
+     "src": [
+      "wp_road_西国街道"
+     ]
+    },
+    {
+     "name": "山陽道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ]
+  },
+  "備後": {
+   "ichinomiya": [
+    {
+     "name": "吉備津神社",
+     "place": "広島県福山市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    },
+    {
+     "name": "素盞嗚神社",
+     "place": "広島県福山市",
+     "note": "全国一の宮会加盟（歴史的一宮の論社以外）",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "広島県福山市",
+    "now": true,
+    "shiseki": false,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "西国街道",
+     "from": null,
+     "src": [
+      "wp_road_西国街道"
+     ]
+    },
+    {
+     "name": "山陽道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ]
+  },
+  "安芸": {
+   "ichinomiya": [
+    {
+     "name": "厳島神社",
+     "place": "広島県廿日市市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "広島県東広島市",
+    "now": true,
+    "shiseki": true,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "西国街道",
+     "from": null,
+     "src": [
+      "wp_road_西国街道"
+     ]
+    },
+    {
+     "name": "山陽道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ]
+  },
+  "周防": {
+   "ichinomiya": [
+    {
+     "name": "玉祖神社",
+     "place": "山口県防府市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "山口県防府市",
+    "now": true,
+    "shiseki": true,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "西国街道",
+     "from": null,
+     "src": [
+      "wp_road_西国街道"
+     ]
+    },
+    {
+     "name": "山陽道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ],
+   "matsuri": [
+    {
+     "name": "山口祇園祭",
+     "since": 1370,
+     "place": "山口県山口市",
+     "src": [
+      "wp_m_山口祇園祭"
+     ]
+    }
+   ]
+  },
+  "長門": {
+   "ichinomiya": [
+    {
+     "name": "住吉神社",
+     "place": "山口県下関市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "山口県下関市",
+    "now": true,
+    "shiseki": false,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "西国街道",
+     "from": null,
+     "src": [
+      "wp_road_西国街道"
+     ]
+    },
+    {
+     "name": "山陽道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ]
+  },
+  "紀伊": {
+   "ichinomiya": [
+    {
+     "name": "日前神宮・國懸神宮",
+     "place": "和歌山県和歌山市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    },
+    {
+     "name": "丹生都比売神社",
+     "place": "和歌山県かつらぎ町",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    },
+    {
+     "name": "伊太祁󠄀曽神社",
+     "place": "和歌山県和歌山市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "和歌山県紀の川市",
+    "now": true,
+    "shiseki": true,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "熊野古道",
+     "from": null,
+     "src": [
+      "wp_road_熊野古道"
+     ]
+    },
+    {
+     "name": "紀州街道",
+     "from": null,
+     "src": [
+      "wp_road_紀州街道"
+     ]
+    },
+    {
+     "name": "高野街道",
+     "from": null,
+     "src": [
+      "wp_road_高野街道"
+     ]
+    }
+   ],
+   "matsuri": [
+    {
+     "name": "和歌祭",
+     "since": 1622,
+     "place": "和歌山県和歌山市",
+     "src": [
+      "wp_m_紀州東照宮"
+     ]
+    }
+   ]
+  },
+  "淡路": {
+   "ichinomiya": [
+    {
+     "name": "伊弉諾神宮",
+     "place": "兵庫県淡路市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "兵庫県南あわじ市",
+    "now": true,
+    "shiseki": true,
+    "src": [
+     "wp_kokubunji"
+    ],
+    "note": "国の史跡は塔跡"
+   },
+   "kaido": [
+    {
+     "name": "南海道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ]
+  },
+  "阿波": {
+   "ichinomiya": [
+    {
+     "name": "上一宮大粟神社",
+     "place": "徳島県神山町",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    },
+    {
+     "name": "一宮神社",
+     "place": "徳島県徳島市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    },
+    {
+     "name": "大麻比古神社",
+     "place": "徳島県鳴門市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    },
+    {
+     "name": "八倉比売神社",
+     "place": "徳島県徳島市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "徳島県徳島市",
+    "now": true,
+    "shiseki": false,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "南海道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ]
+  },
+  "讃岐": {
+   "ichinomiya": [
+    {
+     "name": "田村神社",
+     "place": "香川県高松市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "香川県高松市",
+    "now": true,
+    "shiseki": true,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "南海道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ]
+  },
+  "伊予": {
+   "ichinomiya": [
+    {
+     "name": "大山祇神社",
+     "place": "愛媛県今治市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "愛媛県今治市",
+    "now": true,
+    "shiseki": true,
+    "src": [
+     "wp_kokubunji"
+    ],
+    "note": "国の史跡は塔跡"
+   },
+   "kaido": [
+    {
+     "name": "南海道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ]
+  },
+  "土佐": {
+   "ichinomiya": [
+    {
+     "name": "土佐神社",
+     "place": "高知県高知市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "高知県南国市",
+    "now": true,
+    "shiseki": true,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "南海道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ],
+   "matsuri": [
+    {
+     "name": "よさこい祭り",
+     "since": 1954,
+     "place": "高知県高知市",
+     "src": [
+      "wp_m_よさこい祭り"
+     ]
+    }
+   ]
+  },
+  "筑前": {
+   "ichinomiya": [
+    {
+     "name": "住吉神社",
+     "place": "福岡県福岡市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    },
+    {
+     "name": "筥崎宮",
+     "place": "福岡県福岡市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "福岡県太宰府市",
+    "now": true,
+    "shiseki": true,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "長崎街道",
+     "from": null,
+     "src": [
+      "wp_road_長崎街道"
+     ]
+    },
+    {
+     "name": "薩摩街道",
+     "from": null,
+     "src": [
+      "wp_road_薩摩街道"
+     ]
+    },
+    {
+     "name": "西海道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ],
+   "matsuri": [
+    {
+     "name": "博多祇園山笠",
+     "since": 1241,
+     "place": "福岡県福岡市",
+     "src": [
+      "wp_m_博多祇園山笠"
+     ]
+    },
+    {
+     "name": "博多どんたく（博多松囃子）",
+     "since": 1179,
+     "place": "福岡県福岡市",
+     "src": [
+      "wp_m_博多どんたく"
+     ]
+    }
+   ]
+  },
+  "筑後": {
+   "ichinomiya": [
+    {
+     "name": "高良大社",
+     "place": "福岡県久留米市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "福岡県久留米市",
+    "now": true,
+    "shiseki": false,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "薩摩街道",
+     "from": null,
+     "src": [
+      "wp_road_薩摩街道"
+     ]
+    },
+    {
+     "name": "西海道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ]
+  },
+  "豊前": {
+   "ichinomiya": [
+    {
+     "name": "宇佐神宮",
+     "place": "大分県宇佐市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "福岡県みやこ町",
+    "now": true,
+    "shiseki": true,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "長崎街道",
+     "from": null,
+     "src": [
+      "wp_road_長崎街道"
+     ]
+    },
+    {
+     "name": "西海道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ],
+   "matsuri": [
+    {
+     "name": "小倉祇園太鼓",
+     "since": 1618,
+     "place": "福岡県北九州市",
+     "src": [
+      "wp_m_小倉祇園太鼓"
+     ]
+    }
+   ]
+  },
+  "豊後": {
+   "ichinomiya": [
+    {
+     "name": "柞原八幡宮",
+     "place": "大分県大分市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    },
+    {
+     "name": "西寒多神社",
+     "place": "大分県大分市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "大分県大分市",
+    "now": true,
+    "shiseki": true,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "西海道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ]
+  },
+  "肥前": {
+   "ichinomiya": [
+    {
+     "name": "與止日女神社",
+     "place": "佐賀県佐賀市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    },
+    {
+     "name": "千栗八幡宮",
+     "place": "佐賀県みやき町",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "佐賀県佐賀市",
+    "now": true,
+    "shiseki": false,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "長崎街道",
+     "from": null,
+     "src": [
+      "wp_road_長崎街道"
+     ]
+    },
+    {
+     "name": "西海道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ],
+   "matsuri": [
+    {
+     "name": "長崎くんち",
+     "since": 1634,
+     "place": "長崎県長崎市",
+     "src": [
+      "wp_m_長崎くんち"
+     ]
+    }
+   ]
+  },
+  "肥後": {
+   "ichinomiya": [
+    {
+     "name": "阿蘇神社",
+     "place": "熊本県阿蘇市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "熊本県熊本市",
+    "now": true,
+    "shiseki": false,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "薩摩街道",
+     "from": null,
+     "src": [
+      "wp_road_薩摩街道"
+     ]
+    },
+    {
+     "name": "西海道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ]
+  },
+  "日向": {
+   "ichinomiya": [
+    {
+     "name": "都農神社",
+     "place": "宮崎県都農町",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "宮崎県西都市",
+    "now": false,
+    "shiseki": true,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "西海道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ],
+   "matsuri": [
+    {
+     "name": "宮崎神宮大祭",
+     "since": 1876,
+     "place": "宮崎県宮崎市",
+     "src": [
+      "wp_m_宮崎神宮大祭"
+     ]
+    }
+   ]
+  },
+  "大隅": {
+   "ichinomiya": [
+    {
+     "name": "鹿児島神宮",
+     "place": "鹿児島県霧島市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "鹿児島県霧島市",
+    "now": false,
+    "shiseki": true,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "西海道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ]
+  },
+  "薩摩": {
+   "ichinomiya": [
+    {
+     "name": "枚聞神社",
+     "place": "鹿児島県指宿市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    },
+    {
+     "name": "新田神社",
+     "place": "鹿児島県薩摩川内市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "鹿児島県薩摩川内市",
+    "now": false,
+    "shiseki": true,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "薩摩街道",
+     "from": null,
+     "src": [
+      "wp_road_薩摩街道"
+     ]
+    },
+    {
+     "name": "西海道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ],
+   "matsuri": [
+    {
+     "name": "おはら祭",
+     "since": 1949,
+     "place": "鹿児島県鹿児島市",
+     "src": [
+      "wp_m_おはら祭"
+     ]
+    }
+   ]
+  },
+  "壱岐": {
+   "ichinomiya": [
+    {
+     "name": "興神社",
+     "place": "長崎県壱岐市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    },
+    {
+     "name": "天手長男神社",
+     "place": "長崎県壱岐市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kokubunji": {
+    "place": "長崎県壱岐市",
+    "now": true,
+    "shiseki": false,
+    "src": [
+     "wp_kokubunji"
+    ]
+   },
+   "kaido": [
+    {
+     "name": "西海道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ]
+  },
+  "対馬": {
+   "ichinomiya": [
+    {
+     "name": "海神神社",
+     "place": "長崎県対馬市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    },
+    {
+     "name": "厳原八幡宮神社",
+     "place": "長崎県対馬市",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "kaido": [
+    {
+     "name": "西海道（古代の駅路）",
+     "from": null,
+     "src": [
+      "wp_gokishichido"
+     ]
+    }
+   ]
+  },
+  "蝦夷・松前": {
+   "ichinomiya": [
+    {
+     "name": "北海道神宮",
+     "place": "北海道札幌市",
+     "note": "新一の宮（全国一の宮会、蝦夷国）",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ],
+   "matsuri": [
+    {
+     "name": "さっぽろ雪まつり",
+     "since": 1950,
+     "place": "北海道札幌市",
+     "src": [
+      "wp_m_さっぽろ雪まつり"
+     ]
+    }
+   ]
+  },
+  "琉球": {
+   "ichinomiya": [
+    {
+     "name": "波上宮",
+     "place": "沖縄県那覇市",
+     "note": "新一の宮（全国一の宮会、琉球国）",
+     "src": [
+      "wp_ichinomiya"
+     ]
+    }
+   ]
+  }
+ },
+ "surname": {}
+}

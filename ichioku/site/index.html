@@ -21,7 +21,7 @@
       <div class="top-main">
         <h1 id="top-title" class="top-title" aria-label="1000分の1"><span class="tt-l1">1000</span><span class="tt-l2">分の<span class="tt-one">1</span></span></h1>
         <p class="top-catch">どこに いつ生まれるかは選べない</p>
-        <p class="top-lead"><span id="r0">1000</span>〜<span id="r1">2000</span>年のどこかの1年に、日本のどこかで生まれます。</p>
+        <p class="top-lead"><span class="nw"><span id="r0">1000</span>〜<span id="r1">2000</span>年のどこかの1年に、</span><span class="nw">日本のどこかで生まれます。</span><br><span class="nw">その人は、</span><span class="nw">あなたの先祖の一人かもしれません。</span></p>
 
         <div class="top-count" aria-label="このページを開いてからの日本の数">
           <div class="tc-item tc-birth">
@@ -49,7 +49,7 @@
             <label class="me-l">生まれた年<select id="me-year"></select></label>
             <label class="me-l">都道府県<select id="me-pref"></select></label>
           </div>
-          <p class="note" id="me-note">入れると、主人公の一生とあなたの生まれ年の数字を並べて出します。この端末にだけ保存します</p>
+          <p class="note" id="me-note">入れると、主人公とあなたのつながりが出ます。主人公の一生とあなたの生まれ年の数字も並べて出します。この端末にだけ保存します</p>
         </details>
 
         <div class="top-past">
@@ -236,6 +236,35 @@
       <dl class="rc-grid" id="rc-grid"></dl>
       <button type="button" class="btn-sub rc-again" id="rc-again">最後の瞬間をもう一度見る</button>
     </section>
+    <!-- 主人公とあなたのつながり（v17）：代の数・計算上の先祖の数・当時の人口の目安。今に残るもの。この家をあなたまでたどる -->
+    <section class="o-card rc-reflect tg" id="tg-box" hidden>
+      <h2>あなたとのつながり</h2>
+      <p class="tg-big" id="tg-big" hidden></p>
+      <div id="tg-lines"></div>
+      <p class="tg-close" id="tg-close"></p>
+      <button type="button" class="btn-sub tg-guide" id="tg-guide" hidden>生まれた年を入れると、この人とあなたのつながりが出ます</button>
+      <details class="more tg-more" id="tg-more" hidden>
+        <summary>くわしく</summary>
+        <p id="tg-explain"></p>
+      </details>
+      <div id="im-wrap" hidden>
+        <h2>今に残るもの</h2>
+        <div id="im-lines"></div>
+        <p class="note" id="im-note"></p>
+      </div>
+      <div id="tr-wrap" hidden>
+        <h2>この家をあなたまでたどる</h2>
+        <p class="note" id="tr-note"></p>
+        <button type="button" class="btn-main" id="tr-go">この家をあなたまでたどる</button>
+        <p class="note" id="tr-prog" hidden></p>
+        <ol class="list tr-list" id="tr-list"></ol>
+        <p class="tr-born" id="tr-born" hidden></p>
+        <div id="tr-years-box" hidden>
+          <h2 id="tr-years-h"></h2>
+          <ol class="list tr-years" id="tr-years"></ol>
+        </div>
+      </div>
+    </section>
     <div id="hotline-end" class="hotline" hidden></div>
     <section class="o-card rc-reflect" id="rc-reflect-box" hidden>
       <h2>振り返って</h2>
@@ -372,6 +401,7 @@
 <script src="js/polite.js"></script>
 <script src="js/record.js"></script>
 <script src="js/compare.js"></script>
+<script src="js/tsunagari.js"></script>
 <script src="js/jobs.js"></script>
 <script src="js/causes.js"></script>
 <script src="js/card.js"></script>
