@@ -464,9 +464,9 @@ test('7-3', '今に残るもの（500件：表にない寺社・街道・祭り�
     const row = IM.prov[(L.home0 || {}).prov || L.prov] || { ichinomiya: [], kaido: [], matsuri: [] };
     for (const t of TG.imani(H, L, '東京都千代田区')) {
       lines++;
-      const m1 = t.match(/一宮の(.+?)は/); if (m1 && !row.ichinomiya.some(x => x.name === m1[1])) { bad++; ex = ex || t; }
-      const m2 = t.match(/通っていた(.+?)は/); if (m2 && m2[1].split('・').some(nm => !row.kaido.some(x => x.name === nm))) { bad++; ex = ex || t; }
-      const m3 = t.match(/見たかもしれない(.+?)は/); if (m3 && !row.matsuri.some(x => x.name === m3[1] && x.since <= L.deathYear)) { bad++; ex = ex || t; }
+      const m1 = t.match(/一宮の(.+?)は、/); if (m1 && !row.ichinomiya.some(x => x.name === m1[1])) { bad++; ex = ex || t; }
+      const m2 = t.match(/通っていた(.+?)は、/); if (m2 && m2[1].split('・').some(nm => !row.kaido.some(x => x.name === nm))) { bad++; ex = ex || t; }
+      const m3 = t.match(/見たかもしれない(.+?)は、/); if (m3 && !row.matsuri.some(x => x.name === m3[1] && x.since <= L.deathYear)) { bad++; ex = ex || t; }
       if (/国分寺/.test(t) && !row.kokubunji) { bad++; ex = ex || t; }
       if (/今もあり|今もある/.test(t) && /堤|用水|防塁/.test(t)) { bad++; ex = ex || t; }
     }
