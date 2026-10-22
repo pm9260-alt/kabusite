@@ -1485,7 +1485,12 @@
     // 項目の並びは原作の死亡記録と同じ：最終学歴・最後の仕事・ともに生きた人・最期を見送った人・いちばん幸せだった年・暮らした土地・遺した財産・大人になってから時間を注いだこと
     var baby = L.deathAge === 0;
     $('screen-end').classList.toggle('infant', baby);
-    if (baby) { $('rc-reflect-box').hidden = true; $('rc-again').onclick = null; return; }
+    if (baby) {
+      // 1歳にならずに亡くなった人生も、あなたの今の年齢まで生きられなかった一文は出す（v17 4）
+      var slb = TG() && TG().shortLived(C, H, L, meInfo(), thisYear(), window.IchiokuCompare);
+      if (slb) { var db = el('div', 'rc-item rc-wide'); db.appendChild(el('dt', null, 'あなたと比べると')); db.appendChild(el('dd', null, slb)); g.appendChild(db); }
+      $('rc-reflect-box').hidden = true; $('rc-again').onclick = null; return;
+    }
     item('最終学歴', r.edu || (L.deathAge < 6 ? '—' : '学校には通わなかった'));
     item('最後の仕事', r.job || '—');
     // 位階・勲章（spec6 2-10）：受けた人生だけ
