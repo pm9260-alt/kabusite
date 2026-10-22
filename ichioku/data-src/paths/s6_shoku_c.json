@@ -615,7 +615,7 @@
      "body": -1
     },
     "job": {
-     "n": "大名屋敷の中間",
+     "n": "江戸屋敷の中間",
      "pay": 600,
      "cat": "samurai"
     },
@@ -2138,7 +2138,6 @@
      "body": 1
     },
     "abroad": "琉球",
-    "away": true,
     "next": {
      "in": [
       1,
@@ -2255,7 +2254,6 @@
      "body": 0
     },
     "abroad": "琉球",
-    "away": true,
     "next": {
      "in": [
       1,
@@ -4083,7 +4081,6 @@
      "tie": 1,
      "body": 1
     },
-    "away": true,
     "next": {
      "in": [
       1,
@@ -4666,7 +4663,6 @@
      "f": 0.1
     },
     "abroad": "布哇",
-    "away": true,
     "next": {
      "in": [
       1,
@@ -4904,7 +4900,6 @@
      "body": 1
     },
     "abroad": "伯剌西爾",
-    "away": true,
     "next": {
      "in": [
       1,
@@ -5017,7 +5012,6 @@
      "body": 1
     },
     "abroad": "伯剌西爾",
-    "away": true,
     "next": {
      "in": [
       1,
@@ -5847,7 +5841,6 @@
      "body": 1
     },
     "abroad": "満洲",
-    "away": true,
     "next": {
      "in": [
       1,
@@ -6131,7 +6124,6 @@
      "body": 1
     },
     "abroad": "台湾",
-    "away": true,
     "next": {
      "in": [
       1,
@@ -6245,7 +6237,6 @@
      "body": 1
     },
     "abroad": "台湾",
-    "away": true,
     "next": {
      "in": [
       1,
@@ -6831,7 +6822,6 @@
      "body": 1
     },
     "abroad": "南洋群島",
-    "away": true,
     "next": {
      "in": [
       1,
@@ -7066,7 +7056,6 @@
      "body": 1
     },
     "abroad": "上海",
-    "away": true,
     "next": {
      "in": [
       1,
@@ -7300,7 +7289,6 @@
      "body": 1
     },
     "abroad": "大陸の戦地",
-    "away": true,
     "next": {
      "in": [
       1,
@@ -7532,7 +7520,6 @@
      "f": 0.2
     },
     "abroad": "欧羅巴",
-    "away": true,
     "next": {
      "in": [
       1,
@@ -7890,7 +7877,6 @@
      "body": 0
     },
     "abroad": "亜米利加",
-    "away": true,
     "next": {
      "in": [
       1,
@@ -8398,7 +8384,6 @@
      "body": 1
     },
     "abroad": "南極",
-    "away": true,
     "next": {
      "in": [
       1,
@@ -9342,7 +9327,6 @@
      "body": 1
     },
     "abroad": "満洲",
-    "away": true,
     "next": {
      "in": [
       1,

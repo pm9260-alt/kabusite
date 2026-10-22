@@ -63,7 +63,6 @@
      "body": 1
     },
     "abroad": "琉球",
-    "away": true,
     "next": {
      "in": [
       1,
@@ -294,7 +293,6 @@
      "body": 0
     },
     "abroad": "朝鮮",
-    "away": true,
     "next": {
      "in": [
       1,
@@ -756,7 +754,6 @@
      "tie": 3,
      "body": 0
     },
-    "away": true,
     "next": {
      "in": [
       1,
@@ -990,7 +987,6 @@
      "body": 2
     },
     "abroad": "琉球",
-    "away": true,
     "next": {
      "in": [
       1,
@@ -1455,7 +1451,6 @@
      "tie": 2,
      "body": 1
     },
-    "away": true,
     "next": {
      "in": [
       1,
@@ -1572,7 +1567,6 @@
      "tie": 1,
      "body": 1
     },
-    "away": true,
     "next": {
      "in": [
       1,
@@ -1808,7 +1802,6 @@
      "tie": 1,
      "body": 1
     },
-    "away": true,
     "next": {
      "in": [
       1,
@@ -1927,7 +1920,6 @@
      "body": -1
     },
     "abroad": "朝鮮",
-    "away": true,
     "next": {
      "in": [
       1,
@@ -4270,7 +4262,6 @@
      "body": 1
     },
     "abroad": "明",
-    "away": true,
     "next": {
      "in": [
       1,
@@ -4399,7 +4390,6 @@
      "body": 1
     },
     "abroad": "明",
-    "away": true,
     "next": {
      "in": [
       1,
@@ -4524,7 +4514,6 @@
      "tie": 2,
      "body": -1
     },
-    "away": true,
     "next": {
      "in": [
       1,
@@ -4765,7 +4754,6 @@
      "body": 0
     },
     "abroad": "南蛮",
-    "away": true,
     "next": {
      "in": [
       1,
@@ -4882,7 +4870,6 @@
      "body": 1
     },
     "abroad": "南蛮",
-    "away": true,
     "next": {
      "in": [
       1,
@@ -5002,7 +4989,6 @@
      "body": 0
     },
     "abroad": "呂宋",
-    "away": true,
     "next": {
      "in": [
       1,
@@ -5125,7 +5111,6 @@
      "body": 1
     },
     "abroad": "呂宋",
-    "away": true,
     "next": {
      "in": [
       1,
@@ -5498,7 +5483,6 @@
      "tie": 1,
      "body": 1
     },
-    "away": true,
     "next": {
      "in": [
       1,
@@ -5630,7 +5614,6 @@
      "tie": 0,
      "body": -1
     },
-    "away": true,
     "next": {
      "in": [
       1,
@@ -5753,7 +5736,6 @@
      "tie": 1,
      "body": 1
     },
-    "away": true,
     "next": {
      "in": [
       1,
@@ -5877,7 +5859,6 @@
      "tie": -1,
      "body": 1
     },
-    "away": true,
     "next": {
      "in": [
       1,
@@ -5995,7 +5976,6 @@
      "tie": 3,
      "body": 0
     },
-    "away": true,
     "next": {
      "in": [
       1,
@@ -6117,7 +6097,6 @@
      "tie": 1,
      "body": 0
     },
-    "away": true,
     "next": {
      "in": [
       1,
@@ -6240,7 +6219,6 @@
      "tie": 3,
      "body": 0
     },
-    "away": true,
     "next": {
      "in": [
       1,
@@ -6362,7 +6340,6 @@
      "tie": 2,
      "body": 0
     },
-    "away": true,
     "next": {
      "in": [
       1,
@@ -6960,7 +6937,6 @@
      "tie": 2,
      "body": 0
     },
-    "away": true,
     "next": {
      "in": [
       1,
@@ -7208,7 +7184,6 @@
      "tie": 2,
      "body": -3
     },
-    "away": true,
     "next": {
      "in": [
       1,
@@ -7712,7 +7687,6 @@
      "body": 1
     },
     "abroad": "朝鮮",
-    "away": true,
     "next": {
      "in": [
       1,
@@ -7837,7 +7811,6 @@
      "body": 1
     },
     "abroad": "朝鮮",
-    "away": true,
     "next": {
      "in": [
       1,
@@ -8191,7 +8164,6 @@
      "tie": 2,
      "body": 1
     },
-    "away": true,
     "next": {
      "in": [
       1,
@@ -8315,7 +8287,6 @@
      "tie": 4,
      "body": 0
     },
-    "away": true,
     "next": {
      "in": [
       1,
@@ -8409,7 +8380,7 @@
      "body": 0
     },
     "job": {
-     "n": "大名の船手",
+     "n": "藩の船手",
      "pay": 1200,
      "cat": "samurai"
     },
@@ -9150,7 +9121,6 @@
      "body": 1
     },
     "abroad": "暹羅",
-    "away": true,
     "next": {
      "in": [
       1,
@@ -9267,7 +9237,6 @@
      "body": -2
     },
     "abroad": "カンボジア",
-    "away": true,
     "money": {
      "f": -0.5
     },
@@ -9520,7 +9489,6 @@
      "tie": 2,
      "body": 1
     },
-    "away": true,
     "money": {
      "f": -0.1
     },

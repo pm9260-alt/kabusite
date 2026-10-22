@@ -9,7 +9,7 @@ const BAN = /まず|見ます|効く|効いて|重い|重く|重さ|重か|読�
 const PH = ['name', 'dad', 'mom', 'spouse', 'child', 'friend', 'place', 'sibOlder', 'sibYounger', 'en', 'enName', 'job'];
 const KAKAKU = ['kugyo', 'tenjo', 'zuryo', 'jige', 'sekke', 'seiga', 'daijin', 'urin', 'meika', 'hanke', 'jigekan', 'koshaku', 'koshaku2', 'hakushaku', 'shishaku', 'danshaku'];
 const GRADE = ['ashigaru', 'kachi', 'hirazamurai', 'monogashira', 'karo', 'hatamoto', 'gokenin', 'shizoku_jo', 'shizoku_ka', 'hei', 'kashi', 'junshi', 'ikan', 'sakan', 'shokan', 'jsdf_shi', 'jsdf_so', 'jsdf_i', 'jsdf_sa', 'jsdf_sho'];
-const WHEN = ['kind', 'ind', 'status', 'sex', 'unmarried', 'married', 'divorced', 'childless', 'hasChild', 'hasSib', 'parentOld', 'poor', 'rich', 'pref', 'kakaku', 'grade', 'jobIs', 'rank', 'mode', 'crime', 'debt', 'u'];
+const WHEN = ['kind', 'ind', 'y', 'status', 'sex', 'unmarried', 'married', 'divorced', 'childless', 'hasChild', 'hasSib', 'parentOld', 'poor', 'rich', 'pref', 'kakaku', 'grade', 'jobIs', 'rank', 'mode', 'crime', 'debt', 'u'];
 const FX = ['sat', 'learn', 'tie', 'body'];
 const errs = [], choices = [], lines = [], ids = new Set();
 const SRC = {};
@@ -49,6 +49,12 @@ for (const f of fs.readdirSync(DIR).filter(f => /^(choices|lines)-.*\.json$/.tes
         const v = FX.map(k => (p.fx || {})[k] || 0), up = v.some(x => x > 0) || (p.money && p.money.f > 0), dn = v.some(x => x < 0) || (p.money && p.money.f < 0);
         if (!up || !dn) errs.push(where + ' ' + p.k + ' 得るものと失うものの両方がない');
       }
+      // 土地の種類（kind）と仕事の種類（ind）の条件を必ず付ける（v8直し2）。書いていないときは、文から決める：
+      // 問いの文に村・畑・田の言葉があれば市街地（city）を除く。問いと答えに商いの言葉があれば商い（shop）の人だけ（仕事・位・格で絞った選択は除く）。それ以外はどの仕事でも（home）
+      const w = o.when = Object.assign({}, o.when || {});
+      const q = texts.join(''), ql = q + (o.options || []).map(p => p.l || '').join('');
+      if (!Array.isArray(w.kind)) w.kind = /村|畑|田んぼ|田植|稲/.test(q) ? ['village', 'fish', 'town'] : ['village', 'fish', 'town', 'city'];
+      if (!Array.isArray(w.ind)) w.ind = /仕入れ|客が|売り上げ|商い/.test(ql) && !w.jobIs && !w.grade && !w.kakaku && !w.mode ? ['shop'] : ['home'];
       choices.push(o);
     } else {
       if (!o.t) errs.push(where + ' t');

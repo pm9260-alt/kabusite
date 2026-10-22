@@ -1929,7 +1929,7 @@
       cand.push({ o: o, t: ft, i: i });
     }); });
     // 40歳から先で候補を使い切ったときは、どこでも出せる選択の書き分け（5通りずつ）から引く（spec6 1-1）
-    if (!cand.length && a >= 40) CHm.list.forEach(function (o) { if (!/^s6\.fb\./.test(o.id) || c.y < o.y[0] || c.y > o.y[1] || a < o.a[0]) return; o.texts.forEach(function (t, i) { var ft = fillT(t, P); if (ft && !s.seen[ft]) cand.push({ o: o, t: ft, i: i }); }); });
+    if (!cand.length && a >= 40) CHm.list.forEach(function (o) { if (!/^s6\.fb\./.test(o.id) || c.y < o.y[0] || c.y > o.y[1] || a < o.a[0] || o.options.some(function (p) { return (s.labUse[p.l] || 0) >= 2; })) return; o.texts.forEach(function (t, i) { var ft = fillT(t, P); if (ft && !s.seen[ft]) cand.push({ o: o, t: ft, i: i }); }); });
     if (!cand.length) { if (DBG) DBG('empty', c, list.length); return; }
     // 大きな出来事の年は、その出来事の選択を先に。ふだんは時代と土地で絞った選択を多めに
     var evc = cand.filter(function (x) { return (x.o.when || {}).ev; }), loc = cand.filter(function (x) { return !(x.o.when || {}).u; });
@@ -2701,7 +2701,7 @@
       c.ask('nochi2', '買い上げの代金', '国から買い上げの代金が届いた。物の値段は日ごとに上がっている。代金をどうする？', [
         { k: 'mono', l: 'すぐに品物や道具に替える', w: 1, f: ['earn'] }, { k: 'azuke', l: 'ひとまず預けておく', w: 1, f: ['save'] }], null, 'nochi');
     },
-    igi: function (c) { c.money({ f: -0.03 }); c.say('農地改革の買い上げに、農地委員会へ異議を申し立てたが、決まりは変わらず、田畑は買い上げられた。村に気まずさが残った。', { tie: -4, sat: -2, learn: 1 }, '時代'); },
+    igi: function (c) { c.money({ f: -0.03 }); c.say('農地改革の買い上げに、農地委員会へ異議を申し立てたが、決まりは変わらず、田畑は買い上げられた。村にはわだかまりが残った。', { tie: -4, sat: -2, learn: 1 }, '時代'); },
     mono: function (c) { c.money({ f: 0.02 }); c.say('代金はすぐに農具や家財に替えた。手元に物が残ったことに、少しほっとした。', { sat: 1, tie: -1 }, '時代'); },
     azuke: function (c) { c.money({ f: -0.05 }); c.say('代金を預けておいたが、物の値段が上がるにつれ、その値打ちはみるみる小さくなった。', { sat: -2, learn: 1 }, '時代'); }
   } });
@@ -2792,6 +2792,10 @@
     if (o.status && L.old && !L.rank) L.status = o.status;
     if (o.kakakuSet) L.kakaku = o.kakakuSet;
     if (o.gradeSet) { L.grade = o.gradeSet; (L.gradeLog = L.gradeLog || []).push({ y: c.y, g: o.gradeSet }); }
+    // 名主・地主などの仕事：女性には付けない（答えを隠しきれなかったとき）。下の暮らし向きの家の男性が筋で就いたときは、その役に見合う家の暮らし向きに上がる（jobs.js は暮らし向き6割以上の家にだけこの仕事を付ける。v8直し11）
+    var eliteJob = o.job && PATH_ELITE.test(o.job.n);
+    if (eliteJob && L.sex === 'f') o = Object.assign({}, o, { job: null });
+    else if (eliteJob && (L.incPct == null || L.incPct < 0.6)) L.incPct = 0.6;
     if (o.job) {
       c.job(o.job.n, o.job.pay || 1500, o.job.reg !== false, c.O ? o.job.cat : (PATH_IND[o.job.cat] || 'service')); // 筋で就く仕事は、書いていなければ正規の勤め（非正規の割合の統計を崩さない）
       L.selfJob = { cat: o.job.cat || 'craft', n: o.job.n, d: o.job.d || '' }; L.lastJob = o.job.n;
@@ -2817,7 +2821,22 @@
     var pre = path.id + '.';
     c.s.at = c.s.at.filter(function (x) { return String(x.id).indexOf(pre) !== 0; });
   }
+  // 地主・名主・豪商などの仕事（jobs.js の ELITE）に就く答えは、女性には出さない（v8直し11）。続きの場面で就くものも数える
+  var PATH_ELITE = (root.IchiokuJobs && root.IchiokuJobs.ELITE) || /地主|豪商|豪農|大庄屋|庄屋|名主|割元|両替商|網元|蔵元|大名|家老|問屋の主|大店の主|御用商人|豪族|荘官|地頭/;
+  function pathEliteOpt(path, o, seen) {
+    if (o.job && PATH_ELITE.test(o.job.n)) return true;
+    var nk = o.next && o.next.node, nd = nk && (path.nodes || {})[nk];
+    seen = seen || {};
+    if (!nd || seen[nk]) return false;
+    seen[nk] = 1;
+    return pathEliteOpt(path, nd, seen);
+  }
   function pathAsk(c, path, key, title, text, opts) {
+    var L = c.L;
+    if (L.sex === 'f') {
+      var keep = opts.filter(function (o) { return !pathEliteOpt(path, o); });
+      if (keep.length >= 2) opts = keep;
+    }
     c.ask(key === 'start' ? path.id : path.id + '.' + key, title || path.title, pFill(c, text, path), opts.map(function (o) {
       return { k: key + '__' + o.k, l: o.l, w: typeof o.w === 'number' ? o.w : 1, f: o.f || [] };
     }), null, path.id);
@@ -2825,7 +2844,8 @@
   // 筋の種類ごとの数の決まり：出来事・仕事・格・位の筋は「1つの人生に2本まで」の数に入れない。出世の筋は2本まで（spec6 2-3）
   var PATH_FREE = { jiken: 1, shoku: 1, kakaku: 1, kurai: 1 };
   // 筋の種類ごとの出会いやすさ（spec6 の「確かめ方」の割合に合わせる）
-  var PATH_GX = { kaigai: 1.3, shusse: 2, gun: 12, gaiseki: 10 }, PATH_CAP = { shusse: 0.06, gun: 0.12, gaiseki: 0.25 };
+  // 罪の筋は20歳以上の5〜10%（spec6 2-30）
+  var PATH_GX = { kaigai: 1.3, shusse: 2, gun: 12, gaiseki: 10, tsumi: 1 }, PATH_CAP = { shusse: 0.06, gun: 0.12, gaiseki: 0.25 };
   function pathOk(c, path) {
     var L = c.L, y = c.y, a = c.a, df = c.s.pathDefer && c.s.pathDefer[path.id];
     if (y < path.y[0] || y > (df ? Math.max(path.y[1], df + 2) : path.y[1]) || a < path.a[0] || a > path.a[1] + (df ? 2 : 0)) return false;
@@ -2840,6 +2860,7 @@
     if (path.grade && path.grade.indexOf(L.grade) < 0) return false;
     if (path.jobIs && path.jobIs.indexOf(curJob(L)) < 0) return false;
     if (path.group && L.mode && !path.modeOk && path.group !== 'kaigai' && path.group !== 'shoku') return false;
+    if (L.shukkeY && !path.modeOk && path.group !== 'kaigai' && path.group !== 'shoku') return false; // 出家した人に村や家の筋を始めない（v11直し1）
     return true;
   }
   (function () {
@@ -2855,6 +2876,9 @@
         var nd = path.nodes[nk];
         nodes[nk] = function (c) {
           if (!c.L.alive) return;
+          // 出家する前に始まった筋の続き（村の寄合・年貢・縁談など）は、出家した後には出さない（v11直し1）
+          var st0 = (c.s.done || {})[path.id];
+          if (c.L.shukkeY && c.y >= c.L.shukkeY && (st0 == null || st0 <= c.L.shukkeY)) { c.s.pathEnd = c.s.pathEnd || {}; c.s.pathEnd[path.id] = c.y; return; }
           if (pathDo(c, path, nd, nk) === false) return;
           if (nd.ask && !c.L.storyDeath) pathAsk(c, path, nk, nd.ask.title, nd.ask.text, nd.ask.opts);
         };
@@ -2864,11 +2888,13 @@
         var s = c.s, free = PATH_FREE[path.group];
         // 出来事の筋は、ほかの分かれ道が出た年なら翌年に回す（出来事の年から2年まで）
         if (path.once && s.asked === c.y) { if (pathOk(c, path)) { s.pathDefer = s.pathDefer || {}; s.pathDefer[path.id] = s.pathDefer[path.id] || c.y; } return false; }
-        if (!free && (s.pathN || 0) >= 3) return false;
+        // 上の家格の公家は、外戚争いと政略結婚にほぼ必ず出会う（spec6 2-28）
+        var hiKuge = path.group === 'gaiseki' && c.L.status === 'kuge' && /^(sekke|seiga|daijin|kugyo)$/.test(c.L.kakaku || '');
+        if (!free && !hiKuge && (s.pathN || 0) >= 3) return false;
         if (path.group === 'shusse' && (s.shusseN || 0) >= 2) return false;
         if (!pathOk(c, path)) return false;
         if (path.once) { s.pathOnce = s.pathOnce || {}; if (s.pathOnce[path.id]) return false; s.pathOnce[path.id] = c.y; if (!c.p(Math.min(0.6, (path.p || 0.4) * 1.15))) return false; } // ほかの分かれ道の年に回る分を見こんで少し多めに（住む人の3〜5割が出会う）
-        else if (!c.p(Math.min(free ? 0.4 : PATH_CAP[path.group] || 0.06, (path.p || 0.01) * (PATH_GX[path.group] || PATH_X)))) return false;
+        else if (!c.p(hiKuge ? 0.18 : Math.min(free ? 0.4 : PATH_CAP[path.group] || 0.06, (path.p || 0.01) * (PATH_GX[path.group] || PATH_X)))) return false;
         if (!free) s.pathN = (s.pathN || 0) + 1;
         if (path.group === 'shusse') s.shusseN = (s.shusseN || 0) + 1;
         pathAsk(c, path, 'start', path.title, path.text, path.opts);

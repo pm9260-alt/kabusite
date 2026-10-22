@@ -2021,7 +2021,6 @@
      "body": 0
     },
     "abroad": "宋",
-    "away": true,
     "next": {
      "in": [
       1,
@@ -2285,7 +2284,7 @@
      "body": -1
     },
     "job": {
-     "n": "豪族の館の歌の師",
+     "n": "陸奥の館の歌の師",
      "pay": 900,
      "cat": "court"
     }
@@ -8434,7 +8433,6 @@
      "body": -1
     },
     "abroad": "宋",
-    "away": true,
     "next": {
      "in": [
       1,
@@ -8613,7 +8611,6 @@
      "body": 0
     },
     "abroad": "宋",
-    "away": true,
     "money": {
      "f": 0.1
     },
@@ -8773,14 +8770,14 @@
      "body": -1
     },
     "abroad": "宋",
-    "away": true,
     "next": {
      "in": [
       1,
       3
      ],
      "node": "throw1"
-    }
+    },
+    "away": true
    },
    {
     "k": "keep",
@@ -8821,7 +8818,6 @@
      "body": -1
     },
     "abroad": "宋",
-    "away": true,
     "money": {
      "f": -0.1
     },
@@ -11429,10 +11425,6 @@
      "tie": -2,
      "body": -2
     },
-    "move": {
-     "prov": "相模"
-    },
-    "away": true,
     "money": {
      "f": -0.3
     },
@@ -13233,10 +13225,6 @@
      "tie": 3,
      "body": -1
     },
-    "move": {
-     "prov": "相模"
-    },
-    "away": true,
     "next": {
      "in": [
       1,

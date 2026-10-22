@@ -262,7 +262,7 @@
     { "k": "stay", "l": "浜に残る", "f": ["family"], "w": 1,
       "say": "{name}は網元の帳場に入り、浜の漁の勘定を任された。",
       "fx": { "sat": 1, "learn": -1, "tie": 3, "body": 0 },
-      "job": { "n": "網元の帳場", "pay": 300, "cat": "fish" },
+      "job": { "n": "漁家の帳場", "pay": 300, "cat": "fish" },
       "next": { "in": [10, 15], "node": "hama" } }
   ],
   "nodes": {

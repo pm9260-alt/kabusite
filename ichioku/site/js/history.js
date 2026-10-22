@@ -1175,6 +1175,7 @@
       ev: [ev(L, 'ipss', near(H.nat.marriage[L.sex], y), '平均初婚年齢（' + (L.sex === 'm' ? '夫' : '妻') + '。1898年以前は村の研究の目安）', lin(H.nat.marriage[L.sex], y).toFixed(1) + '歳', { est: y < 1899 }), ev(L, 'ipss', near(H.nat.neverMarried[L.sex], y), '50歳まで一度も結婚しない人の割合', pct(lin(H.nat.neverMarried[L.sex], y)))] });
   }
   function resolveMarry(L, rec, br, answers) {
+    if (L.shukkeY) return; // 出家した後に答えが回った縁談・婿養子の話は、なかったことにする（v11直し1）
     var w = wantFrom(answers, 'marry') || (L.rnd() < 0.85 ? 'yes' : 'no');
     if (w === 'yes') { doMarry(L, rec, false, br.ev, br.suitor); return; }
     L.refused = (L.refused || 0) + 1;
@@ -1184,6 +1185,7 @@
     push(L, rec, '人間関係', SMr && SMr.refuseText ? SMr.refuseText(L, br.suitor) : '縁談を断った', br.ev);
   }
   function doMarry(L, rec, again, evs, su) {
+    if (L.shukkeY) return; // 出家した人は縁談も再婚もしない（同じ年に縁談の答えが出家の後に回ったときも。v11直し1）
     var rnd = L.rnd, y = L.year, H = L.H;
     var gap = Math.round(lin({ 1800: 4.5, 1900: 4.2, 1950: 2.9, 1974: 2.6 }, y) + gauss(rnd) * 3);
     var sby = L.sex === 'm' ? L.by + Math.max(-2, gap) : L.by - Math.max(-2, gap);
@@ -1443,6 +1445,7 @@
     push(L, rec, '家庭', L.status === 'bushi' ? '藩に願い出て認められ、新しく家を立てた（分家）' : '田畑を分けてもらい、近くに家を建てて分家した', br.ev);
   }
   function resolveMuko(L, rec, br, answers) {
+    if (L.shukkeY) return; // 出家した後に答えが回った縁談・婿養子の話は、なかったことにする（v11直し1）
     var w = wantFrom(answers, 'muko');
     if (L.rnd2() >= nudge(br.rate, w, 'yes')) { push(L, rec, '家庭', '婿養子の話を断った', br.ev); L.mukoNo = true; return; }
     var old = L.surname, nw = otherSurname(L);

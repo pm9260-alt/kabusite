@@ -356,7 +356,6 @@
      "body": 0
     },
     "abroad": "インドネシア",
-    "away": true,
     "next": {
      "in": [
       1,
@@ -1519,7 +1518,6 @@
      "body": -3
     },
     "abroad": "ケニア",
-    "away": true,
     "next": {
      "in": [
       1,
@@ -1791,7 +1789,6 @@
      "body": 1
     },
     "abroad": "南極",
-    "away": true,
     "next": {
      "in": [
       1,
@@ -2841,7 +2838,6 @@
      "body": -1
     },
     "abroad": "タイ",
-    "away": true,
     "next": {
      "in": [
       1,
@@ -3089,7 +3085,6 @@
      "body": 0
     },
     "abroad": "米国",
-    "away": true,
     "next": {
      "in": [
       1,
@@ -3340,7 +3335,6 @@
      "f": -0.15
     },
     "abroad": "米国",
-    "away": true,
     "next": {
      "in": [
       1,
@@ -3466,7 +3460,6 @@
      "body": 1
     },
     "abroad": "フランス",
-    "away": true,
     "next": {
      "in": [
       1,
@@ -3830,7 +3823,6 @@
      "body": 1
     },
     "abroad": "イタリア",
-    "away": true,
     "next": {
      "in": [
       1,
@@ -4059,7 +4051,6 @@
      "body": -1
     },
     "abroad": "ドイツ",
-    "away": true,
     "next": {
      "in": [
       1,
@@ -4571,7 +4562,6 @@
      "body": -4
     },
     "abroad": "トルコ",
-    "away": true,
     "next": {
      "in": [
       1,
@@ -4796,7 +4786,6 @@
      "body": -3
     },
     "abroad": "ソマリア沖",
-    "away": true,
     "next": {
      "in": [
       1,

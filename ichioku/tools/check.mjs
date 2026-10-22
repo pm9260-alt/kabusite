@@ -129,7 +129,9 @@ function stripCode(src) { return src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^
   for (const [where, t] of T) if (/(^|[、。「（\s'"])まず/.test(t)) b2.push(where + '「まず」'); rec('作る人が使わないと決めた言葉が入っていないか', b2.length === 0, b2.slice(0, 10).join('、'));
   // 実名の一覧の言葉を含むだけの別の言葉（「関東大震災」の「東大」など）はよける
   const REAL_OK = ['関東大震災', '東京大空襲', '東大寺', '安倍氏'];
-  const T0 = T.map(([w, t]) => [w, REAL_OK.reduce((x, k) => x.split(k).join(''), t)]);
+  // 昔の公家の氏（うじ）の一覧にある「安倍」は、土御門家の本姓としての氏の名前（安倍氏）で、人の実名ではない。history.js の氏の一覧の書き方だけをよける
+  const REAL_OK_IN = { 'js/history.js': ["'安倍'"] };
+  const T0 = T.map(([w, t]) => [w, REAL_OK.concat(REAL_OK_IN[w] || []).reduce((x, k) => x.split(k).join(''), t)]);
   const b3 = ((list) => { const f = []; for (const [where, t] of T0) for (const w of list) if (t.includes(w)) f.push(where + '「' + w + '」'); return f; })(REAL); rec('実名の一覧に当たる名前が入っていないか', b3.length === 0, b3.slice(0, 10).join('、'));
   const chars = [];
   for (const [where, t] of T) {
@@ -1138,7 +1140,8 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
   const newLife = (by, seed) => E.newLife(C, P[E.pickPref(C, by, E.makeRng(seed ^ 0x9e3779b9))], { year: by, seed });
   let nk = 0, kk = 0; const kugeBad = [];
   for (let s0 = 1; s0 <= (TEST ? 6000 : 20000); s0++) { const by = 1000 + s0 % 947, L = oldLife(by, s0); nk++; if (L.status === 'kuge') { kk++; if (!((by < 1869 && L.pref === '26') || (by >= 1869 && L.pref === '13'))) kugeBad.push(by + ' ' + L.pref); } }
-  rec('貴族（公家・明治からは華族）の生まれが1946年までの5%前後で、都（京・東京）に生まれるか', Math.abs(kk / nk - 0.05) <= 0.01 && kugeBad.length === 0, (kk / nk * 100).toFixed(1) + '%（' + nk + '人）' + (kugeBad.length ? '・都でない ' + kugeBad.slice(0, 3).join('、') : ''));
+  // spec6 2-18（身分の割合）で、貴族の生まれは5%から2%（KUGE_SHARE 0.0202）に改めた。目安を2%前後（±0.5ポイント）に合わせる
+  rec('貴族（公家・明治からは華族）の生まれが1946年までの2%前後（spec6 2-18）で、都（京・東京）に生まれるか', Math.abs(kk / nk - 0.02) <= 0.005 && kugeBad.length === 0, (kk / nk * 100).toFixed(1) + '%（' + nk + '人）' + (kugeBad.length ? '・都でない ' + kugeBad.slice(0, 3).join('、') : ''));
   // 40代からの単調さ：同じ人生の中で同じ出来事の文（先頭14字）が2回出ないか（孫の誕生・勤め先・家族の死など、本当に何度も起きることは除く）
   const REAL = /生まれ、孫|が生まれた|勤め先|亡くなった|知らせが届|便り/;
   let ny = 0, nl = 0, dup = 0, empty = 0, nlife = 0; const dups = {};
@@ -1181,11 +1184,13 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
   const kinds = { b: 0, c: 0, e: 0, r: 0 }; PM.list.forEach(p => kinds[p.id[0]]++);
   rec('B・C・E 人生の筋（珍しい仕事' + kinds.b + '・売られた子や預けられた子' + kinds.c + '・都や幕府や国で働く道' + kinds.e + '・将軍家と大名家' + kinds.r + '）のどの分かれ道にも、地元に残る答えがあるか', noStay.length === 0 && kinds.b >= 20 && kinds.c >= 20 && kinds.e >= 20, noStay.slice(0, 4).join('、') || stayOk + 'の分かれ道');
   rec('B・C・E 20歳以上まで生きた人生の2割以上が、人生の筋に出会うか（' + pathLives.adult + '人）', pathLives.hit / pathLives.adult >= 0.2, Math.round(pathLives.hit / pathLives.adult * 100) + '%');
-  // D 武士・士族は統計の3倍、将軍家・大名家が生まれる
-  let nb = 0, bu = 0; const rk = {};
-  for (let s0 = 1; s0 <= (TEST ? 6000 : 20000); s0++) { const L = oldLife(1000 + s0 % 975, s0); nb++; if (L.status === 'bushi' || L.status === 'shizoku') bu++; if (L.rank) rk[L.rank] = (rk[L.rank] || 0) + 1; }
+  // D 武士・士族の生まれと、将軍家・大名家の生まれ
+  // spec6 2-18（身分の割合）で「統計の3倍」（STATUS_MULT）から、時代ごとの掛け算（BUSHI_X）で全国の合計を合わせるやり方に改めた：
+  // 平安（1184年まで）の武士3.5%、1185〜1871年の武士7%（将軍家・大名家を含む）、1872〜1947年の士族7%。生まれ年ごとの目安の平均から±1ポイントで確かめる
+  let nb = 0, bu = 0, want = 0; const rk = {};
+  for (let s0 = 1; s0 <= (TEST ? 6000 : 20000); s0++) { const by = 1000 + s0 % 975, L = oldLife(by, s0); nb++; want += by < 1185 ? 0.035 : by <= 1947 ? 0.07 : 0; if (L.status === 'bushi' || L.status === 'shizoku') bu++; if (L.rank) rk[L.rank] = (rk[L.rank] || 0) + 1; }
   const hj = fs.readFileSync(path.join(SITE, 'js', 'history.js'), 'utf8');
-  rec('D 武士・士族の生まれを統計の3倍にし、将軍家・大名家の生まれがあるか', /STATUS_MULT = \{ kuge: 2, bushi: 3 \}/.test(hj) && (rk.daimyo || 0) > 0, '武士・士族 ' + (bu / nb * 100).toFixed(1) + '%・' + Object.entries(rk).map(x => x.join(' ')).join('・') + '（' + nb + '人）');
+  rec('D 武士・士族の生まれが spec6 2-18 の割合（時代ごとの掛け算 BUSHI_X）に合い、将軍家・大名家の生まれがあるか', /var BUSHI_X = \[/.test(hj) && Math.abs(bu / nb - want / nb) <= 0.01 && (rk.daimyo || 0) > 0 && (rk.shogun || 0) > 0, '武士・士族 ' + (bu / nb * 100).toFixed(1) + '%（目安 ' + (want / nb * 100).toFixed(1) + '%）・' + Object.entries(rk).map(x => x.join(' ')).join('・') + '（' + nb + '人）');
   // H 名前の候補が、どの一覧も前の版より3割以上多いか（2026-10-19 の版と比べる）
   try {
     const cur = require(path.join(SITE, 'js', 'names.js')), base = JSON.parse(fs.readFileSync(path.join(ROOT, 'data-src', 'names-count-20261019.json'), 'utf8'));
@@ -1465,7 +1470,9 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
       if (L.heirFAtMarry && !L.tookMuko) bad.push('男子がいない家の娘が婿を取らずに嫁いだ');
     }
     const T = { m: [0.62, 0.30, 0.40], f: [0.72, 0.60, 0.30] }, rows = [];
-    for (const k of Object.keys(hk).sort()) { const v = hk[k][0] / hk[k][1], t = T[k[0]][+k[1]]; rows.push(k + ' ' + (v * 100).toFixed(1) + '%/' + t * 100 + '%'); if (Math.abs(v - t) > 0.05) bad.push('奉公の割合 ' + k + ' ' + (v * 100).toFixed(1) + '%（表 ' + t * 100 + '%）'); }
+    // 奉公に出るかは種と年から作る乱数で表の割合のまま引くので、ずれは人数の少なさから来る偶然のぶれだけ。試験モードでは1つの区分が150〜800人で、
+    // ぶれの大きさ（標準誤差）が2〜4ポイントになるため、±5ポイントか標準誤差の3倍の広い方まで認める（2026-10-22）
+    for (const k of Object.keys(hk).sort()) { const v = hk[k][0] / hk[k][1], t = T[k[0]][+k[1]], tol = Math.max(0.05, 3 * Math.sqrt(t * (1 - t) / hk[k][1])); rows.push(k + ' ' + (v * 100).toFixed(1) + '%/' + t * 100 + '%'); if (Math.abs(v - t) > tol) bad.push('奉公の割合 ' + k + ' ' + (v * 100).toFixed(1) + '%（表 ' + t * 100 + '%）'); }
     // 当主が養子だった家の割合（作る人の判断 2026-10-17）：生まれた家で家督が受け継がれたとき（1701〜1800年）に、継いだのが養子だった割合と、その年の表の値の平均を比べる
     const tA = bushi.t ? bushi.e / bushi.t : 0, vA = bushi.t ? bushi.a / bushi.t : 0;
     if (bushi.t < 100 || Math.abs(vA - tA) > 0.05) bad.push('当主が養子だった家 ' + (vA * 100).toFixed(1) + '%（表の値の平均 ' + (tA * 100).toFixed(1) + '%・' + bushi.t + '家）');
