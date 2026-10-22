@@ -205,7 +205,7 @@
   // 家をたどる。start は主人公（亡くなった L）、me = { y, pref }、seed は家の種
   // prefix は遊び直した代より前のあらまし（遊び直したときに使う）
   function traceStart(ctx, start, me, seed, prefix) {
-    var head = prefix && prefix.head ? prefix.head : { name: String(ctx.O.displayName && start.old ? ctx.O.displayName(start) : start.name).replace(/（.*?）/g, ''), by: start.by, place: placeWord(start), kuni: kuniOf(start), old: !!start.old };
+    var head = prefix && prefix.head ? prefix.head : { name: String(ctx.O.displayName && start.old ? ctx.O.displayName(start) : start.name).replace(/（.*?）/g, ''), by: start.by, place: placeWord(start), kuni: kuniOf(start), old: !!start.old, surname0: start.surname || null };
     var keep = prefix && prefix.keep ? prefix.keep : (function () { var r = ctx.S.houseRec(start); return { surname: r.surname, treasure: r.treasure, motto: r.motto, since: r.since, ancestor: r.ancestor }; })();
     return { me: { y: +me.y, pref: String(me.pref) }, seed: seed >>> 0, head: head, keep: keep, headNote: prefix && prefix.headNote || '', gens: prefix && prefix.gens ? prefix.gens.slice() : [], used: {}, L: start, k: prefix && prefix.gens ? prefix.gens.length : 0, done: false, end: null };
   }
@@ -263,6 +263,15 @@
     if (st.gens.length && prevNote) st.gens[st.gens.length - 1].lines.splice(-1, 0, prevNote);
     else if (prevNote) st.headNote = (st.headNote || '') + prevNote;
     var g = genEntry(ctx, st, NL, p, note === 'adopt' ? '養子' : sex === 'f' && NL.surname ? (NL.by < 1948 ? '婿' : '妻の名字') : moved ? '移り住み' : '');
+    // 名字が変わったとき（初めて名字を名乗る・婿養子や養子で家の名字が変わる）は、理由の文を付けて、次の代へはその名字を渡す
+    var sn = NL.surname || null;
+    if (sn && sn !== st.keep.surname) {
+      var line = st.keep.surname ? NL.name + 'は' + (NL.sex === 'f' ? '嫁ぎ先' : '婿入り先') + 'の名字の' + sn + 'を名乗り、家の名字も' + sn + 'に変わった。' : (NL.by >= 1870 ? '明治の決まりで、この代から' : 'この代から') + sn + 'の名字を名乗るようになった。';
+      g.lines.splice(-1, 0, ctx.pol(line));
+      g.why = g.why || '名字';
+      st.keep.surname = sn;
+    }
+    g.surnameEnd = st.keep.surname;
     st.gens.push(g);
     st.L = NL; st.k++;
     return st;

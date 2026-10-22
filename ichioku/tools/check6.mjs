@@ -451,8 +451,9 @@ test('7-2', 'この家をあなたまでたどる（200件：最後の子があ�
     for (let k = 1; k < ys.length; k++) { const d = ys[k] - ys[k - 1]; if (d < 16 || d > 45) { gapBad++; ex = ex || '差 ' + d + '（' + ys[k - 1] + '→' + ys[k] + '）'; break; } }
     const last = st.gens[st.gens.length - 1];
     if (last && last.pref !== me.pref && st.gens.length >= 1) { const k3 = st.gens.slice(-2).some(g => g.pref === me.pref); if (!k3) { wrong++; ex = ex || '最後の代まで移り住まない'; } }
-    let prev = st.keep;
-    for (const g of st.gens) { if (prev.surname && g.surname && g.surname !== prev.surname && !g.why) { inhBad++; ex = ex || '名字 ' + prev.surname + '→' + g.surname; } if (g.treasure !== prev.treasure && !g.why) { inhBad++; ex = ex || '家宝 ' + prev.treasure + '→' + g.treasure; } }
+    // 前の代の名字（理由の文で変わったものも含む）と家宝が、次の代に受け継がれているか。変わった代には理由（why）がある
+    let prevS = st.head.surname0 || null, prevT = st.keep.treasure;
+    for (const g of st.gens) { if (prevS && g.surname && g.surname !== prevS && !g.why) { inhBad++; ex = ex || '名字 ' + prevS + '→' + g.surname; } if (g.treasure !== prevT && !g.why) { inhBad++; ex = ex || '家宝 ' + prevT + '→' + g.treasure; } prevS = g.surnameEnd || g.surname || prevS; prevT = g.treasure; }
   }
   return { ok: wrong === 0 && gapBad === 0 && inhBad === 0 && born > 0, n, detail: '最後の子まで ' + born + '・家が絶えた ' + gone + '・年か都道府県の違い ' + wrong + '・代の差の外 ' + gapBad + '・受け継ぎの抜け ' + inhBad + (ex ? '（' + ex + '）' : '') };
 });
