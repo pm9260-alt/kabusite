@@ -600,7 +600,8 @@
   // 家で暮らしているか（v11の直し 1）。出家・旅・奉公・出征の間は false。
   // 結婚と再婚・縁談、配偶者や子の名前の入る家の出来事、家の仕事と村の暮らしの場面、家にいる前提のまわりの人の出来事は、すべてここを通して止める
   var AWAY_MODES = { shukke: 1, tabi: 1, hoko: 1, hei: 1 };
-  function homeLife(L) { return !(L && L.mode && AWAY_MODES[L.mode]); }
+  // 海や国を越えて旅に出た人（筋で abroad になった人）も、家と村の暮らしの場面は出さない
+  function homeLife(L) { return !(L && L.mode && (AWAY_MODES[L.mode] || (L.mode === 'away' && L.abroad))); }
   // 家と村の暮らしに結びついた場面の言葉（家を離れている間は出さない）
   var HOME_RE = /近所|講を作|お伊勢参り|年貢|田植|稲刈|麦刈|夜なべ|屋根|用水|隣の田|隣の家|同じ村|五人組|寄り合い|村の者|村人|村の衆|家の田|田畑|畑|代官所|名主|庄屋|囲炉裏|台所|家の仕事|家の手伝い|看病|言い争い|夫婦|連れ添/;
   function awayWords(L, cat, t) {

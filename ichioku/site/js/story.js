@@ -2787,8 +2787,9 @@
     // 1つの筋で、同じ場面を2回出さない。結末を出した筋の続きは出さない（spec6 1-6）
     if (nodeKey) { if (s.pathEnd[path.id] || s.pathNode[path.id + '.' + nodeKey]) return false; s.pathNode[path.id + '.' + nodeKey] = c.y; }
     if (o.move) c.move(o.move);
-    if (o.away) c.mode('away');
-    if (o.abroad) { L.abroad = o.abroad; L.abroadPlace = o.abroad; c.mode('away'); (L.abroadLog = L.abroadLog || []).push({ y: c.y, to: o.abroad }); }
+    // 出家・旅・奉公・出征のあいだに筋で家を出ても、家を離れた暮らしのまま（村の場面を出さない）
+    if (o.away && !/^(shukke|tabi|hoko|hei)$/.test(L.mode || '')) c.mode('away');
+    if (o.abroad) { L.abroad = o.abroad; L.abroadPlace = o.abroad; if (!L.mode || !/^(shukke|tabi|hoko|hei)$/.test(L.mode)) c.mode('away'); (L.abroadLog = L.abroadLog || []).push({ y: c.y, to: o.abroad }); }
     if (o.status && L.old && !L.rank) L.status = o.status;
     if (o.kakakuSet) L.kakaku = o.kakakuSet;
     if (o.gradeSet) { L.grade = o.gradeSet; (L.gradeLog = L.gradeLog || []).push({ y: c.y, g: o.gradeSet }); }
