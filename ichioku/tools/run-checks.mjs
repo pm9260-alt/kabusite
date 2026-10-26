@@ -30,9 +30,9 @@ const rs = ids.map(id => JSON.parse(fs.readFileSync(path.join(OUT, id + '.json')
 const old = JSON.parse(fs.readFileSync(path.join(OUT, 'old.json'), 'utf8'));
 const pass = rs.filter(r => r.ok).length;
 const oldLines = String(old.report || '').split('\n').filter(l => /^(合格|不合格|目標)/.test(l));
-let md = '# 試験の結果の一覧（1000分の1 v16）\n\n';
+let md = '# 試験の結果の一覧（1000分の1 v17）\n\n';
 md += '作った日：' + new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 16).replace('T', ' ') + '（日本時間）\n\n';
-md += '## 第6版の受け入れの検査（指示書 spec6 の「確かめ方」）\n\n';
+md += '## 受け入れの検査（1-x・2-x は指示書 spec6、7-x は指示書 tsunagari-spec1 の「確かめ方」）\n\n';
 md += '合格 ' + pass + '／' + rs.length + '\n\n| 番号 | 検査 | 件数 | 結果 | 中身 |\n|---|---|---|---|---|\n';
 for (const r of rs) md += '| ' + r.id + ' | ' + String(r.name).replace(/\|/g, '｜') + ' | ' + (r.n || 0) + ' | ' + (r.ok ? '合格' : '不合格') + ' | ' + String(r.detail || '').replace(/\|/g, '｜').replace(/\n/g, ' ') + ' |\n';
 md += '\n## 今までの検査（tools/check.mjs --test）\n\n';
