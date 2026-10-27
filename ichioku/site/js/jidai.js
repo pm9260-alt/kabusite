@@ -24,7 +24,7 @@
   var GOV = [[1000, '朝廷（摂関の政治）'], [1086, '朝廷（院政）'], [1185, '朝廷と鎌倉幕府'], [1333, '朝廷（建武の新政）'], [1336, '室町幕府'], [1573, '織田・豊臣の政権'], [1603, '江戸幕府'], [1868, '明治政府'], [1890, '帝国議会と内閣（大日本帝国憲法）'], [1947, '国会と内閣（日本国憲法）']];
   function govOf(y) { var g = GOV[0][1]; GOV.forEach(function (x) { if (y >= x[0]) g = x[1]; }); return g; }
   function eraOf(H, y) { var e = null; (H.eras || []).forEach(function (x) { if (x[0] <= y) e = x[1]; }); return e; }
-  var ST_WORD = { kuge: '公家', bushi: '武士', priest: '僧・神職', hyakusho: '百姓', chonin: '町人', outcast: 'えた・ひにん' };
+  var ST_WORD = { kuge: '公家', bushi: '武士', priest: '僧・神職', hyakusho: '百姓', chonin: '町人', outcast: '被差別身分とされた人々' };
 
   // ctx = { C, H, E, O, P（県のデータ）}
   function rows(ctx, L, year) {

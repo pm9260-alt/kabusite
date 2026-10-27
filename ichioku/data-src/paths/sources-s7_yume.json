@@ -1,0 +1,7 @@
+{
+ "s7_polderman2015": { "name": "Polderman TJC et al. Meta-analysis of the heritability of human traits based on fifty years of twin studies. Nature Genetics 47: 702-709, 2015", "note": "2,748の論文・17,804の特徴をまとめると、遺伝の割合の平均は49%" },
+ "s7_vinkhuyzen2009": { "name": "Vinkhuyzen AAE, van der Sluis S, Posthuma D, Boomsma DI. The heritability of aptitude and exceptional talent across different domains in adolescents and young adults. Behavior Genetics 39: 380-392, 2009", "note": "双子1,685組。音楽・運動・数学などの素養の遺伝の割合は32〜71%、特に秀でた才能は50〜92%。家庭の共通の環境の影響は小さい" },
+ "s7_krapohl2014": { "name": "Krapohl E et al. The high heritability of educational achievement reflects many genetically influenced traits, not just intelligence. PNAS 111(42): 15273-15278, 2014", "note": "16歳の双子13,306人。中等教育修了試験（GCSE）の成績の遺伝の割合は62%" },
+ "s7_turkheimer2003": { "name": "Turkheimer E et al. Socioeconomic status modifies heritability of IQ in young children. Psychological Science 14(6): 623-628, 2003", "note": "遺伝の割合は環境しだいで変わる（暮らしの苦しい家では小さく出る）" },
+ "s7_daiichi": { "name": "第一生命保険「大人になったらなりたいもの」調査（1989年から毎年。未就学児と小学生）", "note": "男の子は1989〜1992年に野球選手が1位、2013年はサッカー選手、2017年は学者・博士、2023年の小学生は会社員。女の子は食べ物屋さんが2013年まで17年連続1位、ほかに保育園・幼稚園の先生、看護師など。割合は使わず、候補の顔ぶれにだけ使う" }
+}

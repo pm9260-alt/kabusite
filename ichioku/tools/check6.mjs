@@ -97,7 +97,7 @@ test('1-3', '文の終わりが丁寧体・生まれた土地を離れていな�
     for (const e of texts(L)) if (/長屋|路地|表通り/.test(e.t) && L.old && /village|fish/.test(L.kind) && !L.moved && !L.abroad && L.mode !== 'away' && e.cat !== '時代') away.push('村に' + e.t.slice(0, 16));
   }
   const rate = plain.length;
-  return { ok: rate === 0 && away.length === 0, n: Ls.length, detail: '丁寧体でない文 ' + rate + '件' + (rate ? '（' + [...new Set(plain)].slice(0, 4).join('／') + '）' : '') + '・離れた人向けの文 ' + away.length + '件' };
+  return { ok: rate === 0 && away.length === 0, n: Ls.length, detail: '丁寧体でない文 ' + rate + '件' + (rate ? '（' + [...new Set(plain)].slice(0, 4).join('／') + '）' : '') + '・離れた人向けの文 ' + away.length + '件' + (away.length ? '（' + away.slice(0, 3).join('／') + '）' : '') };
 });
 test('1-4', '選んだ中身の文（did）が1つの人生で2回以上出ない', () => {
   const Ls = lives(500, 1000, 2000, 17); let bad = 0, ex = '';
@@ -664,6 +664,253 @@ test('10-7', '出来事の文の日本語（でしました・助詞の連続・
   return { ok: tot === 0, n, detail: tot ? Object.entries(cnt).map(([k, v]) => k + ' ' + v + '（' + ex[k] + '）').join('・') : '文 ' + n + '・おかしな文 0' };
 });
 
+test('10-5', '動物を迎える分かれ道（20歳以上の人生の4割以上が出会う・時代に合わない動物0件・迎えた動物に名前）', () => {
+  const ERA = [[1000, 1599, '犬 猫 鶏 馬 牛 鷹'], [1600, 1867, '犬 猫 金魚 鈴虫 小鳥 狆'], [1868, 1945, '犬 猫 小鳥 金魚 山羊'], [1946, 2120, '犬 猫 インコ ハムスター うさぎ 魚']];
+  let n = 0, met = 0, bad = [], noName = 0, kept = 0, died = 0, sick = 0; const kinds = {};
+  for (let i = 0; n < 500 && i < 4000; i++) {
+    const by = 1000 + (i * 37) % 1001, L = birth(by, ((i + 1) * 7919 + 505) >>> 0); let saw = false;
+    play(L, br => { if (br.d && br.d.cid === '_pet') saw = true; if (br.d && br.d.cid === '_petSick') sick++; }, br => br.d && br.d.cid === '_pet' ? { s: 'p0' } : null);
+    if (L.deathAge < 20) continue;
+    n++; if (saw) met++;
+    for (const p of L.pets || []) {
+      if (!/^s6\./.test(p.src || '') ) { const row = ERA.find(r => p.y >= r[0] && p.y <= r[1]); if (row && !row[2].split(' ').includes(p.a) && !['犬', '猫', '馬', '牛', '鶏', '鷹', '金魚', '小鳥', '鈴虫'].includes(p.a)) bad.push(p.y + p.a); }
+      if (p.a === 'ハムスター' && p.y < 1975 || p.a === 'インコ' && p.y < 1946 || p.a === '金魚' && p.y < 1700 || p.a === '狆' && p.y < 1600) bad.push(p.y + p.a);
+      if (!p.name && p.a !== '鈴虫' && p.a !== '魚') noName++;
+      kept++; if (p.dy != null) died++; kinds[p.a] = (kinds[p.a] || 0) + 1;
+    }
+  }
+  const r = pct(met, n);
+  return { ok: r >= 40 && !bad.length && !noName, n, detail: '出会った人生 ' + r + '%・時代に合わない動物 ' + bad.length + (bad.length ? '（' + bad.slice(0, 3).join('、') + '）' : '') + '・名前なし ' + noName + '・迎えた動物 ' + kept + '（亡くなった ' + died + '・病気の分かれ道 ' + sick + '）・' + Object.entries(kinds).map(([k, v]) => k + v).join(' ') };
+});
+test('10-10', 'あなたに近づく子孫（代ごとに距離が縮む・あなたの生まれ年の100年前より後は同じか隣の都道府県・1代16〜45年・最後の代があなたの年）', () => {
+  const PREFS = C.prefs.map(p => p.code); let n = 0, nearBad = 0, gapBad = 0, endBad = 0; const dist = [];
+  for (let i = 0; i < 100; i++) {
+    const rnd = E.makeRng(((i + 1) * 104729) >>> 0), me = { y: 1960 + Math.floor(rnd() * 50), pref: PREFS[Math.floor(rnd() * 47)] };
+    let by = 1000 + Math.floor(rnd() * 700), pref = PREFS[Math.floor(rnd() * 47)], g = 0;
+    while (g < 40) {
+      const dAge = 20 + Math.floor(rnd() * 60), L = { by, deathYear: by + dAge, members: [] };
+      const d = TG.descPlan(L, 2, me);
+      if (!d) break;
+      if (d.by - by < 16 * d.g || d.by - by > 45 * d.g) gapBad++;
+      const mv = TG.drift(H, pref, d.by, me, Math.min(1, 1.5 / Math.max(1, TG.gensTo(d.by, me.y)) + (d.by >= me.y - 160 ? 0.3 : 0)), rnd);
+      if (mv) pref = mv.pref;
+      (dist[g] = dist[g] || []).push(TG.kmPref(pref, me.pref));
+      if (d.by > me.y - 100 && !TG.nearMe(pref, me.pref)) nearBad++;
+      by = d.by; g++;
+    }
+    // 最後は「たどる」と同じく、あなたの年に生まれる子で終える（1代16〜45年）
+    const last = me.y - by; if (last < 16 && g > 0 || last > 90) endBad++;
+    n++;
+  }
+  const avg = dist.map(a => Math.round(a.reduce((x, y) => x + y, 0) / a.length));
+  let shrink = true; for (let k = 1; k < Math.min(avg.length, 10); k++) if (dist[k].length >= 10 && avg[k] > avg[k - 1]) shrink = false;
+  return { ok: shrink && !nearBad && !gapBad, n, detail: '代ごとの距離の平均 ' + avg.slice(0, 10).join('→') + 'km・100年前より後で遠い代 ' + nearBad + '・間隔の外 ' + gapBad + '・最後の代までの年が合わない ' + endBad };
+});
+test('10-9', '2020年代の出会い（2020〜2030年に初めて結婚する人生500件でアプリの出会いが調査の25%±7ポイント・2014年より前の相席屋と2010年より前のマッチングアプリが0件）', () => {
+  const DE = require(path.join(SITE, 'js', 'deai.js'));
+  let n = 0, app = 0, early = 0, seen = 0, cnt = {};
+  for (let i = 0; n < 500 && i < 30000; i++) {
+    const by = 1965 + (i * 7) % 41, L = birth(by, ((i + 1) * 7919 + 99) >>> 0), M = L.old ? O : E;
+    let g = 0;
+    while (L.alive && g++ < 130 && L.year <= 2030) { let r = M.step(L); while (r && r.branch) { r = M.resolve(L, r.branch.ask ? { text: '' } : null); } }
+    seen++;
+    for (const e of texts(L)) { if (e.y < 2014 && /相席屋/.test(e.t)) early++; if (e.y < 2010 && /マッチングアプリ|出会いのアプリ|アプリで知り合/.test(e.t)) early++; }
+    if (L.metBy === 'app' && L.metByY < 2010) early++;
+    const fm = L.log.find(r => r.events.some(e => e.cat === '家庭' && /と結婚した。/.test(e.t)));
+    if (!fm || fm.year < 2020 || fm.year > 2030 || L.metByY !== fm.year) continue;
+    n++; cnt[L.metBy] = (cnt[L.metBy] || 0) + 1; if (L.metBy === 'app') app++;
+  }
+  const r = pct(app, n), want = DE.MY2023.app;
+  return { ok: n >= 500 && Math.abs(r - want) <= 7 && early === 0, n, detail: 'アプリ ' + r + '%（調査 ' + want + '%）・職場 ' + pct(cnt.work || 0, n) + '%・友人 ' + pct(cnt.friend || 0, n) + '%・見合い ' + pct(cnt.miai || 0, n) + '%・2014年より前の相席屋と2010年より前のアプリ ' + early + '件（' + seen + '人生を2030年まで）' };
+});
+test('10-14', '昭和以降の賭けごと（1910〜2005年生まれの20歳以上1000件：分かれ道に出会うのが3〜6割・賭けた人の通算の収支の平均がマイナス・20歳未満の賭け0件・始まった年より前の競技0件）', () => {
+  const KK = require(path.join(SITE, 'js', 'kake.js'));
+  let n = 0, met = 0, bettors = 0, sum = 0, minor = 0, early = 0, bets = 0, wins = 0, bigW = 0, bigL = 0;
+  for (let i = 0; n < 1000 && i < 5000; i++) {
+    const by = 1910 + (i * 37) % 96, L = play(birth(by, ((i + 1) * 7919 + 1414) >>> 0));
+    if (!(L.deathAge >= 20)) continue;
+    n++;
+    const k = L.kake; if (k && k.met) met++;
+    if (!k || !k.log.length) continue;
+    bettors++; sum += k.net;
+    for (const b of k.log) { bets++; if (b.net > 0) wins++; if (b.a < 20) minor++; if (!KK.open(b.kind, b.y)) early++; }
+    if (k.net >= 100) bigW++; if (k.net <= -100) bigL++;
+  }
+  const mean = bettors ? sum / bettors : 0, r = pct(met, n);
+  return { ok: r >= 30 && r <= 60 && mean < 0 && minor === 0 && early === 0, n, detail: '出会った人生 ' + r + '%・賭けた人 ' + bettors + '人の通算の収支の平均 ' + Math.round(mean) + '千円（今の物価）・勝った賭け ' + wins + '/' + bets + '・10万円以上の大勝ち ' + bigW + '人・大負け ' + bigL + '人・20歳未満 ' + minor + '件・始まる前 ' + early + '件' };
+});
+test('10-13', '仕事の中身（上位300の仕事すべてに6つの項目と出典がある。その仕事に就いて10年以上働いた人生の記録に、6つの項目に沿った場面が2つ以上出る）', () => {
+  const JD = require(path.join(SITE, 'js', 'jobdesc.js'));
+  const top = JSON.parse(fs.readFileSync(path.join(ROOT, 'data-src', 'jobdesc-top.json'), 'utf8')).top.map(x => x[0]);
+  let noItem = 0, noSrc = 0, ex = '';
+  for (const n of top) {
+    const e = JD.get(n, null);
+    if (!e || JD.KEYS.some(k => !e[k] || !/。$/.test(e[k]))) { noItem++; ex = ex || n; continue; }
+    if (!e.src.length || e.src.some(s => !JD.SRC[s])) { noSrc++; ex = ex || n + '（出典）'; }
+  }
+  const TOPS = new Set(top);
+  const working = L => L.old ? !!(L.job && L.job !== 'home') : !!(L.job && L.job.ind);
+  let n = 0, low = 0, scenesN = 0, ex2 = '';
+  for (let i = 0; n < 300 && i < 2400; i++) {
+    const by = 1000 + (i * 37) % 1001, L = birth(by, (i + 1) * 15485863 + 13), M = L.old ? O : E, run = {}, best = {};
+    let g = 0;
+    while (L.alive && g++ < 130) {
+      let r = M.step(L);
+      while (r && r.branch) r = M.resolve(L, r.branch.ask ? { text: '' } : null);
+      const nm = (L.pathJob && L.pathJob.n) || (L.selfJob && L.selfJob.n), a = L.year - 1 - L.by;
+      for (const k of Object.keys(run)) if (k !== nm) delete run[k];
+      if (nm && a >= 15 && working(L) && !(L.mode && L.mode !== 'away' && !L.pathJob) && TOPS.has(nm)) { const rr = run[nm] = run[nm] || { from: L.year - 1, ys: [] }; rr.ys.push(L.year - 1); if (rr.ys.length >= 10 && !best[nm]) best[nm] = rr; }
+      else if (nm) delete run[nm];
+    }
+    const jobs = Object.keys(best);
+    if (!jobs.length) continue;
+    n++;
+    for (const j of jobs) {
+      const set = new Set(); for (const y of best[j].ys) JD.scenes(j, y).forEach(t => set.add(t));
+      const c = texts(L).filter(e => e.story && e.cat === '学歴と仕事' && set.has(e.t)).length;
+      scenesN += c;
+      if (c < 2) { low++; ex2 = ex2 || j + ' ' + L.by + '年生まれ ' + c + '件'; }
+    }
+  }
+  return { ok: noItem === 0 && noSrc === 0 && low === 0 && n >= 100, n, detail: '上位' + top.length + 'の仕事で6つの項目がない ' + noItem + '・出典がない ' + noSrc + (ex ? '（' + ex + '）' : '') + '・10年以上働いた人生 ' + n + '人で場面が2つに満たない ' + low + (ex2 ? '（' + ex2 + '）' : '') + '・場面の平均 ' + (n ? (scenesN / n).toFixed(1) : 0) + '件' };
+});
+const HB = require(path.join(SITE, 'js', 'hisabetsu.js'));
+test('10-4', '被差別身分の家に生まれ25歳まで生きた人生200件で、0〜25歳のうち場面が出た年の割合が3分の1以上。表の場面が決まった藩・国・年の外で0件。蔑称の文字列が0件（全データ・全js）', () => {
+  // 作る人の表（spec v19 4）。決まった国と年の外では出さない
+  const TABLE = {
+    tajima1675: { prov: ['但馬'], y: [1675, 1690] }, awa1699: { prov: ['阿波'], y: [1699, 1699] }, takada1742: { prov: ['越後'], y: [1742, 1742] },
+    chosyu1743: { prov: ['周防', '長門'], y: [1743, 1743] }, kaga1776: { prov: ['加賀', '能登', '越中'], y: [1776, 1776] }, izumi1772: { prov: ['和泉'], y: [1772, 1772] },
+    okayama1855: { prov: ['備前'], y: [1855, 1856] }, okayama1856: { prov: ['備前'], y: [1856, 1856] }, mimasaka1873: { prov: ['美作'], y: [1873, 1873] },
+    kyoto1922: { prov: ['山城'], pref: ['26'], y: [1922, 1922] }, nagano1924: { prov: ['信濃'], pref: ['20'], y: [1924, 1924] }, kochi1961: { prov: ['土佐'], pref: ['39'], y: [1961, 1963] }
+  };
+  const IT = {}; HB.items.forEach(o => { IT[o.id] = o; });
+  const st = by => by >= 1872 ? 'buraku' : 'outcast';
+  const mk = (by, seed, b) => O.newLife(C, H, P[b.pref] || null, { year: by, seed, birth: b, status: st(by) });
+  const hbEvs = L => L.log.flatMap(r => r.events.filter(e => e.hb).map(e => ({ y: r.year, a: r.age, id: e.hb, at: e.hbAt || '', t: e.t, ev: e.ev })));
+  let bad = [], noSrc = 0, ex = '';
+  const checkPlace = (L) => {
+    for (const e of hbEvs(L)) {
+      const o = IT[e.id]; if (!o) { bad.push('不明 ' + e.id); continue; }
+      if (!e.ev || !e.ev.length || e.ev.some(v => !v.name)) noSrc++;
+      const [pv, pf] = e.at.split('|');
+      const T = o.table ? TABLE[o.table] : null;
+      if (o.table && !T) { bad.push('表にない ' + o.table); continue; }
+      const lim = T || (o.prov || o.pref ? { prov: o.prov || [], pref: o.pref || [], y: o.y } : null);
+      if (!lim) continue;
+      const inPlace = (lim.prov || []).includes(pv) || (e.y >= 1872 && (lim.pref || []).includes(pf));
+      if (!inPlace || e.y < lim.y[0] || e.y > lim.y[1]) bad.push(e.id + ' ' + e.y + ' ' + pv);
+    }
+  };
+  // 1. 0〜25歳の場面の割合（1000〜1974年生まれ）
+  let n = 0, hit = 0, yrs = 0;
+  for (let i = 0; n < 200 && i < 3000; i++) {
+    const by = 1000 + (i * 37) % 975, seed = ((i + 1) * 7919 + 4041) >>> 0;
+    const L = play(mk(by, seed, O.pickBirth(C, H, by, E.makeRng(seed ^ 0x9e3779b9))));
+    checkPlace(L);
+    if (L.deathAge < 25) continue;
+    n++; yrs += 26; hit += new Set(hbEvs(L).filter(e => e.a <= 25).map(e => e.a)).size;
+  }
+  // 2. 表の国・年の人生（出ること）と、同じ年のほかの国の人生（出ないこと）
+  let tableHit = 0, tableN = 0;
+  const pref1 = pv => Object.keys(H.prov[pv].prefs)[0];
+  for (const [k, T] of Object.entries(TABLE)) for (const pv of [T.prov[0], '大和']) for (const d of [4, 9, 14, 19]) {
+    const by = T.y[0] - d, L = play(mk(by, (by * 131 + d * 17 + pv.length) >>> 0, { prov: pv, sub: null, pref: pref1(pv) }));
+    checkPlace(L);
+    if (pv !== '大和' && L.deathAge >= d) { tableN++; if (hbEvs(L).some(e => IT[e.id] && IT[e.id].table === k)) tableHit++; }
+  }
+  // 3. 差別のための呼び名（全データ・全js）。本や事典の項目の題名（『…』、コトバンク「…」）は除く
+  const SLUR = /穢多|えた・ひにん|えた身分|ひにん|非人|エタ|ヒニン|新平民|特殊部落|部落民/g;
+  const files = [];
+  const walk = d => { for (const f of fs.readdirSync(d, { withFileTypes: true })) { const p = path.join(d, f.name); if (f.isDirectory()) walk(p); else if (/\.(js|json|mjs|html)$/.test(f.name)) files.push(p); } };
+  walk(path.join(SITE, 'js')); walk(path.join(SITE, 'data')); walk(path.join(ROOT, 'data-src'));
+  const slur = [];
+  for (const f of files) {
+    const t = fs.readFileSync(f, 'utf8').replace(/『[^』\n]{0,60}』/g, '').replace(/(コトバンク|Wikipedia)[「『][^」』\n]{0,30}[」』]/g, '');
+    const m = t.match(SLUR); if (m) slur.push(path.relative(ROOT, f) + '：' + [...new Set(m)].join('・'));
+  }
+  const r = n ? hit / yrs : 0;
+  return { ok: n >= 200 && r >= 1 / 3 && bad.length === 0 && noSrc === 0 && tableHit >= tableN * 0.5 && slur.length === 0, n,
+    detail: '0〜25歳で場面が出た年 ' + pct(hit, yrs) + '%・表の外の場面 ' + bad.length + (bad.length ? '（' + bad.slice(0, 3).join('／') + '）' : '') + '・出典なし ' + noSrc +
+      '・表の国と年の人生で出会った ' + tableHit + '／' + tableN + '・呼び名の残る所 ' + slur.length + (slur.length ? '（' + slur.join('／') + '）' : '') };
+});
+
+/* ---------- v19 15・16・17 素養と夢・プロの選手（site/js/yume.js） ---------- */
+const YM = require(path.join(SITE, 'js', 'yume.js'));
+const playTo = (L, age) => { const M = L.old ? O : E; let g = 0; while (L.alive && g++ < 130 && L.age < age) { let r = M.step(L); while (r && r.branch) r = M.resolve(L, r.branch.ask ? { text: '' } : null); } return L; };
+const MUSIC_P = /楽|琴|三味線|歌の師|奏|音楽|能役者|囃子/, STUDY_P = /学者|研究|博士|教授|医|塾|師範|訓導|教師/;
+const pathDomT = p => { if (/^s7sp_/.test(p.id)) return 'sport'; const js = []; const w = o => { if (o && o.job) js.push(o.job.n); }; p.opts.forEach(w); for (const n of Object.values(p.nodes || {})) { w(n); if (n.ask) n.ask.opts.forEach(w); } const t = js.join('・'); return p.id === 's7_ongaku' || MUSIC_P.test(t) ? 'music' : p.id === 's7_gakumon' || STUDY_P.test(t) ? 'study' : null; };
+test('10-15', '素養の親から子へ（親子の組10万件で回帰の傾きが決めた遺伝の割合±0.03・資料の範囲0.32〜0.71の中。素養が高い子ほどその分野の道に出会う割合が高い）', () => {
+  // 1 親子の組10万件（人々のばらつきから父母を引き、子を作る。yume.js と同じ式）
+  let r = 12345; const rnd = () => { r = (Math.imul(r, 1103515245) + 12345) >>> 0; return r / 4294967296; };
+  const det = []; const D = ['music', 'sport', 'study'];
+  const acc = {}; D.forEach(d => { acc[d] = { sx: 0, sy: 0, sxx: 0, sxy: 0, n: 0 }; });
+  for (let i = 0; i < 100000; i++) {
+    const a = YM.popApt(rnd), b = YM.popApt(rnd), c = YM.childApt(a, b, rnd);
+    for (const d of D) { const x = (a[d] + b[d]) / 2, y = c[d], o = acc[d]; o.sx += x; o.sy += y; o.sxx += x * x; o.sxy += x * y; o.n++; }
+  }
+  let ok1 = true;
+  for (const d of D) { const o = acc[d], sl = (o.sxy - o.sx * o.sy / o.n) / (o.sxx - o.sx * o.sx / o.n); det.push(d + ' 傾き' + sl.toFixed(3) + '（決めた' + YM.H2[d] + '）'); if (Math.abs(sl - YM.H2[d]) > 0.03 || sl < 0.32 || sl > 0.71) ok1 = false; }
+  // 2 人生の中の親子：父母に素養があり、子の素養が父母から作られている
+  // 3 1925〜2005年生まれ3000件（30歳まで）：素養の上の3分の1と下の3分の1で、その分野の道（筋）に出会う割合
+  const rows = [];
+  let withPar = 0, n0 = 0;
+  for (let i = 0; i < 3000; i++) {
+    const by = 1925 + (i * 37) % 81, L = playTo(birth(by, (i + 1) * 7919 + 1515), 30);
+    n0++; const dad = (L.members || []).find(m => m.role === '父'), mom = (L.members || []).find(m => m.role === '母');
+    if (L.apt && dad && dad.apt && mom && mom.apt) withPar++;
+    if (L.age < 22) continue;
+    const met = { music: 0, sport: 0, study: 0 };
+    for (const id of Object.keys((L.story || {}).done || {})) { const p = PID[id]; const d = p && pathDomT(p); if (d) met[d] = 1; }
+    if (L.proSport) met.sport = 1;
+    rows.push({ apt: L.apt, met });
+  }
+  let ok2 = withPar === n0;
+  for (const d of D) {
+    const s = rows.slice().sort((a, b) => a.apt[d] - b.apt[d]), k = Math.floor(s.length / 3);
+    const lo = s.slice(0, k).reduce((t, x) => t + x.met[d], 0) / k, hi = s.slice(-k).reduce((t, x) => t + x.met[d], 0) / k;
+    det.push(d + ' 上' + (hi * 100).toFixed(1) + '%・下' + (lo * 100).toFixed(1) + '%');
+    if (!(hi > lo)) ok2 = false;
+  }
+  return { ok: ok1 && ok2, n: 100000 + n0, detail: det.join('・') + '・父母の素養がある人生 ' + withPar + '／' + n0 };
+});
+test('10-16', 'プロの選手（1925〜2005年生まれで20歳まで生きた人生1万件：男性1.5%・女性0.8%の±0.3ポイント・始まった年より前の競技0件）', () => {
+  const n = { m: 0, f: 0 }, pro = { m: 0, f: 0 }, ks = {}; let bad = [];
+  const SP = {}; YM.SPORT.forEach(o => { SP[o.k] = o; });
+  for (let i = 0; n.m + n.f < 10000 && i < 20000; i++) {
+    const by = 1925 + (i * 37) % 81, L = playTo(birth(by, (i + 1) * 7919 + 1616), 27);
+    if (L.age < 20) continue;
+    n[L.sex]++;
+    if (!L.proSport) continue;
+    pro[L.sex]++; ks[L.proSport.k] = (ks[L.proSport.k] || 0) + 1;
+    const o = SP[L.proSport.k], y = L.proSport.y;
+    const ok = L.sex === 'm' ? o.m && y >= o.m[0] && y <= o.m[1] : o.f.some(r => y >= r[0] && y <= r[1]);
+    if (!ok) bad.push(L.proSport.k + ' ' + y + ' ' + L.sex);
+  }
+  const pm = pro.m / n.m * 100, pf = pro.f / n.f * 100;
+  return { ok: Math.abs(pm - 1.5) <= 0.3 && Math.abs(pf - 0.8) <= 0.3 && bad.length === 0, n: n.m + n.f, detail: '男性 ' + pm.toFixed(2) + '%（' + pro.m + '／' + n.m + '）・女性 ' + pf.toFixed(2) + '%（' + pro.f + '／' + n.f + '）・始まる前の競技 ' + bad.length + '件' + (bad.length ? '（' + bad.slice(0, 3).join('、') + '）' : '') + '・競技 ' + Object.entries(ks).map(([k, v]) => k + ':' + v).join(' ') };
+});
+test('10-17', '10歳の将来の夢（1926年以降に生まれ10歳まで生きた人生500件で全件に夢・夢に合う習い事や進路の道が出る割合が合わない道より高い）', () => {
+  let n = 0, has = 0, mt = 0, mn = 0, ot = 0, on = 0; const D5 = ['music', 'sport', 'study', 'care', 'food'];
+  for (let i = 0; n < 500 && i < 3000; i++) {
+    const by = 1926 + (i * 37) % 80, L = playTo(birth(by, (i + 1) * 7919 + 1717), 20);
+    if (L.age < 11) continue;
+    n++; if (L.dream10 && L.dream10.name && !L.dream10.pending) has++;
+    for (const b of ((L.story || {}).yume || {}).shown || []) {
+      if (D5.indexOf(b.dream) < 0) continue;
+      mt++; if (b.doms.indexOf(b.dream) >= 0) mn++;
+      for (const e of D5) if (e !== b.dream) { ot++; if (b.doms.indexOf(e) >= 0) on++; }
+    }
+  }
+  const pm = mt ? mn / mt : 0, po = ot ? on / ot : 0;
+  return { ok: has === n && n >= 500 && pm > po, n, detail: '夢がある人生 ' + has + '／' + n + '・夢に合う道が出た割合 ' + (pm * 100).toFixed(1) + '%（' + mt + '回）・合わない分野の道が出た割合 ' + (po * 100).toFixed(1) + '%' };
+});
+
+test('10-0', 'site/js のスクリプトがすべて index.html から読まれている（v18 で5つが読まれていなかった誤りの再発を防ぐ）', () => {
+  const html = fs.readFileSync(path.join(SITE, 'index.html'), 'utf8') + fs.readFileSync(path.join(SITE, 'js', 'app.js'), 'utf8');
+  const files = fs.readdirSync(path.join(SITE, 'js')).filter(f => /\.js$/.test(f) && !/^sw\b/.test(f));
+  const miss = files.filter(f => html.indexOf('js/' + f.replace(/\.js$/, '')) < 0 && html.indexOf(f.replace(/\.js$/, '')) < 0);
+  return { ok: !miss.length, n: files.length, detail: '読まれていないスクリプト ' + miss.length + (miss.length ? '（' + miss.join('、') + '）' : '') };
+});
 /* ---------- 動かす ---------- */
 const args = process.argv.slice(2);
 if (args.includes('--list')) { for (const [k, v] of Object.entries(T)) console.log(k + '\t' + v.name); process.exit(0); }

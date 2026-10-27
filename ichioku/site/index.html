@@ -128,7 +128,8 @@
         </div>
       </div>
     </div>
-    <button type="button" class="btn-main bt-start" id="bt-start">人生を始める</button>
+    <p class="bt-auto" id="bt-auto" hidden></p>
+        <button type="button" class="btn-main bt-start" id="bt-start">人生を始める</button>
   </section>
 
   <section id="screen-life" class="screen" hidden aria-live="polite">
@@ -137,7 +138,7 @@
       <div class="oh-row">
         <button type="button" class="o-btn go-top go-top-m" data-go-top>‹ トップへ</button>
         <button type="button" class="oh-title" data-go-top aria-label="トップへ戻る">1000分の<span class="tt-one">1</span></button>
-        <div class="o-age"><span class="o-num" id="age">0</span><span class="o-unit">歳</span><span class="o-meta"><span id="year-now">1975年</span> · <span id="o-name"></span><span class="oh-place"> · <span id="o-place"></span></span> · <span id="o-sec"></span></span></div>
+        <div class="o-age"><span class="o-hero" id="o-name"></span><span class="o-num" id="age">0</span><span class="o-unit">歳</span><span class="o-meta"><span class="oh-year"><span id="year-now">1975年</span> · </span><span class="oh-place"><span id="o-place"></span> · </span><span id="o-sec"></span></span></div>
       </div>
       <div class="ybar" aria-hidden="true"><span id="ybar-fill"></span></div>
       <nav class="o-ctrl" aria-label="進め方">
@@ -348,13 +349,15 @@
       <div id="kyodai-block" hidden>
         <h2 class="h-next">この家の続きを生きる</h2>
         <div id="kyodai-list" class="kyodai-list"></div>
+        <p class="tree-note" id="tree-link">ほかの人は家系図から選べます <button type="button" class="link-btn" id="tree-go">家系図へ</button></p>
       </div>
       <button type="button" class="btn-main" id="same-again" hidden>同じ年に、同じ国でもう一度生まれる</button>
       <button type="button" class="btn-sub" id="same-life">同じ人生をもう一度生きる</button>
       <button type="button" class="btn-main" id="again">別の時代に生まれる</button>
     </div>
     <div class="block">
-      <h2 class="h-self">家系図</h2>
+      <h2 class="h-self" id="tree-end-h">家系図</h2>
+      <p class="tree-hint">人を押すと、その人の人生を送れます。<button type="button" class="link-btn" id="tree-desc" hidden>子孫をたどる</button></p>
       <div class="tree-wrap" id="tree-end"></div>
     </div>
     <section class="o-card rc-reflect" id="multi-block" hidden>
@@ -489,6 +492,7 @@
 <script src="js/choices.js"></script>
 <script src="js/paths.js"></script>
 <script src="js/s6.js"></script>
+<script src="js/jobdesc.js"></script>
 <script src="js/story.js"></script>
 <script src="js/engine.js"></script>
 <script src="js/history.js"></script>
@@ -504,6 +508,12 @@
 <script src="js/card.js"></script>
 <script src="js/japapedia.js"></script>
 <script src="js/curve.js"></script>
+<script src="js/kurashi.js"></script>
+<script src="js/mibun.js"></script>
+<script src="js/shiryo.js"></script>
+<script src="js/tegotae.js"></script>
+<script src="js/kakitsuke.js"></script>
+<script src="js/hisabetsu.js"></script>
 <script src="js/app.js"></script>
 <script src="js/top.js"></script>
 <script>window.IchiokuPrefs && window.IchiokuPrefs.mount(document.getElementById('settings'));</script>

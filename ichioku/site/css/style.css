@@ -930,3 +930,15 @@ body[data-screen="life"] .o-head { gap: 6px; padding-bottom: 8px; }
 .contact div { display: grid; grid-template-columns: 5em minmax(0, 1fr); gap: 8px; padding: 8px 0; border-top: 1px solid var(--line); }
 .contact dt { color: var(--sub); }
 .contact dd { margin: 0; font-weight: 700; word-break: break-all; }
+.bt-auto { font-size: 15px; font-weight: 700; text-align: center; margin: 8px 0; color: var(--text); }
+/* v19 3：主人公の名前を年齢の前に大きく。スマホでは年と場所を先に省いて名前は残す */
+.o-hero { font-size: 20px; font-weight: 700; line-height: 1.2; margin-right: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 11em; min-width: 0; }
+.oh-year { display: none; }
+@media (min-width: 600px) { .oh-year { display: inline; } .o-hero { font-size: 24px; max-width: 14em; } }
+.tree-note { font-size: 14px; margin: 8px 0 0; color: var(--sub); }
+.tree-hint { font-size: 13px; color: var(--sub); margin: 0 0 6px; }
+.tree-hint .link-btn, .tree-note .link-btn { font-size: 14px; }
+/* v19 5：動物の名前の欄と、亡くなった動物の取り消し線 */
+.pet-name { display: flex; flex-direction: column; gap: 4px; margin-top: 10px; font-size: 14px; }
+.pet-name input { font: inherit; font-size: 16px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface, var(--bg)); color: var(--text); }
+.pf-gone .pf-name, .pf-gone .pf-rel { text-decoration: line-through; color: var(--sub); }

@@ -111,7 +111,7 @@
   "text": ["幼なじみの{friend}が賭場の手入れで捕まり、敲きの刑のあと長屋へ戻ってきた。大家は{friend}を追い出したがっている。"],
   "options": [
     { "k": "kabau", "l": "大家にとりなす", "fx": { "tie": 3, "sat": -1 }, "money": { "f": -0.03 }, "after": "{name}は大家に酒を持っていき、{friend}の店賃が遅れたら自分が払うと請け合った。" },
-    { "k": "kakawaranu", "l": "かかわらない", "fx": { "tie": -3, "sat": 1 }, "money": { "f": 0.01 }, "after": "{name}は口をつぐんだ。{friend}は長屋を出て、どこかの宿場へ流れていった。" }
+    { "k": "kakawaranu", "l": "かかわらない", "fx": { "tie": -3, "sat": 1 }, "money": { "f": 0.01 }, "after": "{name}は口をつぐんだ。{friend}は家を出て、どこかの宿場へ流れていった。" }
   ], "src": ["tsumi_ishii_keibatsu"] },
 { "id": "s6.tsumi.edo.c5", "kind": "small", "y": [1600, 1868], "a": [20, 70], "when": { "kind": ["town", "city"] },
   "text": ["{name}の店の売り溜めの銭箱が、夜のうちに盗まれた。番屋の者は、近くの無宿の若者があやしいと言う。"],

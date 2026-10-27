@@ -559,6 +559,7 @@
     CATS.forEach(function (c) { L.cat[c] = 0; });
     L.shogunBirth = !!b.shogun;
     L.status = b.kuge ? 'kuge' : b.shogun ? 'bushi' : drawStatus(L);
+    if (opts.status) L.status = opts.status; // 試験用：身分を決めて人生を作る（tools/check6.mjs 10-4。抽選の順番は変えない）
     L.kind = drawKind(L);
     var mu = pickMuni(L);
     if (mu) { L.muni = mu.code; L.muniName = mu.name; }
@@ -715,13 +716,22 @@
     marryBoost: function (L, k) { if (k >= 1) { L.never = false; L.marryAt = Math.min(L.marryAt || 99, L.age + (k >= 3 ? 1 : 2)); } else L.marryAt = (L.marryAt || L.age) + 5; }
   };
   function storyYear(L, rec) { var S = E.storyMod(); if (S && L.alive) S.year(L, rec, STORY_API); }
+  // 被差別身分とされた家に生まれた人の場面と選択（js/hisabetsu.js。spec v19 4）
+  var HB_API = { push: function (L, rec, cat, t, evs, extra) { return push(L, rec, cat, t, evs, extra); }, ev: function (L, s, y, w, v, x) { return ev(L, s, y, w, v, x); }, homeLife: function (L) { return E.homeLife(L); } };
+  function hbMod() {
+    var g = typeof self !== 'undefined' ? self : this;
+    if (g && g.IchiokuHisabetsu) return g.IchiokuHisabetsu;
+    if (typeof require === 'function') { try { return require('./hisabetsu.js'); } catch (e) { return null; } }
+    return null;
+  }
+  function hbYear(L, rec) { var HB = hbMod(); if (HB && L.alive && HB.target(L)) HB.year(L, rec, HB_API); }
 
   function step(L) {
     if (!L.alive) return null;
     var y = L.year, a = L.age;
     var rec = { year: y, age: a, eraLabel: eraLabel(L.H, y), place: placeLabel(L), pin: pinOf(L), world: worldLine(L, y, a), events: [], branch: null, future: y >= FUTURE_FROM };
     L.rec = rec;
-    if (a === 0) { birthEvent(L, rec); if (L.house && L.house.deathYear >= y) fixedDeathsAtBirth(L, rec); E.multiYear0(L, rec, function (m, fixed) { multiDeath(L, rec, m, fixed); }); storyYear(L, rec); }
+    if (a === 0) { birthEvent(L, rec); if (L.house && L.house.deathYear >= y) fixedDeathsAtBirth(L, rec); E.multiYear0(L, rec, function (m, fixed) { multiDeath(L, rec, m, fixed); }); storyYear(L, rec); hbYear(L, rec); }
     else {
       familyYear(L, rec);
       historyYear(L, rec);
@@ -741,7 +751,7 @@
     if (st === 'kuge' && L.kakaku && KAKAKU_NAME[L.kakaku]) return (y >= 1869 ? '華族' : y < 1221 ? '貴族' : '公家') + '（' + KAKAKU_NAME[L.kakaku] + '）の家';
     if (st === 'kuge' && y >= 1869) return '華族の家';
     if ((st === 'bushi' || st === 'shizoku') && L.grade && GRADE_NAME[L.grade] && !L.rank) return (st === 'bushi' ? '武士' : '士族') + '（' + GRADE_NAME[L.grade] + '）の家';
-    if (y < 1600 && st === 'outcast') return '河原者や非人とされた家';
+    if (y < 1600 && st === 'outcast') return '被差別身分とされた家';
     if (y < 1600 && st === 'chonin') return '職人や商人の家';
     if (y < 1185 && st === 'hyakusho') return '田を耕す農民の家';
     return ST_WORD[st];
@@ -878,7 +888,7 @@
   function historyYear(L, rec) {
     var y = L.year, st = L.status, H = L.H;
     if (y === 1871 && (st === 'bushi')) push(L, rec, '時代', '藩がなくなり県が置かれた。武士の身分は「士族」という呼び名に変わった', [ev(L, 'jinshin', 1872, '士族・卒族の割合（明治5年）', '5.9%')]);
-    if (y === 1871 && st === 'outcast') push(L, rec, '時代', 'えた・ひにんの呼び名と身分をなくす布告（解放令）が出た。けれど近くの村からの差別はなくならず、反対する一揆まで起きた', [ev(L, 'outcast', 1871, '解放令の時点の穢多の人数', '28万人あまり')]);
+    if (y === 1871 && st === 'outcast') push(L, rec, '時代', '差別されていた身分の呼び名と身分をなくす布告（解放令）が出た。けれど近くの村からの差別はなくならず、反対する一揆まで起きた', [ev(L, 'outcast', 1871, '解放令の時点で差別されていた身分とされた人の数', '28万人あまり')]);
     if (y === 1876 && st === 'ainu' && /アイヌ語/.test(L.name)) {
       var nm = nameFor(L, L.sex, 1868, 'hyakusho');
       push(L, rec, '時代', '戸籍に入れられ、「' + nm + '」という和風の名前を名乗るように言われた', [ev(L, LIFE_SRC, 1876, '開拓使がアイヌの人々に和風の名前を付けた', '')]);
@@ -910,6 +920,7 @@
     marryYear(L, rec);
     warYear(L, rec);
     eventYear(L, rec);
+    hbYear(L, rec);
     if (!L.alive) return;
     goodsYear(L, rec);
     if (a === 1 && !rec.events.length) push(L, rec, '健康', L.sex === 'm' ? 'つかまり立ちから、よちよちと歩き始めた' : 'よちよちと歩き始めた', [ev(L, LIFE_SRC, y, '子どもの育ち', '', { noYearNote: true })]);
@@ -1628,7 +1639,7 @@
     // 寄り合いに出るのは、家の主かその跡取りの男性
     if (s.head && !(L.sex === 'm' && (L.heir || L.toshu || (L.dad && !L.dad.alive)))) return false;
     if (s.jp && (L.ainu || L.ryukyu)) return false;
-    // 河原者・非人やえた・ひにんとされた人は、村の祭りに加わることを許されなかった
+    // 被差別身分とされた人は、村の祭りに加わることを許されなかった
     if (!s.st && /祭り/.test(s.t) && (L.status === 'outcast' || (L.status === 'buraku' && y < 1946))) return false;
     if (s.wk && s.wk.indexOf(L.job) < 0) return false;
     // 長屋・路地・表通りは町と市街地だけ。生まれた土地を離れていない人に、離れた人向けの文を出さない（spec6 1-3）
@@ -1812,6 +1823,7 @@
       else if (br.kind === 'bunke') resolveBunke(L, rec, br, answers);
       else if (br.kind === 'muko') resolveMuko(L, rec, br, answers);
       else if (br.kind === 'yoshi') resolveYoshi(L, rec, br, answers);
+      else if (br.kind === 'hisabetsu') { var HBm = hbMod(); if (HBm) HBm.resolve(L, rec, br, answers, HB_API); }
       else if (br.id === 'story') { var SM = E.storyMod(); if (SM) SM.resolve(L, rec, br, answers, STORY_API); }
     }
     if (L.alive && L.queue.length) { rec.branch = L.queue.shift(); return rec; }

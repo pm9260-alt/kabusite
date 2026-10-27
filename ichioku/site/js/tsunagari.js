@@ -133,6 +133,57 @@
       : ['転勤で', '仕事を変えて', '結婚して'];
     return c[Math.floor(rnd() * c.length)];
   }
+  /* ---------- v19 10：子孫へ続けるほど、あなたの生まれ年と都道府県に近づける ---------- */
+  // 都道府県庁のおおよその緯度・経度と、陸で接する都道府県（北海道と青森、鹿児島と沖縄は海をはさんだ隣とみる）
+  var PREF_LL = { '01': [43.06, 141.35], '02': [40.82, 140.74], '03': [39.70, 141.15], '04': [38.27, 140.87], '05': [39.72, 140.10], '06': [38.24, 140.36], '07': [37.75, 140.47], '08': [36.34, 140.45], '09': [36.57, 139.88], '10': [36.39, 139.06], '11': [35.86, 139.65], '12': [35.61, 140.12], '13': [35.69, 139.69], '14': [35.45, 139.64], '15': [37.90, 139.02], '16': [36.70, 137.21], '17': [36.59, 136.63], '18': [36.07, 136.22], '19': [35.66, 138.57], '20': [36.65, 138.18], '21': [35.39, 136.72], '22': [34.98, 138.38], '23': [35.18, 136.91], '24': [34.73, 136.51], '25': [35.00, 135.87], '26': [35.02, 135.76], '27': [34.69, 135.52], '28': [34.69, 135.18], '29': [34.69, 135.83], '30': [34.23, 135.17], '31': [35.50, 134.24], '32': [35.47, 133.05], '33': [34.66, 133.93], '34': [34.40, 132.46], '35': [34.19, 131.47], '36': [34.07, 134.56], '37': [34.34, 134.04], '38': [33.84, 132.77], '39': [33.56, 133.53], '40': [33.61, 130.42], '41': [33.25, 130.30], '42': [32.74, 129.87], '43': [32.79, 130.74], '44': [33.24, 131.61], '45': [31.91, 131.42], '46': [31.56, 130.56], '47': [26.21, 127.68] };
+  var ADJ = { '01': '02', '02': '01 03 05', '03': '02 04 05', '04': '03 05 06 07', '05': '02 03 04 06', '06': '04 05 07 15', '07': '04 06 08 09 10 15', '08': '07 09 11 12', '09': '07 08 10 11', '10': '07 09 11 15 20', '11': '08 09 10 12 13 19 20', '12': '08 11 13', '13': '11 12 14 19', '14': '13 19 22', '15': '06 07 10 16 20', '16': '15 17 20 21', '17': '16 18 21', '18': '17 21 25 26', '19': '11 13 14 20 22', '20': '10 11 15 16 19 21 22 23', '21': '16 17 18 20 23 24 25', '22': '14 19 20 23', '23': '20 21 22 24', '24': '21 23 25 26 29 30', '25': '18 21 24 26', '26': '18 24 25 27 28 29', '27': '26 28 29 30', '28': '26 27 31 33', '29': '24 26 27 30', '30': '24 27 29', '31': '28 32 33 34', '32': '31 34 35', '33': '28 31 34', '34': '31 32 33 35', '35': '32 34 40', '36': '37 38 39', '37': '36 38', '38': '36 37 39', '39': '36 38', '40': '35 41 43 44', '41': '40 42', '42': '41', '43': '40 44 45 46', '44': '40 43 45', '45': '43 44 46', '46': '43 45 47', '47': '46' };
+  function pc(x) { x = String(x); return x.length === 1 ? '0' + x : x; }
+  function kmPref(a, b) {
+    var p = PREF_LL[pc(a)], q = PREF_LL[pc(b)];
+    if (!p || !q || pc(a) === pc(b)) return 0;
+    var R = 6371, t = Math.PI / 180, dLa = (q[0] - p[0]) * t, dLo = (q[1] - p[1]) * t;
+    var h = Math.sin(dLa / 2) * Math.sin(dLa / 2) + Math.cos(p[0] * t) * Math.cos(q[0] * t) * Math.sin(dLo / 2) * Math.sin(dLo / 2);
+    return Math.round(2 * R * Math.asin(Math.min(1, Math.sqrt(h))));
+  }
+  function nearMe(pref, mePref) { pref = pc(pref); mePref = pc(mePref); return pref === mePref || (ADJ[mePref] || '').split(' ').indexOf(pref) >= 0; }
+  // あなたまでの代の数（1代は16〜45年）
+  function gensTo(by, meY) { var n = Math.max(1, Math.round((meY - by) / GEN)); while (n > 1 && (meY - by) / n < 16) n--; while ((meY - by) / n > 45) n++; return n; }
+  // gN 代あとの子孫の生まれ年。あなたの生まれ年にちょうど届くように、あなたまでの年を代の数で等しく分ける。
+  // 亡くなった年より後に生まれる代のうち、gN 代あと以上でいちばん近い代を選ぶ（あなたの代そのものは「たどる」で出す）
+  function descPlan(L, gN, me) {
+    if (!me || !me.y || !me.pref || !L || L.deathYear == null || me.y <= L.by + 32) return null;
+    var n = gensTo(L.by, me.y);
+    for (var g = gN; g < n; g++) {
+      var by = L.by + Math.round((me.y - L.by) * g / n);
+      if (by <= L.deathYear) continue;
+      if (by > 2000) return null;
+      return { gap: by - L.deathYear, by: by, me: true, g: g, toGo: n - g, years: me.y - by };
+    }
+    return null;
+  }
+  // 子孫の住む都道府県：代を重ねるほど、あなたの都道府県へ寄せる。あなたの生まれ年の100年前より後は、あなたの都道府県か隣
+  function drift(H, from, by, me, k, rnd) {
+    from = pc(from); var to = pc(me.pref), d0 = kmPref(from, to);
+    if (from === to) return null;
+    var pick = null;
+    if (by >= me.y - 100) {
+      var adj = (ADJ[to] || '').split(' ').filter(Boolean);
+      pick = rnd() < 0.6 || !adj.length ? to : adj[Math.floor(rnd() * adj.length)];
+      if (nearMe(from, to) && rnd() < 0.5) return null;
+    } else {
+      // 寄せる強さ：あなたまでの残りの代が少ないほど強く（k = 0〜1）
+      if (rnd() > 0.35 + 0.6 * k) return null;
+      var goal = d0 * (1 - Math.min(0.9, 0.3 + 0.6 * k));
+      var c = Object.keys(PREF_LL).filter(function (p) { return p !== from && kmPref(p, to) <= Math.max(goal, 1) + 60 && kmPref(p, to) < d0; });
+      if (!c.length) return null;
+      c.sort(function (a, b) { return Math.abs(kmPref(a, to) - goal) - Math.abs(kmPref(b, to) - goal); });
+      pick = c[Math.floor(rnd() * Math.min(3, c.length))];
+    }
+    if (!pick || pick === from) return null;
+    var pv = by < 1872 && H ? provIn(H, pick, rnd) : { prov: null, sub: null };
+    if (by < 1872 && !pv.prov) return null;
+    return { pref: pick, prov: pv.prov, sub: pv.sub };
+  }
   // この代の大きな出来事（history.json の出来事から、その人の土地と年に合うもの1つ）
   function bigEvent(ctx, L, used) {
     used = used || {};
@@ -318,7 +369,8 @@
   }
 
   var API = { GEN: GEN, big: big, popWord: popWord, popAt: popAt, gens: gens, connect: connect, EXPLAIN: EXPLAIN, sameAgeRow: sameAgeRow, shortLived: shortLived,
-    makeGen: makeGen, playAuto: playAuto, traceStart: traceStart, traceStep: traceStep, traceAll: traceAll, addSelf: addSelf, endText: endText, imani: imani, kidsOf: kidsOf, kuniOf: kuniOf, placeWord: placeWord };
+    makeGen: makeGen, playAuto: playAuto, traceStart: traceStart, traceStep: traceStep, traceAll: traceAll, addSelf: addSelf, endText: endText, imani: imani, kidsOf: kidsOf, kuniOf: kuniOf, placeWord: placeWord,
+    descPlan: descPlan, drift: drift, kmPref: kmPref, nearMe: nearMe, gensTo: gensTo, moveWhy: moveWhy, ADJ: ADJ };
   if (typeof module !== 'undefined' && module.exports) module.exports = API;
   root.IchiokuTsunagari = API;
 })(typeof self !== 'undefined' ? self : this);

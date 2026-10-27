@@ -1775,7 +1775,7 @@
     return null;
   }
   // 飼える年数の目安（これを過ぎた動物は、別れの選択が出なくても、もう飼っていないものとする。kurashi.js の PET_LIFE と同じ）
-  var PET_LIFE = { '鈴虫': 1, '鶏': 8, '小鳥': 8, '金魚': 10, '犬': 14, '猫': 16, '牛': 16, '鷹': 15, '馬': 22 };
+  var PET_LIFE = { '鈴虫': 1, '鶏': 8, '小鳥': 8, '金魚': 10, '犬': 14, '猫': 16, '牛': 16, '鷹': 15, '馬': 22, '狆': 13, '山羊': 12, 'インコ': 10, 'ハムスター': 2, 'うさぎ': 8, '魚': 5 };
   function petOf(L, kinds, minYears) {
     return (L.pets || []).filter(function (p) { return p.dy == null && L.year - p.y <= (PET_LIFE[p.a] || 15) && (kinds === true || [].concat(kinds).indexOf(p.a) >= 0) && (!minYears || L.year - p.y >= minYears); })[0] || null;
   }
@@ -1784,6 +1784,80 @@
     (L.pets = L.pets || []).push({ a: a, name: nm || a, y: c.y, dy: null });
   }
   function endPet(c) { var p = petOf(c.L, true); if (p) p.dy = c.y; }
+  /* ---------- 動物を迎えようか？（v19 5。原作の「ペットを迎えようか？」にならう） ---------- */
+  // 時代ごとに迎えられる動物。年数は目安（戦後の犬・猫は一般社団法人ペットフード協会「全国犬猫飼育実態調査」2023年の平均寿命 犬14.62歳・猫15.79歳から）
+  var PET_ERA = [
+    [1000, 1599, ['犬', '猫', '鶏', '馬', '牛', '鷹']],
+    [1600, 1867, ['犬', '猫', '金魚', '鈴虫', '小鳥', '狆']],
+    [1868, 1945, ['犬', '猫', '小鳥', '金魚', '山羊']],
+    [1946, 2120, ['犬', '猫', 'インコ', 'ハムスター', 'うさぎ', '魚']]
+  ];
+  var PET_WORD = { '小鳥': function (y) { return y < 1868 ? '小鳥（うぐいすかめじろ）' : '小鳥'; }, '狆': function () { return '狆（小さな座敷犬）'; }, '魚': function () { return '熱帯魚'; } };
+  function petKinds(c) {
+    var row = PET_ERA.filter(function (r) { return c.y >= r[0] && c.y <= r[1]; })[0];
+    if (!row) return [];
+    var st = c.st, f = c.L.sex === 'f', vill = c.kind === 'village' || c.kind === 'fish';
+    return row[2].filter(function (a) {
+      if (a === '鷹') return st === 'bushi' && c.a >= 15;
+      if (a === '牛' || a === '馬') return vill && (c.y < 1600 ? st !== 'kuge' : true) && c.a >= 12;
+      if (a === '狆') return (st === 'chonin' || st === 'bushi' || st === 'kuge') && (f || c.L.incPct > 0.6);
+      if (a === '金魚' && c.y < 1700) return false;
+      if (a === 'ハムスター' && c.y < 1975) return false;
+      if (a === '山羊') return vill;
+      return true;
+    });
+  }
+  function petHint(a, y) {
+    var yrs = a === '犬' && y >= 1946 ? '約15年' : a === '猫' && y >= 1946 ? '約16年' : a === '鈴虫' ? 'ひと夏' : a === 'ハムスター' ? '2〜3年' : (PET_LIFE[a] || 10) >= 12 ? '長いあいだ' : '数年';
+    var cost = a === '牛' || a === '馬' ? '費用：餌のわらと草。田畑の働き手になる' : a === '鷹' ? '費用：餌の鳥と世話をする人の手間がかかる' : a === '鈴虫' || a === '魚' || a === '金魚' ? '費用：餌と水かえの手間は少ない' : y >= 1946 ? '費用：餌代と動物病院の代が毎年かかる' : '費用：残り飯と世話の手間';
+    return 'ともに暮らせる年数の目安：' + yrs + '・' + cost;
+  }
+  function petOffer(c, P) {
+    var s = c.s, L = c.L;
+    if (c.a < 6 || c.a > 65 || petOf(L, true) || (s.petAsk && c.y - s.petAsk < 10)) return false;
+    if (!c.p(0.05)) return false;
+    var ks = petKinds(c);
+    if (ks.length < 1) return false;
+    // 2〜3種類を引く
+    var pick = [], pool = ks.slice();
+    while (pick.length < Math.min(3, pool.length + pick.length) && pool.length) pick.push(pool.splice(Math.floor(c.r() * pool.length), 1)[0]);
+    s.petAsk = c.y;
+    var who = P.name || 'この人';
+    var text = c.a < 15 ? who + 'は、動物を飼いたいと家の者にせがんだ。' : who + 'の家に、動物を迎える話が持ち上がった。';
+    var opts = pick.map(function (a, i) { return { k: 'p' + i, l: (PET_WORD[a] ? PET_WORD[a](c.y) : a) + 'を迎える', fx: { sat: 2, tie: 1 }, h: petHint(a, c.y), pet: a }; });
+    opts.push({ k: 'no', l: '迎えない', fx: { sat: -1, learn: 1 }, h: '世話の手間も別れの悲しみもない' });
+    makeChoiceBranch(c, '動物を迎えようか？', text, opts, { cid: '_pet', kind: 'small', pets: pick });
+    return true;
+  }
+  var PET_EV = {
+    walk: ['朝早く、{pet}を連れて近くを歩いた。', '{pet}と一緒に、川べりまで歩いた。'],
+    run: ['{pet}が逃げ出して、夕方まで探し回った。', '戸のすき間から{pet}が出ていき、近所の人が連れて帰ってくれた。'],
+    born: ['{pet}が子を産んだ。もらい手を探して近所を回った。'],
+    trouble: ['{pet}が隣の家の畑を荒らし、頭を下げに行った。', '{pet}の鳴き声がうるさいと、近所から苦情が来た。'],
+    kids: ['{child}が{pet}と転げ回って遊んでいた。', '{pet}は、{child}のそばを離れなかった。']
+  };
+  var PET_BORN = { '犬': 1, '猫': 1, '山羊': 1, 'うさぎ': 1, 'ハムスター': 1, '牛': 1, '馬': 1, '鶏': 1 };
+  var PET_WALK = { '犬': 1, '狆': 1, '馬': 1, '山羊': 1 };
+  // 毎年の動物の暮らし：年を取る・病気（治療する／そばで見送る）・寿命・小さな出来事
+  function petYear(c, P) {
+    var L = c.L, p = (L.pets || []).filter(function (x) { return x.dy == null; })[0];
+    if (!p) return false;
+    var age = c.y - p.y, life = PET_LIFE[p.a] || 15, nm = p.name;
+    if (age >= life + (p.cured ? 2 : 0)) { p.dy = c.y; c.say(nm + 'が、' + age + '年をともに暮らして息を引き取った。庭の隅に埋めてやった。', { sat: -2, tie: -1 }, '家庭'); return false; }
+    if (!p.sick && life >= 5 && age >= Math.round(life * 0.7) && c.p(0.3)) {
+      p.sick = c.y;
+      makeChoiceBranch(c, '動物の病気', nm + 'が餌を食べなくなり、じっと動かなくなった。', [
+        { k: 'cure', l: c.y >= 1946 ? '動物病院で治療を受けさせる' : '薬になるものを探して手を尽くす', fx: { tie: 1, sat: 1 }, h: c.y >= 1946 ? '治療の代がかかる' : '手間がかかる' },
+        { k: 'mitori', l: 'そばで見送る', fx: { tie: 1, sat: -1 }, h: '最期まで一緒にいる' }], { cid: '_petSick', kind: 'small' });
+      return true;
+    }
+    if (c.p(0.15)) {
+      var ks = ['run', 'trouble']; if (PET_WALK[p.a]) ks.push('walk'); if (PET_BORN[p.a] && age >= 2 && age <= 8) ks.push('born'); if (P.child) ks.push('kids');
+      var k = ks[Math.floor(c.r() * ks.length)], t = PET_EV[k][Math.floor(c.r() * PET_EV[k].length)];
+      c.say(t.replace(/\{pet\}/g, nm).replace(/\{child\}/g, P.child || ''), k === 'trouble' || k === 'run' ? { sat: -1 } : { sat: 1, tie: 1 }, '家庭');
+    }
+    return false;
+  }
   function people(c) {
     var L = c.L, y = c.y, ms = (L.members || []).filter(function (m) { return m.alive && !m.gone && m.by <= y && !m.before; });
     var one1 = function (f) { return ms.filter(f)[0]; };
@@ -1920,6 +1994,8 @@
     if (a === 0) return nameChoice(c, P);
     if (a === 2) return tempChoice(c, P);
     if (a === 5) return fiveChoice(c, P);
+    if (petYear(c, P)) return;
+    if (petOffer(c, P)) return;
     if ((c.L.refused || 0) >= 3 && !s.pressured && !c.L.married && a >= 18) {
       s.pressured = c.y;
       return makeChoiceBranch(c, '小さな選択', '縁談を断るのも' + c.L.refused + '度目になった。' + (P.dad ? P.dad : '親') + 'と' + (c.kind === 'city' || c.y >= 1946 ? '親戚' : '村の年寄り') + 'に、「いつまで選り好みをするのか」と囲まれた。', [
@@ -2012,6 +2088,24 @@
       fx = opt.k === 'promise' ? { tie: 2, sat: -1 } : { sat: 1, tie: -2 };
       if (opt.k === 'promise') { L.never = false; L.marryAt = Math.min(L.marryAt || 99, L.age + 1); L.promised = L.year; }
       c.say(opt.k === 'promise' ? '次の縁談は受けると、父に頭を下げた。' : '「自分の相手は自分で決める」と言い切った。座敷が静まり返った。', fx, '家庭');
+      return;
+    }
+    if (d.cid === '_pet') {
+      var po = (br.groups[0].options.filter(function (x) { return x.k === opt.k; })[0] || {});
+      var ia = /^p\d$/.test(opt.k) ? (d.pets || [])[+opt.k.slice(1)] : null;
+      if (!ia) { c.say('動物は迎えないことにした。世話の手間がない代わりに、少しさびしかった。', { sat: -1, learn: 1 }, '家庭'); return; }
+      var K = kurashiMod(), given = String(d.petName || '').replace(/[<>{}\s]/g, '').slice(0, 10);
+      var nm = given || (K && K.petName ? K.petName(ia, c.y, c.r) : null);
+      (L.pets = L.pets || []).push({ a: ia, name: nm || (PET_WORD[ia] ? PET_WORD[ia](c.y).replace(/（.*?）/, '') : ia), y: c.y, dy: null });
+      if (c.y >= 1946 && ia !== '魚') c.money({ f: -0.02 });
+      c.say(po.l.replace(/を迎える$/, '') + 'を家に迎え、' + (nm ? '「' + nm + '」と名付けた。' : '大事に世話をした。'), { sat: 2, tie: 1 }, '家庭');
+      return;
+    }
+    if (d.cid === '_petSick') {
+      var sp = (L.pets || []).filter(function (x) { return x.dy == null; })[0];
+      if (!sp) return;
+      if (opt.k === 'cure') { sp.cured = 1; if (c.y >= 1946) c.money({ f: -0.03 }); c.say(sp.name + 'に手を尽くした。' + sp.name + 'は少しずつ餌を食べるようになった。', { tie: 1, sat: 1 }, '家庭'); }
+      else { sp.dy = c.y; c.say(sp.name + 'のそばに座り、最期まで背中をなでて見送った。', { tie: 1, sat: -1 }, '家庭'); }
       return;
     }
     if (d.cid === '_temp') {
@@ -2218,6 +2312,7 @@
     weddingNote(c, rec);
     modeYear(c, rec);
     palYear(c);
+    jobDescYear(c);
     // 新しい筋は1年に1つまで。分かれ道を出した年は、ほかの筋を始めない
     if (s.asked === y) return;
     for (var i = 0; i < A.length; i++) {
@@ -2260,6 +2355,7 @@
     var s = L.story, k = answers && answers.s;
     if (!k || !br.w.hasOwnProperty(k)) k = pickW(s.r, br.w);
     if (br.ra === '__choice') {
+      if (br.d && br.d.cid === '_pet') br.d.petName = answers && answers.petName ? String(answers.petName) : '';
       var pk0 = br.groups[0].options.filter(function (o) { return o.k === k; })[0];
       rec.storyPick = pk0 ? pk0.l : k;
       noteChoice(L, br, rec.storyPick, false);
@@ -2300,7 +2396,10 @@
     kuge: ['中流の貴族の家', '受領を務める家', '学問の家', '雅楽を伝える家'],
     heimin: ['農家', '商家', '職人の家', '漁師の家', '役場勤めの家', '小学校の先生の家'],
     shizoku: ['旧藩士の家', '元足軽の家', '巡査の家', '学校の先生の家'],
-    other: ['隣の村の家', '同じ村の家', '遠い親戚の家']
+    other: ['隣の村の家', '同じ村の家', '遠い親戚の家'],
+    // 被差別身分とされた家の縁組みは、同じ身分の家どうしだけ（spec v19 4。長野県教育委員会「部落問題学習について」：解放令で異なる身分の結婚が認められたが、結婚差別は根強く残った）
+    outcast: ['同じ身分の隣の村の家', '同じ仲間うちの皮なめしの家', '同じ仲間うちの草履作りの家', '遠縁にあたる同じ身分の家'],
+    buraku: ['同じ地区の家', '隣の町の、同じように差別されてきた地区の家', '遠縁にあたる同じ地区の家', '同じ地区の職人の家']
   };
   var SP_NEW = ['会社員', '公務員', '看護師', '工場勤め', '店の店員', '自営業の家の跡取り', '保育士', 'エンジニア', '教員', '美容師', '営業職', '介護の仕事', '料理人', '銀行員', '建設の仕事', '農家', '研究者', '事務職'];
   var SP_DAD = ['会社勤め', '市役所勤め', '商店を営む人', '農家', '工場勤め', '学校の先生', '大工', '漁師', '銀行勤め', '運転手', '郵便局勤め', '医者'];
@@ -2320,9 +2419,13 @@
     if (n === 3) return 'これで三度目だった。' + lab + 'との縁談も断った。';
     return lab + 'との話も断り、縁談を断るのは' + (KAZU[n] || n) + '度目になった。';
   }
+  // 被差別身分とされた家の相手の家（1871年からは「地区」の言い方。戦後も同じ）
+  function hbHouses(L, y) { return L.old && (L.status === 'outcast' || L.status === 'buraku') ? (y < 1871 && L.status === 'outcast' ? SP_OLD.outcast : SP_OLD.buraku) : null; }
   function spouseDesc(L, sp, y) {
     var r = (L.story && L.story.r) || Math.random, age = y - sp.by, adj = one(r, SP_ADJ);
     var order = sp.sex === 'f' ? one(r, ['長女', '次女', '三女', '末娘', 'ひとり娘']) : one(r, ['長男', '次男', '三男', '末っ子']);
+    var hbH = hbHouses(L, y);
+    if (hbH) { sp.house = one(r, hbH) + 'の' + order; return age + '歳、' + sp.house + 'で、' + adj + '人だった。'; }
     if (!L.old || y >= 1948) { var jb = one(r, SP_NEW); sp.house = '父が' + one(r, SP_DAD) + 'の家の' + order; return age + '歳、' + sp.house + 'で、' + (/勤め$/.test(jb) ? jb.replace(/勤め$/, 'に勤める') : jb + 'として働く') + adj + '人だった。'; }
     var st = sp.st || L.status, list = SP_OLD[st] || SP_OLD.other;
     sp.house = farmWord(one(r, list), y) + 'の' + order;
@@ -2334,7 +2437,8 @@
   var SUIT_JOB = {
     hyakusho: ['田を耕す', '馬を引いて荷を運ぶ', '炭を焼く', '機を織る', '蚕を飼う'], chonin: ['豆腐屋を営む', '大工の', '呉服屋に勤める', '船宿の', '桶屋の'],
     bushi: ['勘定方を務める', '城の番方の', '藩校で教える', '剣術の腕で知られた'], heimin: ['役場に勤める', '鉄道に勤める', '小学校の先生の', '工場に勤める', '商店を営む'],
-    shizoku: ['巡査の', '役場に勤める', '学校の先生の'], kuge: ['歌の家の', '受領の家の'], other: ['同じ村の', '隣村の']
+    shizoku: ['巡査の', '役場に勤める', '学校の先生の'], kuge: ['歌の家の', '受領の家の'], other: ['同じ村の', '隣村の'],
+    outcast: ['皮をなめす', '雪駄を作る', '竹細工をする', '田を耕す'], buraku: ['雪駄を作る', '日雇いで働く', '田を耕す', '工場に勤める']
   };
   function suitor(L, kind) {
     var S = L.story; if (!S) return null;
@@ -2343,7 +2447,7 @@
     var by = L.sex === 'm' ? L.by + g : L.by - g;
     var nm = null;
     try { nm = L.old ? null : null; } catch (e) { nm = null; }
-    var st = L.status || 'heimin', jobs = SUIT_JOB[st] || SUIT_JOB.other, house = y >= 1948 ? SP_DAD.map(function (d) { return '父が' + d + 'の家'; }) : (SP_OLD[st] || SP_OLD.other);
+    var st = L.status || 'heimin', jobs = SUIT_JOB[st] || SUIT_JOB.other, house = hbHouses(L, y) || (y >= 1948 ? SP_DAD.map(function (d) { return '父が' + d + 'の家'; }) : (SP_OLD[st] || SP_OLD.other));
     var o = { y: y, by: by, age: y - by, house: farmWord(one(r, house), y), job: one(r, jobs), trait: one(r, SUIT_TRAIT), order: osex === 'f' ? one(r, ['長女', '次女', '三女', '末娘']) : one(r, ['長男', '次男', '三男']) };
     return o;
   }
@@ -2395,6 +2499,29 @@
     return j === 'agri' || j === 'farm' ? '農協の仲間の' : '職場の同僚の';
   }
   function working(L) { return L.old ? !!(L.job && L.job !== 'home') : !!(L.job && L.job.ind); }
+  // spec 13 仕事の中身の場面（js/jobdesc.js）：15歳から、その仕事に就いているあいだに、6つの項目（1日の流れ・道具と身なり・雇い主と売り先・季節・稼ぎ・けがと苦労）に沿った場面を出す。
+  // 就いて3年のうちに1つ目、次の年までに2つ目を必ず出し、そのあとはまれに。乱数は人生の種と年から作り、ほかの抽選の順番を変えない
+  function jobDescMod() {
+    if (root.IchiokuJobDesc) return root.IchiokuJobDesc;
+    if (typeof require === 'function') { try { return require('./jobdesc.js'); } catch (e) { return null; } }
+    return null;
+  }
+  function jobDescYear(c) {
+    var JD = jobDescMod(), L = c.L, s = c.s;
+    if (!JD || c.a < 15 || !working(L) || (L.mode && L.mode !== 'away' && !L.pathJob)) return; // 奉公・出家・兵などで家を離れている年は、その身の上の場面に任せる
+    var n = (L.pathJob && L.pathJob.n) || (L.selfJob && L.selfJob.n);
+    if (!n || !JD.has(n)) return;
+    var jd = s.jd = s.jd || {}, st = jd[n] = jd[n] || { from: c.y, k: 0 };
+    var p = st.k < 2 ? (c.y - st.from >= 3 + st.k ? 1 : 0.3) : st.k < 4 ? 0.05 : 0;
+    var u = h32((L.seed ^ 0x13d35c) >>> 0, c.y) / 4294967296;
+    if (!p || u >= p) return;
+    var CHk = choicesMod(), pref = curPref(L), said = s.jdSaid = s.jdSaid || {};
+    var cand = JD.scenes(n, c.y).filter(function (t) { return !said[t] && !(s.saidN && s.saidN[t]) && !(L.mode && !awayHome(L) && AWAY_BAN.test(t)) && !(c.kind === 'city' && /村/.test(t)) && (!CHk || !CHk.eraOk || CHk.eraOk(t, c.y, false) && CHk.placeOk(t, pref)); });
+    if (!cand.length) return;
+    var t = cand[h32((L.seed ^ 0x5bd1e9) >>> 0, c.y) % cand.length];
+    said[t] = 1; st.k++;
+    c.say(t, null, '学歴と仕事');
+  }
   var PAL_EV = {
     child: ['{n}と、川で泳いで日が暮れるまで遊んだ。', '{n}と、大人に内緒で山の奥まで行き、こっぴどく叱られた。', '{n}と、祭りの夜店をのぞいて回った。', '{n}とけんかをしたが、次の日には何事もなかったように遊んだ。'],
     childOld: ['{n}が、遠くの町へ奉公に出ることになった。村はずれまで見送った。'],
@@ -2990,8 +3117,12 @@
         if (!free && !hiKuge && (s.pathN || 0) >= 3) return false;
         if (path.group === 'shusse' && (s.shusseN || 0) >= 2) return false;
         if (!pathOk(c, path)) return false;
-        if (path.once) { s.pathOnce = s.pathOnce || {}; if (s.pathOnce[path.id]) return false; s.pathOnce[path.id] = c.y; if (!c.p(Math.min(0.6, (path.p || 0.4) * 1.22))) return false; } // ほかの分かれ道の年に回る分を見こんで少し多めに（住む人の3〜5割が出会う）
-        else if (!c.p(hiKuge ? 0.18 : Math.min(free ? 0.4 : PATH_CAP[path.group] || 0.06, (path.p || 0.01) * (PATH_GX[path.group] || PATH_X)))) return false;
+        // 素養と夢（yume.js）：true はその年に必ず始める・数はその分だけ出会いやすくする・0 は始めない
+        var gt = API.pathGate ? API.pathGate(c, path) : 1;
+        if (!gt) return false;
+        if (gt === true) { /* プロの選手の筋：yume.js が決めた年に始める */ }
+        else if (path.once) { s.pathOnce = s.pathOnce || {}; if (s.pathOnce[path.id]) return false; s.pathOnce[path.id] = c.y; if (!c.p(Math.min(0.6, (path.p || 0.4) * 1.22))) return false; } // ほかの分かれ道の年に回る分を見こんで少し多めに（住む人の3〜5割が出会う）
+        else if (!c.p(gt * (hiKuge ? 0.18 : Math.min(free ? 0.4 : PATH_CAP[path.group] || 0.06, (path.p || 0.01) * (PATH_GX[path.group] || PATH_X))))) return false;
         if (!free) s.pathN = (s.pathN || 0) + 1;
         if (path.group === 'shusse') s.shusseN = (s.shusseN || 0) + 1;
         pathAsk(c, path, 'start', path.title, path.text, path.opts);
@@ -3111,7 +3242,7 @@
   // 外の物語の部品（deai.js 2020年代の出会い・kake.js 昭和以降の賭けごと）：筋（arc）を足す。どちらの読みこみ順でも1回だけ
   API.addArc = arc;
   API.ext = {};
-  [['IchiokuDeai', './deai.js'], ['IchiokuKake', './kake.js']].forEach(function (x) {
+  [['IchiokuDeai', './deai.js'], ['IchiokuKake', './kake.js'], ['IchiokuYume', './yume.js']].forEach(function (x) {
     var m = root[x[0]];
     if (!m && typeof require === 'function') { try { m = require(x[1]); } catch (e) { m = null; } }
     if (m && m.register) m.register(API);

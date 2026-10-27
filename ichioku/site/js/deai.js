@@ -117,17 +117,17 @@
       third: function (c) {
         if (!c.L.alive || !single(c.L) || busy(c, 'deai_app.third')) return;
         c.ask('deai_app.third', '3回目の食事のあと', (c.s.deaiEn || '相手') + 'と3回目の食事をした。駅までの帰り道、この先どうしたいかを考えた。', [
-          { k: 'tsukiau', l: '付き合う', w: 1.2, f: ['family'], h: '二人の時間が増えるが、ほかの出会いは手放す' },
-          { k: 'motto', l: 'もう少し会ってみる', w: 1, f: ['study'], h: '急がずにすむが、相手が待つとは限らない' },
-          { k: 'yameru', l: 'これきりにする', w: 0.5, f: ['earn'], h: '気持ちはすっきりするが、また一から探す' }
+          { k: 'third__tsukiau', l: '付き合う', w: 1.2, f: ['family'], h: '二人の時間が増えるが、ほかの出会いは手放す' },
+          { k: 'third__motto', l: 'もう少し会ってみる', w: 1, f: ['study'], h: '急がずにすむが、相手が待つとは限らない' },
+          { k: 'third__yameru', l: 'これきりにする', w: 0.5, f: ['earn'], h: '気持ちはすっきりするが、また一から探す' }
         ], null, 'deai_app');
       },
       isogu: function (c) {
         if (!c.L.alive || !single(c.L) || busy(c, 'deai_app.isogu')) return;
         c.ask('deai_app.isogu', '結婚の話を急ぐ相手', 'アプリで知り合った相手が、会うたびに「早く親に会ってほしい」と結婚の話を急いだ。', [
-          { k: 'noru', l: '話を進める', w: 0.7, f: ['family'], h: '早く家庭を持てるが、相手をよく知らないまま' },
-          { k: 'yukkuri', l: 'ゆっくり決めたいと話す', w: 1.2, f: ['study'], h: '納得して決められるが、相手は離れるかもしれない' },
-          { k: 'hanareru', l: '会うのをやめる', w: 0.6, f: ['body'], h: '気持ちは軽くなるが、出会いは振り出しに戻る' }
+          { k: 'isogu__noru', l: '話を進める', w: 0.7, f: ['family'], h: '早く家庭を持てるが、相手をよく知らないまま' },
+          { k: 'isogu__yukkuri', l: 'ゆっくり決めたいと話す', w: 1.2, f: ['study'], h: '納得して決められるが、相手は離れるかもしれない' },
+          { k: 'isogu__hanareru', l: '会うのをやめる', w: 0.6, f: ['body'], h: '気持ちは軽くなるが、出会いは振り出しに戻る' }
         ], null, 'deai_app');
       },
       sagi: function (c) {
@@ -135,9 +135,9 @@
         var toshi = c.r() < 0.5;
         c.s.deaiSagi = toshi ? 'toshi' : 'kane';
         c.ask('deai_app.sagi', toshi ? '投資のすすめ' : 'お金の相談', toshi ? 'メッセージを送り合っていた相手が、「二人の将来のために」と、かならずもうかるという投資をすすめてきた。見たことのない取引の画面も送られてきた。' : 'メッセージを送り合っていた相手から、「結婚したら一緒に暮らすための家のお金が足りない。少しだけ貸してほしい」と頼まれた。', [
-          { k: 'okuru', l: toshi ? 'すすめられた投資をする' : '頼まれたお金を送る', w: 0.5, f: ['family'], h: '相手を信じられるが、お金は戻らないかもしれない' },
-          { k: 'miyaburu', l: '話がうますぎると離れる', w: 1, f: ['study'], h: 'お金は守れるが、楽しかったやりとりも終わる' },
-          { k: 'sodan', l: '家族に相談する', w: 0.9, f: ['family'], h: '一人で抱えずにすむが、恥ずかしい思いもする' }
+          { k: 'sagi__okuru', l: toshi ? 'すすめられた投資をする' : '頼まれたお金を送る', w: 0.5, f: ['family'], h: '相手を信じられるが、お金は戻らないかもしれない' },
+          { k: 'sagi__miyaburu', l: '話がうますぎると離れる', w: 1, f: ['study'], h: 'お金は守れるが、楽しかったやりとりも終わる' },
+          { k: 'sagi__sodan', l: '家族に相談する', w: 0.9, f: ['family'], h: '一人で抱えずにすむが、恥ずかしい思いもする' }
         ], null, 'deai_app');
       }
     } });
@@ -198,9 +198,9 @@
       isogu: function (c) {
         if (!c.L.alive || !single(c.L) || busy(c, 'deai_konkatsu.isogu')) return;
         c.ask('deai_konkatsu.isogu', '話を急ぐ相手', '相談所で紹介された相手と見合いをした。相手は三度目に会った日、式をいつにするかの話を始めた。', [
-          { k: 'susumu', l: 'その流れに乗る', w: 0.9, f: ['family'], h: '早く結婚できるが、迷いは残る' },
-          { k: 'yukkuri', l: '少し待ってほしいと話す', w: 1, f: ['study'], h: '落ち着いて決められるが、話が流れることもある' },
-          { k: 'kotowaru', l: 'お断りする', w: 0.5, f: ['body'], h: '気は楽になるが、また紹介を待つことになる' }
+          { k: 'isogu__susumu', l: 'その流れに乗る', w: 0.9, f: ['family'], h: '早く結婚できるが、迷いは残る' },
+          { k: 'isogu__yukkuri', l: '少し待ってほしいと話す', w: 1, f: ['study'], h: '落ち着いて決められるが、話が流れることもある' },
+          { k: 'isogu__kotowaru', l: 'お断りする', w: 0.5, f: ['body'], h: '気は楽になるが、また紹介を待つことになる' }
         ], null, 'deai_konkatsu');
       }
     } });
