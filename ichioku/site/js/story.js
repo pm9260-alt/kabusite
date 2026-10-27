@@ -1855,6 +1855,12 @@
     if (L.job && L.job.label) return L.job.label;
     return L.lastJob || null;
   }
+  // 小さな選択を10年ごとに分けておき、その年に出せるものだけを調べる（選択が1,000をこえたので、毎年すべてを調べると遅い。v18）
+  function poolFor(CHm, y) {
+    var k = Math.floor(y / 10), ix = CHm._yIdx || (CHm._yIdx = { n: CHm.list.length });
+    if (ix.n !== CHm.list.length) { CHm._yIdx = ix = { n: CHm.list.length }; }
+    return ix[k] || (ix[k] = CHm.list.filter(function (o) { return !o.y || (o.y[0] <= k * 10 + 9 && o.y[1] >= k * 10); }));
+  }
   function eligible(c, o) {
     var L = c.L, w = o.when || {}, y = c.y, a = c.a;
     if (w.ind && w.ind.indexOf('home') < 0 && w.ind.indexOf(c.ind || (c.ind = indOf(c))) < 0) return false;
@@ -1929,7 +1935,7 @@
     s.labUse = s.labUse || {}; s.nC = s.nC || 0; s.nU = s.nU || 0;
     var pref = String(c.L.old ? c.L.pref : (c.L.place || {}).pref), elite = ['bushi', 'kuge', 'priest'].indexOf(c.st) >= 0;
     var CHk = CHm;
-    var list = CHm.list.filter(function (o) { return !/^s6\.fb\./.test(o.id) && eligible(c, o) && !(s.cool[o.id] && c.y - s.cool[o.id] < (o.cool || 8)); });
+    var list = poolFor(CHm, c.y).filter(function (o) { return !/^s6\.fb\./.test(o.id) && eligible(c, o) && !(s.cool[o.id] && c.y - s.cool[o.id] < (o.cool || 8)); });
     // 同じ答えの文は、1つの人生で2回まで（v8の直し 13）
     list = list.filter(function (o) { return !o.options.some(function (p) { return (s.labUse[p.l] || 0) >= 2; }); });
     // 時代を問わない選択は、選択の3割まで（v8の直し 2）

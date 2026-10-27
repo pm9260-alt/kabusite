@@ -579,7 +579,7 @@
       ['はじめて結婚する年齢の平均', ma(my), ma(L.by)]
     ];
     rows.forEach(function (r) { var tr = el('tr'); tr.appendChild(el('th', null, r[0])); tr.appendChild(el('td', null, r[1])); tr.appendChild(el('td', null, r[2])); tb.appendChild(tr); });
-    $('bt-tabnote').textContent = (me ? '' : '生まれた年を入れると、あなたの生まれ年と比べます。') + '生命表と、進学・結婚の統計から（' + (sex === 'm' ? '男' : '女') + '）。1899年より前は研究からの推計です。';
+    $('bt-tabnote').textContent = (me ? '' : '生まれた年を入れると、あなたの生まれ年と比べます。') + '生命表と、進学・結婚の記録から（' + (sex === 'm' ? '男' : '女') + '）。1899年より前は研究からの推計です。';
   }
   /* ---------- 生まれの記録（第3弾の9） ---------- */
   var RICH = [[0.2, '苦しい'], [0.4, 'やや苦しい'], [0.6, 'ふつう'], [0.8, 'ややゆとりがある'], [1.01, 'ゆとりがある']];
@@ -1008,7 +1008,7 @@
   function graceOk(br) { return !!(br && !br.ask && br.sid !== 'choice' && isKey(br) && !lessMotion() && !graceOff); }
   var graceOff = false;
   function autoResolve() {
-    while (cur && cur.branch && (cur.branch.ask || (auto === 2 && !graceOk(cur.branch)) || (auto === 1 && !isKey(cur.branch)))) {
+    while (cur && cur.branch && (cur.branch.ask || auto === 2 && !graceOk(cur.branch) || (auto === 1 && !isKey(cur.branch)))) {
       if (cur.branch.ask) { recordAnswer({ text: '' }); cur = M.resolve(L, { text: '' }); continue; }
       var a = E.autoAnswer(cur.branch, L.focus) || { _none: 1 };
       a._auto = 1;
@@ -1076,7 +1076,7 @@
   }
   // 人生の記録：今の年は出来事をすべて（いちばん大きいものを上に）、前の年は時代の出来事を除いて新しい順。多くて6行
   var FEED_MAX = 6;
-  // 行を押すと☆の印（v18 11-6）。印は今の人生の記録に残し、最期の画面に「印を付けた出来事」として並べる
+  // 行を押すと◆の印（v18 11-6）。印は今の人生の記録に残し、最期の画面に「印を付けた出来事」として並べる
   function starOn(k) { return !!(G && G.stars && G.stars[k]); }
   function toggleStar(k, rr, e) {
     if (!G) return;
@@ -1120,7 +1120,7 @@
         if (ol.childNodes.length >= FEED_MAX) return;
         var e = rr.events[i], key = rr.year + ':' + i;
         var sk = rr.year + ':' + i, on = starOn(sk);
-        feedRow(ol, rr.age, (on ? '☆ ' : '') + evText(e), (rr === r ? 'cur' : '') + (on ? ' starred' : ''), function () { toggleStar(sk, rr, e); }, e);
+        feedRow(ol, rr.age, (on ? '◆ ' : '') + evText(e), (rr === r ? 'cur' : '') + (on ? ' starred' : ''), function () { toggleStar(sk, rr, e); }, e);
       });
     }
     var K = window.IchiokuCompare;
@@ -1867,7 +1867,7 @@
     if (tf) item('大人になってから時間を注いだこと', tf);
     // 印を付けた出来事（v18 11-6）・趣味・旅した土地（v18 11-8）
     var stv = G && G.stars ? Object.keys(G.stars).map(function (k) { return G.stars[k]; }).sort(function (a, b) { return a.y - b.y; }) : [];
-    if (stv.length) { var sd0 = el('div', 'rc-item rc-wide'); sd0.appendChild(el('dt', null, '印を付けた出来事')); stv.forEach(function (x) { sd0.appendChild(el('dd', null, '☆ ' + x.a + '歳（' + x.y + '年）　' + x.t)); }); g.appendChild(sd0); }
+    if (stv.length) { var sd0 = el('div', 'rc-item rc-wide'); sd0.appendChild(el('dt', null, '印を付けた出来事')); stv.forEach(function (x) { sd0.appendChild(el('dd', null, '◆ ' + x.a + '歳（' + x.y + '年）　' + x.t)); }); g.appendChild(sd0); }
     var KU = window.IchiokuKurashi;
     if (KU && KU.hobbies) { var hbs = KU.hobbies(L, L.deathYear); if (hbs.length) item('趣味', hbs.map(function (h) { return h.name + (h.lv ? ' Lv.' + h.lv : ''); }).join('・')); }
     var trips = travelPlaces();
