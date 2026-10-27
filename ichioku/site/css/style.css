@@ -893,3 +893,28 @@ body[data-screen="life"] .o-head { gap: 6px; padding-bottom: 8px; }
 .mm-x { position: absolute; top: 8px; right: 8px; width: 44px; height: 44px; background: none; border: 0; font-size: 22px; color: var(--sub); cursor: pointer; }
 .mm-box .btn-sub { align-self: center; min-height: 44px; }
 @media (min-width: 960px) { .me-modal { align-items: center; } .mm-box { border-radius: 12px; max-width: 520px; } }
+/* 分かれ道の札（v18 11-1） */
+.br-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.br-fold { font-size: 13px; min-height: 32px; }
+.branch.br-folded .br-body { display: none; }
+.br-fam { font-size: 13px; color: var(--sub); }
+.br-shiryo { display: flex; gap: 8px; font-size: 13px; line-height: 1.6; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; margin: 6px 0; }
+.br-sk { flex: none; font-weight: 700; color: var(--stamp); }
+.opt-n { display: inline-block; min-width: 1.6em; color: var(--sub); font-weight: 700; }
+.br-grace { font-size: 13px; color: var(--stamp); margin-top: 6px; }
+.br-auto { font-size: 13px; margin-top: 6px; align-self: flex-start; }
+.br-body { display: flex; flex-direction: column; gap: 8px; }
+.hi-num { font-size: 15px; line-height: 1.7; }
+.hi-q { font-size: 16px; font-weight: 700; line-height: 1.7; margin-top: 4px; }
+.hi-comps li { display: flex; flex-direction: column; padding: 6px 0; border-top: 1px solid var(--line); font-size: 14px; }
+.pick-l { display: block; font-size: 12px; color: var(--stamp); font-weight: 700; margin-bottom: 2px; }
+.trip-line { fill: none; stroke: var(--text); stroke-width: 1.2; stroke-dasharray: 3 3; }
+.trip-pt { fill: var(--text); }
+.trip-born { fill: var(--beni); }
+.end-grid #trip-box { order: 8; }
+.bt-multi { display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--line); padding-top: 10px; margin-top: 4px; }
+.bm-k { font-size: 18px; font-weight: 700; color: var(--beni); }
+.bm-t { font-size: 14px; line-height: 1.7; }
+.bm-btn { min-height: 44px; }
+.tab-scroll { overflow-x: auto; }
+.end-grid #multi-block { order: 5; }
