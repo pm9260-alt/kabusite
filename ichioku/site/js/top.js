@@ -195,7 +195,8 @@
 
   // 生まれる年の範囲を common.json に合わせる（違っていたら描き直す）
   try {
-    fetch('data/common.json').then(function (r) { return r.ok ? r.json() : null; }).then(function (c) {
+    // app.js が取りに行った common.json を使い回す（同じファイルを2回取りに行かない。v19 12）
+    (self.IchiokuCommonP || fetch('data/common.json').then(function (r) { return r.ok ? r.json() : null; })).then(function (c) {
       var br = c && c.meta && c.meta.birthRange;
       if (br && (br[0] !== R0 || br[1] !== R1)) {
         R0 = br[0]; R1 = br[1];

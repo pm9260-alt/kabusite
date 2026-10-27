@@ -8,14 +8,14 @@
 const { chromium } = require(require('child_process').execSync('npm root -g').toString().trim() + '/playwright');
 const fs = require('fs'), path = require('path');
 const OUT = path.join(__dirname, '..', 'logs', 'ui19'); fs.mkdirSync(OUT, { recursive: true });
-const URL = 'http://localhost:8123/index.html';
+const URL = process.env.ICHIOKU_URL || 'http://localhost:8123/index.html';
 const MODE = process.argv[2] || 'auto', N = +(process.argv[3] || 5), W = +(process.argv[4] || 390);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 async function page(b, w, h) {
   const p = await b.newPage({ viewport: { width: w, height: h || (w > 900 ? 900 : 844) } });
   p.errs = []; p.ext = [];
   p.on('pageerror', e => p.errs.push(e.message)); p.on('console', m => { if (m.type() === 'error') p.errs.push(m.text()); });
-  p.on('request', q => { if (!/^http:\/\/localhost:8123\//.test(q.url()) && !/^(data|blob):/.test(q.url())) p.ext.push(q.url()); });
+  p.on('request', q => { if (!/^http:\/\/localhost:812[0-9]\//.test(q.url()) && !/^(data|blob):/.test(q.url())) p.ext.push(q.url()); });
   return p;
 }
 async function prep(p, seed, extra) {

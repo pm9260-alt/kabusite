@@ -220,6 +220,8 @@
     // 15歳で現実に寄せるときの夢
     tsutome: { n: '勤め人', y: [1936, 2045], dom: 'office', re: /会社員|事務|職員|公務|役場|銀行|社員|工員/, late: 1 }
   };
+  // 呼び名が変わっただけの夢（15歳で「変わった」と書かない）
+  var SAME = { kangofu: 'kangoshi', kangoshi: 'kangofu', hobo: 'hoiku', hoiku: 'hobo', stew: 'ca', ca: 'stew' };
   function bizOf(L) {
     if (!L.old) return ['agri', 'fish', 'shop'].indexOf(L.dadJob) >= 0 ? L.dadJob : null;
     if (L.status === 'chonin') return 'shop';
@@ -245,7 +247,8 @@
     return w;
   }
   function drawDreams(L, y, r, n, not) {
-    var ids = Object.keys(DREAM).filter(function (k) { return dreamOk(k, L, y) && k !== not; }), out = [];
+    var same = SAME[not] || null;
+    var ids = Object.keys(DREAM).filter(function (k) { return dreamOk(k, L, y) && k !== not && k !== same; }), out = [];
     while (out.length < n && ids.length) {
       var t = 0; ids.forEach(function (k) { t += dreamW(k, L, y); });
       var u = r() * t, pk = ids[ids.length - 1];
@@ -446,11 +449,12 @@
     var L = c.L, Y = c.s.yume;
     if (Y.kanau || !L.dream10 || c.a < 30 || c.a > 34) return;
     Y.kanau = c.y;
-    var d = curDream(L), ok = came(L, d), ok10 = came(L, L.dream10), n = d.name;
+    var d = curDream(L), ok = came(L, d), ok10 = came(L, L.dream10), n = d.name, n10 = L.dream10.name;
     var t;
     if (ok) t = one(c.r, ['子どものころの夢だった' + quoted(n) + 'を、本当にかなえていた。', '作文に書いた' + quoted(n) + 'という夢を、気がつけばかなえていた。']);
     else if (L.dream15 && ok10) t = '15歳で一度は別の夢を選んだが、結局は10歳のころの夢' + quoted(L.dream10.name) + 'の道を歩んでいた。';
-    else t = one(c.r, ['10歳のころの夢は' + quoted(n) + 'だった。夢とは違う道だったが、今の暮らしにも誇りを持てるようになった。', quoted(n) + 'という夢はかなわなかった。ときどき、あのころの自分を思い出した。', '子どものころの夢' + quoted(n) + 'は、心の中にしまったままだった。']);
+    else if (L.dream15) t = one(c.r, ['15歳のころに思い描いた' + quoted(n) + 'という夢は、かなわなかった。それでも今の仕事に、少しずつ誇りを持てるようになった。', '10歳の夢は' + quoted(n10) + '、15歳の夢は' + quoted(n) + 'だった。どちらの夢とも違う道を歩んでいた。']);
+    else t = one(c.r, ['10歳のころの夢は' + quoted(n10) + 'だった。夢とは違う道だったが、今の暮らしにも誇りを持てるようになった。', quoted(n10) + 'という夢はかなわなかった。ときどき、あのころの自分を思い出した。', '子どものころの夢' + quoted(n10) + 'は、心の中にしまったままだった。']);
     L.dreamCame = !!(ok || ok10);
     c.say(t, ok ? { sat: 4 } : { sat: 1, learn: 1 }, '人間関係');
   }

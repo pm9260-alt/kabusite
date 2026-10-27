@@ -42,11 +42,15 @@
     var fam = (L.members || []).filter(function (m) { return !m.before && /父|母|配偶者|子|パートナー/.test(m.role); }).map(function (m) { return { role: m.role === '配偶者' ? (m.sex === 'm' ? '夫' : '妻') : m.role, name: m.name, by: m.by, dy: m.alive ? null : m.dy, house: m.house || null }; });
     var spouse = fam.filter(function (f) { return f.role === '夫' || f.role === '妻'; }).map(function (f) { return f.name; }).join('、');
     var kids = fam.filter(function (f) { return f.role === '子'; }).map(function (f) { return f.name; }).join('、');
+    // 仕事の中身（v19 13）：文献に沿った1日の流れと苦労を、人物の段の最初に。出典は脚注へ
+    var JD = typeof self !== 'undefined' && self.IchiokuJobDesc ? self.IchiokuJobDesc : null, jdLine = JD && job ? JD.recordLine(job, Math.min(y1, (L.by || y0) + 40)) : '';
+    if (jdLine) anec.unshift(clean(jdLine));
     var timeline = [];
     var seenY = {};
     evs.forEach(function (e) { if (e.story && !seenY[e.y] && timeline.length < 16) { seenY[e.y] = 1; timeline.push({ y: e.y, t: e.t }); } });
     timeline.push({ y: y1, t: L.deathAge + '歳で亡くなった。' });
     var srcs = {};
+    if (jdLine && JD.cite) { var ct = JD.cite(job, Math.min(y1, (L.by || y0) + 40)); if (ct) srcs[ct] = 1; }
     (L.log || []).forEach(function (r) { (r.events || []).forEach(function (e) { (e.ev || []).forEach(function (v) { if (v.name) srcs[v.name + (v.org ? '（' + v.org + '）' : '')] = 1; }); }); });
     var info = [
       ['生年', y0 + '年'], ['生地', ctx.place || ''], ['没年', y1 + '年（享年' + L.deathAge + '）'], ['没地', ctx.deathPlace || ''],

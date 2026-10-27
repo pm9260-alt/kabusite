@@ -65,6 +65,8 @@
 
   /* ---------- トップ ---------- */
   function initTop() {
+    // 「生まれる」が押せるようになったら、字体を読み始める（それまでは回線を空けておく。v19 12）
+    if (!initTop.ready) { initTop.ready = 1; try { document.dispatchEvent(new Event('ichioku-ready')); } catch (e) { /* 古い端末 */ } }
     $('born').disabled = false;
     $('born').textContent = '生まれる';
     $('born').onclick = born;
@@ -80,6 +82,11 @@
   function seg() { return G && G.house && G.house.chain.length ? G.house.chain[G.house.chain.length - 1] : G; }
   function lifeSeedOf(g, memberId) { return ((g.seed ^ Math.imul(memberId, 0x9e3779b1)) >>> 0) || 1; }
   function yearOfSeed(seed) { var r = C.meta.birthRange; return r[0] + Math.floor(E.makeRng(seed ^ 0x51ed270b)() * (r[1] - r[0] + 1)); }
+  // 時代ごとに分けたデータ（v19 12）：作った版（dist）では、抽選で生まれ年が決まってから、その時代の分だけ読む。
+  // ほかの時代の分は、人生が始まってしばらくしてから読んでおく（続きの人生・たどる・続きからの前に必ずそろえる）
+  function dataFor(y0, y1) { return window.IchiokuData ? window.IchiokuData.need(y0, y1) : Promise.resolve(); }
+  function dataAll() { return window.IchiokuData ? window.IchiokuData.needAll() : Promise.resolve(); }
+  function laterData() { if (window.IchiokuData) setTimeout(function () { dataAll().catch(function () { /* 次に要るときに読み直す */ }); }, 6000); }
   function makeLife(seed) {
     var year = yearOfSeed(seed);
     var ready = year >= 1975 ? Promise.resolve({ pref: E.pickPref(C, year, E.makeRng(seed ^ 0x9e3779b9)) }) :
@@ -346,7 +353,7 @@
   // おまかせ（統計どおりの答え）で進めて21歳を迎える生まれを探す。選んだ答えしだいで早く亡くなることはある
   function survivesTo21(sd) {
     var year = yearOfSeed(sd);
-    var ready = year >= 1975 ? Promise.resolve({ pref: E.pickPref(C, year, E.makeRng(sd ^ 0x9e3779b9)) }) : getHistory().then(function (h) { return O.pickBirth(C, h, year, E.makeRng(sd ^ 0x9e3779b9)); });
+    var ready = dataFor(year, year + 25).then(function () { return year >= 1975 ? { pref: E.pickPref(C, year, E.makeRng(sd ^ 0x9e3779b9)) } : getHistory().then(function (h) { return O.pickBirth(C, h, year, E.makeRng(sd ^ 0x9e3779b9)); }); });
     return ready.then(function (b) { return getPref(b.pref).then(function (p) {
       var T = year >= 1975 ? E.newLife(C, p, { year: year, seed: sd }) : O.newLife(C, H, p, { year: year, seed: sd, birth: b }), MM = year >= 1975 ? E : O, g = 0;
       while (T.alive && T.age <= 20 && g++ < 40) { var r = MM.step(T); while (r && r.branch) r = MM.resolve(T, r.branch.ask ? { text: '' } : null); }
@@ -366,8 +373,9 @@
     $('born').disabled = true;
     G = { v: 2, seed: seed, year: yearOfSeed(seed), answers: [], marks: [], focus: [], auto: auto === 2, mode: auto };
     houseLives = [];
-    makeLife(seed).then(function () {
+    dataFor(G.year, G.year + 115).then(function () { return makeLife(seed); }).then(function () {
       firstLife = L;
+      laterData();
       return (meInfo() ? getHistory() : Promise.resolve()).then(lottery);
     }).then(function () {
       $('born').disabled = false;
@@ -1891,7 +1899,8 @@
       $('rc-reflect-box').hidden = true; $('rc-again').onclick = null; return;
     }
     item('最終学歴', r.edu || (L.deathAge < 6 ? '—' : '学校には通わなかった'));
-    item('最後の仕事', r.job || '—');
+    var JD = window.IchiokuJobDesc, jn = (L.selfJob && L.selfJob.n) || (L.pathJob && L.pathJob.n) || '', jl = JD && jn ? JD.recordLine(jn, L.deathYear) : '';
+    item('最後の仕事', r.job || '—', jl ? pol(jl) + (JD.cite(jn, L.deathYear) ? '（' + JD.cite(jn, L.deathYear) + '）' : '') : null);
     // 位階・勲章（spec6 2-10）：受けた人生だけ
     var S0 = window.IchiokuStory, hs0 = S0 && S0.finalHonors ? S0.finalHonors(L) : [];
     if (hs0.length) item('位階・勲章', hs0.map(function (h) { return S0.honorText(h); }).join('、'));
@@ -2321,7 +2330,7 @@
     $('tr-go').disabled = true; $('tr-go').hidden = true;
     $('tr-prog').hidden = false; $('tr-prog').textContent = 'たどっています…';
     var codes = [String(L.old ? (L.home0 || {}).pref || L.pref : L.home.pref), String(me.pref)];
-    Promise.all(codes.map(function (c) { return getPref(c); })).then(function () {
+    Promise.all(codes.map(function (c) { return getPref(c); }).concat([dataAll()])).then(function () {
       var ctx = tgCtx(), st = T.traceStart(ctx, Lstart, me, G.seed ^ 0x7a3c, Lstart.tracePrefix || null);
       if (Lstart.tracePrefix) T.addSelf(ctx, st, Lstart);
       (function step() {
@@ -2530,11 +2539,20 @@
   }
 
   bind();
+  // 続きの人生・家の作り直しの前に、どの時代のデータもそろえる（v19 12。そろう前に作ると、全部を読んだときと違う人生になる）
+  var inheritFrom0 = inheritFrom, descendFrom0 = descendFrom, memberFrom0 = memberFrom, rechildFrom0 = rechildFrom, traceFrom0 = traceFrom, buildHouse0 = buildHouse;
+  inheritFrom = function () { var a = arguments; return dataAll().then(function () { return inheritFrom0.apply(null, a); }); };
+  descendFrom = function () { var a = arguments; return dataAll().then(function () { return descendFrom0.apply(null, a); }); };
+  memberFrom = function () { var a = arguments; return dataAll().then(function () { return memberFrom0.apply(null, a); }); };
+  rechildFrom = function () { var a = arguments; return dataAll().then(function () { return rechildFrom0.apply(null, a); }); };
+  traceFrom = function () { var a = arguments; return dataAll().then(function () { return traceFrom0.apply(null, a); }); };
+  buildHouse = function () { var a = arguments; return dataAll().then(function () { return buildHouse0.apply(null, a); }); };
   // 速さは前に選んだものを覚えておく（v19）
   var sp0 = store('ichioku-speed'); if (typeof sp0 === 'number' && sp0 >= 0 && sp0 < SPEEDS.length) speedIdx = sp0;
   try { var av = localStorage.getItem('ichioku-auto'); auto = av === '1' || av === '2' ? 2 : av === 'k' ? 1 : 0; } catch (e) { /* 保存できない環境 */ }
   renderFocus();
-  getJSON('data/common.json').then(function (c) { C = c; getMap(); initTop(); mountMe(); meModal(); }).catch(function () {
+  var commonP = getJSON('data/common.json'); window.IchiokuCommonP = commonP.catch(function () { return null; });
+  commonP.then(function (c) { C = c; getMap(); initTop(); mountMe(); meModal(); }).catch(function () {
     $('born').textContent = 'データを取り出せませんでした';
   });
 })();

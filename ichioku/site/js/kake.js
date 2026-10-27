@@ -100,11 +100,13 @@
     arc({ id: 'kake_g1', start: function (c) {
       if (!adult(c) || c.a > 70 || !keibaOk(c.y) || !c.p(0.0065)) return false;
       var L = c.L, rn = raceName(c.y), all = sav(L);
-      c.s.kakeG1 = { small: 1, mid: 10, all: Math.max(5, all) };
+      // 貯金が1年分の稼ぎより少ない人は「なけなしの全貯金」、多い人は「貯金の1割」を大勝負の額にする
+      var M0 = L.money || {}, inc0 = M0.incN ? M0.incSum / M0.incN : 3000, thin = all <= inc0;
+      c.s.kakeG1 = { small: 1, mid: 10, all: thin ? Math.max(5, all) : all * 0.1, thin: thin };
       c.ask('kake_g1', 'はじめての' + rn, friend(c) + 'に誘われて、はじめて競馬場へ行った。' + (c.y >= 1956 ? rn + 'の日で' : rn + 'のある日で') + '、スタンドは人で埋まっていた。いくら賭ける？', [
         { k: 'small', l: yen(L, 1, c.y) + 'だけ', w: 1.2, f: ['save'], h: '負けても痛くないが、勝っても小さい' },
         { k: 'mid', l: yen(L, 10, c.y), w: 0.8, f: ['earn'], h: '当たれば大きいが、外れれば1日分の稼ぎが消える' },
-        { k: 'all', l: 'なけなしの全貯金', w: 0.08 + Math.max(0, c.tr('adv')) * 0.06, f: ['earn'], h: 'まれに大きく増えるが、たいていは全部なくす' }
+        { k: 'all', l: thin ? 'なけなしの全貯金' : '貯金の1割', w: 0.08 + Math.max(0, c.tr('adv')) * 0.06, f: ['earn'], h: thin ? 'まれに大きく増えるが、たいていは全部なくす' : '当たれば大きいが、外れれば何年分もの蓄えが消える' }
       ]);
       var q = noted(c, 'kake_g1');
       if (q) q.groups.push({ id: 'u', q: 'どの馬の' + (c.y >= 1948 ? '単勝の' : '') + '馬券を買う？', options: [
@@ -120,7 +122,7 @@
         var horse = ans === 'ana' || ans === 'ninki' ? ans : (c.r() < 0.65 ? 'ninki' : 'ana');
         var odds = horse === 'ninki' ? Math.round((1.8 + c.r() * 1.7) * 10) / 10 : Math.round(20 + c.r() * 40);
         var res = bet(c, 'keiba', st, odds, k === 'all' ? 4 : k === 'mid' ? 2 : 1, '競馬の' + (res0(k)));
-        var amt = k === 'all' ? '貯金のすべて' : yen(L, st, c.y);
+        var amt = k === 'all' ? ((c.s.kakeG1 || {}).thin === false ? '貯金の1割' : '貯金のすべて') : yen(L, st, c.y);
         var hw = horse === 'ninki' ? '人気の馬' : '大穴の馬';
         if (res.win) c.say(hw + 'に' + amt + 'を賭けると、その馬が先頭でゴールした。倍率は' + odds + '倍で、' + yen(L, res.ret, c.y) + 'が戻ってきた' + (k === 'all' || horse === 'ana' ? '。手が震えた' : '') + '。', k === 'all' ? { sat: 8, learn: -3, tie: -1 } : { sat: 4, learn: -1 }, '人間関係');
         else c.say(hw + 'に' + amt + 'を賭けたが、その馬は' + (horse === 'ninki' ? '最後の直線で抜かれた' : '後ろのまま終わった') + '。' + (k === 'all' ? '帰りの電車賃にも困るほどだった。' : '外れた馬券を、しばらく手の中で握っていた。'), k === 'all' ? { sat: -8, tie: -3, learn: 2 } : k === 'mid' ? { sat: -3, learn: 1 } : { sat: 1, learn: 1, tie: 1 }, '人間関係');
@@ -227,7 +229,7 @@
     arc({ id: 'kake_toto', start: function (c) {
       if (!adult(c) || c.a > 75 || c.y < START.toto || !c.p(0.004)) return false;
       c.ask('kake_toto', 'サッカーくじ', 'コンビニのレジ横で、サッカーくじの案内が目に入った。試合の勝ち負けを当てるくじだという。', [
-        { k: 'ichi', l: '1口だけ買う', w: 1, f: ['body'], h: '試合を見る楽しみは増えるが、まず当たらない' },
+        { k: 'ichi', l: '1口だけ買う', w: 1, f: ['body'], h: '試合を見る楽しみは増えるが、ほとんど当たらない' },
         { k: 'maishu', l: '毎週買い続ける', w: 0.4, f: ['earn'], h: '当たる見こみは増えるが、1年で使う額はかさむ' },
         { k: 'kawanai', l: '買わない', w: 1, f: ['save'], h: 'お金は減らないが、話の種もない' }
       ]);
@@ -288,7 +290,10 @@
     };
     kn.res.hamaru__kakusu = function (c) {
       var L = c.L, k = K(L), kind = c.s.kakeKind || 'keirin';
-      var res = bet(c, kind, Math.max(20, sav(L) * 0.4), 4, 3, '取り返そうと賭け続けた');
+      // 取り返そうと、休みのたびに額を上げて賭け続ける（貯金の2%ずつを20回。合わせて貯金の4割ほど）
+      var unit = Math.max(1, sav(L) * 0.02), tot = 0;
+      for (var i = 0; i < 20; i++) tot += bet(c, kind, unit, 4, i ? 0 : 3, '取り返そうと賭け続けた').net;
+      var res = { win: tot > 0, net: tot };
       c.say('誰にも言わずに賭け続けた。負けを取り返そうと、賭ける額が少しずつ大きくなった。', res.win ? { sat: 1, learn: -2, tie: -2 } : { sat: -4, tie: -2, learn: -1 }, '人間関係');
       c.later(1 + Math.floor(c.r() * 2), 'kakeN.kuzure', { n: (c.d && c.d.n) || 1 });
     };

@@ -92,7 +92,9 @@
   /* ---------- 筋（アーク） ----------
      start(c)：その年に始まるかどうかを決めて、始まったら true。nodes：あとで呼ばれる出来事や分かれ道。res：分かれ道の答えごとの続き */
   var A = [], N = {};
-  function arc(o) { A.push(o); for (var k in (o.nodes || {})) N[o.id + '.' + k] = o.nodes[k]; }
+  // _ord：並びの順。時代ごとに分けたデータを後から足しても、全部を読んだときと同じ順に並べる（v19 12）
+  var ARC_N = 0;
+  function arc(o) { if (o._ord == null) o._ord = ARC_N++; A.push(o); for (var k in (o.nodes || {})) N[o.id + '.' + k] = o.nodes[k]; }
   function modern(c) { return c.y >= 1975; }
   function single(L) { return !L.married && !L.everMarried; }
   function hasParentOld(L, age) { return (L.members || []).some(function (m) { return (m.role === '父' || m.role === '母') && m.alive && !m.gone && L.year - m.by >= age; }); }
@@ -1747,14 +1749,21 @@
   function choicesMod() {
     var CH = root.IchiokuChoices || null;
     if (!CH && typeof require === 'function') { try { CH = require('./choices.js'); } catch (e) { CH = null; } }
-    // 第6版の選択（js/s6.js）を一度だけ足す
-    if (CH && !CH._s6) {
-      CH._s6 = true;
-      var S6 = s6Mod();
-      if (S6 && S6.choices) S6.choices.forEach(function (o) {
-        CH.list.push({ id: o.id, kind: o.kind, y: o.y, a: o.a, when: o.when || {}, text: o.text, texts: [].concat(o.text), s6: true,
+    // 第6版の選択（js/s6.js）を足す。時代ごとに分けて後から届いた分も足し、全部を読んだときと同じ順に並べる（v19 12）
+    var S6 = CH ? s6Mod() : null;
+    if (CH && S6 && S6.choices && CH._s6n !== S6.choices.length) {
+      CH._s6 = true; CH._s6seen = CH._s6seen || {};
+      CH.list.forEach(function (o, i) { if (o._o == null) o._o = i; });
+      var n0 = CH.list.length;
+      S6.choices.forEach(function (o, idx) {
+        if (CH._s6seen[o.id]) return; CH._s6seen[o.id] = 1;
+        CH.list.push({ _o: 1e6 + (o._i != null ? o._i : idx), id: o.id, kind: o.kind, y: o.y, a: o.a, when: o.when || {}, text: o.text, texts: [].concat(o.text), s6: true,
           options: CH.balance ? CH.balance(o.options.map(function (p) { return { k: p.k, l: p.l, fx: Object.assign({}, p.fx || {}), after: p.after || null, money: p.money || null, pet: p.pet || null, petEnd: !!p.petEnd }; })) : o.options.map(function (p) { return { k: p.k, l: p.l, fx: p.fx || {}, after: p.after || null, money: p.money || null }; }) });
       });
+      // 全部を読んだときは、あとで全体に一度だけ balance をかける。後から届いた分にも同じ回数かける
+      if (CH._bal && CH.balance) for (var bi = n0; bi < CH.list.length; bi++) CH.balance(CH.list[bi].options);
+      CH._s6n = S6.choices.length;
+      if (n0 !== CH.list.length) CH.list.sort(function (a, b) { return a._o - b._o; });
     }
     // どちらの答えにも得るものと失うものを（spec6 2-15）。全部そろったあとに一度だけ
     if (CH && CH.balance && !CH._bal) { CH._bal = true; CH.list.forEach(function (o) { CH.balance(o.options); }); }
@@ -3087,11 +3096,17 @@
     if (L.shukkeY && !path.modeOk && path.group !== 'kaigai' && path.group !== 'shoku') return false; // 出家した人に村や家の筋を始めない（v11直し1）
     return true;
   }
-  (function () {
+  // 筋を arc に登録する。時代ごとに分けたデータが後から届いたら、まだの筋だけ足し、全部を読んだときと同じ順に並べ直す（v19 12）
+  var PATH_SEEN = {}, PATH_ORD = null;
+  function addPaths() {
     var PM = pathsMod();
     if (!PM || !PM.list) return;
-    var CHb = choicesMod();
-    PM.list.forEach(function (path) {
+    if (PATH_ORD == null) PATH_ORD = ARC_N++;
+    var CHb = choicesMod(), added = 0;
+    PM.list.forEach(function (path, idx) {
+      if (PATH_SEEN[path.id]) return;
+      PATH_SEEN[path.id] = 1; added++;
+      var ord = PATH_ORD + ((path._i != null ? path._i : idx) + 1) / 1e7;
       if (CHb && CHb.balance) { CHb.balance(path.opts); Object.keys(path.nodes || {}).forEach(function (nk) { if (path.nodes[nk].ask) CHb.balance(path.nodes[nk].ask.opts); }); }
       var res = {};
       path.opts.forEach(function (o) { res['start__' + o.k] = function (c) { pathClear(c, path); pathDo(c, path, o); }; });
@@ -3127,9 +3142,11 @@
         if (path.group === 'shusse') s.shusseN = (s.shusseN || 0) + 1;
         pathAsk(c, path, 'start', path.title, path.text, path.opts);
         return true;
-      }, res: res, nodes: nodes });
+      }, res: res, nodes: nodes, _ord: ord });
     });
-  })();
+    if (added) A.sort(function (a, b) { return a._ord - b._ord; });
+  }
+  addPaths();
 
   /* ---------- 位階と勲章（spec6 2-10・2-25） ----------
      一定以上の役職に就いた人と、偉業を成しとげた人には、必ず位階か勲章を付ける。時代の制度に合わせる：
@@ -3238,7 +3255,7 @@
     L.descendLine = '家は' + ERA_NAME(rec.since) + 'のころから' + (place ? place + 'の' : 'この土地の') + (rec.pos ? rec.pos + 'を出した' : (POS_WORD[rec.status] || '') ) + '家で、' + (rec.treasure ? '蔵には' + rec.treasure + 'が残っていた。' : '') + (rec.motto ? '家訓は「' + rec.motto + '」だった。' : '') + note;
     return L;
   }
-  var API = { init: init, year: year, houseRec: houseRec, applyDescend: applyDescend, finalHonors: finalHonors, honorText: honorText, honorOk: honorOk, familyLine: familyLine, resolve: resolve, autoAnswer: autoAnswer, spouseDesc: spouseDesc, refuseText: refuseText, enLabel: enLabel, hintFor: hintFor, suitor: suitor, suitorText: suitorText, hokoTo: hokoTo, mukoHouse: mukoHouse, yoshiHouse: yoshiHouse, arcs: A, nodes: N };
+  var API = { init: init, year: year, houseRec: houseRec, applyDescend: applyDescend, finalHonors: finalHonors, honorText: honorText, honorOk: honorOk, familyLine: familyLine, resolve: resolve, autoAnswer: autoAnswer, spouseDesc: spouseDesc, refuseText: refuseText, enLabel: enLabel, hintFor: hintFor, suitor: suitor, suitorText: suitorText, hokoTo: hokoTo, mukoHouse: mukoHouse, yoshiHouse: yoshiHouse, arcs: A, nodes: N, dataChanged: function () { choicesMod(); addPaths(); } };
   // 外の物語の部品（deai.js 2020年代の出会い・kake.js 昭和以降の賭けごと）：筋（arc）を足す。どちらの読みこみ順でも1回だけ
   API.addArc = arc;
   API.ext = {};

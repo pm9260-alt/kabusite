@@ -1,0 +1,6 @@
+{
+  "name": "ichioku-tools",
+  "private": true,
+  "description": "作る手順で使う道具（縮める：terser・csso）。npm install で入れる",
+  "devDependencies": { "terser": "5.36.0", "csso": "5.0.5" }
+}
