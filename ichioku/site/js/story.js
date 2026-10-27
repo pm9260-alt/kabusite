@@ -2274,7 +2274,9 @@
     rec.storyPick = picked ? picked.l : k;
     noteChoice(L, br, rec.storyPick, true);
     var n0 = rec.events.length;
+    s.ans = answers || null; // 2つ目の問い（groups の2つ目）の答えを筋の続きで読む（kake.js）
     if (target) target(ctxOf(L, rec, api, br.d));
+    s.ans = null;
     rec.storyFx = sumFx(rec.events.slice(n0));
     return k;
   }
@@ -2321,7 +2323,7 @@
   function spouseDesc(L, sp, y) {
     var r = (L.story && L.story.r) || Math.random, age = y - sp.by, adj = one(r, SP_ADJ);
     var order = sp.sex === 'f' ? one(r, ['長女', '次女', '三女', '末娘', 'ひとり娘']) : one(r, ['長男', '次男', '三男', '末っ子']);
-    if (!L.old || y >= 1948) { var jb = one(r, SP_NEW); sp.house = '父が' + one(r, SP_DAD) + 'の家の' + order; return age + '歳、' + sp.house + 'で、' + jb + 'として働く' + adj + '人だった。'; }
+    if (!L.old || y >= 1948) { var jb = one(r, SP_NEW); sp.house = '父が' + one(r, SP_DAD) + 'の家の' + order; return age + '歳、' + sp.house + 'で、' + (/勤め$/.test(jb) ? jb.replace(/勤め$/, 'に勤める') : jb + 'として働く') + adj + '人だった。'; }
     var st = sp.st || L.status, list = SP_OLD[st] || SP_OLD.other;
     sp.house = farmWord(one(r, list), y) + 'の' + order;
     return age + '歳、' + sp.house + 'で、' + adj + '人だった。';
@@ -3106,6 +3108,14 @@
     return L;
   }
   var API = { init: init, year: year, houseRec: houseRec, applyDescend: applyDescend, finalHonors: finalHonors, honorText: honorText, honorOk: honorOk, familyLine: familyLine, resolve: resolve, autoAnswer: autoAnswer, spouseDesc: spouseDesc, refuseText: refuseText, enLabel: enLabel, hintFor: hintFor, suitor: suitor, suitorText: suitorText, hokoTo: hokoTo, mukoHouse: mukoHouse, yoshiHouse: yoshiHouse, arcs: A, nodes: N };
+  // 外の物語の部品（deai.js 2020年代の出会い・kake.js 昭和以降の賭けごと）：筋（arc）を足す。どちらの読みこみ順でも1回だけ
+  API.addArc = arc;
+  API.ext = {};
+  [['IchiokuDeai', './deai.js'], ['IchiokuKake', './kake.js']].forEach(function (x) {
+    var m = root[x[0]];
+    if (!m && typeof require === 'function') { try { m = require(x[1]); } catch (e) { m = null; } }
+    if (m && m.register) m.register(API);
+  });
   if (typeof module !== 'undefined' && module.exports) module.exports = API;
   root.IchiokuStory = API;
 })(typeof self !== 'undefined' ? self : this);

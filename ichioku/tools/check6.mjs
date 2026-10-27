@@ -643,6 +643,27 @@ test('9-4', '身元の書き付け・趣味と持ち物・飼う動物・この�
   return { ok: formBad === 0 && eng === 0 && goodsBad === 0 && hobBad === 0 && typeBad === 0 && petBad === 0 && nt >= 12, n, detail: '書き付けの形の違い ' + formBad + '・英字や禁止語 ' + eng + '・年の外の持ち物 ' + goodsBad + '・趣味の値の外れ ' + hobBad + '・飼った動物 ' + petN + '（おかしなもの ' + petBad + '）・手ざわりの型 ' + nt + '種（違反 ' + typeBad + '）' + (ex ? '（' + ex + '）' : '') };
 });
 
+/* ---------- v19（ichioku1000-v18-fix-spec2） ---------- */
+// 7 出来事の文の日本語：機械の点検（記録500件のすべての文を、画面と同じ丁寧体に直してから調べる）
+function sentencesOf(t) { const out = []; let d = 0, cur = ''; for (const ch of t) { cur += ch; if ('「『（'.includes(ch)) d++; else if ('」』）'.includes(ch) && d > 0) d--; else if (ch === '。' && d === 0) { out.push(cur); cur = ''; } } if (cur.trim()) out.push(cur); return out; }
+const BAD_JA = [['でしました・ましました', /でしました|ましました|でしたでした|ですです/], ['同じ助詞の連続', /([一-龠ァ-ヶ]のの[一-龠ァ-ヶ]|をを)/], ['二重のかっこ', /（[^）]*（|）（/], ['〜かったです', /かったです/], ['埋めこみの名前が空', /[、。]と(結婚|再婚)|^と(結婚|再婚)|\{\w+\}|undefined|null|NaN/]];
+const END_OK = /(ます|ました|ません|ませんでした|です|でした|でしょう)。$/;
+test('10-7', '出来事の文の日本語（でしました・助詞の連続・二重のかっこ・かったです・文の終わり・空の名前が0件）', () => {
+  const Ls = lives(500, 1000, 2000, 1907); const cnt = {}; const ex = {}; let n = 0;
+  const add = (k, t) => { cnt[k] = (cnt[k] || 0) + 1; if (!ex[k]) ex[k] = t.slice(0, 40); };
+  for (const L of Ls) for (const e of texts(L)) {
+    const pt = PO.polite(e.t);
+    for (const st of sentencesOf(pt)) {
+      n++;
+      for (const [k, re] of BAD_JA) if (re.test(st)) add(k, st);
+      const body = st.replace(/「[^」]*」/g, '').replace(/（[^（）]*）。$/, '。');
+      if (/。$/.test(st) && body.trim() !== '。' && !END_OK.test(body.trim())) add('文の終わり', st);
+    }
+  }
+  const tot = Object.values(cnt).reduce((a, b) => a + b, 0);
+  return { ok: tot === 0, n, detail: tot ? Object.entries(cnt).map(([k, v]) => k + ' ' + v + '（' + ex[k] + '）').join('・') : '文 ' + n + '・おかしな文 0' };
+});
+
 /* ---------- 動かす ---------- */
 const args = process.argv.slice(2);
 if (args.includes('--list')) { for (const [k, v] of Object.entries(T)) console.log(k + '\t' + v.name); process.exit(0); }

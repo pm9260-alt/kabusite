@@ -36,7 +36,8 @@
     var n = Math.round(qv * 1000);
     return n >= 1 ? '1,000人に' + n + '人' : '1,000人に1人より少ない';
   }
-  function pc(v) { return v > 0 && v < 0.01 ? '1%未満' : '約' + Math.round(v * 100) + '%'; }
+  // 割合：99.5%以上と0.5%未満は小数1けたで（四捨五入で100%や0%に見えないように。v19 7）
+  function pc(v) { var p = v * 100; if (v > 0 && p < 0.05) return '0.1%未満'; if (p >= 99.95 && v < 1) return '99.9%以上'; return '約' + (p >= 99.5 || (p > 0 && p < 0.5) ? p.toFixed(1) : Math.round(p)) + '%'; }
   // 比べの文（です・ます）。me = { y: 生まれ年, pref: '13' }。入れていなければ null
   function line(C, H, L, me, kind) {
     if (!me || !me.y) return null;

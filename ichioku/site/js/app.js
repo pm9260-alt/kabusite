@@ -1913,7 +1913,7 @@
     return out;
   }
   // 死因の下の数字（原作にならう）：同じ死因の割合・同じ年に生まれた人のうち長く生きた割合・平均の寿命との差
-  function pctW(v) { return v < 0.01 ? '1%未満' : '約' + Math.round(v * 100) + '%'; }
+  function pctW(v) { var p = v * 100; if (p < 0.05) return '0.1%未満'; return '約' + (p >= 99.5 || p < 0.5 ? p.toFixed(1) : Math.round(p)) + '%'; }
   var BANDS_OLD = [[0, 0, '0歳'], [1, 4, '1〜4歳'], [5, 14, '5〜14歳'], [15, 39, '15〜39歳'], [40, 64, '40〜64歳'], [65, 200, '65歳以上']];
   function bandWord(bands, a) { var w = ''; bands.forEach(function (b) { if (a >= b[0] && a <= b[1]) w = b[2] || (b[1] >= 200 ? b[0] + '歳以上' : b[0] === b[1] ? b[0] + '歳' : b[0] + '〜' + b[1] + '歳'); }); return w; }
   function causeNote() {

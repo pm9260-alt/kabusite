@@ -319,7 +319,7 @@
     var cn = cityName(L);
     var muni = L.muniName ? '（今の' + L.muniName + 'のあたり）' : '';
     if (L.status === 'ryukyuShi' && L.kind === 'town') return (y < 1879 ? '琉球王国' : '沖縄県') + ' 首里';
-    if (L.pref === '47' && y < 1429) return '沖縄の島の' + (L.kind === 'fish' ? '浜の村' : '村') + '（グスク時代）' + muni;
+    if (L.pref === '47' && y < 1429) return 'グスク時代の沖縄の島の' + (L.kind === 'fish' ? '浜の村' : '村') + muni;
     if (L.pref === '47' && y < 1879) return '琉球王国の村' + muni;
     if (y < 1200 && L.prov === '蝦夷・松前') return '北の島（今の北海道）の川沿いの村';
     if (y < 1600 && L.prov === '蝦夷・松前') return '夷島（今の北海道）の' + (L.kind === 'kotan' ? kw : '和人の館のある浜');
@@ -369,7 +369,7 @@
     });
     return {
       old: true, seed: L.seed0 || L.seed, deathYear: L.deathYear, deathAge: L.deathAge, cause: L.cause,
-      prev: { name: L.name, sex: L.sex, by: L.by, heir: !!L.heir, surname: L.surname || null, multi: L.multi ? { n: L.multi.n, order: L.multi.order } : null },
+      prev: { name: L.name, sex: L.sex, by: L.by, heir: !!L.heir, surname: L.surname || null, multi: L.multi ? { n: L.multi.n, order: L.multi.order } : null, apt: L.apt || null },
       members: mem, status: L.status, kakaku: L.kakakuBirth || L.kakaku || null, grade: L.gradeBirth || null, ancestry: L.ancestry || null, uji: L.uji || null, rank: L.rank || null, parentJobH: L.rank ? L.parentJob : null, ainu: L.ainu, ryukyu: L.ryukyu, home: home, goods: L.goods || {}, incPct: L.incPct, surname: L.surnameOld || L.surname || null,
       jobs: { parent: L.parentJob || null, self: L.selfJob || null },
       chain: (chain || []).slice(), story: L.story ? { toxic: !!L.story.f.toxic, bigwig: !!L.story.f.bigwig, prosper: L.story.f.prosper || L.story.f.prosperHouse || 0 } : null
@@ -471,7 +471,9 @@
     var pv = { id: maxId + 1, role: kidGen ? (h.prev.sex === 'm' ? '父' : '母') : sibRole(h.prev.sex, h.prev.by, me.by), sex: h.prev.sex, by: h.prev.by, name: h.prev.name, sib: !kidGen, live: true, alive: true, dy: null, fixDy: h.deathYear, prevLife: true };
     if (pv.fixDy < me.by) { pv.alive = false; pv.before = true; pv.dy = pv.fixDy; }
     if (!kidGen && h.prev.multi) pv.multi = { n: h.prev.multi.n, order: h.prev.multi.order };
+    if (h.prev.apt) pv.apt = h.prev.apt; // 素養（yume.js）を引き継ぐ
     L.members.push(pv);
+    if (me.apt) L.apt = me.apt;
     E.multiInherit(L, kidGen ? {} : me);
     L.dad = L.members.filter(function (m) { return m.role === '父'; })[0];
     L.mom = L.members.filter(function (m) { return m.role === '母'; })[0];
@@ -764,12 +766,12 @@
   function birthEvent(L, rec) {
     var H = L.H, y = L.year, st = L.status;
     var sibs = L.members.filter(function (m) { return m.sib && m.by < y; });
-    var s = rec.place + 'で、' + stWordJob(L) + 'に' + (L.sex === 'm' ? '男の子' : '女の子') + 'として生まれた。' + (st === 'satsumon' ? '名前は土地の言葉で付けられた。' : /アイヌ語/.test(L.name) ? '名前はアイヌ語で付けられた。' : '名前は' + L.name + 'と名付けられた。');
+    var s = rec.place + 'で、' + stWordJob(L) + 'に' + (L.sex === 'm' ? '男の子' : '女の子') + 'として生まれた。' + (st === 'satsumon' ? '名前は土地の言葉で付けられた。' : /アイヌ語/.test(L.name) ? '名前はアイヌ語で付けられた。' : L.name + 'と名付けられた。');
     s += E.multiText(L, function (m) { return m.name && !/アイヌ語/.test(m.name) && st !== 'satsumon' ? m.name : null; });
     s += '父は' + L.fAge + '歳、母は' + L.mAge + '歳だった。';
     if (L.descendLine) s += L.descendLine;
     var J = E.jobsMod && E.jobsMod();
-    if (L.parentJob && J) s += '家の仕事は' + L.parentJob.n + '（' + L.parentJob.d + '）だ。';
+    if (L.parentJob && J) s += '家の仕事は' + L.parentJob.n + 'だ。' + (L.parentJob.d ? L.parentJob.d + (/仕事$/.test(L.parentJob.d) ? 'だ。' : '。') : '');
     var alive = sibs.filter(function (m) { return !m.before; }), dead = sibs.filter(function (m) { return m.before; });
     if (alive.length) s += alive.map(who).join('、') + 'がいる。';
     else if (!dead.length) s += 'はじめての子どもだった。';
@@ -1093,7 +1095,7 @@
       teacher: '学校の先生になった', clerk: '会社勤めを始めた', maid: 'よその家に住み込みで女中奉公に出た', office: '会社の事務員として働き始めた', store: '商店に住み込みで働き始めた'
     }[k2];
     if (st === 'kuge') { var KJ = y >= 1946 ? KAZOKU_JOB_NEW : KAZOKU_JOB, kj2 = KJ[(L.seed >>> 5) % KJ.length]; sj2 = { cat: 'kuge', n: kj2[0], d: kj2[1] }; L.selfJob = sj2; L.lastJob = sj2.n; txt = (y >= 1947 ? '元は華族の家の者として、' : '華族の家の者として、') + sj2.n + 'の道に進んだ'; }
-    if (sj2) txt += '。' + (sj2.same ? '家と同じ' + sj2.n + 'の仕事だ。' : '仕事は' + sj2.n + '（' + sj2.d + '）だ。');
+    if (sj2) txt += '。' + (sj2.same ? '家と同じ' + sj2.n + 'の仕事だ。' : '仕事は' + sj2.n + 'だ。' + (sj2.d ? sj2.d + (/仕事$/.test(sj2.d) ? 'だ。' : '。') : ''));
     push(L, rec, '学歴と仕事', txt, evs);
   }
   function H_sectors(L) {
@@ -1228,7 +1230,10 @@
     if (su) txt += (y - sp.by) + '歳、' + su.house + 'の' + su.order + 'で、' + su.trait + '人だった。';
     else if (SMd && L.story && !/アイヌ語/.test(sp.name)) txt += SMd.spouseDesc(L, sp, y);
     sp.house = su ? su.house + 'の' + su.order : sp.house;
-    push(L, rec, '家庭', txt, evs || [ev(L, LIFE_SRC, y, '再婚', '', { est: true })]);
+    // 出会いのきっかけ（2015年からの結婚。deai.js）
+    var DMo = E.deaiMod && E.deaiMod(), met = DMo && DMo.metBy ? DMo.metBy(L, y) : null;
+    if (met) txt = txt.replace(/と(再婚|結婚)した。/, 'と$1した。' + met.t);
+    push(L, rec, '家庭', txt, (evs || [ev(L, LIFE_SRC, y, '再婚', '', { est: true })]).concat(met ? [ev(L, met.src, met.sy, met.what, met.val, { est: !!met.est })] : []));
     if (y >= 1948) E.wifeNameYear(L, rec);
   }
 

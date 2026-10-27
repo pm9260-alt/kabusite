@@ -925,3 +925,8 @@ body[data-screen="life"] .o-head { gap: 6px; padding-bottom: 8px; }
   .o-ctrl .o-speeds .o-sp { min-width: 34px; font-size: 12px; }
   .oh-row .o-num { font-size: 34px; }
 }
+/* 問い合わせ先（v19 8） */
+.contact { display: grid; gap: 8px; margin: 12px 0; }
+.contact div { display: grid; grid-template-columns: 5em minmax(0, 1fr); gap: 8px; padding: 8px 0; border-top: 1px solid var(--line); }
+.contact dt { color: var(--sub); }
+.contact dd { margin: 0; font-weight: 700; word-break: break-all; }

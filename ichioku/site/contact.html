@@ -16,7 +16,19 @@
 <main id="app">
   <section class="screen">
     <h1 class="end-title">問い合わせ先</h1>
-    <p>問い合わせ先は、運営者が決めしだいこのページに載せます。</p>
+    <dl class="contact">
+      <div><dt>運営者</dt><dd>小林海斗</dd></div>
+      <div><dt>メール</dt><dd id="mail-box">mamoru04040404 あっと gmail.com</dd></div>
+    </dl>
+    <!-- メールアドレスは、迷惑メールを集める仕組みに拾われにくいよう、開いたときに組み立てて出す（v19 8） -->
+    <script>
+    (function () {
+      var u = 'mamoru04040404', d = ['gmail', 'com'].join('.'), a = u + String.fromCharCode(64) + d;
+      var box = document.getElementById('mail-box'); if (!box) return;
+      var l = document.createElement('a'); l.href = 'mai' + 'lto:' + a; l.textContent = a;
+      box.textContent = ''; box.appendChild(l);
+    })();
+    </script>
     <div class="block">
       <h2 class="h-self">問い合わせの前に</h2>
       <p>数字の出どころは「このサイトについて」の統計の一覧にまとめています。</p>

@@ -7,9 +7,38 @@
   var SAFE = { 'した': 1, 'だった': 1, 'だ': 1 };
   var KANJI = /[\u3400-\u9fff\u30a0-\u30ffー]/;
   // 1つの文（。で終わる）を丁寧体に
+  // v19 7：表にない文末の言い換え（文の終わりのかっこ・今の形の動詞・「〜かった」・名詞で終わる文）
+  var A2I = { 'か': 'き', 'が': 'ぎ', 'さ': 'し', 'た': 'ち', 'な': 'に', 'ば': 'び', 'ま': 'み', 'ら': 'り', 'わ': 'い' };
+  var GODAN = { 'す': 'し', 'く': 'き', 'ぐ': 'ぎ', 'む': 'み', 'ぶ': 'び', 'ぬ': 'に', 'つ': 'ち', 'う': 'い' };
+  var EI_ROW = /[えけげせぜてでねへべぺめれいきぎしじちぢにひびぴみり]$/;
+  var ICHI_KANJI = /(見|着|似|煮|居|出|寝|経|得)$/;
+  function extra(body) {
+    var m;
+    if ((m = body.match(/^([\s\S]*)(（[^（）]*）)$/)) && m[1]) { var inner = one(m[1] + '。'); return inner === m[1] + '。' ? null : inner.replace(/。$/, '') + m[2]; }
+    if (/ではなかった$/.test(body)) return body.replace(/ではなかった$/, 'ではありませんでした');
+    if (/からかった$/.test(body)) return body.replace(/からかった$/, 'からかいました');
+    if ((m = body.match(/([ぁ-ん])なかった$/)) && A2I[m[1]] && !/[がはもに、]なかった$/.test(body)) return body.replace(/([ぁ-ん])なかった$/, function (x, k) { return A2I[k] + 'ませんでした'; });
+    if (/[がはもにくど、]なかった$/.test(body) || /ほとんどなかった$/.test(body)) return body.replace(/なかった$/, 'ありませんでした');
+    if (/よかった$/.test(body)) return body.replace(/よかった$/, 'よかったと思いました');
+    if (/悪かった$/.test(body)) return body.replace(/悪かった$/, 'よくありませんでした');
+    if (/多かった$/.test(body)) return body.replace(/多かった$/, '多くありました');
+    if (/しかった$/.test(body)) return body.replace(/しかった$/, 'しく思いました');
+    if (/[ぁ-ん一-龠]かった$/.test(body) && !/[っゃゅょ]かった$/.test(body)) return body.replace(/かった$/, 'く感じました');
+    if (/[ぁ-ん][えけげせぜてでねへべめれ]た$/.test(body)) return body.slice(0, -1) + 'ました'; // 一段の動詞（ながめた・すえた）
+    if (/する$/.test(body)) return body.replace(/する$/, 'します');
+    if (/くる$/.test(body)) return body.replace(/くる$/, 'きます');
+    if ((m = body.match(/(.)る$/))) { var pv = m[1]; if (EI_ROW.test(pv) || ICHI_KANJI.test(body.slice(0, -1))) return body.slice(0, -1) + 'ます'; return body.slice(0, -1) + 'ります'; }
+    if ((m = body.match(/([すくぐむぶぬつう])$/)) && /[ぁ-ん一-龠]$/.test(body.slice(0, -1))) return body.slice(0, -1) + GODAN[m[1]] + 'ます';
+    if (/[一-龠々ァ-ヶー]$/.test(body) || /[一-龠][いぎしめきりみびち]$/.test(body) || /暮らし$/.test(body)) return body + 'です'; // 名詞（商い・出稼ぎ・暮らし）と形容詞（多い）
+    return null;
+  }
   function one(s) {
     var m = s.match(/^([\s\S]*?)(。*)$/), body = m[1], tail = m[2];
+    if (body && /）$/.test(body) && !/(です|でした|ます|ました|ません)（[^（）]*）$/.test(body)) { var ex0 = extra(body); if (ex0) return ex0 + tail; }
     if (!body || /[」』）)]$/.test(body)) return s;
+    if (/かった$/.test(body)) { var ex2 = extra(body); if (ex2) return ex2 + tail; }
+    // すでに丁寧体の文には二度かけない（「でした」→「でしました」を防ぐ。v19 7）
+    if (/(です|でした|ます|ました|ません|ませんでした|でしょう)$/.test(body)) return s;
     for (var i = 0; i < KEYS.length; i++) {
       var k = KEYS[i];
       if (body.length < k.length || body.slice(-k.length) !== k) continue;
@@ -20,6 +49,7 @@
       if (k === 'だ' && prev === 'ん') continue; // 飛んだ・読んだ は動詞
       return body.slice(0, body.length - k.length) + T[k] + tail;
     }
+    if (tail) { var ex1 = extra(body); if (ex1) return ex1 + tail; }
     // 名詞や数で終わる文（体言止め）は「です」を添える（spec6 1-3：文の終わりをそろえる）
     if (/[\u3400-\u9fff\u30a0-\u30ff0-9０-９]$/.test(body)) return body + 'です' + tail;
     return s;

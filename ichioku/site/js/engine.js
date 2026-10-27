@@ -162,6 +162,12 @@
     if (typeof require === 'function') { try { return require('./jobs.js'); } catch (e) { return null; } }
     return null;
   }
+  // 出会いのきっかけ（deai.js）
+  function deaiMod() {
+    if (typeof self !== 'undefined' && self.IchiokuDeai) return self.IchiokuDeai;
+    if (typeof require === 'function') { try { return require('./deai.js'); } catch (e) { return null; } }
+    return null;
+  }
   function storyMod() {
     if (typeof self !== 'undefined' && self.IchiokuStory) return self.IchiokuStory;
     if (typeof require === 'function') { try { return require('./story.js'); } catch (e) { return null; } }
@@ -237,7 +243,7 @@
     });
     return {
       old: false, seed: L.seed0 || L.seed, deathYear: L.deathYear, deathAge: L.deathAge, cause: L.cause,
-      prev: { name: L.name, sex: L.sex, by: L.by, surname: L.surname || null, multi: L.multi ? { n: L.multi.n, order: L.multi.order } : null },
+      prev: { name: L.name, sex: L.sex, by: L.by, surname: L.surname || null, multi: L.multi ? { n: L.multi.n, order: L.multi.order } : null, apt: L.apt || null },
       members: mem, homeMuni: L.home.muni, placeMuni: place ? place.muni : L.home.muni, moves: moves,
       incPct: L.incPct, adoptU: L.adoptU, parentEdu: L.parentEdu, dadJob: L.dadJob, momJob: L.momJob, dadJobD: L.dadJobD || null, momJobD: L.momJobD || null, ownHome: L.ownHome, threeGen: L.threeGen, income: L.income, goods: L.goods || {},
       chain: (chain || []).slice(), story: L.story ? { toxic: !!L.story.f.toxic, bigwig: !!L.story.f.bigwig, prosper: L.story.f.prosper || L.story.f.prosperHouse || 0 } : null
@@ -342,7 +348,9 @@
     var pv = { id: maxId + 1, role: kidGen ? (h.prev.sex === 'm' ? '父' : '母') : sibRole(h.prev.sex, h.prev.by, me.by), sex: h.prev.sex, by: h.prev.by, name: h.prev.name, sib: !kidGen, alive: true, dy: null, fixDy: h.deathYear, prevLife: true };
     if (pv.fixDy < me.by) { pv.alive = false; pv.before = true; pv.dy = pv.fixDy; }
     if (!kidGen && h.prev.multi) pv.multi = { n: h.prev.multi.n, order: h.prev.multi.order };
+    if (h.prev.apt) pv.apt = h.prev.apt; // 素養（yume.js）を引き継ぐ
     L.members.push(pv);
+    if (me.apt) L.apt = me.apt;
     multiInherit(L, kidGen ? {} : me);
     L.dad = L.members.filter(function (m) { return m.role === '父'; })[0];
     L.mom = L.members.filter(function (m) { return m.role === '母'; })[0];
@@ -743,7 +751,7 @@
     var C = L.C, P = L.P, y = L.year;
     var share = val(L.place.muniObj.share, y);
     var sibs = L.members.filter(function (m) { return m.sib && m.by < y && m.alive; });
-    var s = L.place.prefName + L.place.muniName + 'で、' + (L.sex === 'm' ? '男の子' : '女の子') + 'として生まれた。名前は' + L.name + 'と名付けられた。' + multiText(L);
+    var s = L.place.prefName + L.place.muniName + 'で、' + (L.sex === 'm' ? '男の子' : '女の子') + 'として生まれた。' + L.name + 'と名付けられた。' + multiText(L);
     s += '父は' + L.fAge + '歳で' + (L.dadJobD ? L.dadJobD.n + '（' + L.dadJobD.d + '）' : IND[L.dadJob].job) + '、母は' + L.mAge + '歳で' + (L.momJob ? (L.momJobD ? L.momJobD.n : IND[L.momJob].job) + 'をしている' : '家で家事をしている') + '。';
     if (sibs.length) s += sibs.map(function (m) { return m.role + 'の' + m.name; }).join('、') + 'がいる。';
     else if (!L.members.some(function (m) { return m.sib && m.by < y; })) s += 'はじめての子どもだった。';
@@ -992,7 +1000,7 @@
     else if (jr > 1.3) s += '求人が多い年で、早いうちに';
     var place = { agri: '地元の農家で', fish: '地元の漁業の仕事で', factory: 'ものを作る会社の工場で', build: '建設の会社で', office: '会社の事務や営業の仕事で', shop: '地元の店で', pub: '役所で', care: '病院や福祉の施設で', service: '飲食やサービスの店で' }[k];
     s += place + (reg ? '正社員として' : (L.year < 1995 ? 'パートやアルバイトとして' : '契約社員として')) + '働くことになった。';
-    if (L.selfJob) s += '仕事は' + L.selfJob.n + '（' + L.selfJob.d + '）だ。';
+    if (L.selfJob) s += '仕事は' + L.selfJob.n + 'だ。' + (L.selfJob.d ? L.selfJob.d + (/仕事$/.test(L.selfJob.d) ? 'だ。' : '。') : ''); // かっこを重ねない（v19 7）
     return s;
   }
 
@@ -1016,7 +1024,9 @@
       var sp = addMember(L, '配偶者', L.sex === 'm' ? 'f' : 'm', L.by + diff);
       L.married = true; L.everMarried = true; L.marriedY = y; L.divorced = false; L.widowed = false;
       var SMd = storyMod();
-      push(L, rec, '家庭', sp.name + 'さんと結婚した。' + (SMd && L.story ? SMd.spouseDesc(L, sp, y) : '相手は' + (L.by + diff) + '年生まれ。'), [ev(C, 'vital', y, '生まれ年ごとの、50歳までに結婚する人の割合', pct(target), { est: true })]);
+      // 出会いのきっかけ（2015年からの結婚。deai.js：出生動向基本調査・明治安田生命の調査の割合）
+      var DMd = deaiMod(), met = DMd && DMd.metBy ? DMd.metBy(L, y) : null;
+      push(L, rec, '家庭', sp.name + 'と結婚した。' + (met ? met.t : '') + (SMd && L.story ? SMd.spouseDesc(L, sp, y) : '相手は' + (L.by + diff) + '年生まれ。'), [ev(C, 'vital', y, '生まれ年ごとの、50歳までに結婚する人の割合', pct(target), { est: true })].concat(met ? [ev(C, met.src, met.sy, met.what, met.val, { est: !!met.est })] : []));
       wifeNameYear(L, rec);
     }
   }
@@ -1749,7 +1759,7 @@
         if (m.y !== y || m.done) return;
         m.done = true;
         var avgInc = M.incN ? M.incSum / M.incN : 0;
-        var d = (m.f ? M.sav * m.f : 0) + (m.inc ? avgInc * m.inc : 0);
+        var d = (m.f ? M.sav * m.f : 0) + (m.inc ? avgInc * m.inc : 0) + (m.abs || 0); // abs：今の物価の千円で決めた額（kake.js の賭けの払い・払戻）
         if (d < 0 && -d > M.sav) d = -M.sav;
         M.sav += d;
         why.push({ t: m.t, d: d, ev: [], choice: true });
@@ -2177,6 +2187,6 @@
     pickCause: pickCause, deathStory: deathStory, COURSE: COURSE, ev: ev, askFor: askFor, answerAsk: answerAsk, ASK_AGES: ASK_AGES,
     storyMod: storyMod, jobsMod: jobsMod, goodsOk: goodsOk, eraWords: eraWords, awayWords: awayWords, asDecided: asDecided, WORK_RE: WORK_RE, STUDY_RE: STUDY_RE, homeLife: homeLife, HOME_RE: HOME_RE, WAR_BAN: WAR_BAN, storyName: storyName, namesMod: namesMod, withPool: withPool,
     multiRate: multiRate, multiMort: multiMort, multiQ: multiQ, multiBirth: multiBirth, multiInherit: multiInherit, multiText: multiText, multiYear0: multiYear0, multiEvVal: multiEvVal, multiFirst: multiFirst, MULTI_KIND: MULTI_KIND,
-    statusYear: statusYear, bodyMult: bodyMult, moneyYear: moneyYear, autoAnswer: autoAnswer, FOCUS: FOCUS, yearKind: yearKind, MAP_KINDS: MAP_KINDS, ST_KEYS: ST_KEYS, ST_NAMES: ST_NAMES
+    statusYear: statusYear, bodyMult: bodyMult, moneyYear: moneyYear, priceOf: priceOf, deaiMod: deaiMod, autoAnswer: autoAnswer, FOCUS: FOCUS, yearKind: yearKind, MAP_KINDS: MAP_KINDS, ST_KEYS: ST_KEYS, ST_NAMES: ST_NAMES
   };
 });
