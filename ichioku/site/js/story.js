@@ -2934,7 +2934,7 @@
   var PATH_FREE = { jiken: 1, shoku: 1, kakaku: 1, kurai: 1 };
   // 筋の種類ごとの出会いやすさ（spec6 の「確かめ方」の割合に合わせる）
   // 罪の筋は20歳以上の5〜10%（spec6 2-30）
-  var PATH_GX = { kaigai: 1.3, shusse: 2, gun: 12, gaiseki: 10, tsumi: 1 }, PATH_CAP = { shusse: 0.06, gun: 0.12, gaiseki: 0.25 };
+  var PATH_GX = { kaigai: 1.3, shusse: 2, gun: 12, gaiseki: 10, tsumi: 1, botsuraku: 3.6 }, PATH_CAP = { shusse: 0.06, gun: 0.12, gaiseki: 0.25, botsuraku: 0.09 };
   function pathOk(c, path) {
     var L = c.L, y = c.y, a = c.a, df = c.s.pathDefer && c.s.pathDefer[path.id];
     if (y < path.y[0] || y > (df ? Math.max(path.y[1], df + 2) : path.y[1]) || a < path.a[0] || a > path.a[1] + (df ? 2 : 0)) return false;
@@ -2982,7 +2982,7 @@
         if (!free && !hiKuge && (s.pathN || 0) >= 3) return false;
         if (path.group === 'shusse' && (s.shusseN || 0) >= 2) return false;
         if (!pathOk(c, path)) return false;
-        if (path.once) { s.pathOnce = s.pathOnce || {}; if (s.pathOnce[path.id]) return false; s.pathOnce[path.id] = c.y; if (!c.p(Math.min(0.6, (path.p || 0.4) * 1.15))) return false; } // ほかの分かれ道の年に回る分を見こんで少し多めに（住む人の3〜5割が出会う）
+        if (path.once) { s.pathOnce = s.pathOnce || {}; if (s.pathOnce[path.id]) return false; s.pathOnce[path.id] = c.y; if (!c.p(Math.min(0.6, (path.p || 0.4) * 1.22))) return false; } // ほかの分かれ道の年に回る分を見こんで少し多めに（住む人の3〜5割が出会う）
         else if (!c.p(hiKuge ? 0.18 : Math.min(free ? 0.4 : PATH_CAP[path.group] || 0.06, (path.p || 0.01) * (PATH_GX[path.group] || PATH_X)))) return false;
         if (!free) s.pathN = (s.pathN || 0) + 1;
         if (path.group === 'shusse') s.shusseN = (s.shusseN || 0) + 1;
