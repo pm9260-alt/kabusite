@@ -369,7 +369,7 @@
     });
     return {
       old: true, seed: L.seed0 || L.seed, deathYear: L.deathYear, deathAge: L.deathAge, cause: L.cause,
-      prev: { name: L.name, sex: L.sex, by: L.by, heir: !!L.heir, surname: L.surname || null },
+      prev: { name: L.name, sex: L.sex, by: L.by, heir: !!L.heir, surname: L.surname || null, multi: L.multi ? { n: L.multi.n, order: L.multi.order } : null },
       members: mem, status: L.status, kakaku: L.kakakuBirth || L.kakaku || null, grade: L.gradeBirth || null, ancestry: L.ancestry || null, uji: L.uji || null, rank: L.rank || null, parentJobH: L.rank ? L.parentJob : null, ainu: L.ainu, ryukyu: L.ryukyu, home: home, goods: L.goods || {}, incPct: L.incPct, surname: L.surnameOld || L.surname || null,
       jobs: { parent: L.parentJob || null, self: L.selfJob || null },
       chain: (chain || []).slice(), story: L.story ? { toxic: !!L.story.f.toxic, bigwig: !!L.story.f.bigwig, prosper: L.story.f.prosper || L.story.f.prosperHouse || 0 } : null
@@ -397,8 +397,8 @@
   // きょうだいの候補：亡くなった年に生きているきょうだいと、これから生まれる弟や妹
   function heirCandidates(L) {
     var dy = L.deathYear, momAlive = L.mom && L.mom.alive;
-    return L.members.filter(function (m) { return m.sib && !m.gone && ((m.by > dy && momAlive) || (m.alive && m.by <= dy)); }).map(function (m) {
-      return { id: m.id, role: m.role, name: m.by > dy ? null : m.name, sex: m.sex, by: m.by, age: m.by > dy ? null : dy - m.by, later: m.by > dy ? m.by - dy : 0 };
+    return L.members.filter(function (m) { return m.sib && !m.gone && ((m.by > dy && momAlive) || (m.alive && m.by <= dy)); }).sort(E.multiFirst(L)).map(function (m) {
+      return { id: m.id, role: m.role, name: m.by > dy ? null : m.name, sex: m.sex, by: m.by, age: m.by > dy ? null : dy - m.by, later: m.by > dy ? m.by - dy : 0, multi: !!(m.multi && m.by === L.by) };
     });
   }
   // 子として生きる：亡くなった年に生きている子
@@ -470,7 +470,9 @@
     var kidGen = h.gen === 'child';
     var pv = { id: maxId + 1, role: kidGen ? (h.prev.sex === 'm' ? '父' : '母') : sibRole(h.prev.sex, h.prev.by, me.by), sex: h.prev.sex, by: h.prev.by, name: h.prev.name, sib: !kidGen, live: true, alive: true, dy: null, fixDy: h.deathYear, prevLife: true };
     if (pv.fixDy < me.by) { pv.alive = false; pv.before = true; pv.dy = pv.fixDy; }
+    if (!kidGen && h.prev.multi) pv.multi = { n: h.prev.multi.n, order: h.prev.multi.order };
     L.members.push(pv);
+    E.multiInherit(L, kidGen ? {} : me);
     L.dad = L.members.filter(function (m) { return m.role === '父'; })[0];
     L.mom = L.members.filter(function (m) { return m.role === '母'; })[0];
     L.members.forEach(function (m) { if (!m.name) m.name = nameFor(L, m.sex, m.by, L.status); });
@@ -500,7 +502,9 @@
   function heirOf(L) {
     var kids = L.members.filter(function (m) { return m.sib && !m.gone && m.alive && m.by <= L.year; }).map(function (m) { return { id: m.id, sex: m.sex, by: m.by }; });
     if (L.alive) kids.push({ id: 0, sex: L.sex, by: L.by });
-    kids.sort(function (a, b) { return a.by - b.by || a.id - b.id; });
+    // 同じ日に生まれたきょうだいは、先に生まれた子を年上とする
+    var ord = function (k) { if (k.id === 0) return L.multi ? L.multi.order : 0; var m = L.members.filter(function (x) { return x.id === k.id; })[0]; return m && m.multi && m.by === k.by ? m.multi.order : 0; };
+    kids.sort(function (a, b) { return a.by - b.by || ord(a) - ord(b) || a.id - b.id; });
     var sons = kids.filter(function (k) { return k.sex === 'm'; }), girls = kids.filter(function (k) { return k.sex === 'f'; });
     return sons.length ? { id: sons[0].id, how: 'son' } : girls.length ? { id: girls[0].id, how: 'muko' } : { id: null, how: 'adopt' };
   }
@@ -613,7 +617,18 @@
     }
     L.name = null;
     L.name = nameFor(L, L.sex, y, L.status);
+    // 同じ日に生まれるきょうだい（多胎）。別の乱数で引く（作る人の指示 8）
+    E.multiBirth(L, L.C, function (sx) { var m = addMember(L, '弟', sx, y, { sib: true, live: true }); L.sibs++; return m; }, function (sx) { return dp(L, sx, 0, y); });
     L.fAge = fAge; L.mAge = mAge;
+  }
+  // 多胎の割合（{ twin, triplet, quad, quint, est, src }）
+  function multiRate(H, year) { return E.multiRate(H, year); }
+  function multiDeath(L, rec, m, fixed) {
+    var MM = E.multiMort(L.H, L.year);
+    var e = push(L, rec, '家庭', who(m) + 'は、生まれて1年もたたずに亡くなった。', [fixed ? ev(L, LIFE_SRC, L.year, '前の人生で起きた家族の死', '', { noYearNote: true }) :
+      ev(L, (L.H.nat.multiples.src || {}).mort, MM.y, '多胎の子が生まれてすぐに亡くなる割合の、単産の子に対する比（' + (MM.est ? '統計のない時代のため、1980〜1984年の周産期死亡率の比を使った推計' : '周産期死亡率から') + '）', MM.r.toFixed(1) + '倍', { est: MM.est })]);
+    if (e) { e.short = relWord(m) + 'の' + m.name + 'が亡くなった。'; if (m.prevLife) e.house = true; }
+    updateHeir(L, rec);
   }
   function surviveUntil(L, m, year) {
     for (var yy = m.by; yy < year; yy++) if (L.rnd() < dp(L, m.sex, yy - m.by, yy)) { m.dy = yy; return false; }
@@ -704,7 +719,7 @@
     var y = L.year, a = L.age;
     var rec = { year: y, age: a, eraLabel: eraLabel(L.H, y), place: placeLabel(L), pin: pinOf(L), world: worldLine(L, y, a), events: [], branch: null, future: y >= FUTURE_FROM };
     L.rec = rec;
-    if (a === 0) { birthEvent(L, rec); if (L.house && L.house.deathYear >= y) fixedDeathsAtBirth(L, rec); storyYear(L, rec); }
+    if (a === 0) { birthEvent(L, rec); if (L.house && L.house.deathYear >= y) fixedDeathsAtBirth(L, rec); E.multiYear0(L, rec, function (m, fixed) { multiDeath(L, rec, m, fixed); }); storyYear(L, rec); }
     else {
       familyYear(L, rec);
       historyYear(L, rec);
@@ -740,13 +755,17 @@
     if (!j || !w) return w;
     // 荘園の役は百姓ではないので、身分の呼び名を「荘園の役人」にする（v11の直し 5-4）
     if (JOB_HEAD[j.n] && /百姓(（[^）]*）)?の家$/.test(w)) return w.replace(/百姓(（[^）]*）)?の家$/, JOB_HEAD[j.n] + '（' + j.n + '）の家');
-    if (/）の家$/.test(w)) return w.replace(/）の家$/, '・' + j.n + '）の家');
+    // 仕事の名前にかっこがあるとき（「自作農（米作）」）は、かっこを二重にせず「平民の家（自作農・米作）」の形にする（v18 6-1）
+    var jn = String(j.n).replace(/（([^）]*)）/g, '・$1');
+    if (/）の家$/.test(w)) return w.replace(/）の家$/, '・' + jn + '）の家');
+    if (jn !== j.n) return w + '（' + jn + '）';
     return /の家$/.test(w) ? w.replace(/の家$/, '（' + j.n + '）の家') : w + '（' + j.n + '）';
   }
   function birthEvent(L, rec) {
     var H = L.H, y = L.year, st = L.status;
     var sibs = L.members.filter(function (m) { return m.sib && m.by < y; });
     var s = rec.place + 'で、' + stWordJob(L) + 'に' + (L.sex === 'm' ? '男の子' : '女の子') + 'として生まれた。' + (st === 'satsumon' ? '名前は土地の言葉で付けられた。' : /アイヌ語/.test(L.name) ? '名前はアイヌ語で付けられた。' : '名前は' + L.name + 'と名付けられた。');
+    s += E.multiText(L, function (m) { return m.name && !/アイヌ語/.test(m.name) && st !== 'satsumon' ? m.name : null; });
     s += '父は' + L.fAge + '歳、母は' + L.mAge + '歳だった。';
     if (L.descendLine) s += L.descendLine;
     var J = E.jobsMod && E.jobsMod();
@@ -772,6 +791,7 @@
     if (stShare != null && !(y >= 1948 && /^(shizoku|heimin|kazoku)$/.test(st))) evs.push(y < 1600 && !L.ryukyu && st !== 'ainu' && st !== 'satsumon' ? ev(L, 'medStatus', y, stWord(L) + 'に生まれる割合の目安（' + (H.prov[L.prov] ? H.prov[L.prov].kuni : '') + '）', pct(stShare), { est: true }) :
       ev(L, st === 'ainu' || st === 'satsumon' ? (y < 1804 ? 'medEzo' : 'ezo') : L.ryukyu ? (y < 1706 ? 'medRyukyu' : 'ryukyu') : st === 'outcast' || st === 'buraku' ? 'outcast' : 'jinshin', y < 1873 ? Math.max(y, 1000) : 1873, stWord(L) + 'に生まれる割合（' + (H.prov[L.prov] ? H.prov[L.prov].kuni : '') + '）', pct(stShare), { est: true }));
     evs.push(ev(L, 'ipss', near(H.nat.children, L.mom.by), '母の生まれ年の「妻が産んだ子どもの数」（1890年より前の生まれは1890年代の値）', '平均' + childDist(H, L.mom.by).mean + '人', { est: L.mom.by < 1890 }));
+    if (L.multi) { var MR = multiRate(H, y), MS = H.nat.multiples.src || {}; evs.push(ev(L, MR.base ? MS.base : MR.est ? MS.est : MS.rate, MR.y, MR.base ? '1回のお産で双子や三つ子などが生まれる割合（統計のない時代のため、1980〜1984年の日本の割合を土台にした推計。三つ子より上はヘリンの法則）' : '1回のお産で双子や三つ子などが生まれる割合（分娩件数から' + (MR.est ? '。三つ子より上はヘリンの法則で推計' : '') + '）', E.multiEvVal(MR), { est: MR.est })); }
     push(L, rec, '家庭', s, evs);
   }
   function statusShare(L) {
@@ -1726,6 +1746,7 @@
     if (a >= 60) L.stats.to60 = true;
     var q = clamp(dp(L, L.sex, a, y) * E.bodyMult(L, a), 0, 1);
     if (protectedYear(L)) q = 0;
+    if (a === 0 && L.multi) q = E.multiQ(q, E.multiMort(L.H, y).r);
     if (a > 0 && L.rnd() < q || a >= 110) {
       var c = causeOf(L, rec);
       var ck = c.kind === 'acc' ? 'acc' : c.kind === 'sui' ? 'sui' : 'ill';
@@ -1845,6 +1866,6 @@
   return {
     houseOf: houseOf, surnameNote: surnameNote, shownSurname: shownSurname, heirCandidates: heirCandidates, childCandidates: childCandidates, childHouse: childHouse, heirOf: heirOf, displayName: displayName, heirlessRates: heirlessRates,
     eraLabel: eraLabel, pickBirth: pickBirth, newLife: newLife, step: step, resolve: resolve, autoRun: autoRun,
-    cohort: cohort, majorTimeline: majorTimeline, familyList: familyList, endText: endText, houseWord: stWordJob, placeLabel: placeLabel, deathProb: dp, birthShare: birthShare
+    cohort: cohort, majorTimeline: majorTimeline, familyList: familyList, endText: endText, houseWord: stWordJob, placeLabel: placeLabel, deathProb: dp, birthShare: birthShare, multiRate: multiRate
   };
 });

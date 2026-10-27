@@ -491,6 +491,158 @@ test('7-5', '共有の画像の「あなたまで約○代」は生まれた年�
   return { ok: a && b && c2, n: 3, detail: '画像の行 ' + (a ? 'あり（生まれた年を入れた人だけ）' : 'なし') + '・トップの一文 ' + (b ? 'あり' : 'なし') + '・入力の場所の一文 ' + (c2 ? 'あり' : 'なし') + '（390×844 で2行以内かはブラウザの検査で確かめる）' };
 });
 
+/* ---------- 双子・三つ子（作る人の指示 8） ---------- */
+// app.js の lifeSeedOf と inheritFrom（きょうだいとして生きる）と同じ作り方
+const lifeSeedOf = (seed, id) => ((seed ^ Math.imul(id, 0x9e3779b1)) >>> 0) || 1;
+function asSibling(Lp, seed0, id) {
+  const MM = Lp.old ? O : E, h = MM.houseOf(Lp, []), opt = { house: h, memberId: id, seed: lifeSeedOf(seed0, id) };
+  return Lp.old ? O.newLife(C, H, P[h.home.pref] || null, opt) : E.newLife(C, h.pref ? P[h.pref] : Lp.P, opt);
+}
+const candsOf = L => { const MM = L.old ? O : E; let c = MM.childCandidates(L).concat(MM.heirCandidates(L)); if (L.deathAge === 0) c = c.slice(0, 2); return c; };
+// 多胎の抽選だけを、人生と同じ関数（E.multiBirth）・同じ種で行う（速い。人生を作るのは当たったときだけ）
+function multiN(by, seed) {
+  const L = { seed, by, sex: 'm', C, members: [], rnd: Math.random };
+  let id = 0;
+  E.multiBirth(L, C, () => ({ id: ++id }), () => 0);
+  return L.multi ? L.multi.n : 1;
+}
+function findMulti(n, y0, y1, salt, max) {
+  const out = [];
+  for (let i = 0; out.length < max && i < 3000000; i++) {
+    const by = y0 + (i * 37) % (y1 - y0 + 1), seed = ((i + 1) * 7919 + salt) >>> 0, k = multiN(by, seed);
+    if (k === 1 || (n && k !== n)) continue;
+    const L = birth(by, seed);
+    if (L.multi) out.push({ L, seed });
+  }
+  return out;
+}
+test('8-1', '1950年以降の生まれ10万件で、双子・三つ子以上の割合が統計から大きく外れない（双子±20%・三つ子以上は期待値の幅の中）', () => {
+  let n = 0, tw = 0, tr = 0, eTw = 0, eTr = 0, byN = {};
+  for (let i = 0; i < 100000; i++) {
+    const by = 1950 + (i * 37) % 51, k = multiN(by, ((i + 1) * 7919 + 801) >>> 0), R = E.multiRate(C, by); n++;
+    eTw += R.twin; eTr += R.triplet + R.quad + R.quint;
+    if (k === 1) continue;
+    byN[k] = (byN[k] || 0) + 1;
+    if (k === 2) tw++; else tr++;
+  }
+  // 本物の人生（3000件）で、抽選の結果と家族の形が同じか
+  let real = 0, same = 0, sibBad = 0;
+  for (let i = 0; i < 3000; i++) {
+    const by = 1950 + (i * 37) % 51, seed = ((i + 1) * 7919 + 801) >>> 0, L = birth(by, seed); real++;
+    if ((L.multi ? L.multi.n : 1) === multiN(by, seed)) same++;
+    if (!L.multi) continue;
+    const sib = L.members.filter(m => L.multi.sibIds.includes(m.id));
+    if (!(sib.length === L.multi.n - 1 && sib.every(m => m.by === L.by && m.sib && m.multi && m.multi.n === L.multi.n && new RegExp('^' + L.multi.kind + 'の(兄|姉|弟|妹)$').test(m.role)))) sibBad++;
+  }
+  const dTw = (tw - eTw) / eTw, trOk = Math.abs(tr - eTr) <= 3 * Math.sqrt(eTr) + 2;
+  return { ok: Math.abs(dTw) <= 0.2 && trOk && same === real && sibBad === 0, n, detail: '双子 ' + tw + '（統計から ' + eTw.toFixed(0) + '・' + (dTw * 100).toFixed(1) + '%）・三つ子以上 ' + tr + '（統計から ' + eTr.toFixed(1) + '）・内訳 ' + JSON.stringify(byN) + '・本物の人生 ' + real + '件で抽選の結果が違う ' + (real - same) + '・きょうだいの形の誤り ' + sibBad };
+});
+test('8-2', '三つ子の人生で、亡くなった後に残りの2人として生きる候補が2つ出る（同じ日に生まれたきょうだいが先頭）', () => {
+  const found = findMulti(3, 1975, 2000, 802, 40).concat(findMulti(3, 1000, 1974, 803, 20));
+  let n = 0, both = 0, bad = 0, ex = '';
+  for (const { L } of found) {
+    play(L); n++;
+    const alive = L.members.filter(m => L.multi.sibIds.includes(m.id) && m.alive && !m.gone);
+    // app.js は子の候補のあとにきょうだいの候補を並べる。きょうだいの候補の中では同じ日に生まれたきょうだいが先頭
+    const c = candsOf(L), sibs = c.filter(x => !x.child), first = sibs.slice(0, alive.length);
+    if (alive.length === 2) both++;
+    if (!first.every(x => alive.some(m => m.id === x.id) && /^三つ子の(兄|姉|弟|妹)$/.test(x.role)) || first.length !== alive.length) { bad++; ex = ex || L.by + ' ' + JSON.stringify(c.slice(0, 3).map(x => x.role)); }
+  }
+  return { ok: bad === 0 && both > 0 && n >= 20, n, detail: '残りの2人が生きていた人生 ' + both + '・候補の誤り ' + bad + (ex ? '（' + ex + '）' : '') };
+});
+test('8-3', '同じ日に生まれたきょうだいの人生で、親の死の年が全員一致する（app.js の inheritFrom と同じ作り方）', () => {
+  const found = findMulti(0, 1975, 2000, 804, 40).concat(findMulti(0, 1000, 1974, 805, 60));
+  let n = 0, lives2 = 0, bad = 0, multiBad = 0, ex = '';
+  for (const { L, seed } of found) {
+    play(L); n++;
+    const pd = {}; for (const r of ['父', '母']) { const m = L.members.find(x => x.role === r); pd[r] = m && !m.alive && m.dy <= L.deathYear ? m.dy : null; }
+    for (const c of candsOf(L).filter(x => x.by === L.by)) {
+      const L2 = play(asSibling(L, seed, c.id)); lives2++;
+      for (const r of ['父', '母']) {
+        const m2 = L2.members.find(x => x.role === r), d2 = m2 && !m2.alive ? m2.dy : null;
+        // 前の人が亡くなるまでに親が亡くなっていれば同じ年。生きていれば、その年まではきょうだいの人生でも亡くならない
+        if (pd[r] != null ? d2 !== pd[r] : d2 != null && d2 <= L.deathYear) { bad++; ex = ex || L.by + ' ' + r + ' ' + pd[r] + '→' + d2; }
+      }
+      const pv = L2.members.find(x => x.prevLife);
+      if (!L2.multi || L2.multi.n !== L.multi.n || !pv || !L2.multi.sibIds.includes(pv.id) || pv.dy !== L.deathYear || !new RegExp('^' + L.multi.kind + 'の').test(pv.role)) { multiBad++; ex = ex || '多胎の印 ' + JSON.stringify(L2.multi) + ' ' + (pv && pv.role); }
+    }
+  }
+  return { ok: bad === 0 && multiBad === 0 && lives2 >= 30, n, detail: 'きょうだいの人生 ' + lives2 + '・親の死の年の違い ' + bad + '・多胎の印の誤り ' + multiBad + (ex ? '（' + ex + '）' : '') };
+});
+
+/* ---------- v18（ichioku1000-v17-ui-spec2）の中身の検査：6-1・6-2・11-1・11-3・11-4・11-7・11-8 ---------- */
+const MB = require(path.join(SITE, 'js', 'mibun.js'));
+const KK = require(path.join(SITE, 'js', 'kakitsuke.js'));
+const KR = require(path.join(SITE, 'js', 'kurashi.js'));
+const TE = require(path.join(SITE, 'js', 'tegotae.js'));
+const SH = require(path.join(SITE, 'js', 'shiryo.js'));
+const BAN18 = /まず|見ます|効く|効いて|重い|重く|重さ|重か|読み|判定|一方で|結論から言うと|示唆|わけです|極めて|興味深い|齟齬|——/;
+test('9-1', '家の事情の文の時代の呼び方（1000〜1599年生まれに小作・地主が出ない・1600〜1649年に小作が出ない・身分の行のかっこが二重にならない）', () => {
+  let n = 0, bad = 0, ex = '', saku = 0, dbl = 0, exd = '';
+  for (const L of lives(400, 1000, 1599, 901)) {
+    n++;
+    for (const e of texts(L)) {
+      if ((e.y < 1600 && /小作|地主/.test(e.t)) || (e.y < 1650 && /小作/.test(e.t))) { bad++; ex = ex || e.y + ' ' + e.t; }
+      if (/作人/.test(e.t)) saku++;
+    }
+  }
+  // 身分の行（生まれの画面）：1000〜1974年の生まれで、かっこの中にかっこが入らない
+  for (let i = 0; i < 400; i++) {
+    const L = birth(1000 + (i * 37) % 975, i * 7919 + 911), w = MB.statusLine(L), w2 = L.old ? O.houseWord(L) : '';
+    for (const s of [w, w2, L.log[0] && L.log[0].events[0] ? L.log[0].events[0].t : '']) if (/（[^）]*（/.test(s)) { dbl++; exd = exd || s; }
+  }
+  const flat = MB.flatParen('平民（自作農（米作））の家');
+  return { ok: bad === 0 && dbl === 0 && flat === '平民の家（自作農・米作）', n, detail: '小作・地主の出た文 ' + bad + '・作人の出た文 ' + saku + '・かっこが二重の身分の行 ' + dbl + '・直した形「' + flat + '」' + (ex ? '（' + ex + '）' : '') + (exd ? '（' + exd + '）' : '') };
+});
+test('9-2', '一生の骨組み（区分16×時代7のどこも3以上。tools/count-skeleton.mjs）', async () => {
+  const SK = await import(path.join(ROOT, 'tools', 'count-skeleton.mjs'));
+  const r = SK.countSkeleton(300);
+  const min = Math.min(...r.table.flat());
+  return { ok: r.low.length === 0, n: r.total, detail: '分かれ道 ' + r.total + '・いちばん少ない所 ' + min + (r.low.length ? '・3に満たない所 ' + r.low.join('、') : '') };
+});
+test('9-3', '大きな決断500件（家族の年齢の一行が全件・資料の箱が6割以上・資料の箱はすべて出典つき・数字入りの丁寧な1文）', () => {
+  let n = 0, fam = 0, sh = 0, noSrc = 0, badT = 0, ex = '';
+  for (let i = 0; n < 500 && i < 600; i++) {
+    const L = birth(1000 + (i * 37) % 1001, i * 7919 + 931);
+    play(L, (br, L) => {
+      if (n >= 500 || !SH.isBig(br)) return; n++;
+      const f = SH.familyAges(br, L); if (f && /\d+歳/.test(f)) fam++;
+      const s = SH.forBranch(br, L, H, C);
+      if (s) {
+        sh++;
+        if (!s.src || !(H.sources[s.src] || C.sources[s.src] || SH.SOURCES[s.src])) { noSrc++; ex = ex || s.text; }
+        if (!/\d/.test(s.text) || !/(です|ます|でした|ました)(（[^）]*）)?。$/.test(s.text) || BAN18.test(s.text) || (s.text.match(/。/g) || []).length !== 1) { badT++; ex = ex || s.text; }
+      }
+    });
+  }
+  return { ok: n >= 500 && fam === n && sh / n >= 0.6 && noSrc === 0 && badT === 0, n, detail: '家族の年齢の一行 ' + fam + '／' + n + '・資料の箱 ' + pct(sh, n) + '%・出典なし ' + noSrc + '・文の形の違反 ' + badT + (ex ? '（' + ex + '）' : '') };
+});
+test('9-4', '身元の書き付け・趣味と持ち物・飼う動物・この人生の手ざわり（300人：時代の形・出せる年・英字なし・16の型）', () => {
+  const FROM = { 'スマートフォン': 2008, '携帯電話': 1995, 'パソコン': 1980, 'テレビ': 1953, '電子レンジ': 1965, 'ラジオ': 1925, '自転車': 1890, '懐中時計': 1872, '腕時計': 1930, '算盤': 1570, '煙管': 1600 };
+  let n = 0, formBad = 0, eng = 0, goodsBad = 0, hobBad = 0, typeBad = 0, petN = 0, petBad = 0, ex = '';
+  const types = {};
+  for (let i = 0; n < 300 && i < 400; i++) {
+    const L = play(birth(1000 + (i * 37) % 1001, i * 7919 + 941)); n++;
+    const k = KK.build(L, H, C), y = L.year;
+    const want = y >= 1872 ? '戸籍' : (L.old && y >= 1640 && ['hyakusho', 'chonin', 'genin', 'outcast'].includes(L.status) && L.pref !== '47' && !L.ainu) ? '宗門人別改' : '身元の覚え';
+    if (!k || k.form !== want || !k.rows.length) { formBad++; ex = ex || want + ' ' + (k && k.form); }
+    if (k && k.form === '戸籍' && y > 1947 && k.rows.some(r => r[0] === '族籍')) { formBad++; ex = ex || '1948年からの族籍'; }
+    const all = k ? k.title + k.rows.flat().join('') : '';
+    if (/[A-Za-z]/.test(all) || BAN18.test(all)) { eng++; ex = ex || all.slice(0, 40); }
+    for (const yy of [L.by + 10, L.by + 30, y]) {
+      if (yy > y) continue;
+      for (const g of KR.goods(L, yy)) if ((FROM[g] && yy < FROM[g]) || (g === '刀' && (L.status !== 'bushi' || yy > 1875))) { goodsBad++; ex = ex || yy + ' ' + g; }
+      for (const h of KR.hobbies(L, yy)) if (!(h.lv >= 1 && h.lv <= 99 && h.years >= 1 && h.from <= yy && h.from >= L.by)) { hobBad++; ex = ex || JSON.stringify(h); }
+    }
+    for (const p of KR.pets(L, y)) { petN++; if (!p.a || !p.name || p.from < L.by || (p.to != null && p.to < p.from)) { petBad++; ex = ex || JSON.stringify(p); } }
+    const t = TE.typeOf(L);
+    if (!t || t.axes.length !== 4 || t.axes.some(a => a.v < -1 || a.v > 1) || !TE.TYPES[t.code] || !/でした。$/.test(t.line)) { typeBad++; ex = ex || JSON.stringify(t); }
+    else types[t.code] = 1;
+  }
+  const nt = Object.keys(types).length;
+  return { ok: formBad === 0 && eng === 0 && goodsBad === 0 && hobBad === 0 && typeBad === 0 && petBad === 0 && nt >= 12, n, detail: '書き付けの形の違い ' + formBad + '・英字や禁止語 ' + eng + '・年の外の持ち物 ' + goodsBad + '・趣味の値の外れ ' + hobBad + '・飼った動物 ' + petN + '（おかしなもの ' + petBad + '）・手ざわりの型 ' + nt + '種（違反 ' + typeBad + '）' + (ex ? '（' + ex + '）' : '') };
+});
+
 /* ---------- 動かす ---------- */
 const args = process.argv.slice(2);
 if (args.includes('--list')) { for (const [k, v] of Object.entries(T)) console.log(k + '\t' + v.name); process.exit(0); }
@@ -498,7 +650,7 @@ const only = args.includes('--only') ? args[args.indexOf('--only') + 1] : null;
 for (const [id, t] of Object.entries(T)) {
   if (only && id !== only) continue;
   const t0 = Date.now(); let r;
-  try { r = t.fn(); } catch (e) { r = { ok: false, n: 0, detail: 'エラー：' + e.message + ' ' + (e.stack || '').split('\n')[1] }; }
+  try { r = await t.fn(); } catch (e) { r = { ok: false, n: 0, detail: 'エラー：' + e.message + ' ' + (e.stack || '').split('\n')[1] }; }
   r = Object.assign({ id, name: t.name, secs: Math.round((Date.now() - t0) / 1000), at: new Date().toISOString() }, r);
   fs.writeFileSync(path.join(OUT, id + '.json'), JSON.stringify(r));
   console.log((r.ok ? '合格' : '不合格') + '\t' + id + '\t' + r.name + '\t' + r.detail + '\t（' + r.n + '件・' + r.secs + '秒）');

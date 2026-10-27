@@ -42,5 +42,13 @@
     if (get('ichioku-motion', 'auto') === 'less') return true;
     try { return !!(root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches); } catch (e) { return false; }
   }
-  root.IchiokuPrefs = { mount: mount, classMode: function () { return false; }, lessMotion: lessMotion };
+  // 明るい表示と暗い表示を入れ替える（v18 7。今の見え方から反対へ。この端末に覚えておく）
+  function toggleTheme() {
+    var t = doc.getAttribute('data-theme'), dark = t ? t === 'dark' : !!(root.matchMedia && root.matchMedia('(prefers-color-scheme: dark)').matches);
+    var nt = dark ? 'light' : 'dark';
+    set('ichioku-theme', nt); applyTheme(nt);
+    var box = document.getElementById('settings'); if (box) mount(box);
+    return nt;
+  }
+  root.IchiokuPrefs = { mount: mount, classMode: function () { return false; }, lessMotion: lessMotion, toggleTheme: toggleTheme };
 })(typeof self !== 'undefined' ? self : this);

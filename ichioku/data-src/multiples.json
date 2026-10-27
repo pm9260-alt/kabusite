@@ -1,0 +1,1190 @@
+{
+ "_説明": "多胎（複産）の統計。tools/fetch-multiples.mjs で取り込み、tools/add-multiples.mjs で site/data/history.json と common.json に入れる。1979年以前の単産－複産の統計は e-Stat にない",
+ "fetched": "2026-10-26",
+ "sources": {
+  "vitalMulti": {
+   "name": "人口動態統計（単産－複産（複産の種類）別にみた年次別分娩件数・上巻 表4-36）",
+   "org": "厚生労働省",
+   "url": "https://www.e-stat.go.jp/dbview?sid=0003411624",
+   "tables": [
+    "0003411624",
+    "file:000002623904（2001年版）",
+    "file:000040503673（2025年版）"
+   ]
+  },
+  "vitalPeri": {
+   "name": "人口動態統計（単産－複産・出産順位別にみた周産期死亡数及び率・上巻 表8-6〜8-10）",
+   "org": "厚生労働省",
+   "url": "https://www.e-stat.go.jp/dbview?sid=0003411825",
+   "tables": [
+    "0003411825",
+    "1980〜1993年は報告書のPDF",
+    "1994〜2014・2025年は年ごとのCSV"
+   ]
+  },
+  "vitalInfMulti": {
+   "name": "人口動態統計（病死による乳児死亡数・出生数，単産－複産別）",
+   "org": "厚生労働省",
+   "url": "https://www.e-stat.go.jp/dbview?sid=0003411934",
+   "tables": [
+    "0003411934",
+    "0003411616"
+   ]
+  },
+  "wpTwins": {
+   "name": "Wikipedia「双生児」（日本の双生児の出生頻度は、かつては1/150から1/160の水準で安定していた）",
+   "org": "ウィキペディア",
+   "url": "https://ja.wikipedia.org/wiki/%E5%8F%8C%E7%94%9F%E5%85%90"
+  },
+  "hellin": {
+   "name": "ヘリンの法則（Hellin 1895。双子の割合を t とすると、三つ子 t²・四つ子 t³・五つ子 t⁴ の目安）",
+   "org": ""
+  },
+  "wpQuint": {
+   "name": "Wikipedia「多胎児」（1976年1月、鹿児島市立病院で日本で初めての五つ子が生まれた）",
+   "org": "ウィキペディア",
+   "url": "https://ja.wikipedia.org/wiki/%E5%A4%9A%E8%83%8E%E5%85%90"
+  },
+  "wpChikusho": {
+   "name": "Wikipedia「双生児」（多胎の出生率が低かった日本では、近世まで双子を忌む迷信が一部の地域にあった）",
+   "org": "ウィキペディア",
+   "url": "https://ja.wikipedia.org/wiki/%E5%8F%8C%E7%94%9F%E5%85%90"
+  }
+ },
+ "deliveries": {
+  "1995": {
+   "src": "estat:0003411624",
+   "total": 1215174,
+   "single": 1204082,
+   "multi": 10900,
+   "twin": 10529,
+   "triplet": 337,
+   "quad": 30,
+   "quint": 3,
+   "sext": 0,
+   "sept": 1
+  },
+  "1996": {
+   "src": "file:000002623904",
+   "edition": 2001,
+   "total": 1234344,
+   "single": 1222767,
+   "multi": 11424,
+   "twin": 11094,
+   "triplet": 321,
+   "quad": 8,
+   "quint": 1,
+   "sext": 0,
+   "sept": 0
+  },
+  "1997": {
+   "src": "file:000002623904",
+   "edition": 2001,
+   "total": 1219466,
+   "single": 1207930,
+   "multi": 11414,
+   "twin": 11080,
+   "triplet": 318,
+   "quad": 15,
+   "quint": 1,
+   "sext": 0,
+   "sept": 0
+  },
+  "1998": {
+   "src": "file:000002623904",
+   "edition": 2001,
+   "total": 1230145,
+   "single": 1218429,
+   "multi": 11640,
+   "twin": 11286,
+   "triplet": 341,
+   "quad": 10,
+   "quint": 3,
+   "sext": 0,
+   "sept": 0
+  },
+  "1999": {
+   "src": "file:000002623904",
+   "edition": 2001,
+   "total": 1201381,
+   "single": 1189348,
+   "multi": 11962,
+   "twin": 11606,
+   "triplet": 341,
+   "quad": 14,
+   "quint": 1,
+   "sext": 0,
+   "sept": 0
+  },
+  "2000": {
+   "src": "estat:0003411624",
+   "total": 1216168,
+   "single": 1203627,
+   "multi": 12443,
+   "twin": 12107,
+   "triplet": 328,
+   "quad": 8,
+   "quint": 0,
+   "sext": 0,
+   "sept": 0
+  },
+  "2001": {
+   "src": "file:000002623904",
+   "edition": 2001,
+   "total": 1195616,
+   "single": 1183323,
+   "multi": 12218,
+   "twin": 11919,
+   "triplet": 293,
+   "quad": 6,
+   "quint": 0,
+   "sext": 0,
+   "sept": 0
+  },
+  "2002": {
+   "src": "estat:0003411624",
+   "total": 1177562,
+   "single": 1164518,
+   "multi": 12957,
+   "twin": 12633,
+   "triplet": 319,
+   "quad": 5,
+   "quint": 0,
+   "sext": 0,
+   "sept": 0
+  },
+  "2003": {
+   "src": "estat:0003411624",
+   "total": 1145592,
+   "single": 1132508,
+   "multi": 13045,
+   "twin": 12743,
+   "triplet": 286,
+   "quad": 15,
+   "quint": 0,
+   "sext": 0,
+   "sept": 1
+  },
+  "2004": {
+   "src": "estat:0003411624",
+   "total": 1131567,
+   "single": 1118308,
+   "multi": 13215,
+   "twin": 12900,
+   "triplet": 307,
+   "quad": 6,
+   "quint": 2,
+   "sext": 0,
+   "sept": 0
+  },
+  "2005": {
+   "src": "estat:0003411624",
+   "total": 1081393,
+   "single": 1068633,
+   "multi": 12707,
+   "twin": 12455,
+   "triplet": 246,
+   "quad": 5,
+   "quint": 1,
+   "sext": 0,
+   "sept": 0
+  },
+  "2006": {
+   "src": "estat:0003411624",
+   "total": 1110448,
+   "single": 1097536,
+   "multi": 12883,
+   "twin": 12631,
+   "triplet": 246,
+   "quad": 3,
+   "quint": 2,
+   "sext": 1,
+   "sept": 0
+  },
+  "2007": {
+   "src": "estat:0003411624",
+   "total": 1106288,
+   "single": 1093632,
+   "multi": 12619,
+   "twin": 12394,
+   "triplet": 219,
+   "quad": 5,
+   "quint": 1,
+   "sext": 0,
+   "sept": 0
+  },
+  "2008": {
+   "src": "estat:0003411624",
+   "total": 1107467,
+   "single": 1095749,
+   "multi": 11684,
+   "twin": 11496,
+   "triplet": 181,
+   "quad": 6,
+   "quint": 1,
+   "sext": 0,
+   "sept": 0
+  },
+  "2009": {
+   "src": "estat:0003411624",
+   "total": 1085913,
+   "single": 1074920,
+   "multi": 10966,
+   "twin": 10803,
+   "triplet": 157,
+   "quad": 4,
+   "quint": 1,
+   "sext": 1,
+   "sept": 0
+  },
+  "2010": {
+   "src": "estat:0003411624",
+   "total": 1087149,
+   "single": 1076563,
+   "multi": 10558,
+   "twin": 10394,
+   "triplet": 162,
+   "quad": 2,
+   "quint": 0,
+   "sext": 0,
+   "sept": 0
+  },
+  "2011": {
+   "src": "estat:0003411624",
+   "total": 1066130,
+   "single": 1055833,
+   "multi": 10279,
+   "twin": 10124,
+   "triplet": 151,
+   "quad": 3,
+   "quint": 1,
+   "sext": 0,
+   "sept": 0
+  },
+  "2012": {
+   "src": "estat:0003411624",
+   "total": 1051360,
+   "single": 1040832,
+   "multi": 10505,
+   "twin": 10333,
+   "triplet": 168,
+   "quad": 4,
+   "quint": 0,
+   "sext": 0,
+   "sept": 0
+  },
+  "2013": {
+   "src": "estat:0003411624",
+   "total": 1043277,
+   "single": 1032764,
+   "multi": 10489,
+   "twin": 10328,
+   "triplet": 158,
+   "quad": 3,
+   "quint": 0,
+   "sext": 0,
+   "sept": 0
+  },
+  "2014": {
+   "src": "estat:0003411624",
+   "total": 1016780,
+   "single": 1006528,
+   "multi": 10217,
+   "twin": 10074,
+   "triplet": 141,
+   "quad": 2,
+   "quint": 0,
+   "sext": 0,
+   "sept": 0
+  },
+  "2015": {
+   "src": "estat:0003411624",
+   "total": 1018022,
+   "single": 1007792,
+   "multi": 10195,
+   "twin": 10067,
+   "triplet": 122,
+   "quad": 5,
+   "quint": 1,
+   "sext": 0,
+   "sept": 0
+  },
+  "2016": {
+   "src": "estat:0003411624",
+   "total": 987923,
+   "single": 977780,
+   "multi": 10131,
+   "twin": 10000,
+   "triplet": 129,
+   "quad": 2,
+   "quint": 0,
+   "sext": 0,
+   "sept": 0
+  },
+  "2017": {
+   "src": "estat:0003411624",
+   "total": 956456,
+   "single": 946532,
+   "multi": 9914,
+   "twin": 9769,
+   "triplet": 142,
+   "quad": 3,
+   "quint": 0,
+   "sext": 0,
+   "sept": 0
+  },
+  "2018": {
+   "src": "estat:0003411624",
+   "total": 928151,
+   "single": 918387,
+   "multi": 9745,
+   "twin": 9620,
+   "triplet": 122,
+   "quad": 3,
+   "quint": 0,
+   "sext": 0,
+   "sept": 0
+  },
+  "2019": {
+   "src": "estat:0003411624",
+   "total": 875470,
+   "single": 866378,
+   "multi": 9083,
+   "twin": 8937,
+   "triplet": 143,
+   "quad": 3,
+   "quint": 0,
+   "sext": 0,
+   "sept": 0
+  },
+  "2020": {
+   "src": "estat:0003411624",
+   "total": 849041,
+   "single": 840105,
+   "multi": 8932,
+   "twin": 8790,
+   "triplet": 137,
+   "quad": 5,
+   "quint": 0,
+   "sext": 0,
+   "sept": 0
+  },
+  "2021": {
+   "src": "estat:0003411624",
+   "total": 818724,
+   "single": 809697,
+   "multi": 9023,
+   "twin": 8858,
+   "triplet": 163,
+   "quad": 2,
+   "quint": 0,
+   "sext": 0,
+   "sept": 0
+  },
+  "2022": {
+   "src": "estat:0003411624",
+   "total": 777115,
+   "single": 768403,
+   "multi": 8706,
+   "twin": 8583,
+   "triplet": 122,
+   "quad": 1,
+   "quint": 0,
+   "sext": 0,
+   "sept": 0
+  },
+  "2023": {
+   "src": "estat:0003411624",
+   "total": 733993,
+   "single": 725278,
+   "multi": 8708,
+   "twin": 8576,
+   "triplet": 132,
+   "quad": 0,
+   "quint": 0,
+   "sext": 0,
+   "sept": 0
+  },
+  "2024": {
+   "src": "estat:0003411624",
+   "total": 692510,
+   "single": 683634,
+   "multi": 8873,
+   "twin": 8758,
+   "triplet": 110,
+   "quad": 5,
+   "quint": 0,
+   "sext": 0,
+   "sept": 0
+  },
+  "2025": {
+   "src": "file:000040503673",
+   "edition": 2025,
+   "total": 677704,
+   "single": 668938,
+   "multi": 8750,
+   "twin": 8603,
+   "triplet": 142,
+   "quad": 4,
+   "quint": 1,
+   "sext": 0,
+   "sept": 0
+  }
+ },
+ "perinatal": {
+  "1980": {
+   "deaths": {
+    "total": 18385,
+    "single": 17177,
+    "multi": 1208
+   },
+   "rate": {
+    "total": 11.7,
+    "single": 11,
+    "multi": 62.9
+   },
+   "def": "28週・出生千対",
+   "src": "pdf:000031455947",
+   "url": "https://www.e-stat.go.jp/stat-search/file-download?statInfId=000031455947&fileKind=2",
+   "read": "画像のPDFから目で写し取った"
+  },
+  "1981": {
+   "deaths": {
+    "total": 16531,
+    "single": 15395,
+    "multi": 1136
+   },
+   "rate": {
+    "total": 10.8,
+    "single": 10.2,
+    "multi": 59.8
+   },
+   "def": "28週・出生千対",
+   "src": "pdf:000031455681",
+   "url": "https://www.e-stat.go.jp/stat-search/file-download?statInfId=000031455681&fileKind=2",
+   "read": "画像のPDFから目で写し取った"
+  },
+  "1982": {
+   "deaths": {
+    "total": 15303,
+    "single": 14210,
+    "multi": 1093
+   },
+   "rate": {
+    "total": 10.1,
+    "single": 9.5,
+    "multi": 57.5
+   },
+   "def": "28週・出生千対",
+   "src": "pdf:000031455054",
+   "url": "https://www.e-stat.go.jp/stat-search/file-download?statInfId=000031455054&fileKind=2",
+   "read": "画像のPDFから目で写し取った"
+  },
+  "1983": {
+   "deaths": {
+    "total": 14035,
+    "single": 13080,
+    "multi": 955
+   },
+   "rate": {
+    "total": 9.3,
+    "single": 8.8,
+    "multi": 50.8
+   },
+   "def": "28週・出生千対",
+   "src": "pdf:000031395349",
+   "url": "https://www.e-stat.go.jp/stat-search/file-download?statInfId=000031395349&fileKind=2",
+   "read": "画像のPDFから目で写し取った"
+  },
+  "1984": {
+   "deaths": {
+    "total": 12998,
+    "single": 12025,
+    "multi": 973
+   },
+   "rate": {
+    "total": 8.7,
+    "single": 8.2,
+    "multi": 52.3
+   },
+   "def": "28週・出生千対",
+   "src": "pdf:000031376816",
+   "url": "https://www.e-stat.go.jp/stat-search/file-download?statInfId=000031376816&fileKind=2",
+   "read": "画像のPDFから目で写し取った"
+  },
+  "1985": {
+   "deaths": {
+    "total": 11470,
+    "single": 10660,
+    "multi": 810
+   },
+   "rate": {
+    "total": 8,
+    "single": 7.5,
+    "multi": 45.1
+   },
+   "def": "28週・出生千対",
+   "src": "pdf:000031376542",
+   "url": "https://www.e-stat.go.jp/stat-search/file-download?statInfId=000031376542&fileKind=2",
+   "read": "画像のPDFから目で写し取った"
+  },
+  "1986": {
+   "deaths": {
+    "total": 10148,
+    "single": 9406,
+    "multi": 742
+   },
+   "rate": {
+    "total": 7.3,
+    "single": 6.9,
+    "multi": 43.2
+   },
+   "def": "28週・出生千対",
+   "src": "pdf:000031321381",
+   "url": "https://www.e-stat.go.jp/stat-search/file-download?statInfId=000031321381&fileKind=2",
+   "read": "画像のPDFから目で写し取った"
+  },
+  "1987": {
+   "deaths": {
+    "total": 9317,
+    "single": 8592,
+    "multi": 725
+   },
+   "rate": {
+    "total": 6.9,
+    "single": 6.5,
+    "multi": 42.2
+   },
+   "def": "28週・出生千対",
+   "src": "pdf:000031321101",
+   "url": "https://www.e-stat.go.jp/stat-search/file-download?statInfId=000031321101&fileKind=2",
+   "read": "画像のPDFから目で写し取った"
+  },
+  "1988": {
+   "deaths": {
+    "total": 8508,
+    "single": 7845,
+    "multi": 663
+   },
+   "rate": {
+    "total": 6.5,
+    "single": 6,
+    "multi": 38.8
+   },
+   "def": "28週・出生千対",
+   "src": "pdf:000031320812",
+   "url": "https://www.e-stat.go.jp/stat-search/file-download?statInfId=000031320812&fileKind=2",
+   "read": "画像のPDFから目で写し取った"
+  },
+  "1989": {
+   "deaths": {
+    "total": 7450,
+    "single": 6881,
+    "multi": 569
+   },
+   "rate": {
+    "total": 6,
+    "single": 5.6,
+    "multi": 33.7
+   },
+   "def": "28週・出生千対",
+   "src": "pdf:000027436759",
+   "url": "https://www.e-stat.go.jp/stat-search/file-download?statInfId=000027436759&fileKind=2",
+   "read": "画像のPDFから目で写し取った"
+  },
+  "1990": {
+   "deaths": {
+    "total": 7001,
+    "single": 6403,
+    "multi": 598
+   },
+   "rate": {
+    "total": 5.7,
+    "single": 5.3,
+    "multi": 35.7
+   },
+   "def": "28週・出生千対",
+   "src": "pdf:000027399868",
+   "url": "https://www.e-stat.go.jp/stat-search/file-download?statInfId=000027399868&fileKind=2",
+   "read": "画像のPDFから目で写し取った"
+  },
+  "1991": {
+   "deaths": {
+    "total": 6544,
+    "single": 5966,
+    "multi": 578
+   },
+   "rate": {
+    "total": 5.3,
+    "single": 4.9,
+    "multi": 33.3
+   },
+   "def": "28週・出生千対",
+   "src": "pdf:000027397933",
+   "url": "https://www.e-stat.go.jp/stat-search/file-download?statInfId=000027397933&fileKind=2",
+   "read": "画像のPDFから目で写し取った"
+  },
+  "1992": {
+   "deaths": {
+    "total": 6321,
+    "single": 5785,
+    "multi": 536
+   },
+   "rate": {
+    "total": 5.2,
+    "single": 4.9,
+    "multi": 29.5
+   },
+   "def": "28週・出生千対",
+   "src": "pdf:000023599557",
+   "url": "https://www.e-stat.go.jp/stat-search/file-download?statInfId=000023599557&fileKind=2",
+   "read": "画像のPDFから目で写し取った"
+  },
+  "1993": {
+   "deaths": {
+    "total": 5989,
+    "single": 5458,
+    "multi": 531
+   },
+   "rate": {
+    "total": 5,
+    "single": 4.7,
+    "multi": 28.5
+   },
+   "def": "28週・出生千対",
+   "src": "pdf:000023597787",
+   "url": "https://www.e-stat.go.jp/stat-search/file-download?statInfId=000023597787&fileKind=2",
+   "read": "画像のPDFから目で写し取った"
+  },
+  "1994": {
+   "deaths": {
+    "total": 6134,
+    "single": 5530,
+    "multi": 604
+   },
+   "rate": {
+    "total": 5,
+    "single": 4.5,
+    "multi": 29
+   },
+   "def": "28週・出生千対",
+   "src": "file:000023597368"
+  },
+  "1995": {
+   "deaths": {
+    "total": 8412,
+    "single": 7578,
+    "multi": 815
+   },
+   "rate": {
+    "total": 7,
+    "single": 6.5,
+    "multi": 38.7
+   },
+   "def": "22週・出産千対",
+   "src": "file:000020292748"
+  },
+  "1996": {
+   "deaths": {
+    "total": 8080,
+    "single": 7310,
+    "multi": 752
+   },
+   "rate": {
+    "total": 6.7,
+    "single": 6.1,
+    "multi": 34.1
+   },
+   "def": "22週・出産千対",
+   "src": "file:000012915238"
+  },
+  "1997": {
+   "deaths": {
+    "total": 7624,
+    "single": 6914,
+    "multi": 683
+   },
+   "rate": {
+    "total": 6.4,
+    "single": 5.9,
+    "multi": 30.9
+   },
+   "def": "22週・出産千対",
+   "src": "file:000002613240"
+  },
+  "1998": {
+   "deaths": {
+    "total": 7447,
+    "single": 6718,
+    "multi": 705
+   },
+   "rate": {
+    "total": 6.2,
+    "single": 5.7,
+    "multi": 31.3
+   },
+   "def": "22週・出産千対",
+   "src": "file:000002612894"
+  },
+  "1999": {
+   "deaths": {
+    "total": 7102,
+    "single": 6392,
+    "multi": 683
+   },
+   "rate": {
+    "total": 6,
+    "single": 5.5,
+    "multi": 29.7
+   },
+   "def": "22週・出産千対",
+   "src": "file:000002627273"
+  },
+  "2000": {
+   "deaths": {
+    "total": 6881,
+    "single": 6213,
+    "multi": 645
+   },
+   "rate": {
+    "total": 5.8,
+    "single": 5.3,
+    "multi": 26.8
+   },
+   "def": "22週・出産千対",
+   "src": "file:000002625635"
+  },
+  "2001": {
+   "deaths": {
+    "total": 6476,
+    "single": 5872,
+    "multi": 583
+   },
+   "rate": {
+    "total": 5.5,
+    "single": 5.1,
+    "multi": 24.7
+   },
+   "def": "22週・出産千対",
+   "src": "file:000002623992"
+  },
+  "2002": {
+   "deaths": {
+    "total": 6333,
+    "single": 5736,
+    "multi": 581
+   },
+   "rate": {
+    "total": 5.5,
+    "single": 5.1,
+    "multi": 23.2
+   },
+   "def": "22週・出産千対",
+   "src": "file:000002622349"
+  },
+  "2003": {
+   "deaths": {
+    "total": 5929,
+    "single": 5335,
+    "multi": 574
+   },
+   "rate": {
+    "total": 5.3,
+    "single": 4.8,
+    "multi": 22.8
+   },
+   "def": "22週・出産千対",
+   "src": "file:000002620687"
+  },
+  "2004": {
+   "deaths": {
+    "total": 5541,
+    "single": 4997,
+    "multi": 528
+   },
+   "rate": {
+    "total": 5,
+    "single": 4.6,
+    "multi": 20.7
+   },
+   "def": "22週・出産千対",
+   "src": "file:000002619025"
+  },
+  "2005": {
+   "deaths": {
+    "total": 5149,
+    "single": 4643,
+    "multi": 487
+   },
+   "rate": {
+    "total": 4.8,
+    "single": 4.5,
+    "multi": 19.9
+   },
+   "def": "22週・出産千対",
+   "src": "file:000002615756"
+  },
+  "2006": {
+   "deaths": {
+    "total": 5100,
+    "single": 4585,
+    "multi": 501
+   },
+   "rate": {
+    "total": 4.7,
+    "single": 4.3,
+    "multi": 20.1
+   },
+   "def": "22週・出産千対",
+   "src": "file:000002613802"
+  },
+  "2007": {
+   "deaths": {
+    "total": 4906,
+    "single": 4419,
+    "multi": 476
+   },
+   "rate": {
+    "total": 4.5,
+    "single": 4.1,
+    "multi": 19.5
+   },
+   "def": "22週・出産千対",
+   "src": "file:000001266459"
+  },
+  "2008": {
+   "deaths": {
+    "total": 4720,
+    "single": 4296,
+    "multi": 399
+   },
+   "rate": {
+    "total": 4.3,
+    "single": 4,
+    "multi": 17.6
+   },
+   "def": "22週・出産千対",
+   "src": "file:000003071047"
+  },
+  "2009": {
+   "deaths": {
+    "total": 4519,
+    "single": 4111,
+    "multi": 397
+   },
+   "rate": {
+    "total": 4.2,
+    "single": 3.9,
+    "multi": 18.7
+   },
+   "def": "22週・出産千対",
+   "src": "file:000008185187"
+  },
+  "2010": {
+   "deaths": {
+    "total": 4515,
+    "single": 4148,
+    "multi": 354
+   },
+   "rate": {
+    "total": 4.2,
+    "single": 3.9,
+    "multi": 17.3
+   },
+   "def": "22週・出産千対",
+   "src": "file:000012423027"
+  },
+  "2011": {
+   "deaths": {
+    "total": 4315,
+    "single": 3946,
+    "multi": 362
+   },
+   "rate": {
+    "total": 4.1,
+    "single": 3.8,
+    "multi": 18.2
+   },
+   "def": "22週・出産千対",
+   "src": "file:000014887934"
+  },
+  "2012": {
+   "deaths": {
+    "total": 4133,
+    "single": 3759,
+    "multi": 366
+   },
+   "rate": {
+    "total": 4,
+    "single": 3.7,
+    "multi": 18
+   },
+   "def": "22週・出産千対",
+   "src": "file:000022220210"
+  },
+  "2013": {
+   "deaths": {
+    "total": 3862,
+    "single": 3530,
+    "multi": 323
+   },
+   "rate": {
+    "total": 3.7,
+    "single": 3.5,
+    "multi": 15.9
+   },
+   "def": "22週・出産千対",
+   "src": "file:000027231665"
+  },
+  "2014": {
+   "deaths": {
+    "total": 3751,
+    "single": 3455,
+    "multi": 284
+   },
+   "rate": {
+    "total": 3.7,
+    "single": 3.5,
+    "multi": 14.4
+   },
+   "def": "22週・出産千対",
+   "src": "file:000031288574"
+  },
+  "2015": {
+   "deaths": {
+    "total": 3729,
+    "single": 3365,
+    "multi": 353
+   },
+   "rate": {
+    "total": 3.7,
+    "single": 3.4,
+    "multi": 17.9
+   },
+   "def": "22週・出産千対",
+   "src": "estat:0003411825"
+  },
+  "2016": {
+   "deaths": {
+    "total": 3518,
+    "single": 3163,
+    "multi": 348
+   },
+   "rate": {
+    "total": 3.6,
+    "single": 3.3,
+    "multi": 17.7
+   },
+   "def": "22週・出産千対",
+   "src": "estat:0003411825"
+  },
+  "2017": {
+   "deaths": {
+    "total": 3309,
+    "single": 2994,
+    "multi": 307
+   },
+   "rate": {
+    "total": 3.5,
+    "single": 3.2,
+    "multi": 15.9
+   },
+   "def": "22週・出産千対",
+   "src": "estat:0003411825"
+  },
+  "2018": {
+   "deaths": {
+    "total": 2999,
+    "single": 2792,
+    "multi": 202
+   },
+   "rate": {
+    "total": 3.3,
+    "single": 3.1,
+    "multi": 10.7
+   },
+   "def": "22週・出産千対",
+   "src": "estat:0003411825"
+  },
+  "2019": {
+   "deaths": {
+    "total": 2955,
+    "single": 2724,
+    "multi": 224
+   },
+   "rate": {
+    "total": 3.4,
+    "single": 3.2,
+    "multi": 12.8
+   },
+   "def": "22週・出産千対",
+   "src": "estat:0003411825"
+  },
+  "2020": {
+   "deaths": {
+    "total": 2664,
+    "single": 2477,
+    "multi": 181
+   },
+   "rate": {
+    "total": 3.2,
+    "single": 3,
+    "multi": 10.5
+   },
+   "def": "22週・出産千対",
+   "src": "estat:0003411825"
+  },
+  "2021": {
+   "deaths": {
+    "total": 2741,
+    "single": 2438,
+    "multi": 301
+   },
+   "rate": {
+    "total": 3.4,
+    "single": 3.1,
+    "multi": 17.1
+   },
+   "def": "22週・出産千対",
+   "src": "estat:0003411825"
+  },
+  "2022": {
+   "deaths": {
+    "total": 2527,
+    "single": 2202,
+    "multi": 323
+   },
+   "rate": {
+    "total": 3.3,
+    "single": 2.9,
+    "multi": 19
+   },
+   "def": "22週・出産千対",
+   "src": "estat:0003411825"
+  },
+  "2023": {
+   "deaths": {
+    "total": 2404,
+    "single": 2097,
+    "multi": 300
+   },
+   "rate": {
+    "total": 3.3,
+    "single": 2.9,
+    "multi": 17.6
+   },
+   "def": "22週・出産千対",
+   "src": "estat:0003411825"
+  },
+  "2024": {
+   "deaths": {
+    "total": 2285,
+    "single": 2007,
+    "multi": 272
+   },
+   "rate": {
+    "total": 3.3,
+    "single": 3,
+    "multi": 15.7
+   },
+   "def": "22週・出産千対",
+   "src": "estat:0003411825"
+  },
+  "2025": {
+   "deaths": {
+    "total": 2270,
+    "single": 1955,
+    "multi": 306
+   },
+   "rate": {
+    "total": 3.4,
+    "single": 3,
+    "multi": 17.9
+   },
+   "def": "22週・出産千対",
+   "src": "file:000040502661"
+  }
+ },
+ "infant": {
+  "2015": {
+   "deaths": 1801,
+   "deathsSingle": 1675,
+   "deathsMulti": 126,
+   "births": 1005721,
+   "birthsSingle": 986253,
+   "birthsMulti": 19468
+  },
+  "2016": {
+   "deaths": 1825,
+   "deathsSingle": 1689,
+   "deathsMulti": 136,
+   "births": 977242,
+   "birthsSingle": 957874,
+   "birthsMulti": 19368
+  },
+  "2017": {
+   "deaths": 1650,
+   "deathsSingle": 1530,
+   "deathsMulti": 120,
+   "births": 946146,
+   "birthsSingle": 927105,
+   "birthsMulti": 19041
+  },
+  "2018": {
+   "deaths": 1654,
+   "deathsSingle": 1545,
+   "deathsMulti": 109,
+   "births": 918400,
+   "birthsSingle": 899661,
+   "birthsMulti": 18739
+  },
+  "2019": {
+   "deaths": 1548,
+   "deathsSingle": 1419,
+   "deathsMulti": 129,
+   "births": 865239,
+   "birthsSingle": 847837,
+   "birthsMulti": 17402
+  },
+  "2020": {
+   "deaths": 1415,
+   "deathsSingle": 1313,
+   "deathsMulti": 102,
+   "births": 840835,
+   "birthsSingle": 823687,
+   "birthsMulti": 17148
+  },
+  "2021": {
+   "deaths": 1308,
+   "deathsSingle": 1205,
+   "deathsMulti": 103,
+   "births": 811622,
+   "birthsSingle": 794304,
+   "birthsMulti": 17318
+  },
+  "2022": {
+   "deaths": 1266,
+   "deathsSingle": 1146,
+   "deathsMulti": 120,
+   "births": 770759,
+   "birthsSingle": 754023,
+   "birthsMulti": 16736
+  },
+  "2023": {
+   "deaths": 1220,
+   "deathsSingle": 1110,
+   "deathsMulti": 110,
+   "births": 727288,
+   "birthsSingle": 710535,
+   "birthsMulti": 16753
+  },
+  "2024": {
+   "deaths": 1182,
+   "deathsSingle": 1070,
+   "deathsMulti": 112,
+   "births": 686173,
+   "birthsSingle": 669069,
+   "birthsMulti": 17104
+  }
+ }
+}

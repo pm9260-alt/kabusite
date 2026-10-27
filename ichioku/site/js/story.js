@@ -822,7 +822,7 @@
     var L = c.L;
     if (c.marryPending() || c.s.done.shoya || !c.O || L.sex !== 'm' || L.status !== 'hyakusho' || !edo(c) || (L.incPct || 0) < 0.85 || c.a < 17 || c.a > 23 || L.married || !c.p(0.06)) return false;
     c.s.koi = c.name('f');
-    c.ask('shoya', '想い人', '小作の家の娘、' + c.s.koi + 'を好きになった。庄屋の跡取りとして、親は別の家との縁談を進めている。', [
+    c.ask('shoya', '想い人', farmWord('小作の家の娘、', c.y) + c.s.koi + 'を好きになった。庄屋の跡取りとして、親は別の家との縁談を進めている。', [
       { k: 'tell', l: '想いを打ち明け、親に頼みこむ', w: 0.6 + Math.max(0, c.tr('warm')) + Math.max(0, c.tr('adv')) * 0.5, f: ['family'] },
       { k: 'give', l: 'あきらめて親の決めた縁談を受ける', w: 1, f: ['earn', 'save', 'study'] }
     ]);
@@ -1753,7 +1753,7 @@
       var S6 = s6Mod();
       if (S6 && S6.choices) S6.choices.forEach(function (o) {
         CH.list.push({ id: o.id, kind: o.kind, y: o.y, a: o.a, when: o.when || {}, text: o.text, texts: [].concat(o.text), s6: true,
-          options: CH.balance ? CH.balance(o.options.map(function (p) { return { k: p.k, l: p.l, fx: Object.assign({}, p.fx || {}), after: p.after || null, money: p.money || null }; })) : o.options.map(function (p) { return { k: p.k, l: p.l, fx: p.fx || {}, after: p.after || null, money: p.money || null }; }) });
+          options: CH.balance ? CH.balance(o.options.map(function (p) { return { k: p.k, l: p.l, fx: Object.assign({}, p.fx || {}), after: p.after || null, money: p.money || null, pet: p.pet || null, petEnd: !!p.petEnd }; })) : o.options.map(function (p) { return { k: p.k, l: p.l, fx: p.fx || {}, after: p.after || null, money: p.money || null }; }) });
       });
     }
     // どちらの答えにも得るものと失うものを（spec6 2-15）。全部そろったあとに一度だけ
@@ -1768,6 +1768,22 @@
   // 選択肢と重点（おまかせ）の対応
   function focusOf(fx) { var f = []; if (fx.learn > 0) f.push('study'); if (fx.tie > 0) f.push('family'); if (fx.body > 0) f.push('body'); if (fx.sat > 0) f.push('earn', 'save'); return f; }
   // 差し込み：家族と幼なじみの名前。埋められないときは null
+  /* ---------- 飼っている動物（v18 11-7。L.pets = [{ a: 種類, name, y: 迎えた年, dy: 別れた年 }]） ---------- */
+  function kurashiMod() {
+    if (root.IchiokuKurashi) return root.IchiokuKurashi;
+    if (typeof require === 'function') { try { return require('./kurashi.js'); } catch (e) { return null; } }
+    return null;
+  }
+  // 飼える年数の目安（これを過ぎた動物は、別れの選択が出なくても、もう飼っていないものとする。kurashi.js の PET_LIFE と同じ）
+  var PET_LIFE = { '鈴虫': 1, '鶏': 8, '小鳥': 8, '金魚': 10, '犬': 14, '猫': 16, '牛': 16, '鷹': 15, '馬': 22 };
+  function petOf(L, kinds, minYears) {
+    return (L.pets || []).filter(function (p) { return p.dy == null && L.year - p.y <= (PET_LIFE[p.a] || 15) && (kinds === true || [].concat(kinds).indexOf(p.a) >= 0) && (!minYears || L.year - p.y >= minYears); })[0] || null;
+  }
+  function addPet(c, a) {
+    var K = kurashiMod(), L = c.L, nm = K && K.petName ? K.petName(a, c.y, c.r) : null;
+    (L.pets = L.pets || []).push({ a: a, name: nm || a, y: c.y, dy: null });
+  }
+  function endPet(c) { var p = petOf(c.L, true); if (p) p.dy = c.y; }
   function people(c) {
     var L = c.L, y = c.y, ms = (L.members || []).filter(function (m) { return m.alive && !m.gone && m.by <= y && !m.before; });
     var one1 = function (f) { return ms.filter(f)[0]; };
@@ -1781,7 +1797,7 @@
     return {
       name: ainu(L.name) ? (c.a < 15 ? 'この子' : null) : L.name, mom: nm(one1(function (m) { return m.role === '母'; })), dad: nm(one1(function (m) { return m.role === '父'; })),
       sibOlder: older.length ? nm(older[older.length - 1]) : null, sibYounger: younger.length ? nm(younger[0]) : null,
-      spouse: nm(sp), child: kids.length ? nm(kids[kids.length - 1]) : null, friend: ainu(c.s.friend) ? null : c.s.friend,
+      spouse: nm(sp), child: kids.length ? nm(kids[kids.length - 1]) : null, friend: ainu(c.s.friend) ? null : c.s.friend, pet: (petOf(L, true) || {}).name || null,
       place: String(c.place || '').replace(/（今の.*?）/, '')
     };
   }
@@ -1871,6 +1887,10 @@
     if (w.jobIs && w.jobIs.indexOf(curJob(L)) < 0) return false;
     if (w.rank && w.rank.indexOf(L.rank) < 0) return false;
     if (w.crime && !(L.crimes && L.crimes.length)) return false;
+    // 飼っている動物（v18 11-7）：pet は飼っている動物の種類（true ならどれでも）、petOld は6年以上飼っている、noPet は飼っていない
+    if (w.pet && !petOf(L, w.pet)) return false;
+    if (w.petOld && !petOf(L, true, 6)) return false;
+    if (w.noPet && petOf(L, true)) return false;
     if (o.kind === 'parent' && a > 5) return false;
     if (o.kind !== 'parent' && a < 6) return false;
     return true;
@@ -1955,6 +1975,13 @@
       { k: 'a', l: '「' + L.name + '」にする', fx: { tie: 1 } }, { k: 'b', l: '「' + alt + '」にする', fx: { sat: 1 } }], { cid: '_name', kind: 'parent' });
   }
   function tempChoice(c, P) {
+    // 2歳の気質の場面（v18 11-7）：時代と土地に合う場面（s6.kishitsu.*）を、もとの場面と同じ重みで1つ選ぶ。答えの k（adv・soc・grit・warm・dream）の気質へ傾く
+    var CHm = choicesMod(), ks = CHm ? CHm.list.filter(function (o) { return /^s6\.kishitsu\./.test(o.id) && eligible(c, o); }) : [];
+    if (ks.length && c.r() < ks.length / (ks.length + 1)) {
+      var o = ks[Math.floor(c.r() * ks.length)], t = fillT(o.texts[Math.floor(c.r() * o.texts.length)], P);
+      var opts = o.options.map(function (p) { var l = fillT(p.l, P); return l ? { k: p.k, l: l, fx: p.fx } : null; });
+      if (t && opts.every(Boolean)) return makeChoiceBranch(c, '親の選択', t, opts, { cid: o.id, kind: 'parent' });
+    }
     makeChoiceBranch(c, '親の選択', '2歳。' + P.name + 'は、目を離すとすぐどこかへ行ってしまう。どう育てる？', [
       { k: 'out', l: '外で思いきり遊ばせる', fx: { body: 1, sat: 1 } }, { k: 'near', l: 'そばで見守り、話しかける', fx: { tie: 2 } }, { k: 'self', l: '何でも自分でやらせてみる', fx: { learn: 1, body: 1 } }], { cid: '_temp', kind: 'parent' });
   }
@@ -1995,7 +2022,10 @@
     var P = people(c);
     var op0 = o ? o.options.filter(function (x) { return x.k === opt.k; })[0] : null;
     if (op0 && op0.money) c.money(op0.money);
+    if (op0 && op0.pet) { addPet(c, op0.pet); P.pet = (petOf(L, true) || {}).name || P.pet; }
+    if (/^s6\.kishitsu\./.test(d.cid || '') && c.s.tr[opt.k] != null) c.s.tr[opt.k] += 0.4; // 2歳の気質の場面：選んだ答えの気質へ傾く
     var after = o ? fillT((op0 || {}).after, P) : null;
+    if (op0 && op0.petEnd) endPet(c);
     // 答えだけの「〜ことにした。」は出さない（v11の直し 9）。after がない選択肢は、問いの最初の文を添えて、何について決めたかが分かる文にする
     var q1 = (fillT(String((o && (o.texts || [o.text])[d.ti || 0]) || '').split('。')[0], P) || '').replace(/(かどうか|か)?(迷っている|考えている|悩んでいる)$/, '').replace(/[？?]$/, '');
     var t = after || (q1 ? q1 + '。' + (d.kind === 'parent' ? '親は考えた末、' : '考えた末、') + opt.l + 'ことにした。' : (d.kind === 'parent' ? '親は、' : '') + opt.l + 'ことにした。');
@@ -2035,6 +2065,13 @@
       ['父は商店街で店を営み、近所の誰とでも顔なじみだ。', 0, 'shotengai'], ['父は仕事一筋の会社員で、休みの日もほとんど家にいない。', 0.1, 'kaisha'],
       ['母は教育熱心で、習い事の送り迎えに走り回っている。', 0.05, 'kyoiku'], ['父は頑固だが情に厚い職人だ。', 0, 'shokunin'], ['両親は共働きで、祖母が家のことを見てくれている。', 0.05, 'sobo']]
   };
+  // 家の事情の文の田畑の呼び方を時代に合わせる（v18 6-2。jobs.js の表：作人・名主は1599年まで、小作人は1650年から、庄屋は1600年から）
+  function farmWord(t, y) {
+    t = String(t || '');
+    if (y >= 1650) return t;
+    if (y < 1600) return t.replace(/小作人|小作/g, '作人').replace(/大地主|地主|庄屋/g, '名主');
+    return t.replace(/小作人|小作/g, '水呑百姓').replace(/大地主|地主/g, '庄屋');
+  }
   function personaYear(c) {
     var L = c.L, s = c.s;
     if (s.persona || L.inherited) return;
@@ -2045,7 +2082,7 @@
     var p = one(c.r, list);
     s.persona = p[2];
     if (typeof L.incPct === 'number') L.incPct = clamp(L.incPct + p[1], 0.01, 0.99);
-    c.say(p[0], null, '家庭');
+    c.say(farmWord(p[0], c.y), null, '家庭');
   }
 
   /* ========== 人生の山場（どの人生にも1つは作る） ==========
@@ -2280,7 +2317,7 @@
     var order = sp.sex === 'f' ? one(r, ['長女', '次女', '三女', '末娘', 'ひとり娘']) : one(r, ['長男', '次男', '三男', '末っ子']);
     if (!L.old || y >= 1948) { var jb = one(r, SP_NEW); sp.house = '父が' + one(r, SP_DAD) + 'の家の' + order; return age + '歳、' + sp.house + 'で、' + jb + 'として働く' + adj + '人だった。'; }
     var st = sp.st || L.status, list = SP_OLD[st] || SP_OLD.other;
-    sp.house = one(r, list) + 'の' + order;
+    sp.house = farmWord(one(r, list), y) + 'の' + order;
     return age + '歳、' + sp.house + 'で、' + adj + '人だった。';
   }
 
@@ -2299,7 +2336,7 @@
     var nm = null;
     try { nm = L.old ? null : null; } catch (e) { nm = null; }
     var st = L.status || 'heimin', jobs = SUIT_JOB[st] || SUIT_JOB.other, house = y >= 1948 ? SP_DAD.map(function (d) { return '父が' + d + 'の家'; }) : (SP_OLD[st] || SP_OLD.other);
-    var o = { y: y, by: by, age: y - by, house: one(r, house), job: one(r, jobs), trait: one(r, SUIT_TRAIT), order: osex === 'f' ? one(r, ['長女', '次女', '三女', '末娘']) : one(r, ['長男', '次男', '三男']) };
+    var o = { y: y, by: by, age: y - by, house: farmWord(one(r, house), y), job: one(r, jobs), trait: one(r, SUIT_TRAIT), order: osex === 'f' ? one(r, ['長女', '次女', '三女', '末娘']) : one(r, ['長男', '次男', '三男']) };
     return o;
   }
   function suitorText(L, o, name) {
@@ -2518,7 +2555,7 @@
     var bad = /凶作|飢饉|不作|日照り|冷害/.test(t);
     if (c.y >= 1873 || ['hyakusho', 'genin', 'ryukyuHyakusho', 'gusuku'].indexOf(c.st) < 0 || c.a < 20 || c.a > 60 || !(bad ? c.p(0.6) : c.p(0.012))) return false;
     var dau = kidOf(L, c.y, 10, 16, function (m) { return m.sex === 'f'; });
-    var opts = [{ k: 'shichi', l: '田畑を質に入れる', w: 1, f: ['save'] }, { k: 'shakumai', l: '地主から米を借りる', w: 1, f: ['family'] }];
+    var opts = [{ k: 'shichi', l: '田畑を質に入れる', w: 1, f: ['save'] }, { k: 'shakumai', l: farmWord('地主から米を借りる', c.y), w: 1, f: ['family'] }];
     // 答えは3つまで：年ごろの娘がいる家は前借り、いない家は減免の願い
     if (dau) { c.s.nenguDau = nm(dau) || '娘'; opts.push({ k: 'mae', l: '娘を奉公に出して給金を前借りする', w: 0.6, f: ['earn'] }); }
     else opts.push({ k: 'genmen', l: '年貢を減らしてほしいと願い出る', w: 0.4 + Math.max(0, c.tr('adv')) * 0.5, f: ['study'] });
@@ -2526,11 +2563,11 @@
     return true;
   }, res: {
     shichi: function (c) { c.money({ f: -0.4, t: '田畑を質に入れた（推計）' }); c.say('田畑の一部を質に入れて、年貢を納めた。', { sat: -6 }, '家庭'); c.later(5, 'nengu.back'); },
-    shakumai: function (c) { c.money({ f: -0.15, t: '借りた米の返済（推計）' }); c.say('地主から米を借りて納めた。利息の分まで、何年もかけて返すことになった。', { sat: -4, tie: -1 }, '家庭'); },
+    shakumai: function (c) { c.money({ f: -0.15, t: '借りた米の返済（推計）' }); c.say(farmWord('地主から米を借りて納めた。', c.y) + '利息の分まで、何年もかけて返すことになった。', { sat: -4, tie: -1 }, '家庭'); },
     genmen: function (c) { if (c.p(0.4)) c.say('村の名主を通じて願い出ると、年貢の一部が免じられた。', { sat: 4, tie: 2 }, '家庭'); else { c.money({ f: -0.25, t: '願いは聞き入れられず、蓄えで年貢を納めた' }); c.say('願いは聞き入れられなかった。蓄えをはたいて納めた。', { sat: -5 }, '家庭'); } },
     mae: function (c) { c.money({ inc: 0.25, t: '娘の奉公の給金を前借りした' }); c.say(c.s.nenguDau + 'を奉公に出し、給金を前借りして年貢を納めた。', { tie: -8, sat: -3 }, '家庭'); }
   } });
-  N['nengu.back'] = function (c) { if (!c.L.alive) return; if (c.p(0.5)) { c.money({ f: -0.2, t: '質に入れた田畑を請け戻した' }); c.say('五年かけて、質に入れた田畑を請け戻した。', { sat: 6 }, '家庭'); } else c.say('質に入れた田畑は流れてしまい、その分は小作として耕すことになった。', { sat: -6 }, '家庭'); };
+  N['nengu.back'] = function (c) { if (!c.L.alive) return; if (c.p(0.5)) { c.money({ f: -0.2, t: '質に入れた田畑を請け戻した' }); c.say('五年かけて、質に入れた田畑を請け戻した。', { sat: 6 }, '家庭'); } else c.say(farmWord('質に入れた田畑は流れてしまい、その分は小作として耕すことになった。', c.y), { sat: -6 }, '家庭'); };
   // 頼母子講・無尽に入るか
   arc({ id: 'tanomoshi', start: function (c) {
     if (c.y < 1300 || c.y > 1960 || c.a < 25 || c.a > 55 || !c.p(0.03)) return false;
@@ -2644,7 +2681,58 @@
     var r = m.role === '配偶者' ? (m.sex === 'm' ? '夫' : '妻') : m.role === 'パートナー' ? 'パートナー' : m.role === '子' ? (m.sex === 'm' ? '息子' : '娘') : m.role;
     return r + 'の' + m.name;
   }
+  /* ---------- 双子・三つ子どうしの出来事（作る人の指示 8）----------
+     同じ日に生まれたきょうだい（L.multi）との出来事を、年齢と時代に合わせて1つの人生で1回ずつ出す。
+     江戸時代には双子を「畜生腹」と忌む俗信が一部の土地にあり、親が片方を親戚の家に養子に出すこともあった（割合の記録はないため、二つの道を同じ重さで出す）。
+     どちらになるかは家の種で決めるので、きょうだいとして生き直しても同じ */
+  function multiEv(L, k, y, what, extra) {
+    var so = ((L.H && L.H.sources) || {})[k] || ((L.C && L.C.sources) || {})[k] || { name: k, org: '' };
+    var e = { src: k, name: so.name, org: so.org || '', y: y, what: what, val: '', prov: false, est: true, noYearNote: true };
+    if (extra) for (var x in extra) e[x] = extra[x];
+    return e;
+  }
+  function multiLine(L, rec, api) {
+    if (!L.alive || !rec || rec.dead || L.mode) return;
+    var y = rec.year, a = rec.age, mu = L.multi, done = L.multiDone = L.multiDone || {}, seed0 = (L.seed0 || L.seed) >>> 0;
+    // 1976年1月、鹿児島で日本で初めての五つ子が生まれ、大きく報じられた（実在の家族の名前は出さない）
+    if (y === 1976 && !done.quint && a >= 6 && !L.abroad && (mu || h32(seed0, 1976) % 20 === 0)) {
+      done.quint = 1;
+      api.push(L, rec, '時代', mu ? '鹿児島で日本で初めての五つ子が生まれ、新聞やテレビが連日伝えた。' + mu.kind + 'の自分たちも、近所でその話を何度も振られた。' : '鹿児島で日本で初めての五つ子が生まれ、新聞やテレビが連日伝えた。', [multiEv(L, 'wpQuint', 1976, '1976年1月、鹿児島市立病院で日本で初めての五つ子が生まれた', { est: false })]);
+      return;
+    }
+    if (!mu) return;
+    var sib = (L.members || []).filter(function (m) { return mu.sibIds.indexOf(m.id) >= 0 && !m.gone && m.name && !/アイヌ語/.test(m.name); });
+    var live = sib.filter(function (m) { return m.alive; });
+    var w = function (m) { return famWho(m, L); };
+    var one = live.length ? live[h32(seed0, y) % live.length] : null;
+    // 江戸時代：片方を親戚の家に養子に出すか、二人とも手もとで育てるか（親が決める。家の種で決めるので、どのきょうだいの人生でも同じ）
+    if (a === 1 && !done.chikusho && L.by >= 1603 && L.by <= 1867 && L.old && !L.ainu && !L.ryukyu && mu.n === 2) {
+      done.chikusho = 1;
+      var out = h32(seed0, 8801) % 2 === 0, other = live[0];
+      if (!other) return; // もう一人が生まれてすぐに亡くなっていれば、この話は出さない
+      var ev0 = [multiEv(L, 'wpChikusho', y, '江戸時代には、双子を「畜生腹」と忌む俗信が一部の土地にあった（割合の記録はない）')];
+      if (!out) api.push(L, rec, '家庭', '双子を忌む言い伝えのある土地だったが、父と母は二人とも手もとで育てると決めた。', ev0);
+      else if (mu.order === 2) api.push(L, rec, '家庭', '双子を忌む言い伝えがあり、父と母は悩んだすえ、後に生まれた自分を親戚の家に養子に出すことにした。' + w(other) + 'とは、ときどき行き来して育った。', ev0);
+      else api.push(L, rec, '家庭', '双子を忌む言い伝えがあり、父と母は悩んだすえ、' + w(other) + 'を親戚の家に養子に出すことにした。' + other.name + 'とは、ときどき行き来して育った。', ev0);
+      return;
+    }
+    // 先に亡くなったきょうだいを思う（亡くなった次の年）
+    var gone = sib.filter(function (m) { return !m.alive && m.dy === y - 1 && y - 1 > m.by; })[0];
+    if (gone && !done['gone' + gone.id]) { done['gone' + gone.id] = 1; api.push(L, rec, '家庭', w(gone) + 'のいない誕生日を、はじめて迎えた。', []); return; }
+    if (!one) return;
+    var t = null, k = null;
+    if (a >= 2 && a <= 4 && !done.era) { k = 'era'; t = y < 1946 ? mu.kind + 'は珍しく、近所の人がよく見に来た。' : '母は' + (mu.n === 2 ? '二人' : mu.n === 3 ? '三人' : '小さな子たち') + 'を一度に抱え、近所の人の手を借りながら育てた。'; }
+    else if (a >= 3 && a <= 7 && !done.clothes && h32(seed0, y) % 3 === 0) { k = 'clothes'; t = w(one) + 'と、おそろいの' + (y < 1950 ? '着物' : '服') + 'を着せられた。'; }
+    else if (a >= 5 && a <= 12 && !done.mixup && h32(seed0, y + 7) % 4 === 0 && one.sex === L.sex) { k = 'mixup'; t = '近所の人に、' + w(one) + 'とよく取り違えられた。'; }
+    else if (a >= 15 && a <= 18 && y >= 1950 && !done.course) { k = 'course'; t = '進路を決めるとき、' + w(one) + 'と何かと比べられた。'; }
+    else if (a >= 18 && a <= 26 && y < 1960 && !L.married && !done.match && L.sex === one.sex) { k = 'match'; t = '縁談の話が来るたびに、' + w(one) + 'と比べられた。'; }
+    if (!t) return;
+    done[k] = 1;
+    var e = api.push(L, rec, '家庭', t, []);
+    if (e) e.flavor = true;
+  }
   function familyLine(L, rec, api) {
+    multiLine(L, rec, api);
     if (!L.alive || !rec || rec.dead || rec.age < 2) return;
     var away = api.homeLife && !api.homeLife(L); // 出家・旅・奉公・出征の間は、家族とは便りと訪ねてくることだけ（v11の直し 1）
     var y = rec.year, a = rec.age, ms = (L.members || []).filter(function (m) { return m.alive && !m.gone && !m.before && m.by <= y && m.name && !/アイヌ語/.test(m.name); });

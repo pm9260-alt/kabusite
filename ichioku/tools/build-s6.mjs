@@ -6,10 +6,10 @@ const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..')
 const DIR = path.join(ROOT, 'data-src', 's6');
 const ONLY = process.argv.includes('--only') ? process.argv[process.argv.indexOf('--only') + 1] : null;
 const BAN = /まず|見ます|効く|効いて|重い|重く|重さ|重か|読み|判定|一方で|結論から言うと|示唆|わけです|極めて|興味深い|齟齬|——|[()]/;
-const PH = ['name', 'dad', 'mom', 'spouse', 'child', 'friend', 'place', 'sibOlder', 'sibYounger', 'en', 'enName', 'job'];
+const PH = ['name', 'dad', 'mom', 'spouse', 'child', 'friend', 'place', 'sibOlder', 'sibYounger', 'en', 'enName', 'job', 'pet'];
 const KAKAKU = ['kugyo', 'tenjo', 'zuryo', 'jige', 'sekke', 'seiga', 'daijin', 'urin', 'meika', 'hanke', 'jigekan', 'koshaku', 'koshaku2', 'hakushaku', 'shishaku', 'danshaku'];
 const GRADE = ['ashigaru', 'kachi', 'hirazamurai', 'monogashira', 'karo', 'hatamoto', 'gokenin', 'shizoku_jo', 'shizoku_ka', 'hei', 'kashi', 'junshi', 'ikan', 'sakan', 'shokan', 'jsdf_shi', 'jsdf_so', 'jsdf_i', 'jsdf_sa', 'jsdf_sho'];
-const WHEN = ['kind', 'ind', 'y', 'status', 'sex', 'unmarried', 'married', 'divorced', 'childless', 'hasChild', 'hasSib', 'parentOld', 'poor', 'rich', 'pref', 'kakaku', 'grade', 'jobIs', 'rank', 'mode', 'crime', 'debt', 'u'];
+const WHEN = ['kind', 'ind', 'y', 'status', 'sex', 'unmarried', 'married', 'divorced', 'childless', 'hasChild', 'hasSib', 'parentOld', 'poor', 'rich', 'pref', 'kakaku', 'grade', 'jobIs', 'rank', 'mode', 'crime', 'debt', 'u', 'pet', 'petOld', 'noPet'];
 const FX = ['sat', 'learn', 'tie', 'body'];
 const errs = [], choices = [], lines = [], ids = new Set();
 const SRC = {};

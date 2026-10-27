@@ -1,0 +1,22 @@
+[
+  { "id": "s6.sk.inkyo.ta.heian", "kind": "small", "y": [1000, 1332], "a": [50, 90], "when": { "kind": ["village", "fish"], "ind": ["farm", "fish"], "hasChild": true },
+    "text": ["年をとり、田起こしのあとは腰が伸びなくなった。{child}に田の差配を任せてはどうかと、隣の家の翁が言う。"],
+    "options": [
+      { "k": "makaseru", "l": "{child}に差配を任せて退く", "fx": { "body": 2, "sat": -1 }, "after": "田の差配を{child}に任せ、自分は苗代の見回りだけをするようになった。" },
+      { "k": "tsuzukeru", "l": "体の動くうちは自分が差配する", "fx": { "sat": 1, "body": -2 }, "money": { "f": 0.01 }, "after": "田の差配は手放さず、{child}には水の引き方から教え直した。" } ] },
+  { "id": "s6.sk.inkyo.chishi", "kind": "small", "y": [1000, 1332], "a": [55, 90], "when": { "status": ["kuge"], "kind": ["village", "fish", "town", "city"], "ind": ["office"] },
+    "text": ["年を重ね、朝早くの出仕がこたえるようになった。官職を辞して家にこもるか、まだ務めを続けるか。"],
+    "options": [
+      { "k": "jisu", "l": "職を辞して家で過ごす", "fx": { "body": 2, "sat": 1, "tie": -1 }, "money": { "f": -0.03 }, "after": "職を辞し、屋敷の庭の池を眺めながら古い歌集を写して過ごした。" },
+      { "k": "tsutomeru", "l": "家の名のために務めを続ける", "fx": { "tie": 1, "body": -2 }, "money": { "f": 0.02 }, "after": "出仕を続け、若い公達に儀式の古い作法を教えた。" } ] },
+  { "id": "s6.sk.inkyo.iori", "kind": "small", "y": [1000, 1332], "a": [55, 95], "when": { "kind": ["village", "fish", "town", "city"], "ind": ["home"] },
+    "text": ["歯が抜けて、硬いものが食べられなくなった。残りの日々をどこで送るか、考えるようになった。"],
+    "options": [
+      { "k": "iori", "l": "寺の近くに小さな庵を結ぶ", "fx": { "sat": 2, "tie": -1 }, "money": { "f": -0.02 }, "after": "寺の裏手に小さな庵を結び、朝夕に鐘の音を聞いて暮らした。" },
+      { "k": "ie", "l": "家にとどまり、孫の守りをする", "fx": { "tie": 2, "sat": -1 }, "after": "家にとどまり、孫を背負って村の道を行き来した。" } ] },
+  { "id": "s6.sk.inkyo.yuzuri", "kind": "small", "y": [1000, 1466], "a": [50, 90], "when": { "kind": ["village", "fish", "town", "city"], "ind": ["home"], "hasChild": true },
+    "text": ["年をとり、家の田畑や財をどう譲るか決めておく時が来た。{child}に一度に譲るか、少しずつ分けるか。"],
+    "options": [
+      { "k": "ichido", "l": "譲り状を書いて一度に譲る", "fx": { "sat": 1, "tie": 1, "body": -1 }, "money": { "f": -0.02 }, "after": "譲り状をしたため、田畑と家財を{child}に譲った。肩の荷が下りた気がした。" },
+      { "k": "sukoshi", "l": "手もとに残しつつ、少しずつ分ける", "fx": { "learn": 1, "tie": -1 }, "money": { "f": 0.02 }, "after": "田を少しずつ{child}に分け、残りは自分の名で持ち続けた。" } ] }
+]
