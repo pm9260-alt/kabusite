@@ -918,3 +918,10 @@ body[data-screen="life"] .o-head { gap: 6px; padding-bottom: 8px; }
 .bm-btn { min-height: 44px; }
 .tab-scroll { overflow-x: auto; }
 .end-grid #multi-block { order: 5; }
+/* 小さいパソコン・タブレット（960〜1199px）：上の帯のボタンを1行に収める */
+@media (min-width: 960px) and (max-width: 1199px) {
+  .o-ctrl { column-gap: 4px; }
+  .o-ctrl .o-btn { padding: 0 7px; font-size: 13px; }
+  .o-ctrl .o-speeds .o-sp { min-width: 34px; font-size: 12px; }
+  .oh-row .o-num { font-size: 34px; }
+}
