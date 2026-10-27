@@ -30,14 +30,28 @@ const rs = ids.map(id => JSON.parse(fs.readFileSync(path.join(OUT, id + '.json')
 const old = JSON.parse(fs.readFileSync(path.join(OUT, 'old.json'), 'utf8'));
 const pass = rs.filter(r => r.ok).length;
 const oldLines = String(old.report || '').split('\n').filter(l => /^(合格|不合格|目標)/.test(l));
-let md = '# 試験の結果の一覧（1000分の1 v17）\n\n';
+let md = '# 試験の結果の一覧（1000分の1 v18）\n\n';
 md += '作った日：' + new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 16).replace('T', ' ') + '（日本時間）\n\n';
-md += '## 受け入れの検査（1-x・2-x は指示書 spec6、7-x は指示書 tsunagari-spec1 の「確かめ方」）\n\n';
+md += '## 受け入れの検査（1-x・2-x は指示書 spec6、7-x は tsunagari-spec1、8-x・9-x は ui-spec2 の「確かめ方」）\n\n';
 md += '合格 ' + pass + '／' + rs.length + '\n\n| 番号 | 検査 | 件数 | 結果 | 中身 |\n|---|---|---|---|---|\n';
 for (const r of rs) md += '| ' + r.id + ' | ' + String(r.name).replace(/\|/g, '｜') + ' | ' + (r.n || 0) + ' | ' + (r.ok ? '合格' : '不合格') + ' | ' + String(r.detail || '').replace(/\|/g, '｜').replace(/\n/g, ' ') + ' |\n';
 md += '\n## 今までの検査（tools/check.mjs --test）\n\n';
 md += '全体：' + (old.ok ? '合格' : '不合格') + '（' + (old.secs || 0) + '秒）\n\n';
 if (oldLines.length) { md += '| 結果 | 検査と中身 |\n|---|---|\n'; for (const l of oldLines) { const m = l.match(/^(合格|不合格|目標[^\s]*)\s*(.*)$/); md += '| ' + (m ? m[1] : '') + ' | ' + String(m ? m[2] : l).replace(/\|/g, '｜') + ' |\n'; } }
+// v18：ブラウザの検査（tools/ui18.cjs）・色の差（tools/contrast18.cjs）・一生の骨組みの表（tools/count-skeleton.mjs）
+const LG = path.join(ROOT, 'logs');
+md += '\n## ブラウザでの検査（v18・tools/ui18.cjs。画面写真は tools/screens/）\n\n';
+for (const k of ['sizes', 'modal', 'top', 'trip']) {
+  const f = path.join(LG, 'ui18-' + k + '.json');
+  if (!fs.existsSync(f)) { md += '- ' + k + '：まだ\n'; continue; }
+  const u = JSON.parse(fs.readFileSync(f, 'utf8'));
+  md += '\n### ' + ({ sizes: '6つの大きさの画面（人生・生まれ・最期）', modal: '初めて開いたときの窓', top: '遊んでいる途中の「トップへ」', trip: '三つ子の3人全員の人生' })[k] + '\n\n| 結果 | 確かめたこと | 中身 |\n|---|---|---|\n';
+  for (const c of u.checks) md += '| ' + (c.ok ? '合格' : '不合格') + ' | ' + c.name.replace(/\|/g, '｜') + ' | ' + String(c.detail || '').replace(/\|/g, '｜').slice(0, 300) + ' |\n';
+}
+const cf = path.join(LG, 'contrast18.json');
+if (fs.existsSync(cf)) { const c = JSON.parse(fs.readFileSync(cf, 'utf8')); md += '\n### 文字と背景の色の差（明るい表示・暗い表示、1440×900 と 390×844。tools/contrast18.cjs）\n\n' + (c.length ? '不合格：' + c.length + '組（' + c.slice(0, 5).map(x => x.scheme + ' ' + x.sel + ' ' + x.ratio).join('、') + '）' : '合格：基準（本文4.5・大きな文字3）に足りない組み合わせ 0') + '\n'; }
+const sk = path.join(LG, 'skeleton.md');
+if (fs.existsSync(sk)) md += '\n' + fs.readFileSync(sk, 'utf8').replace(/^# /, '## ') + '\n';
 md += '\n## ブラウザでの確かめ\n\n' + (fs.existsSync(path.join(OUT, 'browser.md')) ? fs.readFileSync(path.join(OUT, 'browser.md'), 'utf8') : '（まだ）\n');
 fs.writeFileSync(path.join(ROOT, 'test-results.md'), md);
 console.log('test-results.md：第6版 ' + pass + '／' + rs.length + '・今まで ' + (old.ok ? '合格' : '不合格'));
