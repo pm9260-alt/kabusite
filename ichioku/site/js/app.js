@@ -212,7 +212,8 @@
   // 亡くなった人から、きょうだい（memberId）へ引き継ぐ
   function inheritFrom(Lp, memberId, gen, sg) {
     if (gen === 'desc') return descendFrom(Lp, sg);
-    if (gen === 'multi') gen = null;
+    var fromBirth = gen === 'multiB';
+    if (gen === 'multi' || gen === 'multiB') gen = null;
     if (gen === 'member') return memberFrom(Lp, sg);
     if (gen === 'rechild') return rechildFrom(Lp, sg);
     if (gen === 'trace') return traceFrom(sg);
@@ -223,7 +224,8 @@
       L = Lp.old ? O.newLife(C, H, P, opt) : E.newLife(C, P, opt);
       L.marks = {};
       comps = [];
-      preRun(Math.max(h.deathYear, L.by));
+      // 先に亡くなった同じ日に生まれたきょうだいは、生まれた年から生きる（v18 8）
+      if (!fromBirth) preRun(Math.max(h.deathYear, L.by));
       return L;
     });
   }
@@ -2052,6 +2054,18 @@
       cl.appendChild(b);
     });
     $('kyodai-block').hidden = !cl.childNodes.length && !cands.length;
+    // 同じ日に生まれたきょうだいで、この人より先に亡くなった子も、生まれた年から生きられる（v18 8：全員の人生を生きる）
+    if (L.multi) {
+      var lived = houseLives.map(function (h) { return h.name; }).concat([dispName(L)]);
+      L.members.filter(function (m) { return L.multi.sibIds.indexOf(m.id) >= 0 && !cands.some(function (c) { return c.id === m.id; }); }).forEach(function (m) {
+        if (lived.some(function (n) { return String(n).indexOf(m.name) >= 0; })) return;
+        var b = el('button', 'btn-sub kyodai-btn multi-b', m.role + ' ' + m.name + '（' + m.by + '年に生まれる）として、生まれから生きる');
+        b.type = 'button';
+        b.onclick = function () { liveAsMultiBirth(m); };
+        cl.insertBefore(b, cl.firstChild);
+      });
+      $('kyodai-block').hidden = !cl.childNodes.length && !cands.length;
+    }
     cands.forEach(function (c) {
       var b = el('button', 'btn-sub kyodai-btn' + (c.child ? ' kid' : ''), c.later ? c.role + '（' + c.later + '年後に生まれる）として生きる' : (c.child ? '子の' : '') + c.role + ' ' + c.name + '（' + c.age + '歳・' + doing(c) + '）として生きる');
       b.type = 'button';
@@ -2307,6 +2321,14 @@
       saveCurrent();
       nextYear();
     });
+  }
+  function liveAsMultiBirth(m) {
+    if (!G || !L) return;
+    G.house = G.house || { chain: [] };
+    houseLives.push(lifeSummary(L, houseLives.length, firstLife));
+    G.house.chain.push({ memberId: m.id, gen: 'multiB', rel: m.role, answers: [], marks: [], focus: [] });
+    G.done = false;
+    inheritFrom(L, m.id, 'multiB').then(function () { cur = null; paused = false; setPauseLabel(); show('life'); saveCurrent(); nextYear(); });
   }
   function liveAsSibling(c) {
     if (!G || !L) return;
