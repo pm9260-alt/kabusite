@@ -192,7 +192,7 @@ async function autoRun(p, seed, tag) {
     async function play(stop, onBr) {
       await p.click('#bt-start');
       const t0 = Date.now();
-      while (Date.now() - t0 < 400000) {
+      while (Date.now() - t0 < 900000) {
         if (await vis(p, 'screen-end')) return 'end';
         if (stop && await stop()) return 'stop';
         if (await vis(p, 'branch')) {
