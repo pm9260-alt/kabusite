@@ -14,7 +14,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 async function page(b, w, h) {
   const p = await b.newPage({ viewport: { width: w, height: h || (w > 900 ? 900 : 844) } });
   p.errs = []; p.ext = [];
-  p.on('pageerror', e => p.errs.push(e.message)); p.on('console', m => { if (m.type() === 'error') p.errs.push(m.text()); });
+  p.on('pageerror', e => p.errs.push(e.message + ' @ ' + String(e.stack || '').split('\n').slice(1, 4).join(' | '))); p.on('console', m => { if (m.type() === 'error') p.errs.push(m.text()); });
   p.on('request', q => { if (!/^http:\/\/localhost:812[0-9]\//.test(q.url()) && !/^(data|blob):/.test(q.url())) p.ext.push(q.url()); });
   return p;
 }
@@ -59,6 +59,7 @@ async function autoRun(p, seed, tag) {
     const p = await page(b, W); res.runs = [];
     for (let i = 0; i < N; i++) {
       const r = await autoRun(p, 1000 + (i + +(process.env.ICHIOKU_SEED0 || 0)) * 7919, 'auto');
+      r.errs = p.errs.length - (res.errN || 0); res.errN = p.errs.length; if (r.errs) r.err = p.errs[p.errs.length - 1];
       res.runs.push(r);
       if (!r.birth) res.bad.push('生まれの画面が出ない ' + r.seed);
       if (!/5秒後に人生を始めます・画面を押すと止まります/.test(r.autoLine)) res.bad.push('5秒の表示がない ' + r.seed);
