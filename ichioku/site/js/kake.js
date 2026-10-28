@@ -290,9 +290,10 @@
     };
     kn.res.hamaru__kakusu = function (c) {
       var L = c.L, k = K(L), kind = c.s.kakeKind || 'keirin';
-      // 取り返そうと、休みのたびに額を上げて賭け続ける（貯金の2%ずつを20回。合わせて貯金の4割ほど）
-      var unit = Math.max(1, sav(L) * 0.02), tot = 0;
-      for (var i = 0; i < 20; i++) tot += bet(c, kind, unit, 4, i ? 0 : 3, '取り返そうと賭け続けた').net;
+      // 取り返そうと、休みのたびに賭け続ける（貯金の2%ずつ、1回1万円までを20回）
+      // 1回の額は貯金の2%、ただし1万円（今の物価）まで。貯金の多い人ほど大きく賭けて収支が大きく振れるのを抑える（v19 14）
+      var unit = Math.min(10, Math.max(1, sav(L) * 0.02)), tot = 0;
+      for (var i = 0; i < 20; i++) tot += bet(c, kind, unit, 2, i ? 0 : 3, '取り返そうと賭け続けた').net;
       var res = { win: tot > 0, net: tot };
       c.say('誰にも言わずに賭け続けた。負けを取り返そうと、賭ける額が少しずつ大きくなった。', res.win ? { sat: 1, learn: -2, tie: -2 } : { sat: -4, tie: -2, learn: -1 }, '人間関係');
       c.later(1 + Math.floor(c.r() * 2), 'kakeN.kuzure', { n: (c.d && c.d.n) || 1 });
