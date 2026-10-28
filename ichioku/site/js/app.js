@@ -378,12 +378,14 @@
     dataFor(G.year, G.year + 115).then(function () { return makeLife(seed); }).then(function () {
       firstLife = L;
       laterData();
-      return (meInfo() ? getHistory() : Promise.resolve()).then(lottery);
+      // 生まれの画面の比べの表は、1975年からの生まれでも history.json の数字を使う（v19：読まずに表を作ると止まっていた）
+      return getHistory().then(lottery);
     }).then(function () {
       $('born').disabled = false;
       rememberBornYear(L.by);
       showBirth();
-    }).catch(function () {
+    }).catch(function (e) {
+      if (window.console) console.error(e);
       $('born').disabled = false;
       alert('データを取り出せませんでした。通信の状態を確かめて、もう一度押してください。');
     });
@@ -1932,7 +1934,7 @@
     // 10歳の夢と実際の仕事（v19 17）
     var YU = window.IchiokuYume, dl = YU && YU.dreamLine ? YU.dreamLine(L) : null;
     if (dl && dl.text) { var dv0 = el('div', 'rc-item rc-wide'); dv0.appendChild(el('dt', null, '10歳の夢')); dv0.appendChild(el('dd', null, '「' + dl.dream10.name + '」' + (dl.dream15 ? '（15歳で「' + dl.dream15.name + '」に）' : ''))); dv0.appendChild(el('dd', 'rc-subv', pol(dl.text))); g.appendChild(dv0); }
-    if (KU && KU.pets) { var pts = KU.pets(L, L.deathYear); if (pts.length) item('ともに暮らした動物', pts.map(function (p) { return p.a + 'の' + (p.name || p.a) + '（' + Math.max(1, p.years) + '年）'; }).join('、')); }
+    if (KU && KU.pets) { var pts = KU.pets(L, L.deathYear); if (pts.length) item('ともに暮らした動物', pts.map(function (p) { var nm = p.name && p.name !== p.a && !/^(熱帯魚|鈴虫)$/.test(p.name) ? p.a + 'の' + p.name : (p.a === '魚' ? '熱帯魚' : p.a); return nm + '（' + Math.max(1, p.years) + '年）'; }).join('、')); }
     var trips = travelPlaces();
     if (trips.length > 1) item('旅した土地・住んだ土地', trips.slice(0, 6).join('、') + (trips.length > 6 ? 'など' + trips.length + 'か所' : ''));
     var TE = window.IchiokuTegotae;

@@ -29,8 +29,8 @@
     for (var k = 0; k < a; k++) s *= 1 - q(C, H, sex, k, by + k);
     return s;
   }
-  function hsRate(H, sex, y) { var s = H.nat.hs && H.nat.hs[sex]; return s && inRange(s, y) && y >= 1948 ? lin(s, y) : null; }
-  function marryAge(H, sex, y) { var s = H.nat.marriage && H.nat.marriage[sex]; if (!s) return null; var ks = keysOf(s); return y >= ks[0] && y <= ks[ks.length - 1] ? lin(s, y) : null; }
+  function hsRate(H, sex, y) { if (!H || !H.nat) return null; var s = H.nat.hs && H.nat.hs[sex]; return s && inRange(s, y) && y >= 1948 ? lin(s, y) : null; }
+  function marryAge(H, sex, y) { if (!H || !H.nat) return null; var s = H.nat.marriage && H.nat.marriage[sex]; if (!s) return null; var ks = keysOf(s); return y >= ks[0] && y <= ks[ks.length - 1] ? lin(s, y) : null; }
   function per(qv) {
     if (qv >= 0.045) return Math.max(2, Math.round(1 / qv)) + '人に1人';
     var n = Math.round(qv * 1000);

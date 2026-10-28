@@ -53,6 +53,7 @@ md += '\n## ブラウザでの受け入れ（v19・tools/ui19.cjs）\n\n| 結果
 const U = (f, name, fn) => { const u = J('ui19/' + f); md += '| ' + (u ? (u.bad.length ? '不合格' : '合格') : 'まだ') + ' | ' + name + ' | ' + (u ? String(fn(u)).replace(/\|/g, '｜') + (u.bad.length ? '・気になる点：' + u.bad.slice(0, 3).join('、') : '') : '') + ' |\n'; };
 U('auto.json', '「すべておまかせ」だけを押して何も押さずに最期まで（390×844）', u => u.summary.runs + '件のうち最期まで ' + u.summary.end + '件・止まった ' + u.summary.stuck + '件・時代 ' + Object.entries(u.summary.eras).map(([k, v]) => k + ' ' + v).join('、') + '・エラー ' + u.summary.errors + '・外部への通信 ' + u.summary.ext);
 U('auto-1440.json', '「すべておまかせ」だけを押して何も押さずに最期まで（1440×900）', u => u.summary.runs + '件のうち最期まで ' + u.summary.end + '件・エラー ' + u.summary.errors);
+U('births.json', '自分で選ぶ遊び方で、生まれ年を入れずに生まれの画面を開く（比べの表・人生を始める）', u => u.summary.runs + '件のうち始まった ' + u.summary.ok + '件・時代 ' + Object.entries(u.summary.eras).map(([k, v]) => k + ' ' + v).join('、') + '・エラー ' + u.summary.errors);
 U('band.json', '帯の名前（390×844・360×740・1440×900、いちばん下まで送ったとき）', u => u.sizes.map(x => x.size + '「' + x.name + '」' + (x.vis ? '見える' : '見えない')).join('・'));
 U('inputs.json', '文を書かせる入力欄（名前の欄と選ぶ欄を除く）', u => '画面 ' + u.inputs.length + '件・HTML ' + u.htmlInputs + '件');
 U('cont.json', '亡くなった後の続きのボタン（3つ以下・家系図への案内・続きの人生で生まれの画面）', u => u.runs.map(r => r.btns.length + 'つ').join('・'));
