@@ -57,7 +57,7 @@ U('births.json', '自分で選ぶ遊び方で、生まれ年を入れずに生�
 U('band.json', '帯の名前（390×844・360×740・1440×900、いちばん下まで送ったとき）', u => u.sizes.map(x => x.size + '「' + x.name + '」' + (x.vis ? '見える' : '見えない')).join('・'));
 U('inputs.json', '文を書かせる入力欄（名前の欄と選ぶ欄を除く）', u => '画面 ' + u.inputs.length + '件・HTML ' + u.htmlInputs + '件');
 U('cont.json', '亡くなった後の続きのボタン（3つ以下・家系図への案内・続きの人生で生まれの画面）', u => u.runs.map(r => r.btns.length + 'つ').join('・'));
-U('desc.json', 'あなたにつながる子孫を代ごとに（生まれた年・都道府県を入れて）', u => u.gens.slice(1).map(g => (g.grid || []).join(' ') || g.end || '').join(' → '));
+U('desc.json', 'あなたにつながる子孫を5代続ける（1998年・東京都を入れて。390×844）', u => u.summary ? '生まれ年 ' + u.summary.years + '・あなたの都道府県まで ' + u.summary.km + 'km（やり直し ' + (u.summary.tries - 1) + '回）' : '');
 for (const acc of [J('ui19/accept.json'), J('ui19/accept-1440.json')]) if (acc) for (const c of acc.checks) md += '| ' + (c.ok ? '合格' : '不合格') + ' | ' + c.name.replace(/\|/g, '｜') + ' | ' + String(c.detail || '').replace(/\|/g, '｜').slice(0, 400) + ' |\n';
 // 7 の目で確かめた300文
 const rv = fs.existsSync(path.join(ROOT, 'data-src', 'review300.json')) ? JSON.parse(fs.readFileSync(path.join(ROOT, 'data-src', 'review300.json'), 'utf8')) : null;

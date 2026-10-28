@@ -137,25 +137,40 @@ async function autoRun(p, seed, tag) {
     if (p.errs.length) res.bad.push('エラー ' + p.errs.slice(0, 2).join(' / '));
   }
   if (MODE === 'desc') {
+    // 生まれた年と都道府県（1998年・東京都）を入れて、「あなたにつながる子孫」を N 代続ける。途中の代が15歳前に亡くなって続かないときは、別の人生からやり直す
     const p = await page(b, W); const me = { y: 1998, pref: '13' };
-    await prep(p, 31337, { 'ichioku-me': me });
-    // 1000〜1500年に生まれるまで引き直す
-    let by = 0;
-    for (let k = 0; k < 60; k++) { await p.click('#born'); await p.waitForSelector('#screen-birth:not([hidden])', { timeout: 30000 }); by = parseInt(await p.textContent('#bt-sub')); if (by <= 1600) break; await p.click('[data-go-top]').catch(() => {}); await prep(p, 31337 + k * 17, { 'ichioku-me': me }); }
-    res.gens = [{ by, place: await p.textContent('#bt-sub') }];
-    for (let g = 0; g < N; g++) {
-      await p.click('#bt-start');
-      const t0 = Date.now();
-      while (Date.now() - t0 < 300000 && !(await vis(p, 'screen-end'))) { if (await vis(p, 'branch')) { const o = await p.$('#branch .opt-btn'); if (o) await o.click().catch(() => {}); const m = await p.$('#branch .btn-main'); if (m && await m.isVisible()) await m.click().catch(() => {}); } if (await p.isVisible('#death-skip').catch(() => false)) await p.click('#death-skip').catch(() => {}); await sleep(120); }
-      await sleep(600);
-      const btn = await p.$('#kyodai-list button.to-me');
-      if (!btn) { res.gens.push({ end: 'あなたにつながる子孫のボタンなし', btns: await p.$$eval('#kyodai-list button', x => x.map(b => b.textContent)) }); break; }
-      await btn.click();
-      await p.waitForSelector('#screen-birth:not([hidden])', { timeout: 60000 });
-      const info = await p.evaluate(() => ({ sub: document.getElementById('bt-sub').textContent, grid: [...document.querySelectorAll('#bt-grid .rc-item')].map(d => d.textContent).filter(t => /あなた/.test(t)) }));
-      res.gens.push(info); console.log(JSON.stringify(info));
-      if (!info.grid.length) res.bad.push('生まれの画面に「あなたまで」がない');
-      await p.screenshot({ path: path.join(OUT, 'desc-' + g + '.png') });
+    res.tries = [];
+    for (let at = 0; at < 15; at++) {
+      await prep(p, 31337 + at * 7717, { 'ichioku-me': me });
+      let by = 0;
+      for (let k = 0; k < 60; k++) { await p.click('#born'); await p.waitForSelector('#screen-birth:not([hidden])', { timeout: 30000 }); by = parseInt(await p.textContent('#bt-sub')); if (by <= 1600) break; await prep(p, 31337 + at * 7717 + k * 17 + 1, { 'ichioku-me': me }); }
+      const gens = [{ by, sub: await p.textContent('#bt-sub') }];
+      let broke = '';
+      for (let g = 0; g < N; g++) {
+        await p.click('#bt-start');
+        const t0 = Date.now();
+        while (Date.now() - t0 < 600000 && !(await vis(p, 'screen-end'))) { if (await vis(p, 'branch')) { const o = await p.$('#branch .opt-btn'); if (o) await o.click().catch(() => {}); const m = await p.$('#branch .btn-main'); if (m && await m.isVisible()) await m.click().catch(() => {}); } if (await p.isVisible('#death-skip').catch(() => false)) await p.click('#death-skip').catch(() => {}); await sleep(120); }
+        await sleep(600);
+        const btn = await p.$('#kyodai-list button.to-me');
+        if (!btn) { broke = (g + 1) + '代目が子孫を残す前に亡くなった'; break; }
+        gens[gens.length - 1].btn = await btn.textContent();
+        await btn.click();
+        await p.waitForSelector('#screen-birth:not([hidden])', { timeout: 60000 });
+        const info = await p.evaluate(() => ({ sub: document.getElementById('bt-sub').textContent, grid: [...document.querySelectorAll('#bt-grid .rc-item')].map(d => d.textContent).filter(t => /あなた/.test(t)) }));
+        info.by = parseInt(info.sub); const km = (info.grid.join(' ').match(/約([\d,]+)km/) || [])[1]; info.km = km ? +km.replace(/,/g, '') : (/同じ都道府県/.test(info.grid.join('')) ? 0 : null);
+        gens.push(info); console.log(JSON.stringify(info));
+        if (!info.grid.length) res.bad.push('生まれの画面に「あなたまで」がない');
+        await p.screenshot({ path: path.join(OUT, 'desc-' + g + '.png') });
+      }
+      res.tries.push({ at, gens: gens.length - 1, broke });
+      if (gens.length - 1 >= N) { res.gens = gens; break; }
+    }
+    if (!res.gens) res.bad.push(N + '代続けられた人生がない（' + res.tries.map(t => t.gens + '代・' + t.broke).join('／') + '）');
+    else {
+      const kms = res.gens.slice(1).map(g => g.km).filter(x => x != null), ys = res.gens.map(g => g.by);
+      if (!(kms.length >= 2 && kms[kms.length - 1] <= kms[0])) res.bad.push('代を重ねても、あなたの都道府県に近づかない ' + kms.join('→'));
+      for (let k = 1; k < ys.length; k++) if (ys[k] <= ys[k - 1]) res.bad.push('生まれ年が進まない ' + ys.join('→'));
+      res.summary = { years: ys.join('→'), km: kms.join('→'), tries: res.tries.length };
     }
     if (p.errs.length) res.bad.push('エラー ' + p.errs.slice(0, 2).join(' / '));
   }
