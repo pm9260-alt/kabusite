@@ -154,6 +154,12 @@ async function autoRun(p, seed, tag) {
         const btn = await p.$('#kyodai-list button.to-me');
         if (!btn) { broke = (g + 1) + '代目が子孫を残す前に亡くなった'; break; }
         gens[gens.length - 1].btn = await btn.textContent();
+        if (!(await btn.isVisible())) {
+          res.hidden = await p.evaluate(() => { const b = document.querySelector('#kyodai-list button.to-me'); const chain = []; for (let e = b; e && e !== document.body; e = e.parentElement) { const cs = getComputedStyle(e); if (e.hidden || cs.display === 'none' || cs.visibility === 'hidden') chain.push((e.id || e.className || e.tagName) + (e.hidden ? '[hidden]' : '') + ':' + cs.display); } return { chain, screen: document.body.dataset.screen, endHidden: document.getElementById('screen-end').hidden }; });
+          await p.screenshot({ path: path.join(OUT, 'desc-hidden.png'), fullPage: true });
+          res.bad.push('あなたにつながる子孫のボタンが見えない ' + JSON.stringify(res.hidden));
+          break;
+        }
         await btn.click();
         await p.waitForSelector('#screen-birth:not([hidden])', { timeout: 60000 });
         const info = await p.evaluate(() => ({ sub: document.getElementById('bt-sub').textContent, grid: [...document.querySelectorAll('#bt-grid .rc-item')].map(d => d.textContent).filter(t => /あなた/.test(t)) }));
