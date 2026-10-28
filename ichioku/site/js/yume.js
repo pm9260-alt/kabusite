@@ -492,6 +492,8 @@
     // つないだ筋を先頭へ
     var mine = S.arcs.splice(n0, S.arcs.length - n0);
     for (var i = mine.length - 1; i >= 0; i--) S.arcs.unshift(mine[i]);
+    // 時代ごとのデータが後から届いて並べ直されても、先頭のままにする（v19 12）
+    mine.forEach(function (o, k) { o._ord = -1e6 + k; });
     S.pathGate = pathGate;
     // 毎年のあと・分かれ道の答えのあと：素養を決め、14歳でプロの選手になるかを決め、プロになった年を記録する
     var year0 = S.year, res0 = S.resolve, rec0 = S.houseRec, desc0 = S.applyDescend;

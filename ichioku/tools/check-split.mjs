@@ -44,11 +44,11 @@ function run(ctx, i) {
   else { const b = O.pickBirth(C, H, by, E.makeRng(seed ^ 0x9e3779b9)); L = O.newLife(C, H, P[b.pref] || null, { year: by, seed, birth: b }); }
   const M = L.old ? O : E; let g = 0;
   while (L.alive && g++ < 130) { let r = M.step(L); while (r && r.branch) r = M.resolve(L, r.branch.ask ? { text: '' } : null); }
-  const h = crypto.createHash('sha1'); L.log.forEach(r => r.events.forEach(e => h.update(r.year + e.t))); return { by, h: h.digest('hex').slice(0, 12), n: L.log.length };
+  const h = crypto.createHash('sha1'), lines = []; L.log.forEach(r => r.events.forEach(e => { h.update(r.year + e.t); lines.push(r.year + ' ' + e.t); })); return { by, h: h.digest('hex').slice(0, 12), n: L.log.length, lines };
 }
 const full = world(false), split = world(true);
 let diff = [];
-for (let i = 0; i < N; i++) { const a = run(full, i), b = run(split, i); if (a.h !== b.h) diff.push(a.by + '年生まれ（' + i + '件目）'); }
+for (let i = 0; i < N; i++) { const a = run(full, i), b = run(split, i); if (a.h !== b.h) { diff.push(a.by + '年生まれ（' + i + '件目）'); if (process.env.SHOW) { const k = a.lines.findIndex((x, j) => x !== b.lines[j]); console.log('全部：', a.lines.slice(k, k + 3).join(' / ')); console.log('分けた：', b.lines.slice(k, k + 3).join(' / ')); } } }
 const ok = !diff.length;
 const res = { ok, n: N, diff: diff.slice(0, 10), loadedChunks: Object.keys(split).length };
 fs.writeFileSync(path.join(ROOT, 'logs', 'check-split.json'), JSON.stringify(res, null, 1));
