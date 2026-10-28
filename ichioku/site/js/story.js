@@ -1823,7 +1823,7 @@
   }
   function petOffer(c, P) {
     var s = c.s, L = c.L;
-    if (c.a < 6 || c.a > 65 || petOf(L, true) || (s.petAsk && c.y - s.petAsk < 10) || (s.petN || 0) >= 3) return false;
+    if (c.a < 6 || c.a > 65 || petOf(L, true) || (s.petAsk && c.y - s.petAsk < 10) || (s.petN || 0) >= 2) return false;
     if (!c.p(0.05)) return false;
     var ks = petKinds(c);
     if (ks.length < 1) return false;
@@ -1857,7 +1857,7 @@
     if (age >= life + (p.cured ? 2 : 0)) { p.dy = c.y; c.say(nm + 'が、' + age + '年をともに暮らして息を引き取った。庭の隅に埋めてやった。', { sat: -2, tie: -1 }, '家庭'); return false; }
     if (!p.sick && life >= 5 && age >= Math.round(life * 0.7) && (c.s.petSickN || 0) < 2 && c.p(0.3)) {
       p.sick = c.y; c.s.petSickN = (c.s.petSickN || 0) + 1;
-      makeChoiceBranch(c, '動物の病気', nm + 'が餌を食べなくなり、じっと動かなくなった。', [
+      makeChoiceBranch(c, '動物の病気', c.s.petSickN === 1 ? nm + 'が餌を食べなくなり、じっと動かなくなった。' : '年を取った' + nm + 'が、ある朝から立ち上がれなくなった。', [
         { k: 'cure', l: c.y >= 1946 ? '動物病院で治療を受けさせる' : '薬になるものを探して手を尽くす', fx: { tie: 1, sat: 1 }, h: CHint({ tie: 1, sat: 1 }) + '。' + (c.y >= 1946 ? '治療の代がかかる' : '手間がかかる') },
         { k: 'mitori', l: 'そばで見送る', fx: { tie: 1, sat: -1 }, h: CHint({ tie: 1, sat: -1 }) + '。最期まで一緒にいる' }], { cid: '_petSick', kind: 'small' });
       return true;

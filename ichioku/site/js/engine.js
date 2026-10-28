@@ -982,7 +982,7 @@
     var jrF = clamp(1 + 0.2 * (1 - val(P.s.jobs, y)), 0.85, 1.15);
     // 職を失ったあとの再就職は非正規になりやすい
     var againF = L.lostJob ? 1.6 : 1;
-    var pNon = clamp(base * 1.1 * eduF * sexF * jrF * againF, 0.02, 0.85);
+    var pNon = clamp(base * 1.2 * eduF * sexF * jrF * againF, 0.02, 0.85); // v19：夢と進路（yume.js）で大学へ進む人が増えた分を見こんで、統計の割合に合うよう 1.1 から 1.2 に
     var reg = rnd() >= pNon;
     L.job = { ind: k, reg: reg, since: y }; L.lastJob = IND[k].job + (reg ? '' : '（非正規）'); L.lastInd = k;
     selfJobE(L, k, reg);
@@ -1608,7 +1608,8 @@
   // からだの数値で亡くなる確率を少し補正する。幅は都道府県の生命表の差（およそ上下15%）と同じくらいにした。
   // 全体の平均は生命表に合うよう割り戻してある
   // BODY_NORM：からだの数値による死亡の上下を、平均で生命表よりわずかに低くする（生命表の死亡に、災害・まれな事故・物語の死が上乗せされる分を差し引く。v18 で平均寿命の検査に合わせて 1.02 から 1.06 に）
-  var BODY_K = 0.018, BODY_NORM = 1.06;
+  // v19：賭けごと・夢と進路などの筋が足されて平均寿命が下がり、検査の境目（差 -3.0年）に近づいたので 1.06 から 1.15 に（差 -2.1年）
+  var BODY_K = 0.018, BODY_NORM = 1.15;
   function bodyMult(L, age) {
     if (!L.st4 || !L.st4.v) return 1;
     var d = L.st4.v.body - stLin(BODY_AGE, age);

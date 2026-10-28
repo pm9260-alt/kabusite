@@ -1222,7 +1222,8 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
     while (L.alive && g++ < 130) { let r = O.step(L); while (r && r.branch) { const br = r.branch, ans = E.autoAnswer(br, null) || {}; for (const gr of br.groups || []) if (gr.id === 'shukke') ans[gr.id] = 'go'; r = O.resolve(L, br.ask ? { text: '' } : ans); } }
     const i0 = L.log.findIndex(r => r.mode === 'shukke');
     if (i0 < 0) continue; ns++; temples.add(L.templeName);
-    for (const r of L.log.slice(i0 + 1)) { yrs++; if (!r.events.length) empty++; for (const e of r.events) if (BAD.test(e.t) && !/知らせ|便り/.test(e.t) && !(e.cat === '健康' && /亡くなった/.test(e.t))) leak.push(L.by + '年生まれ ' + r.year + '年：' + e.t.slice(0, 30)); }
+    // 出家していた年だけを見る（時衆の旅の筋などで寺を出て里に戻った後は、里の暮らしの出来事が出てよい。v19）
+    for (const r of L.log.slice(i0 + 1)) { yrs++; if (!r.events.length) empty++; if (r.mode !== 'shukke') continue; for (const e of r.events) if (BAD.test(e.t) && !/知らせ|便り/.test(e.t) && !(e.cat === '健康' && /亡くなった/.test(e.t))) leak.push(L.by + '年生まれ ' + r.year + '年：' + e.t.slice(0, 30)); }
   }
   rec('v11直し1 出家した人生（' + ns + '人）で、出家の年より後に再婚・縁談・家族の名前の入った家の出来事・年貢や田の仕事の場面が出ないか', ns >= NS && leak.length === 0, leak.slice(0, 4).join('、'));
   rec('v11直し2 出家した人生で、出来事が0件の年が1割以下か', yrs > 0 && empty / yrs <= 0.1, (empty / Math.max(1, yrs) * 100).toFixed(1) + '%（' + yrs + '年）');
