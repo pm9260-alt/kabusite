@@ -2144,9 +2144,11 @@
   }
   // 何代あとの子孫か（spec6 2-6・v19 10）：1代を約27年とみた目安。あなたの生まれ年と都道府県を入れた人は、あなたの生まれ年にちょうど届く間隔にする
   function descPlan(gN) {
-    if (!L || L.deathAge < 15) return null;
+    if (!L) return null;
     var T = TG(), mf = meFull();
+    // あなたにつながる筋は、子を残さずに亡くなっても、きょうだいの子を養子に迎えて続ける（v19 10）
     if (T && T.descPlan && mf) { var d = T.descPlan(L, gN, { y: +mf.y, pref: String(mf.pref) }); if (d) return d; }
+    if (L.deathAge < 15) return null;
     var gap = gN * 27, by = L.deathYear + gap;
     return by > 2000 ? null : { gap: gap, by: by, me: false };
   }

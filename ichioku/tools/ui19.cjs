@@ -149,10 +149,11 @@ async function autoRun(p, seed, tag) {
       for (let g = 0; g < N; g++) {
         await p.click('#bt-start');
         const t0 = Date.now();
-        while (Date.now() - t0 < 600000 && !(await vis(p, 'screen-end'))) { if (await vis(p, 'branch')) { const o = await p.$('#branch .opt-btn'); if (o) await o.click().catch(() => {}); const m = await p.$('#branch .btn-main'); if (m && await m.isVisible()) await m.click().catch(() => {}); } if (await p.isVisible('#death-skip').catch(() => false)) await p.click('#death-skip').catch(() => {}); await sleep(120); }
+        while (Date.now() - t0 < 900000 && !(await vis(p, 'screen-end'))) { if (await vis(p, 'branch')) { const o = await p.$('#branch .opt-btn'); if (o) await o.click().catch(() => {}); const m = await p.$('#branch .btn-main'); if (m && await m.isVisible()) await m.click().catch(() => {}); } if (await p.isVisible('#death-skip').catch(() => false)) await p.click('#death-skip').catch(() => {}); await sleep(120); }
         await sleep(600);
+        if (!(await vis(p, 'screen-end'))) { broke = (g + 1) + '代目が時間内に最期まで進まなかった'; break; }
         const btn = await p.$('#kyodai-list button.to-me');
-        if (!btn) { broke = (g + 1) + '代目が子孫を残す前に亡くなった'; break; }
+        if (!btn) { broke = (g + 1) + '代目のあとに、あなたにつながる子孫のボタンがない'; res.bad.push(broke); break; }
         gens[gens.length - 1].btn = await btn.textContent();
         if (!(await btn.isVisible())) {
           res.hidden = await p.evaluate(() => { const b = document.querySelector('#kyodai-list button.to-me'); const chain = []; for (let e = b; e && e !== document.body; e = e.parentElement) { const cs = getComputedStyle(e); if (e.hidden || cs.display === 'none' || cs.visibility === 'hidden') chain.push((e.id || e.className || e.tagName) + (e.hidden ? '[hidden]' : '') + ':' + cs.display); } return { chain, screen: document.body.dataset.screen, endHidden: document.getElementById('screen-end').hidden }; });
