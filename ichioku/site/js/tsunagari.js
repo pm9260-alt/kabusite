@@ -172,7 +172,7 @@
       if (nearMe(from, to) && rnd() < 0.5) return null;
     } else {
       // 寄せる強さ：あなたまでの残りの代が少ないほど強く（k = 0〜1）
-      if (rnd() > 0.35 + 0.6 * k) return null;
+      if (rnd() > 0.55 + 0.45 * k) return null; // 遠い代でも半分ほどは寄せて、代ごとに近づくのが見えるように（v19 10）
       var goal = d0 * (1 - Math.min(0.9, 0.3 + 0.6 * k));
       var c = Object.keys(PREF_LL).filter(function (p) { return p !== from && kmPref(p, to) <= Math.max(goal, 1) + 60 && kmPref(p, to) < d0; });
       if (!c.length) return null;

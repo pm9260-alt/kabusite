@@ -175,7 +175,7 @@ async function autoRun(p, seed, tag) {
     if (!res.gens) res.bad.push(N + '代続けられた人生がない（' + res.tries.map(t => t.gens + '代・' + t.broke).join('／') + '）');
     else {
       const kms = res.gens.slice(1).map(g => g.km).filter(x => x != null), ys = res.gens.map(g => g.by);
-      if (!(kms.length >= 2 && kms[kms.length - 1] <= kms[0])) res.bad.push('代を重ねても、あなたの都道府県に近づかない ' + kms.join('→'));
+      if (!(kms.length >= 2 && kms[kms.length - 1] < kms[0])) res.bad.push('代を重ねても、あなたの都道府県に近づかない ' + kms.join('→'));
       for (let k = 1; k < ys.length; k++) if (ys[k] <= ys[k - 1]) res.bad.push('生まれ年が進まない ' + ys.join('→'));
       res.summary = { years: ys.join('→'), km: kms.join('→'), tries: res.tries.length };
     }
