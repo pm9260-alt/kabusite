@@ -1145,14 +1145,19 @@
   // 自動で選ぶときは「統計どおり」に任せる（answers = null）
   function resolve(L, answers) {
     var rec0 = L.rec, br0 = rec0 && rec0.branch, n0 = rec0 ? rec0.events.length : 0, sy = L.year, sa = L.age;
+    var sp0 = rec0 ? rec0.storyPick : null;
+    if (rec0) rec0.storyPick = null;
     var out = resolve0(L, answers);
     // 決めた分かれ道の結果の行に、題と決めたことを付ける（v18 11-6：記録で「▸ 縁談・決めたこと：受ける」と出す）
-    if (br0 && !br0.ask && answers && rec0) {
+    // おまかせ・統計どおりで答えを渡さなかったときも、物語の分かれ道で選ばれた答えを付ける（v19 7：後の文だけで出さない）
+    if (br0 && !br0.ask && rec0 && (answers || rec0.storyPick)) {
       var pl = null;
-      (br0.groups || []).forEach(function (g) { var k = answers[g.id]; (g.options || []).forEach(function (o) { if (o.k === k && !pl) pl = o.l; }); });
+      if (answers) (br0.groups || []).forEach(function (g) { var k = answers[g.id]; (g.options || []).forEach(function (o) { if (o.k === k && !pl) pl = o.l; }); });
+      if (!pl && rec0.storyPick) pl = rec0.storyPick;
       var ne = rec0.events.slice(n0).filter(function (e) { return e.cat !== '時代'; })[0];
       if (pl && ne && !ne.pick) ne.pick = { t: br0.ra === '__choice' ? (br0.title || '小さな選択') : (br0.title || ''), l: pl };
     }
+    if (rec0 && rec0.storyPick == null) rec0.storyPick = sp0;
     // 進学・就職・結婚などの分かれ道も覚えておく（死亡の記録の「ひとこと」に使う）
     if (br0 && br0.id !== 'story' && !(br0.id === 'ask')) {
       var lab = null;

@@ -911,6 +911,24 @@ test('10-0', 'site/js のスクリプトがすべて index.html から読まれ�
   const miss = files.filter(f => html.indexOf('js/' + f.replace(/\.js$/, '')) < 0 && html.indexOf(f.replace(/\.js$/, '')) < 0);
   return { ok: !miss.length, n: files.length, detail: '読まれていないスクリプト ' + miss.length + (miss.length ? '（' + miss.join('、') + '）' : '') };
 });
+test('10-7b', '分かれ道の後の文の前に、決めたこと（did）が必ず付く（おまかせ・統計どおりで答えを渡さないときも）', () => {
+  let n = 0, miss = 0, ex = '';
+  for (let i = 0; i < 300; i++) {
+    const by = 1000 + (i * 37) % 1001, L = birth(by, ((i + 1) * 7919 + 717) >>> 0), M = L.old ? O : E; let g = 0;
+    while (L.alive && g++ < 130) {
+      let r = M.step(L);
+      while (r && r.branch) {
+        const br = r.branch, rec = L.rec, n0 = rec ? rec.events.length : 0, story = br.ra === '__choice' || br.id === 'story' || br.id === 'hisabetsu';
+        r = M.resolve(L, br.ask ? { text: '' } : null);
+        if (!story || br.ask || !rec) continue;
+        const ne = rec.events.slice(n0).filter(e => e.cat !== '時代')[0];
+        if (!ne) continue;
+        n++; if (!ne.pick) { miss++; ex = ex || by + ' ' + ne.t.slice(0, 30); }
+      }
+    }
+  }
+  return { ok: miss === 0 && n > 0, n, detail: '物語の分かれ道の後の行 ' + n + '・決めたことのない行 ' + miss + (ex ? '（' + ex + '）' : '') };
+});
 /* ---------- 動かす ---------- */
 const args = process.argv.slice(2);
 if (args.includes('--list')) { for (const [k, v] of Object.entries(T)) console.log(k + '\t' + v.name); process.exit(0); }

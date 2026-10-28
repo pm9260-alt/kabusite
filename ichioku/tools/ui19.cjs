@@ -58,7 +58,7 @@ async function autoRun(p, seed, tag) {
   if (MODE === 'auto') {
     const p = await page(b, W); res.runs = [];
     for (let i = 0; i < N; i++) {
-      const r = await autoRun(p, 1000 + i * 7919, 'auto');
+      const r = await autoRun(p, 1000 + (i + +(process.env.ICHIOKU_SEED0 || 0)) * 7919, 'auto');
       res.runs.push(r);
       if (!r.birth) res.bad.push('生まれの画面が出ない ' + r.seed);
       if (!/5秒後に人生を始めます・画面を押すと止まります/.test(r.autoLine)) res.bad.push('5秒の表示がない ' + r.seed);
@@ -158,7 +158,73 @@ async function autoRun(p, seed, tag) {
     }
     if (p.errs.length) res.bad.push('エラー ' + p.errs.slice(0, 2).join(' / '));
   }
-  fs.writeFileSync(path.join(OUT, MODE + (W !== 390 ? '-' + W : '') + '.json'), JSON.stringify(res, null, 1));
+  if (MODE === 'accept') {
+    // 受け入れ条件 4 の遊び方（tools/find-seeds.mjs で探した人生を ?seed= で開き、分かれ道はいつも1つ目を選ぶ）
+    const seeds = JSON.parse(fs.readFileSync(path.join(OUT, 'seeds.json'), 'utf8'));
+    const p = await page(b, W); res.checks = [];
+    const ck = (name, ok, detail) => { res.checks.push({ name: name + '（' + W + '）', ok: !!ok, detail }); if (!ok) res.bad.push(name + ' ' + detail); };
+    async function open(seed, extra) {
+      await prep(p, 0, extra);
+      await p.goto(URL + '?seed=' + seed); await p.waitForSelector('#born:not([disabled])', { timeout: 30000 });
+      await p.click('#born'); await p.waitForSelector('#screen-birth:not([hidden])', { timeout: 60000 });
+    }
+    async function play(stop, onBr) {
+      await p.click('#bt-start');
+      const t0 = Date.now();
+      while (Date.now() - t0 < 400000) {
+        if (await vis(p, 'screen-end')) return 'end';
+        if (stop && await stop()) return 'stop';
+        if (await vis(p, 'branch')) {
+          if (onBr) await onBr();
+          const groups = await p.$$('#branch .opts');
+          if (groups.length > 1) { for (const g of groups) { const o = await g.$('.opt-btn'); if (o) await o.click().catch(() => {}); } const m = await p.$('#branch .btn-main'); if (m) await m.click().catch(() => {}); }
+          else { const o = await p.$('#branch .opt-btn'); if (o) await o.click().catch(() => {}); else { const m = await p.$('#branch .btn-main'); if (m && await m.isVisible()) await m.click().catch(() => {}); } }
+        }
+        if (await p.isVisible('#death-skip').catch(() => false)) await p.click('#death-skip').catch(() => {});
+        await sleep(80);
+      }
+      return 'timeout';
+    }
+    // 一生の記録（最期の画面の「一生をふり返る」で開く全部の記録）
+    const feed = async () => { if (await p.isVisible('#end-log')) { await p.click('#end-log'); await sleep(500); } const t = await p.evaluate(() => (document.getElementById('sheet') || {}).innerText || '') + '\n' + await p.evaluate(() => [...document.querySelectorAll('#feed li')].map(x => x.textContent).join('\n')); await p.keyboard.press('Escape').catch(() => {}); await sleep(200); return t; };
+    const endGrid = () => p.evaluate(() => (document.getElementById('rc-grid') || {}).innerText || '');
+    // 江戸の被差別身分の家に生まれる人生を25歳まで
+    if (seeds.outcast) {
+      await open(seeds.outcast.seed);
+      const grid = await p.textContent('#bt-grid');
+      const r = await play(() => p.evaluate(() => +document.getElementById('age').textContent >= 25));
+      const age = await p.evaluate(() => +document.getElementById('age').textContent);
+      await p.screenshot({ path: path.join(OUT, 'accept-outcast-' + W + '.png') });
+      const all = await p.evaluate(() => document.body.innerText);
+      ck('江戸の被差別身分の家に生まれる人生を25歳まで', /被差別身分/.test(grid) && age >= 25 && !/えた|ひにん|非人|穢多/.test(all), seeds.outcast.by + '年生まれ・生まれの画面「' + (grid.match(/身分と家[^\n]*\n?[^\n]*/) || [''])[0].replace(/\s+/g, ' ') + '」・' + age + '歳まで進んだ（' + r + '）');
+    }
+    // 動物を迎える人生を、動物が亡くなるまで
+    if (seeds.pet) {
+      await open(seeds.pet.seed);
+      let field = false, offered = '';
+      const r = await play(null, async () => { if (await p.$('#pet-name')) { field = true; offered = offered || await p.textContent('#branch'); } });
+      const g = await endGrid();
+      await p.screenshot({ path: path.join(OUT, 'accept-pet-' + W + '.png'), fullPage: true });
+      ck('動物を迎える人生を、動物が亡くなるまで', field && /ともに暮らした動物/.test(g), '名前の欄 ' + (field ? 'あり' : 'なし') + '・最期の画面「' + ((g.match(/ともに暮らした動物\s*\n?([^\n]*)/) || [])[1] || 'なし') + '」・' + r);
+      // 亡くなった後：続きのボタンは3つ以下・家系図から別の家族を選んで生きる
+      await sleep(600);
+      const btns = await p.$$eval('#kyodai-list button', x => x.length);
+      const hit = await p.$('#tree-end rect[role="button"]');
+      let started = false, who = '';
+      if (hit) { await hit.click(); await sleep(400); const lb = await p.$('.person-live:not([disabled])'); if (lb) { who = await p.evaluate(() => document.querySelector('.sheet-title, .sheet h2, [role="dialog"] h2') ? document.querySelector('.sheet-title, .sheet h2, [role="dialog"] h2').textContent : ''); await lb.click(); started = await p.waitForSelector('#screen-birth:not([hidden])', { timeout: 60000 }).then(() => true).catch(() => false); } }
+      const nm = started ? await p.textContent('#bt-name') : '';
+      ck('亡くなった後、続きのボタンが3つ以下で、家系図から別の家族を選んで生きる', btns <= 3 && started, '続きのボタン ' + btns + 'つ・家系図から選んだ人「' + (who || nm) + '」の生まれの画面 ' + (started ? '出た' : '出ない'));
+    }
+    // 2020年代に結婚する人生
+    if (seeds.marry2020) { await open(seeds.marry2020.seed); const r = await play(); const f = await feed(); const m = f.split('\n').find(t => /と結婚しました/.test(t)) || ''; ck('2020年代に結婚する人生', /と結婚しました/.test(f), seeds.marry2020.by + '年生まれ・「' + m.slice(0, 60) + '」・' + r); }
+    // 20歳以降に公営競技に賭ける人生
+    if (seeds.kake) { await open(seeds.kake.seed); let seen = ''; const r = await play(null, async () => { const t = await p.textContent('#branch'); if (/競馬|競輪|競艇|ボートレース|オートレース|G1|八大競走|最終レース/.test(t) && !seen) seen = t.replace(/\s+/g, ' ').slice(0, 60); }); ck('20歳以降に競馬や競輪などに賭ける人生', !!seen, seeds.kake.by + '年生まれ・分かれ道「' + seen + '」・' + r); }
+    // プロの選手になる人生
+    if (seeds.athlete) { await open(seeds.athlete.seed); const r = await play(); const f = await feed(); const g = await endGrid(); const ok = /選手/.test(f + g); ck('プロの選手になる人生', ok, seeds.athlete.by + '年生まれ・' + seeds.athlete.t + '・' + r); }
+    if (p.errs.length) res.bad.push('エラー ' + p.errs.slice(0, 2).join(' / '));
+    ck('画面のエラー・外部への通信', !p.errs.length && !p.ext.length, 'エラー ' + p.errs.length + '・外部への通信 ' + p.ext.length);
+  }
+  fs.writeFileSync(path.join(OUT, MODE + (W !== 390 ? '-' + W : '') + (process.env.ICHIOKU_PART ? '-' + process.env.ICHIOKU_PART : '') + '.json'), JSON.stringify(res, null, 1));
   console.log('気になる点', res.bad.length, JSON.stringify(res.bad.slice(0, 10)), JSON.stringify(res.summary || ''));
   await b.close();
 })();

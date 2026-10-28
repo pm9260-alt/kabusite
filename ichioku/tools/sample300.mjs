@@ -1,4 +1,4 @@
-// 7 の目で確かめる300文（v19）：記録500件から、出来事の文を無作為に300文取り出す。分かれ道のあとの文には、画面と同じく「決めたこと」を添える
+// 7 の目で確かめる300文（v19）：記録500件から、出来事の文（記録の1行）を無作為に300文取り出す。分かれ道のあとの文には、画面と同じく「決めたこと」を添える
 // 使い方：node tools/sample300.mjs → logs/sample300.json（文・年・年齢・決めたこと）。目で確かめた結果は data-src/review300.json に書き、run-checks.mjs が test-results.md に出す
 import fs from 'fs'; import path from 'path'; import { createRequire } from 'module';
 const require = createRequire(import.meta.url);
@@ -16,8 +16,9 @@ for (let i = 0; i < 500; i++) {
   while (L.alive && g++ < 130) { let r = M.step(L); while (r && r.branch) r = M.resolve(L, r.branch.ask ? { text: '' } : null); }
   for (const r of L.log) for (const e of r.events) {
     if (e.cat === '時代' && !e.story) continue;
-    const t = PO.polite(e.t);
-    for (const s of t.split(/(?<=。)(?![」』）])/)) { const k = s.trim(); if (k.length >= 6) all.push({ life: i, y: r.year, a: r.age, did: e.story && r.storyPick ? r.storyPick : '', t: k }); }
+    // 記録の1行（画面の1行と同じ単位）を1文として取り出す。前の行がなくても、誰が何をしたか分かるかを確かめる
+    const t = PO.polite(e.t).trim();
+    if (t.length >= 6) all.push({ life: i, y: r.year, a: r.age, did: e.pick ? e.pick.l : '', t });
   }
 }
 // 決まった種で並べ替えて300文（毎回同じ300文になる）

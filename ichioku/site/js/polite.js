@@ -39,6 +39,7 @@
     var m = s.match(/^([\s\S]*?)(。*)$/), body = m[1], tail = m[2];
     if (body && /）$/.test(body) && !/(です|でした|ます|ました|ません)（[^（）]*）$/.test(body)) { var ex0 = extra(body); if (ex0) return ex0 + tail; }
     if (!body || /[」』）)]$/.test(body)) return s;
+    if (/に通った$/.test(body)) return body.replace(/通った$/, '通いました') + tail; // 通う（治療に通った）。道を通った は表のまま
     if (/かった$/.test(body)) { var ex2 = extra(body); if (ex2) return ex2 + tail; }
     // すでに丁寧体の文には二度かけない（「でした」→「でしました」を防ぐ。v19 7）
     if (/(です|でした|ます|ました|ません|ませんでした|でしょう)$/.test(body)) return s;
