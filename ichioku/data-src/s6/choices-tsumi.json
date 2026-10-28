@@ -167,7 +167,7 @@
     { "k": "ukeru", "l": "引き受ける", "fx": { "tie": 3, "learn": 1, "body": -1 }, "money": { "f": -0.02 }, "after": "{name}は研修を受け、刑務所を出たばかりの若者と月に二度、喫茶店で会うようになった。" },
     { "k": "kotowaru", "l": "自分にはまだ早いと断る", "fx": { "sat": 1, "tie": -1 }, "after": "{name}は断ったが、保護司会の清掃の集まりには年に一度顔を出した。" }
   ], "src": ["tsumi_hogoshi"] },
-{ "id": "s6.tsumi.sengo.c4", "kind": "small", "y": [1960, 2090], "a": [30, 80], "when": { "hasChild": true },
+{ "id": "s6.tsumi.sengo.c4", "kind": "small", "cool": 99, "y": [1960, 2090], "a": [30, 80], "when": { "hasChild": true },
   "text": ["{child}が酒を飲んで車を運転し、警察に捕まったと連絡が来た。けが人は出なかったが、職場に知られれば辞めることになるかもしれない。"],
   "options": [
     { "k": "bengoshi", "l": "弁護士を頼んで支える", "fx": { "tie": 2, "sat": -1 }, "money": { "f": -0.1 }, "after": "{name}は貯金を崩して弁護士を頼み、{child}と一緒に裁判所へ通った。" },

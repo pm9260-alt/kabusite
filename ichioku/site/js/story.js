@@ -1757,7 +1757,7 @@
       var n0 = CH.list.length;
       S6.choices.forEach(function (o, idx) {
         if (CH._s6seen[o.id]) return; CH._s6seen[o.id] = 1;
-        CH.list.push({ _o: 1e6 + (o._i != null ? o._i : idx), id: o.id, kind: o.kind, y: o.y, a: o.a, when: o.when || {}, text: o.text, texts: [].concat(o.text), s6: true,
+        CH.list.push({ _o: 1e6 + (o._i != null ? o._i : idx), cool: o.cool, id: o.id, kind: o.kind, y: o.y, a: o.a, when: o.when || {}, text: o.text, texts: [].concat(o.text), s6: true,
           options: CH.balance ? CH.balance(o.options.map(function (p) { return { k: p.k, l: p.l, fx: Object.assign({}, p.fx || {}), after: p.after || null, money: p.money || null, pet: p.pet || null, petEnd: !!p.petEnd }; })) : o.options.map(function (p) { return { k: p.k, l: p.l, fx: p.fx || {}, after: p.after || null, money: p.money || null }; }) });
       });
       // 全部を読んだときは、あとで全体に一度だけ balance をかける。後から届いた分にも同じ回数かける
@@ -1823,18 +1823,20 @@
   }
   function petOffer(c, P) {
     var s = c.s, L = c.L;
-    if (c.a < 6 || c.a > 65 || petOf(L, true) || (s.petAsk && c.y - s.petAsk < 10)) return false;
+    if (c.a < 6 || c.a > 65 || petOf(L, true) || (s.petAsk && c.y - s.petAsk < 10) || (s.petN || 0) >= 3) return false;
     if (!c.p(0.05)) return false;
     var ks = petKinds(c);
     if (ks.length < 1) return false;
     // 2〜3種類を引く
     var pick = [], pool = ks.slice();
-    while (pick.length < Math.min(3, pool.length + pick.length) && pool.length) pick.push(pool.splice(Math.floor(c.r() * pool.length), 1)[0]);
-    s.petAsk = c.y;
+    // 答えは2種類の動物と「迎えない」の3つ（分かれ道の答えは2〜3つ）
+    while (pick.length < 2 && pool.length) pick.push(pool.splice(Math.floor(c.r() * pool.length), 1)[0]);
+    s.petAsk = c.y; s.petN = (s.petN || 0) + 1;
     var who = P.name || 'この人';
-    var text = c.a < 15 ? who + 'は、動物を飼いたいと家の者にせがんだ。' : who + 'の家に、動物を迎える話が持ち上がった。';
-    var opts = pick.map(function (a, i) { return { k: 'p' + i, l: (PET_WORD[a] ? PET_WORD[a](c.y) : a) + 'を迎える', fx: { sat: 2, tie: 1 }, h: petHint(a, c.y), pet: a }; });
-    opts.push({ k: 'no', l: '迎えない', fx: { sat: -1, learn: 1 }, h: '世話の手間も別れの悲しみもない' });
+    // 同じ問いの文を1つの人生で2回出さない（1回目・2回目・3回目で書き分ける）
+    var text = [c.a < 15 ? who + 'は、動物を飼いたいと家の者にせがんだ。' : who + 'の家に、動物を迎える話が持ち上がった。', '知り合いから、動物を譲りたいという話が' + who + 'のもとに来た。', '家の中が静かになり、' + who + 'はまた動物を迎えようかと考えた。'][s.petN - 1];
+    var opts = pick.map(function (a, i) { return { k: 'p' + i, l: (PET_WORD[a] ? PET_WORD[a](c.y) : a) + 'を迎える', fx: { sat: 2, tie: 1 }, h: CHint({ sat: 2, tie: 1 }) + '。' + petHint(a, c.y), pet: a }; });
+    opts.push({ k: 'no', l: '迎えない', fx: { sat: -1, learn: 1 }, h: CHint({ sat: -1, learn: 1 }) + '。世話の手間も別れの悲しみもない' });
     makeChoiceBranch(c, '動物を迎えようか？', text, opts, { cid: '_pet', kind: 'small', pets: pick });
     return true;
   }
@@ -1853,11 +1855,11 @@
     if (!p) return false;
     var age = c.y - p.y, life = PET_LIFE[p.a] || 15, nm = p.name;
     if (age >= life + (p.cured ? 2 : 0)) { p.dy = c.y; c.say(nm + 'が、' + age + '年をともに暮らして息を引き取った。庭の隅に埋めてやった。', { sat: -2, tie: -1 }, '家庭'); return false; }
-    if (!p.sick && life >= 5 && age >= Math.round(life * 0.7) && c.p(0.3)) {
-      p.sick = c.y;
+    if (!p.sick && life >= 5 && age >= Math.round(life * 0.7) && (c.s.petSickN || 0) < 2 && c.p(0.3)) {
+      p.sick = c.y; c.s.petSickN = (c.s.petSickN || 0) + 1;
       makeChoiceBranch(c, '動物の病気', nm + 'が餌を食べなくなり、じっと動かなくなった。', [
-        { k: 'cure', l: c.y >= 1946 ? '動物病院で治療を受けさせる' : '薬になるものを探して手を尽くす', fx: { tie: 1, sat: 1 }, h: c.y >= 1946 ? '治療の代がかかる' : '手間がかかる' },
-        { k: 'mitori', l: 'そばで見送る', fx: { tie: 1, sat: -1 }, h: '最期まで一緒にいる' }], { cid: '_petSick', kind: 'small' });
+        { k: 'cure', l: c.y >= 1946 ? '動物病院で治療を受けさせる' : '薬になるものを探して手を尽くす', fx: { tie: 1, sat: 1 }, h: CHint({ tie: 1, sat: 1 }) + '。' + (c.y >= 1946 ? '治療の代がかかる' : '手間がかかる') },
+        { k: 'mitori', l: 'そばで見送る', fx: { tie: 1, sat: -1 }, h: CHint({ tie: 1, sat: -1 }) + '。最期まで一緒にいる' }], { cid: '_petSick', kind: 'small' });
       return true;
     }
     if (c.p(0.15)) {

@@ -474,8 +474,9 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
       let r = M.step(L);
       while (r && r.branch) { if (r.branch.ask) asked.push(r.age); r = M.resolve(L, r.branch.ask ? { text: '' } : null); }
     }
-    const want = E.ASK_AGES.filter(x => x <= L.deathAge);
-    if (asked.join(',') !== want.join(',')) bad.push(L.by + '年生まれ（' + L.deathAge + '歳）：' + asked.join(',') + ' / 期待 ' + want.join(','));
+    // 亡くなった年の節目は、その年に亡くなる前か後かで出るときと出ないときがある（v19：戦死などで30歳の年に亡くなった人）
+    const want = E.ASK_AGES.filter(x => x < L.deathAge), wantMax = E.ASK_AGES.filter(x => x <= L.deathAge);
+    if (asked.join(',') !== want.join(',') && asked.join(',') !== wantMax.join(',')) bad.push(L.by + '年生まれ（' + L.deathAge + '歳）：' + asked.join(',') + ' / 期待 ' + want.join(','));
     if ((L.notes || []).some(n => n.text)) bad.push('空の答えなのに書き残しがある');
   };
   for (let i = 0; i < 60; i++) {
@@ -487,7 +488,9 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
   // 画面に文字を入力する欄がないか（index.html と app.js）
   const html = fs.readFileSync(path.join(SITE, 'index.html'), 'utf8'), app = fs.readFileSync(path.join(SITE, 'js', 'app.js'), 'utf8');
   if (/<input|<textarea/.test(html)) bad.push('index.html に入力欄がある');
-  if (/createElement\('input'\)|ask-input|farewell/.test(app)) bad.push('app.js に入力欄が残っている');
+  // v19 1：残してよいのは動物の名前の欄（pet-name）だけ。文を書かせる欄はない
+  const inputs = (app.match(/createElement\('input'\)[^\n]*/g) || []).filter(l => !/pet-name/.test(l));
+  if (inputs.length || /ask-input|farewell/.test(app)) bad.push('app.js に入力欄が残っている');
   if (!/cur\.branch\.ask \|\| auto/.test(app)) bad.push('節目の問いかけを画面で止めずに進める処理がない');
   rec('A 入力欄がなく、節目の問いかけは画面で止まらずに進むか（120人分の人生と画面のファイル）', bad.length === 0, bad.slice(0, 5).join('、'));
   const qs = new Set();
@@ -622,7 +625,7 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
       while (r && r.branch) {
         if (r.branch.ask) { ans.push({ text: '' }); r = M.resolve(L, { text: '' }); continue; }
         const a = E.autoAnswer(r.branch, L.focus);
-        if (a) for (const gr of r.branch.groups) if (!gr.options.some(o => o.k === a[gr.id])) bad.push(L.by + '年生まれ：' + r.branch.title + ' の答え ' + a[gr.id] + ' が選択肢にない');
+        if (a) for (const gr of r.branch.groups) if (!(gr !== r.branch.groups[0] && a[gr.id] === undefined) && !gr.options.some(o => o.k === a[gr.id]))  /* v19 14：2つ目の問い（はじめてのG1 のどの馬か）は、答えなしなら重みで選ぶ */ bad.push(L.by + '年生まれ：' + r.branch.title + ' の答え ' + a[gr.id] + ' が選択肢にない');
         ans.push(a); r = M.resolve(L, a);
       }
     }
@@ -960,7 +963,8 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
   const K = require(path.join(SITE, 'js', 'compare.js'));
   const KINDS = ['birth', 5, 15, 30, 50, 70, 'death'];
   const leak = [], mism = [], share = [];
-  const pc = v => v > 0 && v < 0.01 ? '1%未満' : '約' + Math.round(v * 100) + '%';
+  // v19 7：99.5%以上と0.5%未満は小数1けた（compare.js の pc と同じ決まり）
+  const pc = v => { const p = v * 100; if (v > 0 && p < 0.05) return '0.1%未満'; if (p >= 99.95 && v < 1) return '99.9%以上'; return '約' + (p >= 99.5 || (p > 0 && p < 0.5) ? p.toFixed(1) : Math.round(p)) + '%'; };
   const lin = (s, y) => { const ks = Object.keys(s).map(Number).sort((a, b) => a - b); if (y <= ks[0]) return s[ks[0]]; for (let i = 1; i < ks.length; i++) if (y <= ks[i]) { const a = ks[i - 1], b = ks[i]; return s[a] + (s[b] - s[a]) * (y - a) / (b - a); } return s[ks[ks.length - 1]]; };
   const qOf = (sex, age, y) => y >= 1975 ? E.deathProb(C, null, sex, age, y) : O.deathProb({ C, H, pref: null, kind: 'town', P: null }, sex, age, y);
   const survOf = (by, sex, a) => { let s = 1; for (let k = 0; k < a; k++) s *= 1 - qOf(sex, k, by + k); return s; };
@@ -1482,7 +1486,7 @@ cmpOld('昔の人生：50歳までに結婚した割合が元の統計から±3�
   { const bad = []; let n = 0;
     for (let s0 = 1; n < 30 && s0 < 80000; s0++) { const L = firstLife(1700 + s0 % 200, s0); if (L.status !== 'hyakusho' || L.sex !== 'm') continue; run(O, L); if (!L.muko && !L.adopted) continue; n++; if (!L.surnameOld || O.displayName(L) !== L.surname + L.name + '（旧姓 ' + L.surnameOld + '）') bad.push('名字の出し方'); }
     const app = fs.readFileSync(path.join(SITE, 'js', 'app.js'), 'utf8');
-    if (!/\$\('end-title'\)\.textContent = dispName\(\)/.test(app) || !/name: dispName\(\)/.test(app) || !/'旧姓 ' \+ L\.surnameOld/.test(app)) bad.push('最期の画面・共有用の画像・家系図に新しい名字と旧姓が出ない');
+    if (!/\$\('end-title'\)\.textContent = (dispName|heroName)\(\)/.test(app) || !/function heroName\(Lx\) \{ return String\(dispName\(Lx\)/.test(app) || !/name: dispName\(\)/.test(app) || !/'旧姓 ' \+ L\.surnameOld/.test(app)) bad.push('最期の画面・共有用の画像・家系図に新しい名字と旧姓が出ない');
     res['14 婿養子・養子に入った人の名字と旧姓（' + n + '人）'] = bad; }
   // 15 1948年からの生まれに奉公・分家・婿養子・養子の分かれ道が出ない
   { const bad = [];
