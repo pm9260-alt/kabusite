@@ -368,6 +368,8 @@
     return next(first).catch(function () { return first; });
   }
   function born(fixedSeed) {
+    // 試験用：?seed=数 で最初の人生の種を決める（ブラウザの受け入れ試験で、決まった人生を開くのに使う）
+    if (typeof fixedSeed !== 'number' && !born.qs) { born.qs = 1; try { var qs = (location.search.match(/[?&]seed=(\d+)/) || [])[1]; if (qs) fixedSeed = +qs >>> 0 || 1; } catch (e) { /* 読めない環境 */ } }
     if (typeof fixedSeed !== 'number') { $('born').disabled = true; pickSeed().then(function (sd) { born(sd); }); return; }
     var seed = fixedSeed;
     $('born').disabled = true;
@@ -1927,6 +1929,9 @@
     if (stv.length) { var sd0 = el('div', 'rc-item rc-wide'); sd0.appendChild(el('dt', null, '印を付けた出来事')); stv.forEach(function (x) { sd0.appendChild(el('dd', null, '◆ ' + x.a + '歳（' + x.y + '年）　' + x.t)); }); g.appendChild(sd0); }
     var KU = window.IchiokuKurashi;
     if (KU && KU.hobbies) { var hbs = KU.hobbies(L, L.deathYear); if (hbs.length) item('趣味', hbs.map(function (h) { return h.name + (h.lv ? ' Lv.' + h.lv : ''); }).join('・')); }
+    // 10歳の夢と実際の仕事（v19 17）
+    var YU = window.IchiokuYume, dl = YU && YU.dreamLine ? YU.dreamLine(L) : null;
+    if (dl && dl.text) { var dv0 = el('div', 'rc-item rc-wide'); dv0.appendChild(el('dt', null, '10歳の夢')); dv0.appendChild(el('dd', null, '「' + dl.dream10.name + '」' + (dl.dream15 ? '（15歳で「' + dl.dream15.name + '」に）' : ''))); dv0.appendChild(el('dd', 'rc-subv', pol(dl.text))); g.appendChild(dv0); }
     if (KU && KU.pets) { var pts = KU.pets(L, L.deathYear); if (pts.length) item('ともに暮らした動物', pts.map(function (p) { return p.a + 'の' + (p.name || p.a) + '（' + Math.max(1, p.years) + '年）'; }).join('、')); }
     var trips = travelPlaces();
     if (trips.length > 1) item('旅した土地・住んだ土地', trips.slice(0, 6).join('、') + (trips.length > 6 ? 'など' + trips.length + 'か所' : ''));

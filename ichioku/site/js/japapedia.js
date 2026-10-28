@@ -54,7 +54,7 @@
     (L.log || []).forEach(function (r) { (r.events || []).forEach(function (e) { (e.ev || []).forEach(function (v) { if (v.name) srcs[v.name + (v.org ? '（' + v.org + '）' : '')] = 1; }); }); });
     var info = [
       ['生年', y0 + '年'], ['生地', ctx.place || ''], ['没年', y1 + '年（享年' + L.deathAge + '）'], ['没地', ctx.deathPlace || ''],
-      ['身分・家格', hw], ['職業', job], ['最終の位・役職', lastPost || (L.grade ? ctx.gradeName || '' : '')],
+      ['身分・家格', hw], ['職業', job], ['10歳の夢', (function () { var Y = typeof self !== 'undefined' && self.IchiokuYume, d = Y && Y.dreamLine ? Y.dreamLine(L) : null; return d && d.dream10 ? d.dream10.name + (d.dream15 ? '（15歳で' + d.dream15.name + '）' : '') : ''; })()], ['最終の位・役職', lastPost || (L.grade ? ctx.gradeName || '' : '')],
       ['位階', hs.filter(function (h) { return h.k === 'ikai' || h.k === 'zoui'; }).map(function (h) { return h.t; }).join('、')],
       ['勲章・褒章', hs.filter(function (h) { return h.k === 'kunsho' || h.k === 'hosho' || h.k === 'hobi'; }).map(function (h) { return h.t; }).join('、')],
       ['配偶者', spouse], ['子', kids], ['出身校', L.edu || '']

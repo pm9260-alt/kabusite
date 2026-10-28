@@ -479,7 +479,7 @@ test('7-4', '同じ年齢のあなた（500件：生きた人生の全件に特�
   for (let i = 0; n < 500 && i < 3000; i++) {
     const by = 1000 + (i * 37) % 1001, L = play(birth(by, i * 7919 + 704)), me = { y: 1960 + (i * 7) % 60, pref: '13' }, a = NOWY - me.y; n++;
     if (L.deathAge >= a) { lived++; const r = L.log.find(x => x.age === a); const t = r && TG.sameAgeRow(L, r, me, NOWY, PO.polite); if (!t || t.indexOf('あなたと同じ' + a + '歳') < 0) { rowMiss++; ex = ex || by + ' ' + a; } }
-    else { died++; const t = TG.shortLived(C, H, L, me, NOWY, CMP); if (!t || !/生きられませんでした.*約\d+%|1%未満/.test(t)) { endMiss++; ex = ex || String(t); } }
+    else { died++; const t = TG.shortLived(C, H, L, me, NOWY, CMP); if (!t || !/生きられませんでした.*(約\d+(\.\d)?%|0\.1%未満|99\.9%以上)/.test(t)) { endMiss++; ex = ex || String(t); } }
   }
   const src = fs.readFileSync(path.join(SITE, 'js', 'compare.js'), 'utf8'), da = (src.match(/だ。'/g) || []).length;
   return { ok: rowMiss === 0 && endMiss === 0 && da === 0 && lived > 0 && died > 0, n, detail: '生きた ' + lived + '（行なし ' + rowMiss + '）・生きられなかった ' + died + '（一文なし ' + endMiss + '）・compare.js の「だ。」 ' + da + (ex ? '（' + ex + '）' : '') };
